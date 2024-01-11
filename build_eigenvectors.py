@@ -2,6 +2,7 @@
 import os, sys
 import ROOT
 import numpy as np
+import pickle
 from matplotlib import pyplot as plt
 from scipy.optimize import least_squares, minimize
 from common_functions import MyArray1D
@@ -26,8 +27,9 @@ smi_dir = os.environ.get("SMI_DIR")
 off_runlist = ReadRunListFromFile('../easy-matrix-method/output_vts_hours/RunList_1ES0229_V6.txt')
 print (off_runlist)
 
-big_matrix = build_big_camera_matrix(smi_input,off_runlist)
+big_matrix = build_big_camera_matrix(smi_input,off_runlist,max_runs=1e10)
 
+print ('Computing SVD eigenvectors...')
 big_eigenvectors = []
 for logE in range(0,logE_bins):
     U_full, S_full, VT_full = np.linalg.svd(big_matrix[logE],full_matrices=False)
@@ -50,3 +52,4 @@ output_filename = f'{smi_dir}/output_eigenvector/eigenvectors.pkl'
 with open(output_filename,"wb") as file:
     pickle.dump(big_eigenvectors, file)
 
+print ('SVD eigenvectors saved.')

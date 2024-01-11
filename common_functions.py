@@ -25,6 +25,8 @@ logE_bins = 6
 logE_start = -1.
 logE_end = 1.
 
+smi_aux = os.environ.get("SMI_AUX")
+
 def ReadRunListFromFile(input_file):
 
     runlist = []
@@ -199,7 +201,60 @@ class MyArray1D:
             key_idx = len(self.xaxis)-2
         return self.waxis[key_idx]
 
-def build_big_camera_matrix(smi_input,runlist):
+def GetGammaSources(tele_point_ra, tele_point_dec):
+
+    bright_stars_coord = []
+    inputFile = open(f'{smi_aux}/TeVCat_RaDec.txt')
+    for line in inputFile:
+        if line=='': continue
+        line_split = line.split()
+        if len(line_split)!=2: continue
+        star_ra = float(line_split[0])
+        star_dec = float(line_split[1])
+        distance = pow(pow(star_ra-tele_point_ra,2)+pow(star_dec-tele_point_dec,2),0.5)
+        if distance>2.: continue
+        print (f'{line_split}')
+        bright_stars_coord += [[star_ra,star_dec]]
+    print (f'Found {len(bright_stars_coord)} Gamma-ray sources.')
+    return bright_stars_coord
+
+def GetBrightStars(tele_point_ra, tele_point_dec):
+
+    brightness_cut = 6.0
+    bright_stars_coord = []
+    inputFile = open(f'{smi_aux}/Hipparcos_MAG8_1997.dat')
+    for line in inputFile:
+        if '#' in line: continue 
+        if '*' in line: continue 
+        if line=='': continue
+        line_split = line.split()
+        if len(line_split)!=5: continue
+        star_ra = float(line_split[0])
+        star_dec = float(line_split[1])
+        star_brightness = float(line_split[3]) + float(line_split[4])
+        distance = pow(pow(star_ra-tele_point_ra,2)+pow(star_dec-tele_point_dec,2),0.5)
+        if distance>2.: continue
+        print (f'{line_split}')
+        if star_brightness<brightness_cut:
+            bright_stars_coord += [[star_ra,star_dec]]
+
+    print (f'Found {len(bright_stars_coord)} bright stars.')
+    return bright_stars_coord
+
+
+def CoincideWithBrightStars(ra, dec, bright_stars_coord):
+    bright_star_radius_cut = 0.25
+    isCoincident = False
+    for star in range(0,len(bright_stars_coord)):
+        star_ra = bright_stars_coord[star][0]
+        star_dec = bright_stars_coord[star][1]
+        distance = pow(pow(star_ra-ra,2)+pow(star_dec-dec,2),0.5)
+        if distance>bright_star_radius_cut: continue
+        isCoincident = True
+    return isCoincident
+
+
+def build_big_camera_matrix(smi_input,runlist,max_runs=1e10):
 
     big_matrix = []
     for logE in range(0,logE_bins):
@@ -207,6 +262,7 @@ def build_big_camera_matrix(smi_input,runlist):
 
     logE_axis = MyArray1D(x_bins=logE_bins,start_x=logE_start,end_x=logE_end)
 
+    run_count = 0
     for run_number in runlist:
     
         rootfile_name = f'{smi_input}/{run_number}.anasum.root'
@@ -214,12 +270,22 @@ def build_big_camera_matrix(smi_input,runlist):
         if not os.path.exists(rootfile_name):
             print (f'file does not exist.')
             continue
+        run_count += 1
     
         xyoff_map = []
         for logE in range(0,logE_bins):
             xyoff_map += [MyArray3D(x_bins=xoff_bins,start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins,start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
     
         InputFile = ROOT.TFile(rootfile_name)
+
+        TreeName = f'run_{run_number}/stereo/pointingDataReduced'
+        TelTree = InputFile.Get(TreeName)
+        TelTree.GetEntry(int(float(TelTree.GetEntries())/2.))
+        TelRAJ2000 = TelTree.TelRAJ2000*180./np.pi
+        TelDecJ2000 = TelTree.TelDecJ2000*180./np.pi
+        bright_star_coord = GetBrightStars(TelRAJ2000,TelDecJ2000)
+        gamma_source_coord = GetGammaSources(TelRAJ2000,TelDecJ2000)
+
         TreeName = f'run_{run_number}/stereo/DL3EventTree'
         EvtTree = InputFile.Get(TreeName)
         total_entries = EvtTree.GetEntries()
@@ -228,6 +294,8 @@ def build_big_camera_matrix(smi_input,runlist):
             EvtTree.GetEntry(entry)
             Xoff = EvtTree.Xoff
             Yoff = EvtTree.Yoff
+            Xderot = EvtTree.Xderot
+            Yderot = EvtTree.Yderot
             MSCW = EvtTree.MSCW
             MSCL = EvtTree.MSCL
             Energy = EvtTree.Energy
@@ -242,6 +310,21 @@ def build_big_camera_matrix(smi_input,runlist):
             if EmissionHeight>max_EmissionHeight_cut: continue
             if EmissionHeight<min_EmissionHeight_cut: continue
             if Roff>max_Roff: continue
+
+            Xsky = TelRAJ2000 + Xderot
+            Ysky = TelDecJ2000 + Yderot
+            mirror_Xsky = TelRAJ2000 - Xderot
+            mirror_Ysky = TelDecJ2000 - Yderot
+            found_bright_star = CoincideWithBrightStars(Xsky, Ysky, bright_star_coord)
+            found_gamma_source = CoincideWithBrightStars(Xsky, Ysky, gamma_source_coord)
+            found_mirror_star = CoincideWithBrightStars(mirror_Xsky, mirror_Ysky, bright_star_coord)
+            found_mirror_gamma_source = CoincideWithBrightStars(mirror_Xsky, mirror_Ysky, gamma_source_coord)
+
+            if found_bright_star: continue
+            if found_gamma_source: continue
+            if found_mirror_star or found_mirror_gamma_source:
+                xyoff_map[logE_bin].fill(-Xoff,-Yoff,MSCW)
+
             xyoff_map[logE_bin].fill(Xoff,Yoff,MSCW)
     
         for logE in range(0,logE_bins):
@@ -255,5 +338,22 @@ def build_big_camera_matrix(smi_input,runlist):
             else:
                 big_matrix[logE] += [xyoff_map_1d]
 
+        if run_count==max_runs: break
+
     return big_matrix
+
+def cosmic_ray_like_chi2(try_params,eigenvectors,xyoff_map):
+
+    try_params = np.array(try_params)
+    try_xyoff_map = eigenvectors.T @ try_params
+
+    chi2 = 0.
+    for gcut in range(1,gcut_bins):
+        for idx_x in range(0,xoff_bins):
+            for idx_y in range(0,yoff_bins):
+                idx_1d = gcut*xoff_bins*yoff_bins + idx_x*yoff_bins + idx_y
+                stat_err = max(1.,pow(xyoff_map[idx_1d],0.5))
+                chi2 += pow((try_xyoff_map[idx_1d]-xyoff_map[idx_1d])/stat_err,2)
+
+    return chi2
 
