@@ -2,8 +2,10 @@
 import os, sys
 import ROOT
 import numpy as np
+import pickle
+from scipy.optimize import least_squares, minimize
 
-matrix_rank = 3
+matrix_rank = 4
 
 min_NImages = 3
 max_Roff = 2.0
@@ -11,6 +13,7 @@ max_EmissionHeight_cut = 20.
 min_EmissionHeight_cut = 6.
 max_Rcore = 400.
 min_Rcore = 0.
+min_Energy_cut = 0.2
 
 xoff_bins = 20
 xoff_start = -2.
@@ -21,11 +24,12 @@ yoff_end = 2.
 gcut_bins = 4
 gcut_start = -0.6
 gcut_end = -0.6+1.2*gcut_bins
-logE_bins = 6
-logE_start = -1.
+logE_bins = 5
+logE_start = -1.+0.33
 logE_end = 1.
 
 smi_aux = os.environ.get("SMI_AUX")
+smi_dir = os.environ.get("SMI_DIR")
 
 def ReadRunListFromFile(input_file):
 
@@ -34,6 +38,17 @@ def ReadRunListFromFile(input_file):
     inputFile = open(input_file)
     for line in inputFile:
         runlist += [int(line)]
+
+    return runlist
+
+def ReadOffRunListFromFile(input_file):
+
+    runlist = []
+
+    inputFile = open(input_file)
+    for line in inputFile:
+        line_split = line.split()
+        runlist += [int(line_split[1])]
 
     return runlist
 
@@ -254,7 +269,7 @@ def CoincideWithBrightStars(ra, dec, bright_stars_coord):
     return isCoincident
 
 
-def build_big_camera_matrix(smi_input,runlist,max_runs=1e10):
+def build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_run=0):
 
     big_matrix = []
     for logE in range(0,logE_bins):
@@ -270,6 +285,9 @@ def build_big_camera_matrix(smi_input,runlist,max_runs=1e10):
         if not os.path.exists(rootfile_name):
             print (f'file does not exist.')
             continue
+        if specific_run!=0:
+            if specific_run!=run_number: 
+                continue
         run_count += 1
     
         xyoff_map = []
@@ -310,6 +328,7 @@ def build_big_camera_matrix(smi_input,runlist,max_runs=1e10):
             if EmissionHeight>max_EmissionHeight_cut: continue
             if EmissionHeight<min_EmissionHeight_cut: continue
             if Roff>max_Roff: continue
+            if Energy<min_Energy_cut: continue
 
             Xsky = TelRAJ2000 + Xderot
             Ysky = TelDecJ2000 + Yderot
@@ -320,10 +339,11 @@ def build_big_camera_matrix(smi_input,runlist,max_runs=1e10):
             found_mirror_star = CoincideWithBrightStars(mirror_Xsky, mirror_Ysky, bright_star_coord)
             found_mirror_gamma_source = CoincideWithBrightStars(mirror_Xsky, mirror_Ysky, gamma_source_coord)
 
-            if found_bright_star: continue
-            if found_gamma_source: continue
-            if found_mirror_star or found_mirror_gamma_source:
-                xyoff_map[logE_bin].fill(-Xoff,-Yoff,MSCW)
+            if not is_on:
+                if found_bright_star: continue
+                if found_gamma_source: continue
+                if found_mirror_star or found_mirror_gamma_source:
+                    xyoff_map[logE_bin].fill(-Xoff,-Yoff,MSCW)
 
             xyoff_map[logE_bin].fill(Xoff,Yoff,MSCW)
     
@@ -338,9 +358,133 @@ def build_big_camera_matrix(smi_input,runlist,max_runs=1e10):
             else:
                 big_matrix[logE] += [xyoff_map_1d]
 
+        InputFile.Close()
         if run_count==max_runs: break
 
     return big_matrix
+
+def build_skymap(smi_input,runlist,src_ra,src_dec,max_runs=1e10):
+
+    skymap_size = 3.
+    skymap_bins = 100
+    xsky_start = src_ra-skymap_size
+    xsky_end = src_ra+skymap_size
+    ysky_start = src_dec-skymap_size
+    ysky_end = src_dec+skymap_size
+
+    print ('loading svd pickle data... ')
+    input_filename = f'{smi_dir}/output_eigenvector/eigenvectors.pkl'
+    big_eigenvectors = pickle.load(open(input_filename, "rb"))
+
+    all_sky_map = []
+    for logE in range(0,logE_bins):
+        all_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+
+    data_xyoff_map = []
+    fit_xyoff_map = []
+    for logE in range(0,logE_bins):
+        data_xyoff_map += [MyArray3D(x_bins=xoff_bins,start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins,start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+        fit_xyoff_map += [MyArray3D(x_bins=xoff_bins,start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins,start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+
+    logE_axis = MyArray1D(x_bins=logE_bins,start_x=logE_start,end_x=logE_end)
+
+    run_count = 0
+    for run_number in runlist:
+    
+        print (f'analyzing run {run_number}')
+        rootfile_name = f'{smi_input}/{run_number}.anasum.root'
+        print (rootfile_name)
+        if not os.path.exists(rootfile_name):
+            print (f'file does not exist.')
+            continue
+        run_count += 1
+    
+        print ('build big matrix...')
+        big_on_matrix = build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=False,specific_run=run_number)
+        
+        ratio_xyoff_map = []
+        for logE in range(0,logE_bins):
+            ratio_xyoff_map += [MyArray3D(x_bins=xoff_bins,start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins,start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+
+        print ('fitting xyoff maps...')
+        for logE in range(0,logE_bins):
+            data_xyoff_map_1d = big_on_matrix[logE][0]
+            init_params = [1e-3] * matrix_rank
+            stepsize = [1e-3] * matrix_rank
+            solution = minimize(
+                cosmic_ray_like_chi2,
+                x0=init_params,
+                args=(big_eigenvectors[logE],data_xyoff_map_1d),
+                method='L-BFGS-B',
+                jac=None,
+                options={'eps':stepsize,'ftol':0.001},
+            )
+            fit_params = solution['x']
+            fit_xyoff_map_1d = big_eigenvectors[logE].T @ fit_params
+
+            for gcut in range(0,gcut_bins):
+                for idx_x in range(0,xoff_bins):
+                    for idx_y in range(0,yoff_bins):
+                        idx_1d = gcut*xoff_bins*yoff_bins + idx_x*yoff_bins + idx_y
+                        data_xyoff_map[logE].waxis[idx_x,idx_y,gcut] += data_xyoff_map_1d[idx_1d]
+                        fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] += fit_xyoff_map_1d[idx_1d]
+
+            for gcut in range(0,gcut_bins):
+                for idx_x in range(0,xoff_bins):
+                    for idx_y in range(0,yoff_bins):
+                        idx_1d = gcut*xoff_bins*yoff_bins + idx_x*yoff_bins + idx_y
+                        glike_idx_1d = 0*xoff_bins*yoff_bins + idx_x*yoff_bins + idx_y
+                        if fit_xyoff_map_1d[idx_1d]==0.: continue
+                        ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = fit_xyoff_map_1d[glike_idx_1d]/fit_xyoff_map_1d[idx_1d]
+
+    
+        InputFile = ROOT.TFile(rootfile_name)
+
+        TreeName = f'run_{run_number}/stereo/pointingDataReduced'
+        TelTree = InputFile.Get(TreeName)
+        TelTree.GetEntry(int(float(TelTree.GetEntries())/2.))
+        TelRAJ2000 = TelTree.TelRAJ2000*180./np.pi
+        TelDecJ2000 = TelTree.TelDecJ2000*180./np.pi
+        bright_star_coord = GetBrightStars(TelRAJ2000,TelDecJ2000)
+        gamma_source_coord = GetGammaSources(TelRAJ2000,TelDecJ2000)
+
+        TreeName = f'run_{run_number}/stereo/DL3EventTree'
+        EvtTree = InputFile.Get(TreeName)
+        total_entries = EvtTree.GetEntries()
+        print (f'total_entries = {total_entries}')
+        for entry in range(0,total_entries):
+            EvtTree.GetEntry(entry)
+            Xoff = EvtTree.Xoff
+            Yoff = EvtTree.Yoff
+            Xderot = EvtTree.Xderot
+            Yderot = EvtTree.Yderot
+            MSCW = EvtTree.MSCW
+            MSCL = EvtTree.MSCL
+            Energy = EvtTree.Energy
+            NImages = EvtTree.NImages
+            EmissionHeight = EvtTree.EmissionHeight
+            Xcore = EvtTree.XCore
+            Ycore = EvtTree.YCore
+            Roff = pow(Xoff*Xoff+Yoff*Yoff,0.5)
+            Rcore = pow(Xcore*Xcore+Ycore*Ycore,0.5)
+            logE_bin = logE_axis.get_bin(np.log10(Energy))
+            if NImages<min_NImages: continue
+            if EmissionHeight>max_EmissionHeight_cut: continue
+            if EmissionHeight<min_EmissionHeight_cut: continue
+            if Roff>max_Roff: continue
+            if Energy<min_Energy_cut: continue
+
+            Xsky = TelRAJ2000 + Xderot
+            Ysky = TelDecJ2000 + Yderot
+
+            cr_correction = ratio_xyoff_map[logE_bin].get_bin_content(Xoff,Yoff,MSCW)
+            if cr_correction>10.: continue
+
+            all_sky_map[logE_bin].fill(Xsky,Ysky,MSCW,cr_correction)
+
+
+    return all_sky_map, data_xyoff_map, fit_xyoff_map
+
 
 def cosmic_ray_like_chi2(try_params,eigenvectors,xyoff_map):
 

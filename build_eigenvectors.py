@@ -12,7 +12,7 @@ import common_functions
 
 logE_bins = common_functions.logE_bins
 matrix_rank = common_functions.matrix_rank
-ReadRunListFromFile = common_functions.ReadRunListFromFile
+ReadOffRunListFromFile = common_functions.ReadOffRunListFromFile
 build_big_camera_matrix = common_functions.build_big_camera_matrix
 
 fig, ax = plt.subplots()
@@ -24,10 +24,9 @@ fig.set_figwidth(figsize_x)
 smi_input = os.environ.get("SMI_INPUT")
 smi_dir = os.environ.get("SMI_DIR")
 
-off_runlist = ReadRunListFromFile('../easy-matrix-method/output_vts_hours/RunList_1ES0229_V6.txt')
-print (off_runlist)
-
-big_matrix = build_big_camera_matrix(smi_input,off_runlist,max_runs=1e10)
+print ('loading matrix pickle data... ')
+input_filename = f'{smi_dir}/output_eigenvector/big_off_matrix.pkl'
+big_matrix = pickle.load(open(input_filename, "rb"))
 
 print ('Computing SVD eigenvectors...')
 big_eigenvectors = []
