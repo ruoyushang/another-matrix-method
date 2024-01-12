@@ -21,6 +21,7 @@ gcut_start = common_functions.gcut_start
 gcut_end = common_functions.gcut_end
 ReadRunListFromFile = common_functions.ReadRunListFromFile
 build_skymap = common_functions.build_skymap
+smooth_image = common_functions.smooth_image
 
 fig, ax = plt.subplots()
 figsize_x = 8.6
@@ -47,9 +48,9 @@ for logE in range(0,logE_bins):
     fit_xyoff_map += [MyArray3D(x_bins=xoff_bins,start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins,start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
     err_xyoff_map += [MyArray3D(x_bins=xoff_bins,start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins,start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
 
-on_runlist = ReadRunListFromFile('../easy-matrix-method/output_vts_hours/RunList_CrabNebula_elev_60_70_V6.txt')
-src_ra = 83.633
-src_dec = 22.014
+on_runlist = ReadRunListFromFile('../easy-matrix-method/output_vts_hours/RunList_UrsaMinor_V6.txt')
+src_ra = 227.2854167
+src_dec = 67.2225000
 
 skymap_size = 3.
 skymap_bins = 100
@@ -60,10 +61,14 @@ ysky_end = src_dec+skymap_size
 
 data_sky_map = []
 bkgd_sky_map = []
+data_sky_map_smooth = []
+bkgd_sky_map_smooth = []
 diff_sky_map = []
 for logE in range(0,logE_bins):
     data_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
     bkgd_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
+    data_sky_map_smooth += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
+    bkgd_sky_map_smooth += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
     diff_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
 
 total_runs = len(on_runlist)
@@ -85,13 +90,21 @@ for run in range(0,total_runs):
                 bkg1 = run_all_sky_map[logE].waxis[idx_x,idx_y,1]
                 bkg2 = run_all_sky_map[logE].waxis[idx_x,idx_y,2]
                 bkg3 = run_all_sky_map[logE].waxis[idx_x,idx_y,3]
-                bkgd = (bkg1+bkg2+bkg3)/3.
+                #bkgd = (bkg1+bkg2+bkg3)/3.
+                bkgd = bkg1
                 data_sky_map[logE].waxis[idx_x,idx_y,0] += data
                 bkgd_sky_map[logE].waxis[idx_x,idx_y,0] += bkgd
+
+        data_sky_map_smooth[logE].reset()
+        bkgd_sky_map_smooth[logE].reset()
+        data_sky_map_smooth[logE].add(data_sky_map[logE])
+        bkgd_sky_map_smooth[logE].add(bkgd_sky_map[logE])
+        smooth_image(data_sky_map_smooth[logE].waxis[:,:,0],data_sky_map_smooth[logE].xaxis,data_sky_map_smooth[logE].yaxis)
+        smooth_image(bkgd_sky_map_smooth[logE].waxis[:,:,0],bkgd_sky_map_smooth[logE].xaxis,bkgd_sky_map_smooth[logE].yaxis)
         for idx_x in range(0,skymap_bins):
             for idx_y in range(0,skymap_bins):
-                data = data_sky_map[logE].waxis[idx_x,idx_y,0]
-                bkgd = bkgd_sky_map[logE].waxis[idx_x,idx_y,0]
+                data = data_sky_map_smooth[logE].waxis[idx_x,idx_y,0]
+                bkgd = bkgd_sky_map_smooth[logE].waxis[idx_x,idx_y,0]
                 data_err = max(1.,pow(data,0.5))
                 diff_sky_map[logE].waxis[idx_x,idx_y,0] = (data-bkgd)/data_err
 
@@ -107,7 +120,7 @@ for run in range(0,total_runs):
         xmax = diff_sky_map[logE].xaxis.max()
         ymin = diff_sky_map[logE].yaxis.min()
         ymax = diff_sky_map[logE].yaxis.max()
-        im = axbig.imshow(diff_sky_map[logE].waxis[:,:,0].T,origin='lower',extent=(xmin,xmax,ymin,ymax),vmin=-max_z,vmax=max_z,aspect='auto')
+        im = axbig.imshow(diff_sky_map[logE].waxis[:,:,0].T,origin='lower',extent=(xmin,xmax,ymin,ymax),vmin=-max_z,vmax=max_z,aspect='auto',cmap='coolwarm')
         cbar = fig.colorbar(im)
         fig.savefig(f'output_plots/diff_sky_map_logE{logE}.png',bbox_inches='tight')
         axbig.remove()
@@ -153,7 +166,7 @@ for run in range(0,total_runs):
             xmax = err_xyoff_map[logE].xaxis.max()
             ymin = err_xyoff_map[logE].yaxis.min()
             ymax = err_xyoff_map[logE].yaxis.max()
-            im = axbig.imshow(err_xyoff_map[logE].waxis[:,:,gcut].T,origin='lower',extent=(xmin,xmax,ymin,ymax),vmin=-max_z,vmax=max_z,aspect='auto')
+            im = axbig.imshow(err_xyoff_map[logE].waxis[:,:,gcut].T,origin='lower',extent=(xmin,xmax,ymin,ymax),vmin=-max_z,vmax=max_z,aspect='auto',cmap='coolwarm')
             cbar = fig.colorbar(im)
             fig.savefig(f'output_plots/err_xyoff_map_logE{logE}_gcut{gcut}.png',bbox_inches='tight')
             axbig.remove()

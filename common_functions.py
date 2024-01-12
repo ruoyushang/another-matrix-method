@@ -14,6 +14,7 @@ min_EmissionHeight_cut = 6.
 max_Rcore = 400.
 min_Rcore = 0.
 min_Energy_cut = 0.2
+max_Energy_cut = 1.0
 
 xoff_bins = 20
 xoff_start = -2.
@@ -51,6 +52,45 @@ def ReadOffRunListFromFile(input_file):
         runlist += [int(line_split[1])]
 
     return runlist
+
+def smooth_image(image_data,xaxis,yaxis,kernel_radius=0.07):
+
+    image_smooth = np.zeros_like(image_data)
+
+    bin_size = xaxis[1]-xaxis[0]
+
+    kernel_pix_size = int(kernel_radius/bin_size)
+    gaus_norm = 2.*np.pi*kernel_radius*kernel_radius
+    image_kernel = np.zeros_like(image_data)
+    central_bin_x = int(float(len(xaxis)-1)/2.)
+    central_bin_y = int(float(len(yaxis)-1)/2.)
+    for idx_x in range(0,len(xaxis)-1):
+        for idx_y in range(0,len(yaxis)-1):
+            pix_x = xaxis[idx_x] - xaxis[central_bin_x]
+            pix_y = yaxis[idx_y] - yaxis[central_bin_y]
+            distance = pow(pix_x*pix_x+pix_y*pix_y,0.5)
+            pix_content = np.exp(-(distance*distance)/(2.*kernel_radius*kernel_radius))
+            image_kernel[idx_y,idx_x] = pix_content
+            #image_kernel[idx_y,idx_x] = pix_content/gaus_norm
+
+    kernel_norm = np.sum(image_kernel)
+    for idx_x1 in range(0,len(xaxis)-1):
+        for idx_y1 in range(0,len(yaxis)-1):
+            image_smooth[idx_y1,idx_x1] = 0.
+            for idx_x2 in range(idx_x1-2*kernel_pix_size,idx_x1+2*kernel_pix_size):
+                for idx_y2 in range(idx_y1-2*kernel_pix_size,idx_y1+2*kernel_pix_size):
+                    if idx_x2<0: continue
+                    if idx_y2<0: continue
+                    if idx_x2>=len(xaxis)-1: continue
+                    if idx_y2>=len(yaxis)-1: continue
+                    old_content = image_data[idx_y2,idx_x2]
+                    scale = image_kernel[central_bin_y+idx_y2-idx_y1,central_bin_x+idx_x2-idx_x1]
+                    image_smooth[idx_y1,idx_x1] += old_content*scale
+                    #image_smooth[idx_y1,idx_x1] += old_content*scale/kernel_norm
+
+    for idx_x in range(0,len(xaxis)-1):
+        for idx_y in range(0,len(yaxis)-1):
+            image_data[idx_y,idx_x] = image_smooth[idx_y,idx_x]
 
 class MyArray3D:
 
@@ -316,6 +356,7 @@ def build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_
             Yderot = EvtTree.Yderot
             MSCW = EvtTree.MSCW
             MSCL = EvtTree.MSCL
+            MSCR = pow(MSCW*MSCW+MSCL*MSCL,0.5)
             Energy = EvtTree.Energy
             NImages = EvtTree.NImages
             EmissionHeight = EvtTree.EmissionHeight
@@ -329,6 +370,7 @@ def build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_
             if EmissionHeight<min_EmissionHeight_cut: continue
             if Roff>max_Roff: continue
             if Energy<min_Energy_cut: continue
+            if Energy>max_Energy_cut: continue
 
             Xsky = TelRAJ2000 + Xderot
             Ysky = TelDecJ2000 + Yderot
@@ -343,9 +385,9 @@ def build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_
                 if found_bright_star: continue
                 if found_gamma_source: continue
                 if found_mirror_star or found_mirror_gamma_source:
-                    xyoff_map[logE_bin].fill(-Xoff,-Yoff,MSCW)
+                    xyoff_map[logE_bin].fill(-Xoff,-Yoff,MSCR)
 
-            xyoff_map[logE_bin].fill(Xoff,Yoff,MSCW)
+            xyoff_map[logE_bin].fill(Xoff,Yoff,MSCR)
     
         for logE in range(0,logE_bins):
             xyoff_map_1d = []
@@ -460,6 +502,7 @@ def build_skymap(smi_input,runlist,src_ra,src_dec,max_runs=1e10):
             Yderot = EvtTree.Yderot
             MSCW = EvtTree.MSCW
             MSCL = EvtTree.MSCL
+            MSCR = pow(MSCW*MSCW+MSCL*MSCL,0.5)
             Energy = EvtTree.Energy
             NImages = EvtTree.NImages
             EmissionHeight = EvtTree.EmissionHeight
@@ -473,14 +516,15 @@ def build_skymap(smi_input,runlist,src_ra,src_dec,max_runs=1e10):
             if EmissionHeight<min_EmissionHeight_cut: continue
             if Roff>max_Roff: continue
             if Energy<min_Energy_cut: continue
+            if Energy>max_Energy_cut: continue
 
             Xsky = TelRAJ2000 + Xderot
             Ysky = TelDecJ2000 + Yderot
 
-            cr_correction = ratio_xyoff_map[logE_bin].get_bin_content(Xoff,Yoff,MSCW)
+            cr_correction = ratio_xyoff_map[logE_bin].get_bin_content(Xoff,Yoff,MSCR)
             if cr_correction>10.: continue
 
-            all_sky_map[logE_bin].fill(Xsky,Ysky,MSCW,cr_correction)
+            all_sky_map[logE_bin].fill(Xsky,Ysky,MSCR,cr_correction)
 
 
     return all_sky_map, data_xyoff_map, fit_xyoff_map
@@ -496,8 +540,9 @@ def cosmic_ray_like_chi2(try_params,eigenvectors,xyoff_map):
         for idx_x in range(0,xoff_bins):
             for idx_y in range(0,yoff_bins):
                 idx_1d = gcut*xoff_bins*yoff_bins + idx_x*yoff_bins + idx_y
-                stat_err = max(1.,pow(xyoff_map[idx_1d],0.5))
-                chi2 += pow((try_xyoff_map[idx_1d]-xyoff_map[idx_1d])/stat_err,2)
+                stat_err = 1.
+                #stat_err = max(1.,pow(xyoff_map[idx_1d],0.5))
+                chi2 += pow((try_xyoff_map[idx_1d]-xyoff_map[idx_1d])/stat_err,2)/float(gcut)
 
     return chi2
 
