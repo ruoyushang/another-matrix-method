@@ -13,22 +13,20 @@ ReadRunListFromFile = common_functions.ReadRunListFromFile
 build_big_camera_matrix = common_functions.build_big_camera_matrix
 
 smi_input = os.environ.get("SMI_INPUT")
+smi_output = os.environ.get("SMI_OUTPUT")
 smi_dir = os.environ.get("SMI_DIR")
 
-off_runlist = ReadOffRunListFromFile('../easy-matrix-method/output_vts_hours/PairList_UrsaMinor_V6.txt')
+source_name = sys.argv[1]
+input_epoch = sys.argv[2] # 'V4', 'V5' or 'V6'
+print (f'source_name = {source_name}, input_epoch = {input_epoch}')
+
+off_runlist = ReadOffRunListFromFile(f'/nevis/tehanu/home/ryshang/veritas_analysis/easy-matrix-method/output_vts_hours/PairList_{source_name}_{input_epoch}.txt')
 print (off_runlist)
-#big_off_matrix = build_big_camera_matrix(smi_input,off_runlist,max_runs=30,is_on=False)
 big_off_matrix = build_big_camera_matrix(smi_input,off_runlist,max_runs=1e10,is_on=False)
 
-output_filename = f'{smi_dir}/output_eigenvector/big_off_matrix.pkl'
+output_filename = f'{smi_output}/big_off_matrix_{source_name}_{input_epoch}.pkl'
 with open(output_filename,"wb") as file:
     pickle.dump(big_off_matrix, file)
 
-#on_runlist = ReadRunListFromFile('../easy-matrix-method/output_vts_hours/RunList_CrabNebula_elev_60_70_V6.txt')
-#big_on_matrix = build_big_camera_matrix(smi_input,on_runlist,max_runs=1e10,is_on=False)
-#
-#output_filename = f'{smi_dir}/output_eigenvector/big_on_matrix.pkl'
-#with open(output_filename,"wb") as file:
-#    pickle.dump(big_on_matrix, file)
 
 print ('Big matrices saved.')

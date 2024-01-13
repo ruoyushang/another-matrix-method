@@ -22,10 +22,14 @@ fig.set_figheight(figsize_y)
 fig.set_figwidth(figsize_x)
 
 smi_input = os.environ.get("SMI_INPUT")
+smi_output = os.environ.get("SMI_OUTPUT")
 smi_dir = os.environ.get("SMI_DIR")
 
+source_name = sys.argv[1]
+input_epoch = sys.argv[2] # 'V4', 'V5' or 'V6'
+
 print ('loading matrix pickle data... ')
-input_filename = f'{smi_dir}/output_eigenvector/big_off_matrix.pkl'
+input_filename = f'{smi_output}/big_off_matrix_{source_name}_{input_epoch}.pkl'
 big_matrix = pickle.load(open(input_filename, "rb"))
 
 print ('Computing SVD eigenvectors...')
@@ -44,10 +48,10 @@ for logE in range(0,logE_bins):
     axbig.set_ylabel(label_y)
     axbig.set_xlim(0,10)
     axbig.plot(S_full)
-    fig.savefig(f'{smi_dir}/output_plots/signularvalue_logE{logE}.png',bbox_inches='tight')
+    fig.savefig(f'{smi_dir}/output_plots/signularvalue_{source_name}_{input_epoch}_logE{logE}.png',bbox_inches='tight')
     axbig.remove()
 
-output_filename = f'{smi_dir}/output_eigenvector/eigenvectors.pkl'
+output_filename = f'{smi_output}/eigenvectors_{source_name}_{input_epoch}.pkl'
 with open(output_filename,"wb") as file:
     pickle.dump(big_eigenvectors, file)
 

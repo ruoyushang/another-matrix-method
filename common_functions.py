@@ -14,7 +14,9 @@ min_EmissionHeight_cut = 6.
 max_Rcore = 400.
 min_Rcore = 0.
 min_Energy_cut = 0.2
-max_Energy_cut = 1.0
+max_Energy_cut = 10.0
+MSCW_cut = 0.6
+MSCL_cut = 0.7
 
 xoff_bins = 20
 xoff_start = -2.
@@ -23,8 +25,8 @@ yoff_bins = 20
 yoff_start = -2.
 yoff_end = 2.
 gcut_bins = 4
-gcut_start = -0.6
-gcut_end = -0.6+1.2*gcut_bins
+gcut_start = 0
+gcut_end = gcut_bins
 logE_bins = 5
 logE_start = -1.+0.33
 logE_end = 1.
@@ -354,8 +356,8 @@ def build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_
             Yoff = EvtTree.Yoff
             Xderot = EvtTree.Xderot
             Yderot = EvtTree.Yderot
-            MSCW = EvtTree.MSCW
-            MSCL = EvtTree.MSCL
+            MSCW = EvtTree.MSCW/MSCW_cut
+            MSCL = EvtTree.MSCL/MSCL_cut
             MSCR = pow(MSCW*MSCW+MSCL*MSCL,0.5)
             Energy = EvtTree.Energy
             NImages = EvtTree.NImages
@@ -364,11 +366,12 @@ def build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_
             Ycore = EvtTree.YCore
             Roff = pow(Xoff*Xoff+Yoff*Yoff,0.5)
             Rcore = pow(Xcore*Xcore+Ycore*Ycore,0.5)
-            logE_bin = logE_axis.get_bin(np.log10(Energy))
+            logE = logE_axis.get_bin(np.log10(Energy))
             if NImages<min_NImages: continue
             if EmissionHeight>max_EmissionHeight_cut: continue
             if EmissionHeight<min_EmissionHeight_cut: continue
             if Roff>max_Roff: continue
+            if Rcore>max_Rcore: continue
             if Energy<min_Energy_cut: continue
             if Energy>max_Energy_cut: continue
 
@@ -385,9 +388,9 @@ def build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_
                 if found_bright_star: continue
                 if found_gamma_source: continue
                 if found_mirror_star or found_mirror_gamma_source:
-                    xyoff_map[logE_bin].fill(-Xoff,-Yoff,MSCR)
+                    xyoff_map[logE].fill(-Xoff,-Yoff,MSCR)
 
-            xyoff_map[logE_bin].fill(Xoff,Yoff,MSCR)
+            xyoff_map[logE].fill(Xoff,Yoff,MSCR)
     
         for logE in range(0,logE_bins):
             xyoff_map_1d = []
@@ -405,7 +408,7 @@ def build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_
 
     return big_matrix
 
-def build_skymap(smi_input,runlist,src_ra,src_dec,max_runs=1e10):
+def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10):
 
     skymap_size = 3.
     skymap_bins = 100
@@ -415,7 +418,7 @@ def build_skymap(smi_input,runlist,src_ra,src_dec,max_runs=1e10):
     ysky_end = src_dec+skymap_size
 
     print ('loading svd pickle data... ')
-    input_filename = f'{smi_dir}/output_eigenvector/eigenvectors.pkl'
+    input_filename = eigenvector_path
     big_eigenvectors = pickle.load(open(input_filename, "rb"))
 
     all_sky_map = []
@@ -442,7 +445,7 @@ def build_skymap(smi_input,runlist,src_ra,src_dec,max_runs=1e10):
         run_count += 1
     
         print ('build big matrix...')
-        big_on_matrix = build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=False,specific_run=run_number)
+        big_on_matrix = build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_run=run_number)
         
         ratio_xyoff_map = []
         for logE in range(0,logE_bins):
@@ -500,8 +503,8 @@ def build_skymap(smi_input,runlist,src_ra,src_dec,max_runs=1e10):
             Yoff = EvtTree.Yoff
             Xderot = EvtTree.Xderot
             Yderot = EvtTree.Yderot
-            MSCW = EvtTree.MSCW
-            MSCL = EvtTree.MSCL
+            MSCW = EvtTree.MSCW/MSCW_cut
+            MSCL = EvtTree.MSCL/MSCL_cut
             MSCR = pow(MSCW*MSCW+MSCL*MSCL,0.5)
             Energy = EvtTree.Energy
             NImages = EvtTree.NImages
@@ -510,21 +513,22 @@ def build_skymap(smi_input,runlist,src_ra,src_dec,max_runs=1e10):
             Ycore = EvtTree.YCore
             Roff = pow(Xoff*Xoff+Yoff*Yoff,0.5)
             Rcore = pow(Xcore*Xcore+Ycore*Ycore,0.5)
-            logE_bin = logE_axis.get_bin(np.log10(Energy))
+            logE = logE_axis.get_bin(np.log10(Energy))
             if NImages<min_NImages: continue
             if EmissionHeight>max_EmissionHeight_cut: continue
             if EmissionHeight<min_EmissionHeight_cut: continue
             if Roff>max_Roff: continue
+            if Rcore>max_Rcore: continue
             if Energy<min_Energy_cut: continue
             if Energy>max_Energy_cut: continue
 
             Xsky = TelRAJ2000 + Xderot
             Ysky = TelDecJ2000 + Yderot
 
-            cr_correction = ratio_xyoff_map[logE_bin].get_bin_content(Xoff,Yoff,MSCR)
+            cr_correction = ratio_xyoff_map[logE].get_bin_content(Xoff,Yoff,MSCR)
             if cr_correction>10.: continue
 
-            all_sky_map[logE_bin].fill(Xsky,Ysky,MSCR,cr_correction)
+            all_sky_map[logE].fill(Xsky,Ysky,MSCR,cr_correction)
 
 
     return all_sky_map, data_xyoff_map, fit_xyoff_map
