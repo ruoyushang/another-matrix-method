@@ -57,14 +57,19 @@ for logE in range(0,logE_bins):
     sum_data_sky_map_smooth += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
     sum_bkgd_sky_map_smooth += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
     sum_diff_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
+sum_data_sky_map_allE = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
+sum_bkgd_sky_map_allE = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
+sum_diff_sky_map_allE = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
 
 sum_data_xyoff_map = []
 sum_fit_xyoff_map = []
 sum_err_xyoff_map = []
+sum_init_err_xyoff_map = []
 for logE in range(0,logE_bins):
     sum_data_xyoff_map += [MyArray3D(x_bins=xoff_bins,start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins,start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
     sum_fit_xyoff_map += [MyArray3D(x_bins=xoff_bins,start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins,start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
     sum_err_xyoff_map += [MyArray3D(x_bins=xoff_bins,start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins,start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+    sum_init_err_xyoff_map += [MyArray3D(x_bins=xoff_bins,start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins,start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
 
 for epoch in input_epoch:
 
@@ -87,6 +92,20 @@ for epoch in input_epoch:
         sum_fit_xyoff_map[logE].add(fit_xyoff_map[logE])
     
 for logE in range(0,logE_bins):
+    data_integral = 0.
+    model_integral = 0.
+    for idx_x in range(0,xoff_bins):
+        for idx_y in range(0,yoff_bins):
+            data_integral += sum_data_xyoff_map[logE].waxis[idx_x,idx_y,0] 
+            model_integral += sum_data_xyoff_map[logE].waxis[idx_x,idx_y,1] 
+    for idx_x in range(0,xoff_bins):
+        for idx_y in range(0,yoff_bins):
+            data = sum_data_xyoff_map[logE].waxis[idx_x,idx_y,0] 
+            model = sum_data_xyoff_map[logE].waxis[idx_x,idx_y,1]*data_integral/model_integral 
+            data_err = max(1.,pow(data,0.5))
+            sum_init_err_xyoff_map[logE].waxis[idx_x,idx_y,0] = (data-model)/data_err
+
+for logE in range(0,logE_bins):
     for gcut in range(0,gcut_bins):
         for idx_x in range(0,xoff_bins):
             for idx_y in range(0,yoff_bins):
@@ -107,6 +126,15 @@ for logE in range(0,logE_bins):
             bkgd = sum_bkgd_sky_map_smooth[logE].waxis[idx_x,idx_y,0]
             data_err = max(1.,pow(data,0.5))
             sum_diff_sky_map[logE].waxis[idx_x,idx_y,0] = (data-bkgd)/data_err
+    sum_data_sky_map_allE.add(sum_data_sky_map_smooth[logE])
+    sum_bkgd_sky_map_allE.add(sum_bkgd_sky_map_smooth[logE])
+
+for idx_x in range(0,skymap_bins):
+    for idx_y in range(0,skymap_bins):
+        data = sum_data_sky_map_allE.waxis[idx_x,idx_y,0]
+        bkgd = sum_bkgd_sky_map_allE.waxis[idx_x,idx_y,0]
+        data_err = max(1.,pow(data,0.5))
+        sum_diff_sky_map_allE.waxis[idx_x,idx_y,0] = (data-bkgd)/data_err
 
 for logE in range(0,logE_bins):
     max_z = 5.
@@ -123,6 +151,21 @@ for logE in range(0,logE_bins):
     im = axbig.imshow(sum_diff_sky_map[logE].waxis[:,:,0].T,origin='lower',extent=(xmin,xmax,ymin,ymax),vmin=-max_z,vmax=max_z,aspect='auto',cmap='coolwarm')
     cbar = fig.colorbar(im)
     fig.savefig(f'output_plots/{source_name}_diff_sky_map_logE{logE}.png',bbox_inches='tight')
+    axbig.remove()
+
+    fig.clf()
+    axbig = fig.add_subplot()
+    label_x = 'Xoff'
+    label_y = 'Yoff'
+    axbig.set_xlabel(label_x)
+    axbig.set_ylabel(label_y)
+    xmin = sum_init_err_xyoff_map[logE].xaxis.min()
+    xmax = sum_init_err_xyoff_map[logE].xaxis.max()
+    ymin = sum_init_err_xyoff_map[logE].yaxis.min()
+    ymax = sum_init_err_xyoff_map[logE].yaxis.max()
+    im = axbig.imshow(sum_init_err_xyoff_map[logE].waxis[:,:,0].T,origin='lower',extent=(xmin,xmax,ymin,ymax),vmin=-max_z,vmax=max_z,aspect='auto',cmap='coolwarm')
+    cbar = fig.colorbar(im)
+    fig.savefig(f'output_plots/{source_name}_init_err_xyoff_map_logE{logE}.png',bbox_inches='tight')
     axbig.remove()
 
     for gcut in range(0,gcut_bins):
@@ -171,5 +214,20 @@ for logE in range(0,logE_bins):
         fig.savefig(f'output_plots/{source_name}_err_xyoff_map_logE{logE}_gcut{gcut}.png',bbox_inches='tight')
         axbig.remove()
 
+max_z = 5.
+fig.clf()
+axbig = fig.add_subplot()
+label_x = 'RA'
+label_y = 'Dec'
+axbig.set_xlabel(label_x)
+axbig.set_ylabel(label_y)
+xmin = sum_diff_sky_map_allE.xaxis.min()
+xmax = sum_diff_sky_map_allE.xaxis.max()
+ymin = sum_diff_sky_map_allE.yaxis.min()
+ymax = sum_diff_sky_map_allE.yaxis.max()
+im = axbig.imshow(sum_diff_sky_map_allE.waxis[:,:,0].T,origin='lower',extent=(xmin,xmax,ymin,ymax),vmin=-max_z,vmax=max_z,aspect='auto',cmap='coolwarm')
+cbar = fig.colorbar(im)
+fig.savefig(f'output_plots/{source_name}_diff_sky_map_allE.png',bbox_inches='tight')
+axbig.remove()
 
 
