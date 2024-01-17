@@ -15,13 +15,14 @@ max_Rcore = 400.
 min_Rcore = 0.
 min_Energy_cut = 0.2
 max_Energy_cut = 10.0
-MSCW_cut = 0.6
+MSCW_cut = 0.5
 MSCL_cut = 0.7
+MVA_cut = 0.5
 
-xoff_bins = 20
+xoff_bins = 10
 xoff_start = -2.
 xoff_end = 2.
-yoff_bins = 20
+yoff_bins = 10
 yoff_start = -2.
 yoff_end = 2.
 gcut_bins = 4
@@ -358,7 +359,9 @@ def build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_
             Yderot = EvtTree.Yderot
             MSCW = EvtTree.MSCW/MSCW_cut
             MSCL = EvtTree.MSCL/MSCL_cut
-            MSCR = pow(MSCW*MSCW+MSCL*MSCL,0.5)
+            GammaCut = pow(MSCW*MSCW+MSCL*MSCL,0.5)
+            #MVA = EvtTree.MVA
+            #GammaCut = (1.-MVA)/(1.-MVA_cut)
             Energy = EvtTree.Energy
             NImages = EvtTree.NImages
             EmissionHeight = EvtTree.EmissionHeight
@@ -367,6 +370,8 @@ def build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_
             Roff = pow(Xoff*Xoff+Yoff*Yoff,0.5)
             Rcore = pow(Xcore*Xcore+Ycore*Ycore,0.5)
             logE = logE_axis.get_bin(np.log10(Energy))
+            if logE<0: continue
+            if logE>len(xyoff_map): continue
             if NImages<min_NImages: continue
             if EmissionHeight>max_EmissionHeight_cut: continue
             if EmissionHeight<min_EmissionHeight_cut: continue
@@ -388,9 +393,9 @@ def build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_
                 if found_bright_star: continue
                 if found_gamma_source: continue
                 if found_mirror_star or found_mirror_gamma_source:
-                    xyoff_map[logE].fill(-Xoff,-Yoff,MSCR)
+                    xyoff_map[logE].fill(-Xoff,-Yoff,GammaCut)
 
-            xyoff_map[logE].fill(Xoff,Yoff,MSCR)
+            xyoff_map[logE].fill(Xoff,Yoff,GammaCut)
     
         for logE in range(0,logE_bins):
             xyoff_map_1d = []
@@ -421,6 +426,7 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
     input_filename = eigenvector_path
     big_eigenvectors = pickle.load(open(input_filename, "rb"))
 
+    exposure_hours = 0.
     all_sky_map = []
     for logE in range(0,logE_bins):
         all_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
@@ -430,6 +436,12 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
     for logE in range(0,logE_bins):
         data_xyoff_map += [MyArray3D(x_bins=xoff_bins,start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins,start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
         fit_xyoff_map += [MyArray3D(x_bins=xoff_bins,start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins,start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+
+    for logE in range(0,logE_bins):
+        print (f'big_eigenvectors[{logE}].shape = {big_eigenvectors[logE].shape}') 
+        if matrix_rank>big_eigenvectors[logE].shape[0]:
+            print (f'Not enough vectors. Break.')
+            return exposure_hours, all_sky_map, data_xyoff_map, fit_xyoff_map
 
     logE_axis = MyArray1D(x_bins=logE_bins,start_x=logE_start,end_x=logE_end)
 
@@ -482,6 +494,20 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
                         if fit_xyoff_map_1d[idx_1d]==0.: continue
                         ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = fit_xyoff_map_1d[glike_idx_1d]/fit_xyoff_map_1d[idx_1d]
 
+            #for gcut in range(1,gcut_bins):
+            #    avg_ratio = 0.
+            #    for idx_x in range(0,xoff_bins):
+            #        for idx_y in range(0,yoff_bins):
+            #            avg_ratio += ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
+            #    avg_ratio = avg_ratio/float(xoff_bins*yoff_bins)
+            #    for idx_x in range(0,xoff_bins):
+            #        for idx_y in range(0,yoff_bins):
+            #            if ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut]<0.1*avg_ratio:
+            #                ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = 0.1*avg_ratio
+            #            if ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut]>10.*avg_ratio:
+            #                ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = 10.*avg_ratio
+
+
     
         InputFile = ROOT.TFile(rootfile_name)
 
@@ -497,6 +523,11 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
         EvtTree = InputFile.Get(TreeName)
         total_entries = EvtTree.GetEntries()
         print (f'total_entries = {total_entries}')
+        EvtTree.GetEntry(0)
+        time_start = EvtTree.timeOfDay
+        EvtTree.GetEntry(total_entries-1)
+        time_end = EvtTree.timeOfDay
+        exposure_hours += (time_end-time_start)/3600.
         for entry in range(0,total_entries):
             EvtTree.GetEntry(entry)
             Xoff = EvtTree.Xoff
@@ -505,7 +536,9 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
             Yderot = EvtTree.Yderot
             MSCW = EvtTree.MSCW/MSCW_cut
             MSCL = EvtTree.MSCL/MSCL_cut
-            MSCR = pow(MSCW*MSCW+MSCL*MSCL,0.5)
+            GammaCut = pow(MSCW*MSCW+MSCL*MSCL,0.5)
+            #MVA = EvtTree.MVA
+            #GammaCut = (1.-MVA)/(1.-MVA_cut)
             Energy = EvtTree.Energy
             NImages = EvtTree.NImages
             EmissionHeight = EvtTree.EmissionHeight
@@ -514,6 +547,8 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
             Roff = pow(Xoff*Xoff+Yoff*Yoff,0.5)
             Rcore = pow(Xcore*Xcore+Ycore*Ycore,0.5)
             logE = logE_axis.get_bin(np.log10(Energy))
+            if logE<0: continue
+            if logE>len(all_sky_map): continue
             if NImages<min_NImages: continue
             if EmissionHeight>max_EmissionHeight_cut: continue
             if EmissionHeight<min_EmissionHeight_cut: continue
@@ -525,13 +560,12 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
             Xsky = TelRAJ2000 + Xderot
             Ysky = TelDecJ2000 + Yderot
 
-            cr_correction = ratio_xyoff_map[logE].get_bin_content(Xoff,Yoff,MSCR)
-            if cr_correction>10.: continue
+            cr_correction = ratio_xyoff_map[logE].get_bin_content(Xoff,Yoff,GammaCut)
 
-            all_sky_map[logE].fill(Xsky,Ysky,MSCR,cr_correction)
+            all_sky_map[logE].fill(Xsky,Ysky,GammaCut,weight=cr_correction)
 
 
-    return all_sky_map, data_xyoff_map, fit_xyoff_map
+    return exposure_hours, all_sky_map, data_xyoff_map, fit_xyoff_map
 
 
 def cosmic_ray_like_chi2(try_params,eigenvectors,xyoff_map):

@@ -37,6 +37,7 @@ source_name = sys.argv[1]
 src_ra = float(sys.argv[2])
 src_dec = float(sys.argv[3])
 #input_epoch = ['V4']
+#input_epoch = ['V5','V6']
 input_epoch = ['V4','V5','V6']
 
 skymap_size = 3.
@@ -46,6 +47,7 @@ xsky_end = src_ra+skymap_size
 ysky_start = src_dec-skymap_size
 ysky_end = src_dec+skymap_size
 
+total_exposure = 0.
 sum_data_sky_map = []
 sum_bkgd_sky_map = []
 sum_data_sky_map_smooth = []
@@ -80,11 +82,13 @@ for epoch in input_epoch:
         continue
     analysis_result = pickle.load(open(input_filename, "rb"))
     
-    data_sky_map = analysis_result[0] 
-    bkgd_sky_map = analysis_result[1] 
-    data_xyoff_map = analysis_result[2]
-    fit_xyoff_map = analysis_result[3]
+    exposure = analysis_result[0] 
+    data_sky_map = analysis_result[1] 
+    bkgd_sky_map = analysis_result[2] 
+    data_xyoff_map = analysis_result[3]
+    fit_xyoff_map = analysis_result[4]
 
+    total_exposure += exposure
     for logE in range(0,logE_bins):
         sum_data_sky_map[logE].add(data_sky_map[logE])
         sum_bkgd_sky_map[logE].add(bkgd_sky_map[logE])
@@ -229,5 +233,7 @@ im = axbig.imshow(sum_diff_sky_map_allE.waxis[:,:,0].T,origin='lower',extent=(xm
 cbar = fig.colorbar(im)
 fig.savefig(f'output_plots/{source_name}_diff_sky_map_allE.png',bbox_inches='tight')
 axbig.remove()
+
+print (f'total_exposure = {total_exposure}')
 
 

@@ -56,6 +56,7 @@ xsky_end = src_ra+skymap_size
 ysky_start = src_dec-skymap_size
 ysky_end = src_dec+skymap_size
 
+exposure_hours = 0.
 data_sky_map = []
 bkgd_sky_map = []
 for logE in range(0,logE_bins):
@@ -64,7 +65,8 @@ for logE in range(0,logE_bins):
 
 total_runs = len(on_runlist)
 for run in range(0,total_runs):
-    run_all_sky_map, run_data_xyoff_map, run_fit_xyoff_map = build_skymap(smi_input,path_to_eigenvector,[on_runlist[run]],src_ra,src_dec)
+    run_exposure_hours, run_all_sky_map, run_data_xyoff_map, run_fit_xyoff_map = build_skymap(smi_input,path_to_eigenvector,[on_runlist[run]],src_ra,src_dec)
+    exposure_hours += run_exposure_hours
     for logE in range(0,logE_bins):
         data_xyoff_map[logE].add(run_data_xyoff_map[logE])
         fit_xyoff_map[logE].add(run_fit_xyoff_map[logE])
@@ -74,12 +76,12 @@ for run in range(0,total_runs):
                 bkg1 = run_all_sky_map[logE].waxis[idx_x,idx_y,1]
                 bkg2 = run_all_sky_map[logE].waxis[idx_x,idx_y,2]
                 bkg3 = run_all_sky_map[logE].waxis[idx_x,idx_y,3]
-                #bkgd = (bkg1+bkg2+bkg3)/3.
-                bkgd = bkg1
+                bkgd = (bkg1/1.+bkg2/2.+bkg3/3.)/(1.+1./2.+1./3.)
+                #bkgd = bkg1
                 data_sky_map[logE].waxis[idx_x,idx_y,0] += data
                 bkgd_sky_map[logE].waxis[idx_x,idx_y,0] += bkgd
 
-    all_skymaps = [data_sky_map, bkgd_sky_map, data_xyoff_map, fit_xyoff_map]
+    all_skymaps = [exposure_hours, data_sky_map, bkgd_sky_map, data_xyoff_map, fit_xyoff_map]
     output_filename = f'{smi_output}/skymaps_{source_name}_{input_epoch}.pkl'
     with open(output_filename,"wb") as file:
         pickle.dump(all_skymaps, file)
