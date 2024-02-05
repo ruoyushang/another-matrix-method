@@ -76,8 +76,8 @@ for run in range(0,total_runs):
                 bkg1 = run_all_sky_map[logE].waxis[idx_x,idx_y,1]
                 bkg2 = run_all_sky_map[logE].waxis[idx_x,idx_y,2]
                 bkg3 = run_all_sky_map[logE].waxis[idx_x,idx_y,3]
-                bkgd = (bkg1/1.+bkg2/2.+bkg3/3.)/(1.+1./2.+1./3.)
-                #bkgd = bkg1
+                #bkgd = (bkg1/1.+bkg2/2.+bkg3/3.)/(1.+1./2.+1./3.)
+                bkgd = bkg1
                 data_sky_map[logE].waxis[idx_x,idx_y,0] += data
                 bkgd_sky_map[logE].waxis[idx_x,idx_y,0] += bkgd
 

@@ -5,8 +5,6 @@ import numpy as np
 import pickle
 from scipy.optimize import least_squares, minimize
 
-matrix_rank = 4
-
 min_NImages = 3
 max_Roff = 2.0
 max_EmissionHeight_cut = 20.
@@ -19,10 +17,10 @@ MSCW_cut = 0.5
 MSCL_cut = 0.7
 MVA_cut = 0.5
 
-xoff_bins = 10
+xoff_bins = 5
 xoff_start = -2.
 xoff_end = 2.
-yoff_bins = 10
+yoff_bins = 5
 yoff_start = -2.
 yoff_end = 2.
 gcut_bins = 4
@@ -31,6 +29,8 @@ gcut_end = gcut_bins
 logE_bins = 5
 logE_start = -1.+0.33
 logE_end = 1.
+
+matrix_rank = [3,3,2,2,1]
 
 smi_aux = os.environ.get("SMI_AUX")
 smi_dir = os.environ.get("SMI_DIR")
@@ -439,7 +439,7 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
 
     for logE in range(0,logE_bins):
         print (f'big_eigenvectors[{logE}].shape = {big_eigenvectors[logE].shape}') 
-        if matrix_rank>big_eigenvectors[logE].shape[0]:
+        if matrix_rank[logE]>big_eigenvectors[logE].shape[0]:
             print (f'Not enough vectors. Break.')
             return exposure_hours, all_sky_map, data_xyoff_map, fit_xyoff_map
 
@@ -466,8 +466,8 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
         print ('fitting xyoff maps...')
         for logE in range(0,logE_bins):
             data_xyoff_map_1d = big_on_matrix[logE][0]
-            init_params = [1e-3] * matrix_rank
-            stepsize = [1e-3] * matrix_rank
+            init_params = [1e-3] * matrix_rank[logE]
+            stepsize = [1e-3] * matrix_rank[logE]
             solution = minimize(
                 cosmic_ray_like_chi2,
                 x0=init_params,
@@ -486,26 +486,27 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
                         data_xyoff_map[logE].waxis[idx_x,idx_y,gcut] += data_xyoff_map_1d[idx_1d]
                         fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] += fit_xyoff_map_1d[idx_1d]
 
+            #avg_gamma_cnt = 0.
+            #for idx_x in range(0,xoff_bins):
+            #    for idx_y in range(0,yoff_bins):
+            #        avg_gamma_cnt += fit_xyoff_map[logE].waxis[idx_x,idx_y,0]
+            #avg_gamma_cnt = avg_gamma_cnt/float(xoff_bins*yoff_bins)
+            #if avg_gamma_cnt<0.1:
+            #    for gcut in range(0,gcut_bins):
+            #        avg_cnt = 0.
+            #        for idx_x in range(0,xoff_bins):
+            #            for idx_y in range(0,yoff_bins):
+            #                avg_cnt += fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
+            #        avg_cnt = avg_cnt/float(xoff_bins*yoff_bins)
+            #        for idx_x in range(0,xoff_bins):
+            #            for idx_y in range(0,yoff_bins):
+            #                fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = avg_cnt
+
             for gcut in range(0,gcut_bins):
                 for idx_x in range(0,xoff_bins):
                     for idx_y in range(0,yoff_bins):
-                        idx_1d = gcut*xoff_bins*yoff_bins + idx_x*yoff_bins + idx_y
-                        glike_idx_1d = 0*xoff_bins*yoff_bins + idx_x*yoff_bins + idx_y
-                        if fit_xyoff_map_1d[idx_1d]==0.: continue
-                        ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = fit_xyoff_map_1d[glike_idx_1d]/fit_xyoff_map_1d[idx_1d]
-
-            #for gcut in range(1,gcut_bins):
-            #    avg_ratio = 0.
-            #    for idx_x in range(0,xoff_bins):
-            #        for idx_y in range(0,yoff_bins):
-            #            avg_ratio += ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
-            #    avg_ratio = avg_ratio/float(xoff_bins*yoff_bins)
-            #    for idx_x in range(0,xoff_bins):
-            #        for idx_y in range(0,yoff_bins):
-            #            if ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut]<0.1*avg_ratio:
-            #                ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = 0.1*avg_ratio
-            #            if ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut]>10.*avg_ratio:
-            #                ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = 10.*avg_ratio
+                        if fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut]==0.: continue
+                        ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = fit_xyoff_map[logE].waxis[idx_x,idx_y,0]/fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
 
 
     
@@ -584,3 +585,6 @@ def cosmic_ray_like_chi2(try_params,eigenvectors,xyoff_map):
 
     return chi2
 
+#def MakeSkyMap(hist_map,fig,label_x,label_y,label_z,plotname,roi_x=[],roi_y=[],roi_r=[],colormap='coolwarm'):
+#
+#    flip_sky_map = MyArray3D(x_bins=10,start_x=0,end_x=10,y_bins=10,start_y=0,end_y=10,z_bins=1,start_z=0,end_z=10)

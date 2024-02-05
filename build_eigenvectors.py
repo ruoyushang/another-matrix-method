@@ -36,8 +36,8 @@ print ('Computing SVD eigenvectors...')
 big_eigenvectors = []
 for logE in range(0,logE_bins):
     U_full, S_full, VT_full = np.linalg.svd(big_matrix[logE],full_matrices=False)
-    U_eco = U_full[:, :matrix_rank]
-    VT_eco = VT_full[:matrix_rank, :]
+    U_eco = U_full[:, :matrix_rank[logE]]
+    VT_eco = VT_full[:matrix_rank[logE], :]
     big_eigenvectors += [VT_eco]
 
     fig.clf()
