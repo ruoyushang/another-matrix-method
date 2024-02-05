@@ -51,8 +51,8 @@ on_runlist = ReadRunListFromFile(f'/nevis/tehanu/home/ryshang/veritas_analysis/e
 
 skymap_size = 3.
 skymap_bins = 100
-xsky_start = src_ra-skymap_size
-xsky_end = src_ra+skymap_size
+xsky_start = src_ra+skymap_size
+xsky_end = src_ra-skymap_size
 ysky_start = src_dec-skymap_size
 ysky_end = src_dec+skymap_size
 

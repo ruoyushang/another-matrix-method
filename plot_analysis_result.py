@@ -22,6 +22,7 @@ gcut_end = common_functions.gcut_end
 ReadRunListFromFile = common_functions.ReadRunListFromFile
 build_skymap = common_functions.build_skymap
 smooth_image = common_functions.smooth_image
+MakeSkyMap = common_functions.MakeSkyMap
 
 fig, ax = plt.subplots()
 figsize_x = 8.6
@@ -42,8 +43,8 @@ input_epoch = ['V4','V5','V6']
 
 skymap_size = 3.
 skymap_bins = 100
-xsky_start = src_ra-skymap_size
-xsky_end = src_ra+skymap_size
+xsky_start = src_ra+skymap_size
+xsky_end = src_ra-skymap_size
 ysky_start = src_dec-skymap_size
 ysky_end = src_dec+skymap_size
 
@@ -141,22 +142,10 @@ for idx_x in range(0,skymap_bins):
         sum_diff_sky_map_allE.waxis[idx_x,idx_y,0] = (data-bkgd)/data_err
 
 for logE in range(0,logE_bins):
-    max_z = 5.
-    fig.clf()
-    axbig = fig.add_subplot()
-    label_x = 'RA'
-    label_y = 'Dec'
-    axbig.set_xlabel(label_x)
-    axbig.set_ylabel(label_y)
-    xmin = sum_diff_sky_map[logE].xaxis.min()
-    xmax = sum_diff_sky_map[logE].xaxis.max()
-    ymin = sum_diff_sky_map[logE].yaxis.min()
-    ymax = sum_diff_sky_map[logE].yaxis.max()
-    im = axbig.imshow(sum_diff_sky_map[logE].waxis[:,:,0].T,origin='lower',extent=(xmin,xmax,ymin,ymax),vmin=-max_z,vmax=max_z,aspect='auto',cmap='coolwarm')
-    cbar = fig.colorbar(im)
-    fig.savefig(f'output_plots/{source_name}_diff_sky_map_logE{logE}.png',bbox_inches='tight')
-    axbig.remove()
 
+    MakeSkyMap(fig,sum_diff_sky_map[logE],f'{source_name}_diff_sky_map_logE{logE}',roi_x=[],roi_y=[],roi_r=[])
+
+    max_z = 5.
     fig.clf()
     axbig = fig.add_subplot()
     label_x = 'Xoff'
@@ -218,21 +207,7 @@ for logE in range(0,logE_bins):
         fig.savefig(f'output_plots/{source_name}_err_xyoff_map_logE{logE}_gcut{gcut}.png',bbox_inches='tight')
         axbig.remove()
 
-max_z = 5.
-fig.clf()
-axbig = fig.add_subplot()
-label_x = 'RA'
-label_y = 'Dec'
-axbig.set_xlabel(label_x)
-axbig.set_ylabel(label_y)
-xmin = sum_diff_sky_map_allE.xaxis.min()
-xmax = sum_diff_sky_map_allE.xaxis.max()
-ymin = sum_diff_sky_map_allE.yaxis.min()
-ymax = sum_diff_sky_map_allE.yaxis.max()
-im = axbig.imshow(sum_diff_sky_map_allE.waxis[:,:,0].T,origin='lower',extent=(xmin,xmax,ymin,ymax),vmin=-max_z,vmax=max_z,aspect='auto',cmap='coolwarm')
-cbar = fig.colorbar(im)
-fig.savefig(f'output_plots/{source_name}_diff_sky_map_allE.png',bbox_inches='tight')
-axbig.remove()
+MakeSkyMap(fig,sum_diff_sky_map_allE,f'{source_name}_diff_sky_map_allE',roi_x=[],roi_y=[],roi_r=[])
 
 print (f'total_exposure = {total_exposure}')
 
