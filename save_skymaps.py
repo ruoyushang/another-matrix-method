@@ -39,6 +39,7 @@ src_dec = float(sys.argv[3])
 input_epoch = sys.argv[4] # 'V4', 'V5' or 'V6'
 
 path_to_eigenvector = f'{smi_output}/eigenvectors_{source_name}_{input_epoch}.pkl'
+print (f'path_to_eigenvector = {path_to_eigenvector}')
 
 
 data_xyoff_map = []
@@ -61,7 +62,8 @@ data_sky_map = []
 bkgd_sky_map = []
 for logE in range(0,logE_bins):
     data_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
-    bkgd_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
+    bkgd_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=2,start_z=gcut_start,end_z=gcut_end)]
+
 
 total_runs = len(on_runlist)
 for run in range(0,total_runs):
@@ -80,11 +82,12 @@ for run in range(0,total_runs):
                 bkgd = bkg1
                 data_sky_map[logE].waxis[idx_x,idx_y,0] += data
                 bkgd_sky_map[logE].waxis[idx_x,idx_y,0] += bkgd
+                bkgd_sky_map[logE].waxis[idx_x,idx_y,1] += (bkg1+bkg2+bkg3)/3.
 
-    all_skymaps = [exposure_hours, data_sky_map, bkgd_sky_map, data_xyoff_map, fit_xyoff_map]
-    output_filename = f'{smi_output}/skymaps_{source_name}_{input_epoch}.pkl'
-    with open(output_filename,"wb") as file:
-        pickle.dump(all_skymaps, file)
+all_skymaps = [exposure_hours, data_sky_map, bkgd_sky_map, data_xyoff_map, fit_xyoff_map]
+output_filename = f'{smi_output}/skymaps_{source_name}_{input_epoch}.pkl'
+with open(output_filename,"wb") as file:
+    pickle.dump(all_skymaps, file)
 
 
 
