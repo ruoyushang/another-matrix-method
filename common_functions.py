@@ -38,6 +38,8 @@ logE_end = 1.
 doFluxCalibration = False
 calibration_radius = 0.15 # need to be larger than the PSF and smaller than the integration radius
 
+logE_min = 1
+logE_max = 6
 matrix_rank = [4,3,3,2,2,1,1]
 
 smi_aux = os.environ.get("SMI_AUX")
@@ -133,6 +135,12 @@ class MyArray3D:
             for idx_y in range(0,len(self.yaxis)-1):
                 for idx_z in range(0,len(self.zaxis)-1):
                     self.waxis[idx_x,idx_y,idx_z] = self.waxis[idx_x,idx_y,idx_z]+add_array.waxis[idx_x,idx_y,idx_z]*factor
+
+    def addSquare(self, add_array, factor=1.):
+        for idx_x in range(0,len(self.xaxis)-1):
+            for idx_y in range(0,len(self.yaxis)-1):
+                for idx_z in range(0,len(self.zaxis)-1):
+                    self.waxis[idx_x,idx_y,idx_z] = pow(pow(self.waxis[idx_x,idx_y,idx_z],2)+pow(add_array.waxis[idx_x,idx_y,idx_z]*factor,2),0.5)
 
     def get_bin(self, value_x, value_y, value_z):
         key_idx_x = -1
@@ -1025,6 +1033,20 @@ def GetFluxCalibration(energy):
 
     return flux_calibration[energy]
 
+def make_significance_map(data_sky_map,bkgd_sky_map,significance_sky_map,excess_sky_map):
+  
+    skymap_bins = len(data_sky_map.xaxis)-1
+
+    for idx_x in range(0,skymap_bins):
+        for idx_y in range(0,skymap_bins):
+            data = data_sky_map.waxis[idx_x,idx_y,0]
+            bkgd = bkgd_sky_map.waxis[idx_x,idx_y,1]
+            #bkgd = 1./3.*(bkgd_sky_map.waxis[idx_x,idx_y,1]+bkgd_sky_map.waxis[idx_x,idx_y,2]+bkgd_sky_map.waxis[idx_x,idx_y,3])
+            data_err = pow(data,0.5)
+            if data_err==0.: continue
+            significance_sky_map.waxis[idx_x,idx_y,0] = (data-bkgd)/data_err
+            excess_sky_map.waxis[idx_x,idx_y,0] = (data-bkgd)
+
 def make_flux_map(data_sky_map,bkgd_sky_map,flux_sky_map,flux_err_sky_map,avg_energy,delta_energy):
   
     skymap_bins = len(data_sky_map.xaxis)-1
@@ -1032,27 +1054,67 @@ def make_flux_map(data_sky_map,bkgd_sky_map,flux_sky_map,flux_err_sky_map,avg_en
     norm_content_max = 0.
     for idx_x in range(0,skymap_bins):
         for idx_y in range(0,skymap_bins):
-            norm = bkgd_sky_map.waxis[idx_x,idx_y,1]
+            norm = bkgd_sky_map.waxis[idx_x,idx_y,0]
             if norm_content_max<norm:
                 norm_content_max = norm
 
     for idx_x in range(0,skymap_bins):
         for idx_y in range(0,skymap_bins):
             data = data_sky_map.waxis[idx_x,idx_y,0]
-            bkgd = bkgd_sky_map.waxis[idx_x,idx_y,0]
-            norm = bkgd_sky_map.waxis[idx_x,idx_y,1]
+            norm = bkgd_sky_map.waxis[idx_x,idx_y,0]
+            bkgd = bkgd_sky_map.waxis[idx_x,idx_y,1]
+            #bkgd = 1./3.*(bkgd_sky_map.waxis[idx_x,idx_y,1]+bkgd_sky_map.waxis[idx_x,idx_y,2]+bkgd_sky_map.waxis[idx_x,idx_y,3])
             if norm>0.:
-                flux = (data-bkgd)/norm*pow(avg_energy,2)/(100.*100.*3600.)/delta_energy
-                flux_err = pow(data,0.5)/norm*pow(avg_energy,2)/(100.*100.*3600.)/delta_energy
+                excess = data-bkgd
+                error = pow(data,0.5)
                 logE = logE_axis.get_bin(np.log10(avg_energy))
-                correction = GetFluxCalibration(logE)
+                correction = GetFluxCalibration(logE)/norm*pow(avg_energy,2)/(100.*100.*3600.)/delta_energy
                 norm_ratio = norm/norm_content_max
                 norm_weight = correction*1./(1.+np.exp(-(norm_ratio-0.3)/0.05))
-                flux_sky_map.waxis[idx_x,idx_y,0] = flux*norm_weight
-                flux_err_sky_map.waxis[idx_x,idx_y,0] = flux_err*norm_weight
+                #flux = excess*correction*norm_weight
+                #flux_err = error*correction*norm_weight
+                flux = excess
+                flux_err = error
+                flux_sky_map.waxis[idx_x,idx_y,0] = flux
+                flux_err_sky_map.waxis[idx_x,idx_y,0] = flux_err
             else:
                 flux_sky_map.waxis[idx_x,idx_y,0] = 0.
                 flux_err_sky_map.waxis[idx_x,idx_y,0] = 0.
+
+def GetRadialProfile(hist_flux_skymap,hist_error_skymap,roi_x,roi_y,roi_r):
+
+    radial_axis = MyArray1D(x_bins=15,start_x=0.,end_x=roi_r)
+
+    radius_array = []
+    brightness_array = []
+    brightness_err_array = []
+    pixel_array = []
+    for br in range(0,len(radial_axis.xaxis)-1):
+        radius = 0.5*(radial_axis.xaxis[br]+radial_axis.xaxis[br+1])
+        radius_array += [radius]
+        brightness_array += [0.]
+        brightness_err_array += [0.]
+        pixel_array += [0.]
+
+    for br in range(0,len(radial_axis.xaxis)-1):
+        radius = 0.5*(radial_axis.xaxis[br]+radial_axis.xaxis[br+1])
+        for bx in range(0,len(hist_flux_skymap.xaxis)-1):
+            for by in range(0,len(hist_flux_skymap.yaxis)-1):
+                bin_ra = 0.5*(hist_flux_skymap.xaxis[bx]+hist_flux_skymap.xaxis[bx+1])
+                bin_dec = 0.5*(hist_flux_skymap.yaxis[by]+hist_flux_skymap.yaxis[by+1])
+                keep_event = False
+                distance = pow(pow(bin_ra-roi_x,2) + pow(bin_dec-roi_y,2),0.5)
+                if distance<radial_axis.xaxis[br+1] and distance>=radial_axis.xaxis[br]: 
+                    keep_event = True
+                if keep_event:
+                    pixel_array[br] += 1.
+                    brightness_array[br] += hist_flux_skymap.waxis[bx,by,0]
+                    brightness_err_array[br] += pow(hist_error_skymap.waxis[bx,by,0],2)
+        if pixel_array[br]==0.: continue
+        brightness_array[br] = brightness_array[br]/pixel_array[br]
+        brightness_err_array[br] = pow(brightness_err_array[br],0.5)/pixel_array[br]
+
+    return radius_array, brightness_array, brightness_err_array
 
 def GetRegionIntegral(hist_flux_skymap,hist_error_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r):
 

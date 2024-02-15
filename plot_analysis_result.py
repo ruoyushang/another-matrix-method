@@ -9,6 +9,8 @@ from common_functions import MyArray3D
 
 import common_functions
 
+logE_min = common_functions.logE_min
+logE_max = common_functions.logE_max
 logE_axis = common_functions.logE_axis
 logE_bins = common_functions.logE_bins
 gcut_bins = common_functions.gcut_bins
@@ -25,8 +27,10 @@ build_skymap = common_functions.build_skymap
 smooth_image = common_functions.smooth_image
 PlotSkyMap = common_functions.PlotSkyMap
 make_flux_map = common_functions.make_flux_map
+make_significance_map = common_functions.make_significance_map
 DefineRegionOfInterest = common_functions.DefineRegionOfInterest
 PrintFluxCalibration = common_functions.PrintFluxCalibration
+GetRadialProfile = common_functions.GetRadialProfile
 
 fig, ax = plt.subplots()
 figsize_x = 8.6
@@ -59,20 +63,25 @@ sum_data_sky_map = []
 sum_bkgd_sky_map = []
 sum_data_sky_map_smooth = []
 sum_bkgd_sky_map_smooth = []
+sum_excess_sky_map_smooth = []
 sum_significance_sky_map = []
 sum_flux_sky_map = []
 sum_flux_err_sky_map = []
 for logE in range(0,logE_bins):
     sum_data_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
-    sum_bkgd_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=2,start_z=gcut_start,end_z=gcut_end)]
+    sum_bkgd_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
     sum_data_sky_map_smooth += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
-    sum_bkgd_sky_map_smooth += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=2,start_z=gcut_start,end_z=gcut_end)]
+    sum_bkgd_sky_map_smooth += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+    sum_excess_sky_map_smooth += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
     sum_significance_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
     sum_flux_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
     sum_flux_err_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
 sum_data_sky_map_allE = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
-sum_bkgd_sky_map_allE = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=2,start_z=gcut_start,end_z=gcut_end)
+sum_bkgd_sky_map_allE = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)
 sum_significance_sky_map_allE = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
+sum_excess_sky_map_allE = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
+sum_flux_sky_map_allE = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
+sum_flux_err_sky_map_allE = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
 
 sum_data_xyoff_map = []
 sum_fit_xyoff_map = []
@@ -101,6 +110,8 @@ for epoch in input_epoch:
 
     total_exposure += exposure
     for logE in range(0,logE_bins):
+        if logE<logE_min: continue
+        if logE>logE_max: continue
         sum_data_sky_map[logE].add(data_sky_map[logE])
         sum_bkgd_sky_map[logE].add(bkgd_sky_map[logE])
         sum_data_xyoff_map[logE].add(data_xyoff_map[logE])
@@ -131,19 +142,24 @@ for logE in range(0,logE_bins):
 
     sum_data_sky_map_smooth[logE].reset()
     sum_bkgd_sky_map_smooth[logE].reset()
+    sum_excess_sky_map_smooth[logE].reset()
     sum_data_sky_map_smooth[logE].add(sum_data_sky_map[logE])
     sum_bkgd_sky_map_smooth[logE].add(sum_bkgd_sky_map[logE])
+    smooth_image(sum_bkgd_sky_map_smooth[logE].waxis[:,:,0],sum_bkgd_sky_map_smooth[logE].xaxis,sum_bkgd_sky_map_smooth[logE].yaxis,kernel_radius=0.14)
+    smooth_image(sum_bkgd_sky_map_smooth[logE].waxis[:,:,1],sum_bkgd_sky_map_smooth[logE].xaxis,sum_bkgd_sky_map_smooth[logE].yaxis,kernel_radius=0.07)
+    smooth_image(sum_bkgd_sky_map_smooth[logE].waxis[:,:,2],sum_bkgd_sky_map_smooth[logE].xaxis,sum_bkgd_sky_map_smooth[logE].yaxis,kernel_radius=0.07)
+    smooth_image(sum_bkgd_sky_map_smooth[logE].waxis[:,:,3],sum_bkgd_sky_map_smooth[logE].xaxis,sum_bkgd_sky_map_smooth[logE].yaxis,kernel_radius=0.07)
     smooth_image(sum_data_sky_map_smooth[logE].waxis[:,:,0],sum_data_sky_map_smooth[logE].xaxis,sum_data_sky_map_smooth[logE].yaxis,kernel_radius=0.07)
-    smooth_image(sum_bkgd_sky_map_smooth[logE].waxis[:,:,0],sum_bkgd_sky_map_smooth[logE].xaxis,sum_bkgd_sky_map_smooth[logE].yaxis,kernel_radius=0.07)
-    smooth_image(sum_bkgd_sky_map_smooth[logE].waxis[:,:,1],sum_bkgd_sky_map_smooth[logE].xaxis,sum_bkgd_sky_map_smooth[logE].yaxis,kernel_radius=0.14)
-    for idx_x in range(0,skymap_bins):
-        for idx_y in range(0,skymap_bins):
-            data = sum_data_sky_map_smooth[logE].waxis[idx_x,idx_y,0]
-            bkgd = sum_bkgd_sky_map_smooth[logE].waxis[idx_x,idx_y,0]
-            data_err = max(1.,pow(data,0.5))
-            sum_significance_sky_map[logE].waxis[idx_x,idx_y,0] = (data-bkgd)/data_err
+    #smooth_image(sum_bkgd_sky_map_smooth[logE].waxis[:,:,1],sum_bkgd_sky_map_smooth[logE].xaxis,sum_bkgd_sky_map_smooth[logE].yaxis,kernel_radius=0.14)
+    #smooth_image(sum_bkgd_sky_map_smooth[logE].waxis[:,:,2],sum_bkgd_sky_map_smooth[logE].xaxis,sum_bkgd_sky_map_smooth[logE].yaxis,kernel_radius=0.14)
+    #smooth_image(sum_bkgd_sky_map_smooth[logE].waxis[:,:,3],sum_bkgd_sky_map_smooth[logE].xaxis,sum_bkgd_sky_map_smooth[logE].yaxis,kernel_radius=0.14)
+    #smooth_image(sum_data_sky_map_smooth[logE].waxis[:,:,0],sum_data_sky_map_smooth[logE].xaxis,sum_data_sky_map_smooth[logE].yaxis,kernel_radius=0.14)
     sum_data_sky_map_allE.add(sum_data_sky_map_smooth[logE])
     sum_bkgd_sky_map_allE.add(sum_bkgd_sky_map_smooth[logE])
+
+for logE in range(0,logE_bins):
+    make_significance_map(sum_data_sky_map_smooth[logE],sum_bkgd_sky_map_smooth[logE],sum_significance_sky_map[logE],sum_excess_sky_map_smooth[logE])
+make_significance_map(sum_data_sky_map_allE,sum_bkgd_sky_map_allE,sum_significance_sky_map_allE,sum_excess_sky_map_allE)
 
 for logE in range(0,logE_bins):
 
@@ -151,17 +167,39 @@ for logE in range(0,logE_bins):
     delta_energy = 0.5*(pow(10.,logE_axis.xaxis[logE+1])-pow(10.,logE_axis.xaxis[logE]))
     make_flux_map(sum_data_sky_map_smooth[logE],sum_bkgd_sky_map_smooth[logE],sum_flux_sky_map[logE],sum_flux_err_sky_map[logE],avg_energy,delta_energy)
     PlotSkyMap(fig,sum_flux_sky_map[logE],f'{source_name}_flux_sky_map_logE{logE}',roi_x=[],roi_y=[],roi_r=[])
-    PlotSkyMap(fig,sum_bkgd_sky_map_smooth[logE],f'{source_name}_bkgd_sky_map_logE{logE}',roi_x=[],roi_y=[],roi_r=[],layer=0)
-    PlotSkyMap(fig,sum_bkgd_sky_map_smooth[logE],f'{source_name}_norm_sky_map_logE{logE}',roi_x=[],roi_y=[],roi_r=[],layer=1)
+    PlotSkyMap(fig,sum_bkgd_sky_map_smooth[logE],f'{source_name}_norm_sky_map_logE{logE}',roi_x=[],roi_y=[],roi_r=[],layer=0)
+    PlotSkyMap(fig,sum_bkgd_sky_map_smooth[logE],f'{source_name}_bkgd_sky_map_logE{logE}',roi_x=[],roi_y=[],roi_r=[],layer=3)
+    PlotSkyMap(fig,sum_excess_sky_map_smooth[logE],f'{source_name}_excess_sky_map_logE{logE}',roi_x=[],roi_y=[],roi_r=[],layer=0)
+    sum_flux_sky_map_allE.add(sum_flux_sky_map[logE])
+    sum_flux_err_sky_map_allE.addSquare(sum_flux_err_sky_map[logE])
 
 PrintFluxCalibration(sum_flux_sky_map,sum_flux_err_sky_map,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
 
-for idx_x in range(0,skymap_bins):
-    for idx_y in range(0,skymap_bins):
-        data = sum_data_sky_map_allE.waxis[idx_x,idx_y,0]
-        bkgd = sum_bkgd_sky_map_allE.waxis[idx_x,idx_y,0]
-        data_err = max(1.,pow(data,0.5))
-        sum_significance_sky_map_allE.waxis[idx_x,idx_y,0] = (data-bkgd)/data_err
+for logE in range(0,logE_bins):
+    radial_axis, profile_axis, profile_err_axis = GetRadialProfile(sum_flux_sky_map[logE],sum_flux_err_sky_map[logE],roi_x[0],roi_y[0],1.5)
+    baseline_yaxis = [0. for i in range(0,len(radial_axis))]
+    fig.clf()
+    axbig = fig.add_subplot()
+    label_x = 'angular distance'
+    label_y = 'surface brightness'
+    axbig.set_xlabel(label_x)
+    axbig.set_ylabel(label_y)
+    axbig.plot(radial_axis, baseline_yaxis, color='b', ls='dashed')
+    axbig.errorbar(radial_axis,profile_axis,profile_err_axis,color='k',marker='s',ls='none')
+    fig.savefig(f'output_plots/{source_name}_surface_brightness_logE{logE}.png',bbox_inches='tight')
+    axbig.remove()
+radial_axis, profile_axis, profile_err_axis = GetRadialProfile(sum_flux_sky_map_allE,sum_flux_err_sky_map_allE,roi_x[0],roi_y[0],1.5)
+baseline_yaxis = [0. for i in range(0,len(radial_axis))]
+fig.clf()
+axbig = fig.add_subplot()
+label_x = 'angular distance'
+label_y = 'surface brightness'
+axbig.set_xlabel(label_x)
+axbig.set_ylabel(label_y)
+axbig.plot(radial_axis, baseline_yaxis, color='b', ls='dashed')
+axbig.errorbar(radial_axis,profile_axis,profile_err_axis,color='k',marker='s',ls='none')
+fig.savefig(f'output_plots/{source_name}_surface_brightness_allE.png',bbox_inches='tight')
+axbig.remove()
 
 for logE in range(0,logE_bins):
 
@@ -230,6 +268,7 @@ for logE in range(0,logE_bins):
         axbig.remove()
 
 PlotSkyMap(fig,sum_significance_sky_map_allE,f'{source_name}_significance_sky_map_allE',roi_x=[],roi_y=[],roi_r=[],max_z=5.)
+PlotSkyMap(fig,sum_excess_sky_map_allE,f'{source_name}_excess_sky_map_allE',roi_x=[],roi_y=[],roi_r=[])
 
 print (f'total_exposure = {total_exposure}')
 
