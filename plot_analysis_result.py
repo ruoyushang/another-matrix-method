@@ -88,10 +88,10 @@ sum_fit_xyoff_map = []
 sum_err_xyoff_map = []
 sum_init_err_xyoff_map = []
 for logE in range(0,logE_bins):
-    sum_data_xyoff_map += [MyArray3D(x_bins=xoff_bins,start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins,start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
-    sum_fit_xyoff_map += [MyArray3D(x_bins=xoff_bins,start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins,start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
-    sum_err_xyoff_map += [MyArray3D(x_bins=xoff_bins,start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins,start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
-    sum_init_err_xyoff_map += [MyArray3D(x_bins=xoff_bins,start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins,start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+    sum_data_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+    sum_fit_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+    sum_err_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+    sum_init_err_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
 
 for epoch in input_epoch:
 
@@ -102,7 +102,11 @@ for epoch in input_epoch:
         continue
     analysis_result = pickle.load(open(input_filename, "rb"))
     
-    exposure = analysis_result[0] 
+    run_info = analysis_result[0] 
+    exposure = run_info[0]
+    list_run_elev = run_info[1]
+    list_run_azim = run_info[2]
+
     data_sky_map = analysis_result[1] 
     bkgd_sky_map = analysis_result[2] 
     data_xyoff_map = analysis_result[3]
@@ -120,12 +124,13 @@ for epoch in input_epoch:
 for logE in range(0,logE_bins):
     data_integral = 0.
     model_integral = 0.
-    for idx_x in range(0,xoff_bins):
-        for idx_y in range(0,yoff_bins):
+    for idx_x in range(0,xoff_bins[logE]):
+        for idx_y in range(0,yoff_bins[logE]):
             data_integral += sum_data_xyoff_map[logE].waxis[idx_x,idx_y,0] 
             model_integral += sum_data_xyoff_map[logE].waxis[idx_x,idx_y,1] 
-    for idx_x in range(0,xoff_bins):
-        for idx_y in range(0,yoff_bins):
+    if model_integral==0.: continue
+    for idx_x in range(0,xoff_bins[logE]):
+        for idx_y in range(0,yoff_bins[logE]):
             data = sum_data_xyoff_map[logE].waxis[idx_x,idx_y,0] 
             model = sum_data_xyoff_map[logE].waxis[idx_x,idx_y,1]*data_integral/model_integral 
             data_err = max(1.,pow(data,0.5))
@@ -133,8 +138,8 @@ for logE in range(0,logE_bins):
 
 for logE in range(0,logE_bins):
     for gcut in range(0,gcut_bins):
-        for idx_x in range(0,xoff_bins):
-            for idx_y in range(0,yoff_bins):
+        for idx_x in range(0,xoff_bins[logE]):
+            for idx_y in range(0,yoff_bins[logE]):
                 data = sum_data_xyoff_map[logE].waxis[idx_x,idx_y,gcut] 
                 model = sum_fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] 
                 data_err = max(1.,pow(data,0.5))
@@ -173,7 +178,7 @@ for logE in range(0,logE_bins):
     sum_flux_sky_map_allE.add(sum_flux_sky_map[logE])
     sum_flux_err_sky_map_allE.addSquare(sum_flux_err_sky_map[logE])
 
-PrintFluxCalibration(sum_flux_sky_map,sum_flux_err_sky_map,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
+PrintFluxCalibration(fig,sum_flux_sky_map,sum_flux_err_sky_map,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
 
 for logE in range(0,logE_bins):
     radial_axis, profile_axis, profile_err_axis = GetRadialProfile(sum_flux_sky_map[logE],sum_flux_err_sky_map[logE],roi_x[0],roi_y[0],1.5)

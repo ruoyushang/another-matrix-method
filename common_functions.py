@@ -16,14 +16,12 @@ max_Rcore = 400.
 min_Rcore = 0.
 min_Energy_cut = 0.2
 max_Energy_cut = 10.0
-MSCW_cut = 0.6
+MSCW_cut = 0.5
 MSCL_cut = 0.7
 MVA_cut = 0.5
 
-xoff_bins = 5
 xoff_start = -2.
 xoff_end = 2.
-yoff_bins = 5
 yoff_start = -2.
 yoff_end = 2.
 gcut_bins = 4
@@ -38,9 +36,12 @@ logE_end = 1.
 doFluxCalibration = False
 calibration_radius = 0.15 # need to be larger than the PSF and smaller than the integration radius
 
-logE_min = 1
+logE_min = 0
 logE_max = 6
-matrix_rank = [4,3,3,2,2,1,1]
+#matrix_rank = [5,5,5,4,3,2,1]
+matrix_rank = [5,5,5,3,3,1,1]
+xoff_bins = matrix_rank
+yoff_bins = matrix_rank
 
 smi_aux = os.environ.get("SMI_AUX")
 smi_dir = os.environ.get("SMI_DIR")
@@ -107,7 +108,7 @@ def smooth_image(image_data,xaxis,yaxis,kernel_radius=0.07):
 
 class MyArray3D:
 
-    def __init__(self,x_bins=10,start_x=0.,end_x=10.,y_bins=10,start_y=0.,end_y=10.,z_bins=10,start_z=0.,end_z=10.,overflow=True):
+    def __init__(self,x_bins=10,start_x=0.,end_x=10.,y_bins=10,start_y=0.,end_y=10.,z_bins=10,start_z=0.,end_z=10.,overflow=False):
         array_shape = (x_bins,y_bins,z_bins)
         self.delta_x = (end_x-start_x)/float(x_bins)
         self.delta_y = (end_y-start_y)/float(y_bins)
@@ -221,7 +222,7 @@ class MyArray3D:
 
 class MyArray1D:
 
-    def __init__(self,x_bins=10,start_x=0.,end_x=10.,overflow=True):
+    def __init__(self,x_bins=10,start_x=0.,end_x=10.,overflow=False):
         array_shape = (x_bins)
         self.delta_x = (end_x-start_x)/float(x_bins)
         self.xaxis = np.zeros(array_shape+1)
@@ -351,7 +352,7 @@ def build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_
     
         xyoff_map = []
         for logE in range(0,logE_bins):
-            xyoff_map += [MyArray3D(x_bins=xoff_bins,start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins,start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+            xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
     
         InputFile = ROOT.TFile(rootfile_name)
 
@@ -396,6 +397,7 @@ def build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_
             if Rcore>max_Rcore: continue
             if Energy<min_Energy_cut: continue
             if Energy>max_Energy_cut: continue
+            if MSCL>1.0: continue
 
             Xsky = TelRAJ2000 + Xderot
             Ysky = TelDecJ2000 + Yderot
@@ -417,8 +419,8 @@ def build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_
         for logE in range(0,logE_bins):
             xyoff_map_1d = []
             for gcut in range(0,gcut_bins):
-                for idx_x in range(0,xoff_bins):
-                    for idx_y in range(0,yoff_bins):
+                for idx_x in range(0,xoff_bins[logE]):
+                    for idx_y in range(0,yoff_bins[logE]):
                         xyoff_map_1d += [xyoff_map[logE].waxis[idx_x,idx_y,gcut]]
             if big_matrix[logE]==None:
                 big_matrix[logE] = [xyoff_map_1d]
@@ -447,6 +449,8 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
     big_eigenvectors = pickle.load(open(input_filename, "rb"))
 
     exposure_hours = 0.
+    avg_tel_elev = 0.
+    avg_tel_azim = 0.
     all_sky_map = []
     for logE in range(0,logE_bins):
         all_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
@@ -454,14 +458,14 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
     data_xyoff_map = []
     fit_xyoff_map = []
     for logE in range(0,logE_bins):
-        data_xyoff_map += [MyArray3D(x_bins=xoff_bins,start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins,start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
-        fit_xyoff_map += [MyArray3D(x_bins=xoff_bins,start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins,start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+        data_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+        fit_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
 
     for logE in range(0,logE_bins):
         print (f'big_eigenvectors[{logE}].shape = {big_eigenvectors[logE].shape}') 
         if matrix_rank[logE]>big_eigenvectors[logE].shape[0]:
             print (f'Not enough vectors. Break.')
-            return exposure_hours, all_sky_map, data_xyoff_map, fit_xyoff_map
+            return [exposure_hours,avg_tel_elev,avg_tel_azim], all_sky_map, data_xyoff_map, fit_xyoff_map
 
     run_count = 0
     for run_number in runlist:
@@ -479,7 +483,7 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
         
         ratio_xyoff_map = []
         for logE in range(0,logE_bins):
-            ratio_xyoff_map += [MyArray3D(x_bins=xoff_bins,start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins,start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+            ratio_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
 
         print ('fitting xyoff maps...')
         for logE in range(0,logE_bins):
@@ -489,7 +493,7 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
             solution = minimize(
                 cosmic_ray_like_chi2,
                 x0=init_params,
-                args=(big_eigenvectors[logE],data_xyoff_map_1d),
+                args=(big_eigenvectors[logE],data_xyoff_map_1d,logE),
                 method='L-BFGS-B',
                 jac=None,
                 options={'eps':stepsize,'ftol':0.001},
@@ -498,31 +502,31 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
             fit_xyoff_map_1d = big_eigenvectors[logE].T @ fit_params
 
             for gcut in range(0,gcut_bins):
-                for idx_x in range(0,xoff_bins):
-                    for idx_y in range(0,yoff_bins):
-                        idx_1d = gcut*xoff_bins*yoff_bins + idx_x*yoff_bins + idx_y
+                for idx_x in range(0,xoff_bins[logE]):
+                    for idx_y in range(0,yoff_bins[logE]):
+                        idx_1d = gcut*xoff_bins[logE]*yoff_bins[logE] + idx_x*yoff_bins[logE] + idx_y
                         data_xyoff_map[logE].waxis[idx_x,idx_y,gcut] += data_xyoff_map_1d[idx_1d]
                         fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] += fit_xyoff_map_1d[idx_1d]
 
             #avg_gamma_cnt = 0.
-            #for idx_x in range(0,xoff_bins):
-            #    for idx_y in range(0,yoff_bins):
+            #for idx_x in range(0,xoff_bins[logE]):
+            #    for idx_y in range(0,yoff_bins[logE]):
             #        avg_gamma_cnt += fit_xyoff_map[logE].waxis[idx_x,idx_y,0]
-            #avg_gamma_cnt = avg_gamma_cnt/float(xoff_bins*yoff_bins)
+            #avg_gamma_cnt = avg_gamma_cnt/float(xoff_bins[logE]*yoff_bins[logE])
             #if avg_gamma_cnt<0.1:
             #    for gcut in range(0,gcut_bins):
             #        avg_cnt = 0.
-            #        for idx_x in range(0,xoff_bins):
-            #            for idx_y in range(0,yoff_bins):
+            #        for idx_x in range(0,xoff_bins[logE]):
+            #            for idx_y in range(0,yoff_bins[logE]):
             #                avg_cnt += fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
-            #        avg_cnt = avg_cnt/float(xoff_bins*yoff_bins)
-            #        for idx_x in range(0,xoff_bins):
-            #            for idx_y in range(0,yoff_bins):
+            #        avg_cnt = avg_cnt/float(xoff_bins[logE]*yoff_bins[logE])
+            #        for idx_x in range(0,xoff_bins[logE]):
+            #            for idx_y in range(0,yoff_bins[logE]):
             #                fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = avg_cnt
 
             for gcut in range(0,gcut_bins):
-                for idx_x in range(0,xoff_bins):
-                    for idx_y in range(0,yoff_bins):
+                for idx_x in range(0,xoff_bins[logE]):
+                    for idx_y in range(0,yoff_bins[logE]):
                         if fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut]==0.: continue
                         ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = fit_xyoff_map[logE].waxis[idx_x,idx_y,0]/fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
 
@@ -535,6 +539,8 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
         TelTree.GetEntry(int(float(TelTree.GetEntries())/2.))
         TelRAJ2000 = TelTree.TelRAJ2000*180./np.pi
         TelDecJ2000 = TelTree.TelDecJ2000*180./np.pi
+        TelElevation = TelTree.TelElevation
+        TelAzimuth = TelTree.TelAzimuth
         bright_star_coord = GetBrightStars(TelRAJ2000,TelDecJ2000)
         gamma_source_coord = GetGammaSources(TelRAJ2000,TelDecJ2000)
 
@@ -547,6 +553,8 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
         EvtTree.GetEntry(total_entries-1)
         time_end = EvtTree.timeOfDay
         exposure_hours += (time_end-time_start)/3600.
+        avg_tel_elev += TelElevation*(time_end-time_start)/3600.
+        avg_tel_azim += TelAzimuth*(time_end-time_start)/3600.
         for entry in range(0,total_entries):
             EvtTree.GetEntry(entry)
             Xoff = EvtTree.Xoff
@@ -576,6 +584,7 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
             if Rcore>max_Rcore: continue
             if Energy<min_Energy_cut: continue
             if Energy>max_Energy_cut: continue
+            if MSCL>1.0: continue
 
             Xsky = TelRAJ2000 + Xderot
             Ysky = TelDecJ2000 + Yderot
@@ -589,23 +598,27 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
         InputFile.Close()
   
     tracemalloc.stop()
+    if exposure_hours>0.:
+        avg_tel_elev = avg_tel_elev/exposure_hours
+        avg_tel_azim = avg_tel_azim/exposure_hours
 
-    return exposure_hours, all_sky_map, data_xyoff_map, fit_xyoff_map
+    return [exposure_hours,avg_tel_elev,avg_tel_azim], all_sky_map, data_xyoff_map, fit_xyoff_map
 
 
-def cosmic_ray_like_chi2(try_params,eigenvectors,xyoff_map):
+def cosmic_ray_like_chi2(try_params,eigenvectors,xyoff_map,logE):
 
     try_params = np.array(try_params)
     try_xyoff_map = eigenvectors.T @ try_params
 
     chi2 = 0.
     for gcut in range(1,gcut_bins):
-        for idx_x in range(0,xoff_bins):
-            for idx_y in range(0,yoff_bins):
-                idx_1d = gcut*xoff_bins*yoff_bins + idx_x*yoff_bins + idx_y
-                stat_err = 1.
-                #stat_err = max(1.,pow(xyoff_map[idx_1d],0.5))
+        for idx_x in range(0,xoff_bins[logE]):
+            for idx_y in range(0,yoff_bins[logE]):
+                idx_1d = gcut*xoff_bins[logE]*yoff_bins[logE] + idx_x*yoff_bins[logE] + idx_y
+                #stat_err = 1.
+                stat_err = max(1.,pow(xyoff_map[idx_1d],0.5))
                 chi2 += pow((try_xyoff_map[idx_1d]-xyoff_map[idx_1d])/stat_err,2)/float(gcut)
+                #chi2 += pow((try_xyoff_map[idx_1d]-xyoff_map[idx_1d])/stat_err,2)
 
     return chi2
 
@@ -1025,7 +1038,7 @@ def GetFluxCalibration(energy):
     if doFluxCalibration:
         return 1.
 
-    str_flux_calibration = ['1.20e-07', '7.27e-08', '5.63e-08', '6.03e-08', '6.04e-08', '5.60e-08', '6.85e-08']
+    str_flux_calibration = ['1.22e-01', '9.20e-02', '8.27e-02', '9.03e-02', '9.83e-02', '1.07e-01', '1.24e-01']
 
     flux_calibration = []
     for string in str_flux_calibration:
@@ -1070,11 +1083,11 @@ def make_flux_map(data_sky_map,bkgd_sky_map,flux_sky_map,flux_err_sky_map,avg_en
                 logE = logE_axis.get_bin(np.log10(avg_energy))
                 correction = GetFluxCalibration(logE)/norm*pow(avg_energy,2)/(100.*100.*3600.)/delta_energy
                 norm_ratio = norm/norm_content_max
-                norm_weight = correction*1./(1.+np.exp(-(norm_ratio-0.3)/0.05))
-                #flux = excess*correction*norm_weight
-                #flux_err = error*correction*norm_weight
-                flux = excess
-                flux_err = error
+                norm_weight = 1./(1.+np.exp(-(norm_ratio-0.3)/0.05))
+                flux = excess*correction*norm_weight
+                flux_err = error*correction*norm_weight
+                #flux = excess
+                #flux_err = error
                 flux_sky_map.waxis[idx_x,idx_y,0] = flux
                 flux_err_sky_map.waxis[idx_x,idx_y,0] = flux_err
             else:
@@ -1132,7 +1145,7 @@ def GetRegionIntegral(hist_flux_skymap,hist_error_skymap,roi_x,roi_y,roi_r,excl_
             for roi in range(0,len(excl_roi_x)):
                 excl_distance = pow(pow(bin_ra-excl_roi_x[roi],2) + pow(bin_dec-excl_roi_y[roi],2),0.5)
                 if excl_distance<excl_roi_r[roi]: 
-                    keep_event = True
+                    keep_event = False
             if keep_event:
                 flux_sum += hist_flux_skymap.waxis[bx,by,0]
                 flux_stat_err += pow(hist_error_skymap.waxis[bx,by,0],2)
@@ -1166,19 +1179,18 @@ def flux_crab_func(x):
     # Crab https://arxiv.org/pdf/1508.06442.pdf
     return 37.5*pow(10,-12)*pow(x*1./1000.,-2.467-0.16*np.log(x/1000.))
 
-def PrintFluxCalibration(hist_flux_skymap,hist_error_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r):
+def PrintFluxCalibration(fig,hist_flux_skymap,hist_error_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r):
 
     energy_axis, energy_error, flux, flux_stat_err = GetRegionSpectrum(hist_flux_skymap,hist_error_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
+    print (f'energy_axis = {energy_axis}')
 
     vectorize_f_crab = np.vectorize(flux_crab_func)
-    xdata_array = []
-    for binx in range(0,len(energy_axis)):
-        xdata_array += [energy_axis[binx]]
-    ydata_crab_ref = pow(np.array(xdata_array)/1e3,2)*vectorize_f_crab(xdata_array)
+    ydata_crab_ref = pow(np.array(energy_axis),2)*vectorize_f_crab(energy_axis)
 
-    log_energy = np.linspace(np.log10(2e2),np.log10(1.2e4),50)
-    xdata = pow(10.,log_energy)
-    ydata_crab = pow(xdata/1e3,2)*vectorize_f_crab(xdata)
+    #log_energy = np.linspace(np.log10(2e2),np.log10(1.2e4),50)
+    #xdata = pow(10.,log_energy)
+    #ydata_crab = pow(xdata/1e3,2)*vectorize_f_crab(xdata)
+
     calibration_new = []
     for binx in range(0,len(energy_axis)):
         if flux[binx]>0.:
@@ -1189,6 +1201,16 @@ def PrintFluxCalibration(hist_flux_skymap,hist_error_skymap,roi_x,roi_y,roi_r,ex
     formatted_numbers = ['%0.2e' % num for num in calibration_new]
     print ('new flux_calibration = %s'%(formatted_numbers))
     print ('=======================================================================')
+
+    fig.clf()
+    axbig = fig.add_subplot()
+    label_x = 'Energy [TeV]'
+    label_y = 'Flux in C.U.'
+    axbig.set_xlabel(label_x)
+    axbig.set_ylabel(label_y)
+    axbig.plot(energy_axis, calibration_new, color='b', ls='dashed')
+    fig.savefig(f'output_plots/flux_crab_unit.png',bbox_inches='tight')
+    axbig.remove()
 
 def DefineRegionOfInterest(src_name,src_ra,src_dec):
 

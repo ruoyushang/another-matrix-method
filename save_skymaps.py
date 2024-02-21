@@ -45,10 +45,10 @@ print (f'path_to_eigenvector = {path_to_eigenvector}')
 data_xyoff_map = []
 fit_xyoff_map = []
 for logE in range(0,logE_bins):
-    data_xyoff_map += [MyArray3D(x_bins=xoff_bins,start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins,start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
-    fit_xyoff_map += [MyArray3D(x_bins=xoff_bins,start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins,start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+    data_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+    fit_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
 
-on_runlist = ReadRunListFromFile(f'/nevis/tehanu/home/ryshang/veritas_analysis/easy-matrix-method/output_vts_hours/RunList_{source_name}_{input_epoch}.txt')
+on_runlist = ReadRunListFromFile(f'/nevis/tehanu/home/ryshang/veritas_analysis/another-matrix-method/output_vts_query/RunList_{source_name}_{input_epoch}.txt')
 
 skymap_size = 3.
 skymap_bins = 100
@@ -58,6 +58,9 @@ ysky_start = src_dec-skymap_size
 ysky_end = src_dec+skymap_size
 
 exposure_hours = 0.
+list_run_elev = []
+list_run_azim = []
+
 data_sky_map = []
 bkgd_sky_map = []
 for logE in range(0,logE_bins):
@@ -67,8 +70,13 @@ for logE in range(0,logE_bins):
 
 total_runs = len(on_runlist)
 for run in range(0,total_runs):
-    run_exposure_hours, run_all_sky_map, run_data_xyoff_map, run_fit_xyoff_map = build_skymap(smi_input,path_to_eigenvector,[on_runlist[run]],src_ra,src_dec)
+    run_info, run_all_sky_map, run_data_xyoff_map, run_fit_xyoff_map = build_skymap(smi_input,path_to_eigenvector,[on_runlist[run]],src_ra,src_dec)
+    run_exposure_hours = run_info[0]
+    run_elev = run_info[1]
+    run_azim = run_info[2]
     exposure_hours += run_exposure_hours
+    list_run_elev += [run_elev]
+    list_run_azim += [run_azim]
     for logE in range(0,logE_bins):
         data_xyoff_map[logE].add(run_data_xyoff_map[logE])
         fit_xyoff_map[logE].add(run_fit_xyoff_map[logE])
@@ -85,10 +93,10 @@ for run in range(0,total_runs):
                 bkgd_sky_map[logE].waxis[idx_x,idx_y,2] += bkg2
                 bkgd_sky_map[logE].waxis[idx_x,idx_y,3] += bkg3
 
-all_skymaps = [exposure_hours, data_sky_map, bkgd_sky_map, data_xyoff_map, fit_xyoff_map]
-output_filename = f'{smi_output}/skymaps_{source_name}_{input_epoch}.pkl'
-with open(output_filename,"wb") as file:
-    pickle.dump(all_skymaps, file)
+    all_skymaps = [[exposure_hours, list_run_elev, list_run_azim], data_sky_map, bkgd_sky_map, data_xyoff_map, fit_xyoff_map]
+    output_filename = f'{smi_output}/skymaps_{source_name}_{input_epoch}.pkl'
+    with open(output_filename,"wb") as file:
+        pickle.dump(all_skymaps, file)
 
 
 
