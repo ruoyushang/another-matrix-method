@@ -16,7 +16,7 @@ max_Rcore = 400.
 min_Rcore = 0.
 min_Energy_cut = 0.2
 max_Energy_cut = 10.0
-MSCW_cut = 0.5
+MSCW_cut = 0.4
 MSCL_cut = 0.7
 MVA_cut = 0.5
 
@@ -457,9 +457,11 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
 
     data_xyoff_map = []
     fit_xyoff_map = []
+    ratio_xyoff_map = []
     for logE in range(0,logE_bins):
         data_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
         fit_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+        ratio_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
 
     for logE in range(0,logE_bins):
         print (f'big_eigenvectors[{logE}].shape = {big_eigenvectors[logE].shape}') 
@@ -481,9 +483,11 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
         print ('build big matrix...')
         big_on_matrix = build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_run=run_number)
         
-        ratio_xyoff_map = []
+
         for logE in range(0,logE_bins):
-            ratio_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+            data_xyoff_map[logE].reset()
+            fit_xyoff_map[logE].reset()
+            ratio_xyoff_map[logE].reset()
 
         print ('fitting xyoff maps...')
         for logE in range(0,logE_bins):
@@ -507,22 +511,6 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
                         idx_1d = gcut*xoff_bins[logE]*yoff_bins[logE] + idx_x*yoff_bins[logE] + idx_y
                         data_xyoff_map[logE].waxis[idx_x,idx_y,gcut] += data_xyoff_map_1d[idx_1d]
                         fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] += fit_xyoff_map_1d[idx_1d]
-
-            #avg_gamma_cnt = 0.
-            #for idx_x in range(0,xoff_bins[logE]):
-            #    for idx_y in range(0,yoff_bins[logE]):
-            #        avg_gamma_cnt += fit_xyoff_map[logE].waxis[idx_x,idx_y,0]
-            #avg_gamma_cnt = avg_gamma_cnt/float(xoff_bins[logE]*yoff_bins[logE])
-            #if avg_gamma_cnt<0.1:
-            #    for gcut in range(0,gcut_bins):
-            #        avg_cnt = 0.
-            #        for idx_x in range(0,xoff_bins[logE]):
-            #            for idx_y in range(0,yoff_bins[logE]):
-            #                avg_cnt += fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
-            #        avg_cnt = avg_cnt/float(xoff_bins[logE]*yoff_bins[logE])
-            #        for idx_x in range(0,xoff_bins[logE]):
-            #            for idx_y in range(0,yoff_bins[logE]):
-            #                fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = avg_cnt
 
             for gcut in range(0,gcut_bins):
                 for idx_x in range(0,xoff_bins[logE]):
@@ -1038,13 +1026,13 @@ def GetFluxCalibration(energy):
     if doFluxCalibration:
         return 1.
 
-    str_flux_calibration = ['1.22e-01', '9.20e-02', '8.27e-02', '9.03e-02', '9.83e-02', '1.07e-01', '1.24e-01']
+    str_flux_calibration = ['5.75e+00', '8.81e+00', '1.10e+01', '1.06e+01', '1.70e+01', '1.78e+01', '1.36e+01']
 
     flux_calibration = []
     for string in str_flux_calibration:
         flux_calibration.append(float(string))
 
-    return flux_calibration[energy]
+    return 1./flux_calibration[energy]
 
 def make_significance_map(data_sky_map,bkgd_sky_map,significance_sky_map,excess_sky_map):
   
@@ -1194,7 +1182,7 @@ def PrintFluxCalibration(fig,hist_flux_skymap,hist_error_skymap,roi_x,roi_y,roi_
     calibration_new = []
     for binx in range(0,len(energy_axis)):
         if flux[binx]>0.:
-            calibration_new += [ydata_crab_ref[binx]/flux[binx]]
+            calibration_new += [flux[binx]/ydata_crab_ref[binx]]
         else:
             calibration_new += [0.]
     print ('=======================================================================')
@@ -1219,7 +1207,7 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
     excl_region_r = [0.0]
     region_x = [src_ra]
     region_y = [src_dec]
-    region_r = [2.0]
+    region_r = [calibration_radius]
 
     if 'Crab' in src_name:
         region_x = [src_ra]
