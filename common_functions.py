@@ -16,8 +16,8 @@ max_Rcore = 400.
 min_Rcore = 0.
 min_Energy_cut = 0.2
 max_Energy_cut = 10.0
-MSCW_cut = 0.4
-MSCL_cut = 0.7
+MSCW_cut = 0.7
+MSCL_cut = 0.5
 MVA_cut = 0.5
 
 xoff_start = -2.
@@ -156,12 +156,12 @@ class MyArray3D:
         for idx_z in range(0,len(self.zaxis)-1):
             if abs(self.zaxis[idx_z]-value_z)<=abs(self.delta_z) and abs(self.zaxis[idx_z+1]-value_z)<abs(self.delta_z):
                 key_idx_z = idx_z
-        if value_x>self.xaxis.max():
-            key_idx_x = len(self.xaxis)-2
-        if value_y>self.yaxis.max():
-            key_idx_y = len(self.yaxis)-2
-        if value_z>self.zaxis.max():
-            key_idx_z = len(self.zaxis)-2
+        #if value_x>self.xaxis.max():
+        #    key_idx_x = len(self.xaxis)-2
+        #if value_y>self.yaxis.max():
+        #    key_idx_y = len(self.yaxis)-2
+        #if value_z>self.zaxis.max():
+        #    key_idx_z = len(self.zaxis)-2
         return [key_idx_x,key_idx_y,key_idx_z]
 
     def fill(self, value_x, value_y, value_z, weight=1.):
@@ -171,22 +171,22 @@ class MyArray3D:
         key_idx_z = key_idx[2]
         if key_idx_x==-1: 
             key_idx_x = 0
-            if not self.overflow: weight = 0.
+            weight = 0.
         if key_idx_y==-1: 
             key_idx_y = 0
-            if not self.overflow: weight = 0.
+            weight = 0.
         if key_idx_z==-1: 
             key_idx_z = 0
-            if not self.overflow: weight = 0.
-        if key_idx_x==len(self.xaxis): 
-            key_idx_x = len(self.xaxis)-2
-            if not self.overflow: weight = 0.
-        if key_idx_y==len(self.yaxis): 
-            key_idx_y = len(self.yaxis)-2
-            if not self.overflow: weight = 0.
-        if key_idx_z==len(self.zaxis): 
-            key_idx_z = len(self.zaxis)-2
-            if not self.overflow: weight = 0.
+            weight = 0.
+        #if key_idx_x==len(self.xaxis): 
+        #    key_idx_x = len(self.xaxis)-2
+        #    if not self.overflow: weight = 0.
+        #if key_idx_y==len(self.yaxis): 
+        #    key_idx_y = len(self.yaxis)-2
+        #    if not self.overflow: weight = 0.
+        #if key_idx_z==len(self.zaxis): 
+        #    key_idx_z = len(self.zaxis)-2
+        #    if not self.overflow: weight = 0.
         self.waxis[key_idx_x,key_idx_y,key_idx_z] += 1.*weight
     
     def divide(self, add_array):
@@ -207,17 +207,17 @@ class MyArray3D:
         key_idx_y = key_idx[1]
         key_idx_z = key_idx[2]
         if key_idx_x==-1: 
-            key_idx_x = 0
+            return 0.
         if key_idx_y==-1: 
-            key_idx_y = 0
+            return 0.
         if key_idx_z==-1: 
-            key_idx_z = 0
-        if key_idx_x==len(self.xaxis): 
-            key_idx_x = len(self.xaxis)-2
-        if key_idx_y==len(self.yaxis): 
-            key_idx_y = len(self.yaxis)-2
-        if key_idx_z==len(self.zaxis): 
-            key_idx_z = len(self.zaxis)-2
+            return 0.
+        #if key_idx_x==len(self.xaxis): 
+        #    key_idx_x = len(self.xaxis)-2
+        #if key_idx_y==len(self.yaxis): 
+        #    key_idx_y = len(self.yaxis)-2
+        #if key_idx_z==len(self.zaxis): 
+        #    key_idx_z = len(self.zaxis)-2
         return self.waxis[key_idx_x,key_idx_y,key_idx_z]
 
 class MyArray1D:
@@ -376,7 +376,7 @@ def build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_
             Yderot = EvtTree.Yderot
             MSCW = EvtTree.MSCW/MSCW_cut
             MSCL = EvtTree.MSCL/MSCL_cut
-            GammaCut = MSCW
+            GammaCut = abs(MSCW)
             #GammaCut = pow(MSCW*MSCW+MSCL*MSCL,0.5)
             #MVA = EvtTree.MVA
             #GammaCut = (1.-MVA)/(1.-MVA_cut)
@@ -551,7 +551,7 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
             Yderot = EvtTree.Yderot
             MSCW = EvtTree.MSCW/MSCW_cut
             MSCL = EvtTree.MSCL/MSCL_cut
-            GammaCut = MSCW
+            GammaCut = abs(MSCW)
             #GammaCut = pow(MSCW*MSCW+MSCL*MSCL,0.5)
             #MVA = EvtTree.MVA
             #GammaCut = (1.-MVA)/(1.-MVA_cut)
@@ -603,10 +603,10 @@ def cosmic_ray_like_chi2(try_params,eigenvectors,xyoff_map,logE):
         for idx_x in range(0,xoff_bins[logE]):
             for idx_y in range(0,yoff_bins[logE]):
                 idx_1d = gcut*xoff_bins[logE]*yoff_bins[logE] + idx_x*yoff_bins[logE] + idx_y
-                #stat_err = 1.
-                stat_err = max(1.,pow(xyoff_map[idx_1d],0.5))
-                chi2 += pow((try_xyoff_map[idx_1d]-xyoff_map[idx_1d])/stat_err,2)/float(gcut)
-                #chi2 += pow((try_xyoff_map[idx_1d]-xyoff_map[idx_1d])/stat_err,2)
+                stat_err = 1.
+                #stat_err = max(1.,pow(xyoff_map[idx_1d],0.5)) # cause bias
+                #chi2 += pow((try_xyoff_map[idx_1d]-xyoff_map[idx_1d])/stat_err,2)/float(gcut)
+                chi2 += pow((try_xyoff_map[idx_1d]-xyoff_map[idx_1d])/stat_err,2)
 
     return chi2
 
