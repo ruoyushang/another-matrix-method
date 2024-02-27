@@ -33,23 +33,21 @@ input_filename = f'{smi_output}/big_off_matrix_{source_name}_{input_epoch}.pkl'
 big_matrix = pickle.load(open(input_filename, "rb"))
 
 print ('Computing SVD eigenvectors...')
-big_eigenvectors = []
-for logE in range(0,logE_bins):
-    U_full, S_full, VT_full = np.linalg.svd(big_matrix[logE],full_matrices=False)
-    U_eco = U_full[:, :matrix_rank[logE]]
-    VT_eco = VT_full[:matrix_rank[logE], :]
-    big_eigenvectors += [VT_eco]
+U_full, S_full, VT_full = np.linalg.svd(big_matrix,full_matrices=False)
+U_eco = U_full[:, :matrix_rank]
+VT_eco = VT_full[:matrix_rank, :]
+big_eigenvectors = VT_eco
 
-    fig.clf()
-    axbig = fig.add_subplot()
-    label_x = 'Rank'
-    label_y = 'Signular value'
-    axbig.set_xlabel(label_x)
-    axbig.set_ylabel(label_y)
-    axbig.set_xlim(0,10)
-    axbig.plot(S_full)
-    fig.savefig(f'{smi_dir}/output_plots/signularvalue_{source_name}_{input_epoch}_logE{logE}.png',bbox_inches='tight')
-    axbig.remove()
+fig.clf()
+axbig = fig.add_subplot()
+label_x = 'Rank'
+label_y = 'Signular value'
+axbig.set_xlabel(label_x)
+axbig.set_ylabel(label_y)
+axbig.set_xlim(0,10)
+axbig.plot(S_full)
+fig.savefig(f'{smi_dir}/output_plots/signularvalue_{source_name}_{input_epoch}.png',bbox_inches='tight')
+axbig.remove()
 
 output_filename = f'{smi_output}/eigenvectors_{source_name}_{input_epoch}.pkl'
 with open(output_filename,"wb") as file:
