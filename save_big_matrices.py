@@ -21,6 +21,7 @@ input_epoch = sys.argv[2] # 'V4', 'V5' or 'V6'
 print (f'source_name = {source_name}, input_epoch = {input_epoch}')
 
 off_runlist = ReadOffRunListFromFile(f'/nevis/tehanu/home/ryshang/veritas_analysis/another-matrix-method/output_vts_query/PairList_{source_name}_{input_epoch}.txt')
+#off_runlist = ReadRunListFromFile(f'/nevis/tehanu/home/ryshang/veritas_analysis/another-matrix-method/output_vts_query/RunList_{source_name}_{input_epoch}.txt')
 print (off_runlist)
 big_off_matrix = build_big_camera_matrix(smi_input,off_runlist,max_runs=1e10,is_on=False)
 

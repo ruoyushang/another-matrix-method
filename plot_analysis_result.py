@@ -31,6 +31,7 @@ make_significance_map = common_functions.make_significance_map
 DefineRegionOfInterest = common_functions.DefineRegionOfInterest
 PrintFluxCalibration = common_functions.PrintFluxCalibration
 GetRadialProfile = common_functions.GetRadialProfile
+matrix_rank = common_functions.matrix_rank
 
 fig, ax = plt.subplots()
 figsize_x = 8.6
@@ -59,6 +60,12 @@ ysky_end = src_dec+skymap_size
 roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r = DefineRegionOfInterest(source_name,src_ra,src_dec)
 
 total_exposure = 0.
+total_list_run_elev = []
+total_list_run_azim = []
+total_list_truth_params = []
+total_list_fit_params = []
+total_list_sr_chi2 = []
+total_list_cr_chi2 = []
 sum_data_sky_map = []
 sum_bkgd_sky_map = []
 sum_data_sky_map_smooth = []
@@ -106,6 +113,10 @@ for epoch in input_epoch:
     exposure = run_info[0]
     list_run_elev = run_info[1]
     list_run_azim = run_info[2]
+    list_truth_params = run_info[3]
+    list_fit_params = run_info[4]
+    list_sr_chi2 = run_info[5]
+    list_cr_chi2 = run_info[6]
 
     data_sky_map = analysis_result[1] 
     bkgd_sky_map = analysis_result[2] 
@@ -113,6 +124,12 @@ for epoch in input_epoch:
     fit_xyoff_map = analysis_result[4]
 
     total_exposure += exposure
+    total_list_run_elev += list_run_elev
+    total_list_run_azim += list_run_azim
+    total_list_truth_params += list_truth_params
+    total_list_fit_params += list_fit_params
+    total_list_sr_chi2 += list_sr_chi2
+    total_list_cr_chi2 += list_cr_chi2
     for logE in range(0,logE_bins):
         if logE<logE_min: continue
         if logE>logE_max: continue
@@ -162,6 +179,12 @@ for logE in range(0,logE_bins):
     sum_data_sky_map_allE.add(sum_data_sky_map_smooth[logE])
     sum_bkgd_sky_map_allE.add(sum_bkgd_sky_map_smooth[logE])
 
+print ('=================================================================================')
+for logE in range(0,logE_bins):
+    data_sum = np.sum(sum_data_sky_map[logE].waxis[:,:,0])
+    bkgd_sum = np.sum(sum_bkgd_sky_map[logE].waxis[:,:,1])
+    print (f'logE = {logE}, data_sum = {data_sum}, bkgd_sum = {bkgd_sum}')
+
 for logE in range(0,logE_bins):
     make_significance_map(sum_data_sky_map_smooth[logE],sum_bkgd_sky_map_smooth[logE],sum_significance_sky_map[logE],sum_excess_sky_map_smooth[logE])
 make_significance_map(sum_data_sky_map_allE,sum_bkgd_sky_map_allE,sum_significance_sky_map_allE,sum_excess_sky_map_allE)
@@ -173,7 +196,7 @@ for logE in range(0,logE_bins):
     make_flux_map(sum_data_sky_map_smooth[logE],sum_bkgd_sky_map_smooth[logE],sum_flux_sky_map[logE],sum_flux_err_sky_map[logE],avg_energy,delta_energy)
     PlotSkyMap(fig,sum_flux_sky_map[logE],f'{source_name}_flux_sky_map_logE{logE}',roi_x=[],roi_y=[],roi_r=[])
     PlotSkyMap(fig,sum_bkgd_sky_map_smooth[logE],f'{source_name}_norm_sky_map_logE{logE}',roi_x=[],roi_y=[],roi_r=[],layer=0)
-    PlotSkyMap(fig,sum_bkgd_sky_map_smooth[logE],f'{source_name}_bkgd_sky_map_logE{logE}',roi_x=[],roi_y=[],roi_r=[],layer=3)
+    PlotSkyMap(fig,sum_bkgd_sky_map_smooth[logE],f'{source_name}_bkgd_sky_map_logE{logE}',roi_x=[],roi_y=[],roi_r=[],layer=1)
     PlotSkyMap(fig,sum_excess_sky_map_smooth[logE],f'{source_name}_excess_sky_map_logE{logE}',roi_x=[],roi_y=[],roi_r=[],layer=0)
     sum_flux_sky_map_allE.add(sum_flux_sky_map[logE])
     sum_flux_err_sky_map_allE.addSquare(sum_flux_err_sky_map[logE])
@@ -277,4 +300,81 @@ PlotSkyMap(fig,sum_excess_sky_map_allE,f'{source_name}_excess_sky_map_allE',roi_
 
 print (f'total_exposure = {total_exposure}')
 
+fig.clf()
+axbig = fig.add_subplot()
+label_x = 'CR chi2'
+label_y = 'SR chi2'
+axbig.set_xlabel(label_x)
+axbig.set_ylabel(label_y)
+for entry in range(0,len(total_list_sr_chi2)):
+    axbig.scatter(total_list_cr_chi2[entry],total_list_sr_chi2[entry],color='b',alpha=0.5)
+fig.savefig(f'output_plots/{source_name}_crsr_chi2.png',bbox_inches='tight')
+axbig.remove()
+
+fig.clf()
+axbig = fig.add_subplot()
+label_x = 'Run elevation'
+label_y = 'SR chi2'
+axbig.set_xlabel(label_x)
+axbig.set_ylabel(label_y)
+for entry in range(0,len(total_list_sr_chi2)):
+    axbig.scatter(total_list_run_elev[entry],total_list_sr_chi2[entry],color='b',alpha=0.5)
+fig.savefig(f'output_plots/{source_name}_elev_sr_chi2.png',bbox_inches='tight')
+axbig.remove()
+
+fig.clf()
+axbig = fig.add_subplot()
+label_x = 'Run azimuth'
+label_y = 'SR chi2'
+axbig.set_xlabel(label_x)
+axbig.set_ylabel(label_y)
+for entry in range(0,len(total_list_sr_chi2)):
+    axbig.scatter(total_list_run_azim[entry],total_list_sr_chi2[entry],color='b',alpha=0.5)
+fig.savefig(f'output_plots/{source_name}_azim_sr_chi2.png',bbox_inches='tight')
+axbig.remove()
+
+fig.clf()
+axbig = fig.add_subplot()
+label_x = 'elevation'
+label_y = 'azimuth'
+axbig.set_xlabel(label_x)
+axbig.set_ylabel(label_y)
+for entry in range(0,len(total_list_run_elev)):
+    axbig.scatter(total_list_run_elev[entry],total_list_run_azim[entry],color='b',alpha=0.5)
+fig.savefig(f'output_plots/{source_name}_elevazim.png',bbox_inches='tight')
+axbig.remove()
+
+fig.clf()
+axbig = fig.add_subplot()
+label_x = 'elevation'
+axbig.set_xlabel(label_x)
+axbig.hist(total_list_run_elev, bins=20)
+fig.savefig(f'output_plots/{source_name}_elev.png',bbox_inches='tight')
+axbig.remove()
+
+for par1 in range(0,matrix_rank):
+    for par2 in range(par1+1,matrix_rank):
+        fig.clf()
+        axbig = fig.add_subplot()
+        label_x = 'c%s'%(par1)
+        label_y = 'c%s'%(par2)
+        axbig.set_xlabel(label_x)
+        axbig.set_ylabel(label_y)
+        for entry in range(0,len(total_list_truth_params)):
+            axbig.scatter(total_list_truth_params[entry][par1],total_list_truth_params[entry][par2],color='b',alpha=0.5)
+            axbig.scatter(total_list_fit_params[entry][par1],total_list_fit_params[entry][par2],color='r',alpha=0.5)
+        fig.savefig(f'output_plots/{source_name}_truth_params_c{par1}_c{par2}.png',bbox_inches='tight')
+        axbig.remove()
+
+for par1 in range(0,matrix_rank):
+    fig.clf()
+    axbig = fig.add_subplot()
+    label_x = 'truth'
+    label_y = 'fit'
+    axbig.set_xlabel(label_x)
+    axbig.set_ylabel(label_y)
+    for entry in range(0,len(total_list_truth_params)):
+        axbig.scatter(total_list_truth_params[entry][par1],total_list_fit_params[entry][par1],color='b',alpha=0.5)
+    fig.savefig(f'output_plots/{source_name}_truth_fit_params_c{par1}.png',bbox_inches='tight')
+    axbig.remove()
 

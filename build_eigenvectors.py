@@ -44,7 +44,8 @@ label_x = 'Rank'
 label_y = 'Signular value'
 axbig.set_xlabel(label_x)
 axbig.set_ylabel(label_y)
-axbig.set_xlim(0,10)
+axbig.set_xlim(0,20)
+axbig.set_yscale('log')
 axbig.plot(S_full)
 fig.savefig(f'{smi_dir}/output_plots/signularvalue_{source_name}_{input_epoch}.png',bbox_inches='tight')
 axbig.remove()

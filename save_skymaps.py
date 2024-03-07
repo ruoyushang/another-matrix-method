@@ -60,6 +60,10 @@ ysky_end = src_dec+skymap_size
 exposure_hours = 0.
 list_run_elev = []
 list_run_azim = []
+list_truth_params = []
+list_fit_params = []
+list_sr_chi2 = []
+list_cr_chi2 = []
 
 data_sky_map = []
 bkgd_sky_map = []
@@ -74,9 +78,19 @@ for run in range(0,total_runs):
     run_exposure_hours = run_info[0]
     run_elev = run_info[1]
     run_azim = run_info[2]
+    truth_params = run_info[3]
+    fit_params = run_info[4]
+    sr_chi2 = run_info[5]
+    cr_chi2 = run_info[6]
+    if run_exposure_hours==0.: continue
+    if run_elev<55.: continue
     exposure_hours += run_exposure_hours
     list_run_elev += [run_elev]
     list_run_azim += [run_azim]
+    list_truth_params += [truth_params]
+    list_fit_params += [fit_params]
+    list_sr_chi2 += [sr_chi2]
+    list_cr_chi2 += [cr_chi2]
     for logE in range(0,logE_bins):
         data_xyoff_map[logE].add(run_data_xyoff_map[logE])
         fit_xyoff_map[logE].add(run_fit_xyoff_map[logE])
@@ -86,6 +100,7 @@ for run in range(0,total_runs):
                 bkg1 = run_all_sky_map[logE].waxis[idx_x,idx_y,1]
                 bkg2 = run_all_sky_map[logE].waxis[idx_x,idx_y,2]
                 bkg3 = run_all_sky_map[logE].waxis[idx_x,idx_y,3]
+                #bkgd = bkg1
                 bkgd = (bkg1/3.+bkg2/3.+bkg3/3.)
                 data_sky_map[logE].waxis[idx_x,idx_y,0] += data
                 bkgd_sky_map[logE].waxis[idx_x,idx_y,0] += bkgd
@@ -93,7 +108,13 @@ for run in range(0,total_runs):
                 bkgd_sky_map[logE].waxis[idx_x,idx_y,2] += bkg2
                 bkgd_sky_map[logE].waxis[idx_x,idx_y,3] += bkg3
 
-    all_skymaps = [[exposure_hours, list_run_elev, list_run_azim], data_sky_map, bkgd_sky_map, data_xyoff_map, fit_xyoff_map]
+    print ('=================================================================================')
+    for logE in range(0,logE_bins):
+        data_sum = np.sum(data_sky_map[logE].waxis[:,:,0])
+        bkgd_sum = np.sum(bkgd_sky_map[logE].waxis[:,:,0])
+        print (f'logE = {logE}, data_sum = {data_sum}, bkgd_sum = {bkgd_sum}')
+
+    all_skymaps = [[exposure_hours, list_run_elev, list_run_azim, list_truth_params, list_fit_params, list_sr_chi2, list_cr_chi2], data_sky_map, bkgd_sky_map, data_xyoff_map, fit_xyoff_map]
     output_filename = f'{smi_output}/skymaps_{source_name}_{input_epoch}.pkl'
     with open(output_filename,"wb") as file:
         pickle.dump(all_skymaps, file)
