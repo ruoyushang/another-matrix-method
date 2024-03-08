@@ -9,7 +9,7 @@ from common_functions import MyArray3D
 
 import common_functions
 
-logE_bins = common_functions.logE_bins
+logE_nbins = common_functions.logE_nbins
 gcut_bins = common_functions.gcut_bins
 xoff_bins = common_functions.xoff_bins
 yoff_bins = common_functions.yoff_bins
@@ -40,11 +40,12 @@ input_epoch = sys.argv[4] # 'V4', 'V5' or 'V6'
 
 path_to_eigenvector = f'{smi_output}/eigenvectors_{source_name}_{input_epoch}.pkl'
 print (f'path_to_eigenvector = {path_to_eigenvector}')
+path_to_eigenvector_ctl = f'{smi_output}/eigenvectors_ctl_{source_name}_{input_epoch}.pkl'
 
 
 data_xyoff_map = []
 fit_xyoff_map = []
-for logE in range(0,logE_bins):
+for logE in range(0,logE_nbins):
     data_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
     fit_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
 
@@ -67,14 +68,14 @@ list_cr_chi2 = []
 
 data_sky_map = []
 bkgd_sky_map = []
-for logE in range(0,logE_bins):
+for logE in range(0,logE_nbins):
     data_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
     bkgd_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
 
 
 total_runs = len(on_runlist)
 for run in range(0,total_runs):
-    run_info, run_all_sky_map, run_data_xyoff_map, run_fit_xyoff_map = build_skymap(smi_input,path_to_eigenvector,[on_runlist[run]],src_ra,src_dec)
+    run_info, run_all_sky_map, run_data_xyoff_map, run_fit_xyoff_map = build_skymap(smi_input,path_to_eigenvector,path_to_eigenvector_ctl,[on_runlist[run]],src_ra,src_dec)
     run_exposure_hours = run_info[0]
     run_elev = run_info[1]
     run_azim = run_info[2]
@@ -91,28 +92,25 @@ for run in range(0,total_runs):
     list_fit_params += [fit_params]
     list_sr_chi2 += [sr_chi2]
     list_cr_chi2 += [cr_chi2]
-    for logE in range(0,logE_bins):
+    for logE in range(0,logE_nbins):
         data_xyoff_map[logE].add(run_data_xyoff_map[logE])
         fit_xyoff_map[logE].add(run_fit_xyoff_map[logE])
         for idx_x in range(0,skymap_bins):
             for idx_y in range(0,skymap_bins):
                 data = run_all_sky_map[logE].waxis[idx_x,idx_y,0]
-                bkg1 = run_all_sky_map[logE].waxis[idx_x,idx_y,1]
-                bkg2 = run_all_sky_map[logE].waxis[idx_x,idx_y,2]
-                bkg3 = run_all_sky_map[logE].waxis[idx_x,idx_y,3]
-                #bkgd = bkg1
-                bkgd = (bkg1/3.+bkg2/3.+bkg3/3.)
                 data_sky_map[logE].waxis[idx_x,idx_y,0] += data
+                bkgd = 0.
+                for gcut in range(1,gcut_bins):
+                    bkgd += 1./float(gcut_bins-1)*run_all_sky_map[logE].waxis[idx_x,idx_y,gcut]
                 bkgd_sky_map[logE].waxis[idx_x,idx_y,0] += bkgd
-                bkgd_sky_map[logE].waxis[idx_x,idx_y,1] += bkg1
-                bkgd_sky_map[logE].waxis[idx_x,idx_y,2] += bkg2
-                bkgd_sky_map[logE].waxis[idx_x,idx_y,3] += bkg3
+                for gcut in range(1,gcut_bins):
+                    bkgd_sky_map[logE].waxis[idx_x,idx_y,gcut] += run_all_sky_map[logE].waxis[idx_x,idx_y,gcut]
 
     print ('=================================================================================')
-    for logE in range(0,logE_bins):
+    for logE in range(0,logE_nbins):
         data_sum = np.sum(data_sky_map[logE].waxis[:,:,0])
         bkgd_sum = np.sum(bkgd_sky_map[logE].waxis[:,:,0])
-        print (f'logE = {logE}, data_sum = {data_sum}, bkgd_sum = {bkgd_sum}')
+        print (f'logE = {logE}, data_sum = {data_sum}, bkgd_sum = {bkgd_sum:0.1f}')
 
     all_skymaps = [[exposure_hours, list_run_elev, list_run_azim, list_truth_params, list_fit_params, list_sr_chi2, list_cr_chi2], data_sky_map, bkgd_sky_map, data_xyoff_map, fit_xyoff_map]
     output_filename = f'{smi_output}/skymaps_{source_name}_{input_epoch}.pkl'

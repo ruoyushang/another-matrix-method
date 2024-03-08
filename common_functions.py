@@ -16,20 +16,20 @@ max_Rcore = 400.
 min_Rcore = 0.
 min_Energy_cut = 0.2
 max_Energy_cut = 10.0
-MSCW_cut = 0.7
-MSCL_cut = 0.5
+MSCW_cut = 0.6
+MSCL_cut = 0.6
 MVA_cut = 0.5
 
 xoff_start = -2.
 xoff_end = 2.
 yoff_start = -2.
 yoff_end = 2.
-gcut_bins = 5
+gcut_bins = 2
 gcut_start = 0
 gcut_end = gcut_bins
-logE_bins = 7
-logE_start = -1.+0.25
-logE_end = 1.
+
+logE_bins = [-0.75,-0.625,-0.50,-0.375,-0.25,0.00,0.25,0.50,0.75,1.0] # logE TeV
+logE_nbins = len(logE_bins)-1
 
 
 #doFluxCalibration = True
@@ -37,10 +37,10 @@ doFluxCalibration = False
 calibration_radius = 0.15 # need to be larger than the PSF and smaller than the integration radius
 
 logE_min = 0
-logE_max = 6
+logE_max = logE_nbins
 #matrix_rank = 2
-matrix_rank = 6
-xoff_bins = [7,7,5,5,3,3,1]
+matrix_rank = 3
+xoff_bins = [7,7,7,5,5,5,3,3,1]
 yoff_bins = xoff_bins
 
 #chi2_cut = 0.03
@@ -153,18 +153,15 @@ class MyArray3D:
         for idx_x in range(0,len(self.xaxis)-1):
             if abs(self.xaxis[idx_x]-value_x)<=abs(self.delta_x) and abs(self.xaxis[idx_x+1]-value_x)<abs(self.delta_x):
                 key_idx_x = idx_x
+                break
         for idx_y in range(0,len(self.yaxis)-1):
             if abs(self.yaxis[idx_y]-value_y)<=abs(self.delta_y) and abs(self.yaxis[idx_y+1]-value_y)<abs(self.delta_y):
                 key_idx_y = idx_y
+                break
         for idx_z in range(0,len(self.zaxis)-1):
             if abs(self.zaxis[idx_z]-value_z)<=abs(self.delta_z) and abs(self.zaxis[idx_z+1]-value_z)<abs(self.delta_z):
                 key_idx_z = idx_z
-        #if value_x>self.xaxis.max():
-        #    key_idx_x = len(self.xaxis)-2
-        #if value_y>self.yaxis.max():
-        #    key_idx_y = len(self.yaxis)-2
-        #if value_z>self.zaxis.max():
-        #    key_idx_z = len(self.zaxis)-2
+                break
         return [key_idx_x,key_idx_y,key_idx_z]
 
     def fill(self, value_x, value_y, value_z, weight=1.):
@@ -181,15 +178,6 @@ class MyArray3D:
         if key_idx_z==-1: 
             key_idx_z = 0
             weight = 0.
-        #if key_idx_x==len(self.xaxis): 
-        #    key_idx_x = len(self.xaxis)-2
-        #    if not self.overflow: weight = 0.
-        #if key_idx_y==len(self.yaxis): 
-        #    key_idx_y = len(self.yaxis)-2
-        #    if not self.overflow: weight = 0.
-        #if key_idx_z==len(self.zaxis): 
-        #    key_idx_z = len(self.zaxis)-2
-        #    if not self.overflow: weight = 0.
         self.waxis[key_idx_x,key_idx_y,key_idx_z] += 1.*weight
     
     def divide(self, add_array):
@@ -225,14 +213,24 @@ class MyArray3D:
 
 class MyArray1D:
 
-    def __init__(self,x_bins=10,start_x=0.,end_x=10.,overflow=False):
-        array_shape = (x_bins)
-        self.delta_x = (end_x-start_x)/float(x_bins)
-        self.xaxis = np.zeros(array_shape+1)
-        self.waxis = np.zeros(array_shape)
-        self.overflow = overflow
-        for idx in range(0,len(self.xaxis)):
-            self.xaxis[idx] = start_x + idx*self.delta_x
+    def __init__(self,x_nbins=10,start_x=0.,end_x=10.,x_bins=[],overflow=False):
+        if len(x_bins)==0:
+            array_shape = (x_nbins)
+            self.delta_x = np.empty(x_nbins+1)
+            self.delta_x.fill((end_x-start_x)/float(x_nbins))
+            self.xaxis = np.zeros(array_shape+1)
+            self.waxis = np.zeros(array_shape)
+            self.overflow = overflow
+            for idx in range(0,len(self.xaxis)):
+                self.xaxis[idx] = start_x + idx*self.delta_x[idx]
+        else:
+            self.xaxis = np.array(x_bins)
+            self.waxis = np.zeros(len(x_bins)-1)
+            self.overflow = overflow
+            self.delta_x = np.empty(len(x_bins))
+            for idx in range(0,len(self.xaxis)-1):
+                self.delta_x[idx] = self.xaxis[idx+1] - self.xaxis[idx]
+            self.delta_x[len(self.xaxis)-1] = self.delta_x[len(self.xaxis)-2]
 
     def reset(self):
         for idx_x in range(0,len(self.xaxis)-1):
@@ -244,21 +242,19 @@ class MyArray1D:
 
     def get_bin(self, value_x):
         key_idx_x = -1
-        for idx_x in range(0,len(self.xaxis)-1):
-            if abs(self.xaxis[idx_x]-value_x)<=abs(self.delta_x) and abs(self.xaxis[idx_x+1]-value_x)<abs(self.delta_x):
+        for idx_x in range(0,len(self.xaxis)):
+            if (value_x-self.xaxis[idx_x])<self.delta_x[idx_x]:
                 key_idx_x = idx_x
+                break
         if value_x>self.xaxis.max():
-            key_idx_x = len(self.xaxis)-2
+            key_idx_x = -1
         return key_idx_x
 
     def fill(self, value_x, weight=1.):
         key_idx = self.get_bin(value_x)
         if key_idx==-1: 
             key_idx = 0
-            if not self.overflow: weight = 0.
-        if key_idx==len(self.xaxis): 
-            key_idx = len(self.xaxis)-2
-            if not self.overflow: weight = 0.
+            weight = 0.
         self.waxis[key_idx] += 1.*weight
     
     def divide(self, add_array):
@@ -269,7 +265,7 @@ class MyArray1D:
                 self.waxis[idx_x] = self.waxis[idx_x]/add_array.waxis[idx_x]
 
     def get_bin_center(self, idx_x):
-        return self.xaxis[idx_x]+0.5*self.delta_x
+        return self.xaxis[idx_x]+0.5*self.delta_x[idx_x]
 
     def get_bin_content(self, value_x):
         key_idx = self.get_bin(value_x)
@@ -279,7 +275,7 @@ class MyArray1D:
             key_idx = len(self.xaxis)-2
         return self.waxis[key_idx]
 
-logE_axis = MyArray1D(x_bins=logE_bins,start_x=logE_start,end_x=logE_end)
+logE_axis = MyArray1D(x_bins=logE_bins)
 
 def GetGammaSources(tele_point_ra, tele_point_dec):
 
@@ -293,7 +289,7 @@ def GetGammaSources(tele_point_ra, tele_point_dec):
         star_dec = float(line_split[1])
         distance = pow(pow(star_ra-tele_point_ra,2)+pow(star_dec-tele_point_dec,2),0.5)
         if distance>2.: continue
-        print (f'{line_split}')
+        #print (f'{line_split}')
         bright_stars_coord += [[star_ra,star_dec]]
     print (f'Found {len(bright_stars_coord)} Gamma-ray sources.')
     return bright_stars_coord
@@ -314,7 +310,7 @@ def GetBrightStars(tele_point_ra, tele_point_dec):
         star_brightness = float(line_split[3]) + float(line_split[4])
         distance = pow(pow(star_ra-tele_point_ra,2)+pow(star_dec-tele_point_dec,2),0.5)
         if distance>2.: continue
-        print (f'{line_split}')
+        #print (f'{line_split}')
         if star_brightness<brightness_cut:
             bright_stars_coord += [[star_ra,star_dec]]
 
@@ -334,7 +330,7 @@ def CoincideWithBrightStars(ra, dec, bright_stars_coord):
     return isCoincident
 
 
-def build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_run=0):
+def build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_run=0,control_region=False):
 
     big_matrix = []
 
@@ -352,7 +348,7 @@ def build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_
         run_count += 1
     
         xyoff_map = []
-        for logE in range(0,logE_bins):
+        for logE in range(0,logE_nbins):
             xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
     
         InputFile = ROOT.TFile(rootfile_name)
@@ -390,7 +386,7 @@ def build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_
             Rcore = pow(Xcore*Xcore+Ycore*Ycore,0.5)
             logE = logE_axis.get_bin(np.log10(Energy))
             if logE<0: continue
-            if logE>len(xyoff_map): continue
+            if logE>=len(xyoff_map): continue
             if NImages<min_NImages: continue
             if EmissionHeight>max_EmissionHeight_cut: continue
             if EmissionHeight<min_EmissionHeight_cut: continue
@@ -398,13 +394,17 @@ def build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_
             if Rcore>max_Rcore: continue
             if Energy<min_Energy_cut: continue
             if Energy>max_Energy_cut: continue
-            if MSCL>1.0: continue
+            if not control_region:
+                if MSCL>1.0: continue
+            else:
+                if MSCL<1.0: continue
+                if MSCL>2.0: continue
             if GammaCut>float(gcut_end): continue
 
             Xsky = TelRAJ2000 + Xderot
             Ysky = TelDecJ2000 + Yderot
             mirror_Xsky = TelRAJ2000 - Xderot
-            mirror_Ysky = TelDecJ2000 - Yderot
+            mirror_Ysky = TelDecJ2000 + Yderot
             found_bright_star = CoincideWithBrightStars(Xsky, Ysky, bright_star_coord)
             found_gamma_source = CoincideWithBrightStars(Xsky, Ysky, gamma_source_coord)
             found_mirror_star = CoincideWithBrightStars(mirror_Xsky, mirror_Ysky, bright_star_coord)
@@ -414,13 +414,13 @@ def build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_
                 if found_bright_star: continue
                 if found_gamma_source: continue
                 if found_mirror_star or found_mirror_gamma_source:
-                    xyoff_map[logE].fill(-Xoff,-Yoff,GammaCut)
+                    xyoff_map[logE].fill(-Xoff,Yoff,GammaCut)
 
             xyoff_map[logE].fill(Xoff,Yoff,GammaCut)
     
         xyoff_map_1d = []
         for gcut in range(0,gcut_bins):
-            for logE in range(0,logE_bins):
+            for logE in range(0,logE_nbins):
                 for idx_x in range(0,xoff_bins[logE]):
                     for idx_y in range(0,yoff_bins[logE]):
                         xyoff_map_1d += [xyoff_map[logE].waxis[idx_x,idx_y,gcut]]
@@ -431,7 +431,7 @@ def build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_
 
     return big_matrix
 
-def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10):
+def build_skymap(smi_input,eigenvector_path,eigenvector_ctl_path,runlist,src_ra,src_dec,max_runs=1e10):
 
     # start memory profiling
     tracemalloc.start()
@@ -446,20 +446,26 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
     print ('loading svd pickle data... ')
     input_filename = eigenvector_path
     big_eigenvectors = pickle.load(open(input_filename, "rb"))
+    input_filename = eigenvector_ctl_path
+    big_eigenvectors_ctl = pickle.load(open(input_filename, "rb"))
 
     exposure_hours = 0.
     avg_tel_elev = 0.
     avg_tel_azim = 0.
     all_sky_map = []
-    for logE in range(0,logE_bins):
+    for logE in range(0,logE_nbins):
         all_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
 
     data_xyoff_map = []
     fit_xyoff_map = []
+    data_xyoff_map_ctl = []
+    fit_xyoff_map_ctl = []
     ratio_xyoff_map = []
-    for logE in range(0,logE_bins):
+    for logE in range(0,logE_nbins):
         data_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
         fit_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+        data_xyoff_map_ctl += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+        fit_xyoff_map_ctl += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
         ratio_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
 
     truth_params = [1e-3] * matrix_rank
@@ -484,28 +490,46 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
     
         print ('build big matrix...')
         big_on_matrix = build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_run=run_number)
+        big_on_matrix_ctl = build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_run=run_number,control_region=True)
         
 
-        for logE in range(0,logE_bins):
+        for logE in range(0,logE_nbins):
             data_xyoff_map[logE].reset()
             fit_xyoff_map[logE].reset()
+            data_xyoff_map_ctl[logE].reset()
+            fit_xyoff_map_ctl[logE].reset()
             ratio_xyoff_map[logE].reset()
 
         print ('fitting xyoff maps...')
+
         data_xyoff_map_1d = np.array(big_on_matrix[0])
         print (f'data_xyoff_map_1d.shape = {data_xyoff_map_1d.shape}')
-        init_params = [1e-3] * matrix_rank
-        stepsize = [1e-3] * matrix_rank
+        init_params = [1e-4] * matrix_rank
+        stepsize = [1e-4] * matrix_rank
         solution = minimize(
             cosmic_ray_like_chi2,
             x0=init_params,
             args=(big_eigenvectors,data_xyoff_map_1d),
             method='L-BFGS-B',
             jac=None,
-            options={'eps':stepsize,'ftol':0.001},
+            options={'eps':stepsize,'ftol':0.0001},
         )
         fit_params = solution['x']
         fit_xyoff_map_1d = big_eigenvectors.T @ fit_params
+
+        data_xyoff_map_1d_ctl = np.array(big_on_matrix_ctl[0])
+        init_params = [1e-4] * matrix_rank
+        stepsize = [1e-4] * matrix_rank
+        solution = minimize(
+            cosmic_ray_like_chi2,
+            x0=init_params,
+            args=(big_eigenvectors_ctl,data_xyoff_map_1d_ctl),
+            method='L-BFGS-B',
+            jac=None,
+            options={'eps':stepsize,'ftol':0.0001},
+        )
+        fit_params_ctl = solution['x']
+        fit_xyoff_map_1d_ctl = big_eigenvectors_ctl.T @ fit_params_ctl
 
         truth_params = big_eigenvectors @ data_xyoff_map_1d
 
@@ -527,22 +551,32 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
 
         idx_1d = 0
         for gcut in range(0,gcut_bins):
-            for logE in range(0,logE_bins):
+            for logE in range(0,logE_nbins):
                 for idx_x in range(0,xoff_bins[logE]):
                     for idx_y in range(0,yoff_bins[logE]):
                         idx_1d += 1
                         data_xyoff_map[logE].waxis[idx_x,idx_y,gcut] += data_xyoff_map_1d[idx_1d-1]
                         fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] += fit_xyoff_map_1d[idx_1d-1]
+                        data_xyoff_map_ctl[logE].waxis[idx_x,idx_y,gcut] += data_xyoff_map_1d_ctl[idx_1d-1]
+                        fit_xyoff_map_ctl[logE].waxis[idx_x,idx_y,gcut] += fit_xyoff_map_1d_ctl[idx_1d-1]
 
+        print (f'==============================================================')
         for gcut in range(0,gcut_bins):
-            for logE in range(0,logE_bins):
+            for logE in range(0,logE_nbins):
+                data_sum = np.sum(data_xyoff_map[logE].waxis[:,:,gcut])
+                fit_sum = np.sum(fit_xyoff_map[logE].waxis[:,:,gcut])
+                #data_ctl_sum = np.sum(data_xyoff_map_ctl[logE].waxis[:,:,0])
+                #fit_ctl_sum = np.sum(fit_xyoff_map_ctl[logE].waxis[:,:,0])
+                print (f'gcut = {gcut}, logE = {logE}, data_sum = {data_sum}, fit_sum = {fit_sum:0.1f}')
+                #if data_ctl_sum==0.: continue
+                #ctl_correction = fit_ctl_sum/data_ctl_sum
                 for idx_x in range(0,xoff_bins[logE]):
                     for idx_y in range(0,yoff_bins[logE]):
                         if fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut]==0.: continue
                         ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = fit_xyoff_map[logE].waxis[idx_x,idx_y,0]/fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
 
-        for gcut in range(0,gcut_bins):
-            for logE in range(0,logE_bins):
+        for gcut in range(1,gcut_bins):
+            for logE in range(0,logE_nbins):
 
                 if xoff_bins[logE]==1: continue
                 if yoff_bins[logE]==1: continue
@@ -614,7 +648,7 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
             Rcore = pow(Xcore*Xcore+Ycore*Ycore,0.5)
             logE = logE_axis.get_bin(np.log10(Energy))
             if logE<0: continue
-            if logE>len(all_sky_map): continue
+            if logE>=len(all_sky_map): continue
             if NImages<min_NImages: continue
             if EmissionHeight>max_EmissionHeight_cut: continue
             if EmissionHeight<min_EmissionHeight_cut: continue
@@ -636,11 +670,6 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
     
         print(f'memory usage (current,peak) = {tracemalloc.get_traced_memory()}')
 
-        for logE in range(0,logE_bins):
-            data_sum = np.sum(all_sky_map[logE].waxis[:,:,0])
-            bkgd_sum = np.sum(all_sky_map[logE].waxis[:,:,1])
-            print (f'logE = {logE}, data_sum = {data_sum}, bkgd_sum = {bkgd_sum}')
-
         InputFile.Close()
   
     tracemalloc.stop()
@@ -659,7 +688,7 @@ def cosmic_ray_like_chi2(try_params,eigenvectors,xyoff_map,is_blind=True):
     chi2 = 0.
     idx_1d = 0
     for gcut in range(0,gcut_bins):
-        for logE in range(0,logE_bins):
+        for logE in range(0,logE_nbins):
             for idx_x in range(0,xoff_bins[logE]):
                 for idx_y in range(0,yoff_bins[logE]):
                     idx_1d += 1
@@ -676,7 +705,7 @@ def cosmic_ray_like_count(xyoff_map,is_blind=True):
     count = 0.
     idx_1d = 0
     for gcut in range(0,gcut_bins):
-        for logE in range(0,logE_bins):
+        for logE in range(0,logE_nbins):
             for idx_x in range(0,xoff_bins[logE]):
                 for idx_y in range(0,yoff_bins[logE]):
                     idx_1d += 1
@@ -1102,7 +1131,7 @@ def GetFluxCalibration(energy):
     if doFluxCalibration:
         return 1.
 
-    str_flux_calibration = ['5.75e+00', '8.81e+00', '1.10e+01', '1.06e+01', '1.70e+01', '1.78e+01', '1.36e+01']
+    str_flux_calibration = ['5.75e+00', '8.81e+00', '1.10e+01', '1.06e+01', '1.70e+01', '1.78e+01', '1.36e+01', '1.36e+01', '1.36e+01']
 
     flux_calibration = []
     for string in str_flux_calibration:
@@ -1117,8 +1146,9 @@ def make_significance_map(data_sky_map,bkgd_sky_map,significance_sky_map,excess_
     for idx_x in range(0,skymap_bins):
         for idx_y in range(0,skymap_bins):
             data = data_sky_map.waxis[idx_x,idx_y,0]
-            #bkgd = bkgd_sky_map.waxis[idx_x,idx_y,1]
-            bkgd = 1./3.*(bkgd_sky_map.waxis[idx_x,idx_y,1]+bkgd_sky_map.waxis[idx_x,idx_y,2]+bkgd_sky_map.waxis[idx_x,idx_y,3])
+            bkgd = 0.
+            for gcut in range(1,gcut_bins):
+                bkgd += 1./float(gcut_bins-1)*bkgd_sky_map.waxis[idx_x,idx_y,gcut]
             data_err = pow(data,0.5)
             if data_err==0.: continue
             significance_sky_map.waxis[idx_x,idx_y,0] = (data-bkgd)/data_err
@@ -1139,8 +1169,9 @@ def make_flux_map(data_sky_map,bkgd_sky_map,flux_sky_map,flux_err_sky_map,avg_en
         for idx_y in range(0,skymap_bins):
             data = data_sky_map.waxis[idx_x,idx_y,0]
             norm = bkgd_sky_map.waxis[idx_x,idx_y,0]
-            #bkgd = bkgd_sky_map.waxis[idx_x,idx_y,1]
-            bkgd = 1./3.*(bkgd_sky_map.waxis[idx_x,idx_y,1]+bkgd_sky_map.waxis[idx_x,idx_y,2]+bkgd_sky_map.waxis[idx_x,idx_y,3])
+            bkgd = 0.
+            for gcut in range(1,gcut_bins):
+                bkgd += 1./float(gcut_bins-1)*bkgd_sky_map.waxis[idx_x,idx_y,gcut]
             if norm>0.:
                 excess = data-bkgd
                 error = pow(data,0.5)
@@ -1160,7 +1191,7 @@ def make_flux_map(data_sky_map,bkgd_sky_map,flux_sky_map,flux_err_sky_map,avg_en
 
 def GetRadialProfile(hist_flux_skymap,hist_error_skymap,roi_x,roi_y,roi_r):
 
-    radial_axis = MyArray1D(x_bins=15,start_x=0.,end_x=roi_r)
+    radial_axis = MyArray1D(x_nbins=15,start_x=0.,end_x=roi_r)
 
     radius_array = []
     brightness_array = []
@@ -1224,7 +1255,7 @@ def GetRegionSpectrum(hist_flux_skymap,hist_error_skymap,roi_x,roi_y,roi_r,excl_
     y_error = []
 
     binE_start = 0
-    binE_end = logE_bins
+    binE_end = logE_nbins
 
     for binE in range(binE_start,binE_end):
         flux_sum = 0.

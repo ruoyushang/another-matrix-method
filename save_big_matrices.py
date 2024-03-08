@@ -6,7 +6,7 @@ import pickle
 
 import common_functions
 
-logE_bins = common_functions.logE_bins
+logE_nbins = common_functions.logE_nbins
 matrix_rank = common_functions.matrix_rank
 ReadOffRunListFromFile = common_functions.ReadOffRunListFromFile
 ReadRunListFromFile = common_functions.ReadRunListFromFile
@@ -24,10 +24,15 @@ off_runlist = ReadOffRunListFromFile(f'/nevis/tehanu/home/ryshang/veritas_analys
 #off_runlist = ReadRunListFromFile(f'/nevis/tehanu/home/ryshang/veritas_analysis/another-matrix-method/output_vts_query/RunList_{source_name}_{input_epoch}.txt')
 print (off_runlist)
 big_off_matrix = build_big_camera_matrix(smi_input,off_runlist,max_runs=1e10,is_on=False)
+big_off_matrix_ctl = build_big_camera_matrix(smi_input,off_runlist,max_runs=1e10,is_on=False,control_region=True)
 
 output_filename = f'{smi_output}/big_off_matrix_{source_name}_{input_epoch}.pkl'
 with open(output_filename,"wb") as file:
     pickle.dump(big_off_matrix, file)
+
+output_filename = f'{smi_output}/big_off_matrix_ctl_{source_name}_{input_epoch}.pkl'
+with open(output_filename,"wb") as file:
+    pickle.dump(big_off_matrix_ctl, file)
 
 
 print ('Big matrices saved.')
