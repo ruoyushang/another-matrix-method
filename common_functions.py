@@ -431,7 +431,7 @@ def build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_
 
     return big_matrix
 
-def build_skymap(smi_input,eigenvector_path,eigenvector_ctl_path,runlist,src_ra,src_dec,max_runs=1e10):
+def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10,control_region=False):
 
     # start memory profiling
     tracemalloc.start()
@@ -446,8 +446,6 @@ def build_skymap(smi_input,eigenvector_path,eigenvector_ctl_path,runlist,src_ra,
     print ('loading svd pickle data... ')
     input_filename = eigenvector_path
     big_eigenvectors = pickle.load(open(input_filename, "rb"))
-    input_filename = eigenvector_ctl_path
-    big_eigenvectors_ctl = pickle.load(open(input_filename, "rb"))
 
     exposure_hours = 0.
     avg_tel_elev = 0.
@@ -458,14 +456,10 @@ def build_skymap(smi_input,eigenvector_path,eigenvector_ctl_path,runlist,src_ra,
 
     data_xyoff_map = []
     fit_xyoff_map = []
-    data_xyoff_map_ctl = []
-    fit_xyoff_map_ctl = []
     ratio_xyoff_map = []
     for logE in range(0,logE_nbins):
         data_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
         fit_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
-        data_xyoff_map_ctl += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
-        fit_xyoff_map_ctl += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
         ratio_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
 
     truth_params = [1e-3] * matrix_rank
@@ -489,15 +483,11 @@ def build_skymap(smi_input,eigenvector_path,eigenvector_ctl_path,runlist,src_ra,
         run_count += 1
     
         print ('build big matrix...')
-        big_on_matrix = build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_run=run_number)
-        big_on_matrix_ctl = build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_run=run_number,control_region=True)
-        
+        big_on_matrix = build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_run=run_number,control_region=control_region)
 
         for logE in range(0,logE_nbins):
             data_xyoff_map[logE].reset()
             fit_xyoff_map[logE].reset()
-            data_xyoff_map_ctl[logE].reset()
-            fit_xyoff_map_ctl[logE].reset()
             ratio_xyoff_map[logE].reset()
 
         print ('fitting xyoff maps...')
@@ -516,20 +506,6 @@ def build_skymap(smi_input,eigenvector_path,eigenvector_ctl_path,runlist,src_ra,
         )
         fit_params = solution['x']
         fit_xyoff_map_1d = big_eigenvectors.T @ fit_params
-
-        data_xyoff_map_1d_ctl = np.array(big_on_matrix_ctl[0])
-        init_params = [1e-4] * matrix_rank
-        stepsize = [1e-4] * matrix_rank
-        solution = minimize(
-            cosmic_ray_like_chi2,
-            x0=init_params,
-            args=(big_eigenvectors_ctl,data_xyoff_map_1d_ctl),
-            method='L-BFGS-B',
-            jac=None,
-            options={'eps':stepsize,'ftol':0.0001},
-        )
-        fit_params_ctl = solution['x']
-        fit_xyoff_map_1d_ctl = big_eigenvectors_ctl.T @ fit_params_ctl
 
         truth_params = big_eigenvectors @ data_xyoff_map_1d
 
@@ -557,19 +533,9 @@ def build_skymap(smi_input,eigenvector_path,eigenvector_ctl_path,runlist,src_ra,
                         idx_1d += 1
                         data_xyoff_map[logE].waxis[idx_x,idx_y,gcut] += data_xyoff_map_1d[idx_1d-1]
                         fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] += fit_xyoff_map_1d[idx_1d-1]
-                        data_xyoff_map_ctl[logE].waxis[idx_x,idx_y,gcut] += data_xyoff_map_1d_ctl[idx_1d-1]
-                        fit_xyoff_map_ctl[logE].waxis[idx_x,idx_y,gcut] += fit_xyoff_map_1d_ctl[idx_1d-1]
 
-        print (f'==============================================================')
         for gcut in range(0,gcut_bins):
             for logE in range(0,logE_nbins):
-                data_sum = np.sum(data_xyoff_map[logE].waxis[:,:,gcut])
-                fit_sum = np.sum(fit_xyoff_map[logE].waxis[:,:,gcut])
-                #data_ctl_sum = np.sum(data_xyoff_map_ctl[logE].waxis[:,:,0])
-                #fit_ctl_sum = np.sum(fit_xyoff_map_ctl[logE].waxis[:,:,0])
-                print (f'gcut = {gcut}, logE = {logE}, data_sum = {data_sum}, fit_sum = {fit_sum:0.1f}')
-                #if data_ctl_sum==0.: continue
-                #ctl_correction = fit_ctl_sum/data_ctl_sum
                 for idx_x in range(0,xoff_bins[logE]):
                     for idx_y in range(0,yoff_bins[logE]):
                         if fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut]==0.: continue
@@ -656,7 +622,11 @@ def build_skymap(smi_input,eigenvector_path,eigenvector_ctl_path,runlist,src_ra,
             if Rcore>max_Rcore: continue
             if Energy<min_Energy_cut: continue
             if Energy>max_Energy_cut: continue
-            if MSCL>1.0: continue
+            if not control_region:
+                if MSCL>1.0: continue
+            else:
+                if MSCL<1.0: continue
+                if MSCL>2.0: continue
             if GammaCut>float(gcut_end): continue
 
             Xsky = TelRAJ2000 + Xderot
