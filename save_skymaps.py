@@ -40,7 +40,7 @@ input_epoch = sys.argv[4] # 'V4', 'V5' or 'V6'
 
 path_to_eigenvector = f'{smi_output}/eigenvectors_{source_name}_{input_epoch}.pkl'
 print (f'path_to_eigenvector = {path_to_eigenvector}')
-path_to_eigenvector_ctl = f'{smi_output}/eigenvectors_ctl_{source_name}_{input_epoch}.pkl'
+#path_to_eigenvector_ctl = f'{smi_output}/eigenvectors_ctl_{source_name}_{input_epoch}.pkl'
 
 
 data_xyoff_map = []
@@ -81,7 +81,7 @@ total_runs = len(on_runlist)
 for run in range(0,total_runs):
 
     run_info, run_all_sky_map, run_data_xyoff_map, run_fit_xyoff_map = build_skymap(smi_input,path_to_eigenvector,[on_runlist[run]],src_ra,src_dec)
-    run_info_ctl, run_all_sky_map_ctl, run_data_xyoff_map_ctl, run_fit_xyoff_map_ctl = build_skymap(smi_input,path_to_eigenvector_ctl,[on_runlist[run]],src_ra,src_dec,control_region=True)
+    #run_info_ctl, run_all_sky_map_ctl, run_data_xyoff_map_ctl, run_fit_xyoff_map_ctl = build_skymap(smi_input,path_to_eigenvector_ctl,[on_runlist[run]],src_ra,src_dec,control_region=True)
 
     run_exposure_hours = run_info[0]
     run_elev = run_info[1]
@@ -103,8 +103,8 @@ for run in range(0,total_runs):
     for logE in range(0,logE_nbins):
         data_xyoff_map[logE].add(run_data_xyoff_map[logE])
         fit_xyoff_map[logE].add(run_fit_xyoff_map[logE])
-        data_xyoff_map_ctl[logE].add(run_data_xyoff_map_ctl[logE])
-        fit_xyoff_map_ctl[logE].add(run_fit_xyoff_map_ctl[logE])
+        #data_xyoff_map_ctl[logE].add(run_data_xyoff_map_ctl[logE])
+        #fit_xyoff_map_ctl[logE].add(run_fit_xyoff_map_ctl[logE])
 
         run_fit_xyoff_sum_sr = np.sum(run_fit_xyoff_map[logE].waxis[:,:,0])
         run_fit_sky_sum_sr = 0.
@@ -115,11 +115,11 @@ for run in range(0,total_runs):
         if run_fit_sky_sum_sr>0.:
             renormalization = run_fit_xyoff_sum_sr/run_fit_sky_sum_sr
 
-        run_data_xyoff_sum_ctl = np.sum(run_data_xyoff_map_ctl[logE].waxis[:,:,0])
-        run_fit_xyoff_sum_ctl = np.sum(run_fit_xyoff_map_ctl[logE].waxis[:,:,0])
+        #run_data_xyoff_sum_ctl = np.sum(run_data_xyoff_map_ctl[logE].waxis[:,:,0])
+        #run_fit_xyoff_sum_ctl = np.sum(run_fit_xyoff_map_ctl[logE].waxis[:,:,0])
         ctl_correction = 1.
-        if run_fit_xyoff_sum_ctl>0.:
-            ctl_correction = run_data_xyoff_sum_ctl/run_fit_xyoff_sum_ctl
+        #if run_fit_xyoff_sum_ctl>0.:
+        #    ctl_correction = run_data_xyoff_sum_ctl/run_fit_xyoff_sum_ctl
 
         for idx_x in range(0,skymap_bins):
             for idx_y in range(0,skymap_bins):
@@ -138,18 +138,21 @@ for run in range(0,total_runs):
                 for gcut in range(1,gcut_bins):
                     bkgd_sky_map[logE].waxis[idx_x,idx_y,gcut] += run_all_sky_map[logE].waxis[idx_x,idx_y,gcut]
 
+    print ('=================================================================================')
     for logE in range(0,logE_nbins):
-        print ('=================================================================================')
         print (f'logE = {logE}')
         data_sum = np.sum(data_sky_map[logE].waxis[:,:,0])
         bkgd_sum = np.sum(bkgd_sky_map[logE].waxis[:,:,0])
-        #print (f'Sky, data_sum = {data_sum}, bkgd_sum = {bkgd_sum:0.1f}')
-        data_sum = np.sum(data_xyoff_map[logE].waxis[:,:,0])
-        bkgd_sum = np.sum(fit_xyoff_map[logE].waxis[:,:,0])
-        print (f'SR , data_sum = {data_sum}, bkgd_sum = {bkgd_sum:0.1f}')
-        data_sum = np.sum(data_xyoff_map_ctl[logE].waxis[:,:,0])
-        bkgd_sum = np.sum(fit_xyoff_map_ctl[logE].waxis[:,:,0])
-        print (f'CR , data_sum = {data_sum}, bkgd_sum = {bkgd_sum:0.1f}')
+        error = 0.
+        if data_sum>0.:
+            error = 100.*(data_sum-bkgd_sum)/data_sum
+        print (f'Sky, data_sum = {data_sum}, bkgd_sum = {bkgd_sum:0.1f}, error = {error:0.1f} %')
+        #data_sum = np.sum(data_xyoff_map[logE].waxis[:,:,0])
+        #bkgd_sum = np.sum(fit_xyoff_map[logE].waxis[:,:,0])
+        #print (f'SR , data_sum = {data_sum}, bkgd_sum = {bkgd_sum:0.1f}')
+        #data_sum = np.sum(data_xyoff_map_ctl[logE].waxis[:,:,0])
+        #bkgd_sum = np.sum(fit_xyoff_map_ctl[logE].waxis[:,:,0])
+        #print (f'CR , data_sum = {data_sum}, bkgd_sum = {bkgd_sum:0.1f}')
 
     all_skymaps = [[exposure_hours, list_run_elev, list_run_azim, list_truth_params, list_fit_params, list_sr_chi2, list_cr_chi2], data_sky_map, bkgd_sky_map, data_xyoff_map, fit_xyoff_map]
     output_filename = f'{smi_output}/skymaps_{source_name}_{input_epoch}.pkl'

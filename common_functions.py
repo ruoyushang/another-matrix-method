@@ -24,7 +24,7 @@ xoff_start = -2.
 xoff_end = 2.
 yoff_start = -2.
 yoff_end = 2.
-gcut_bins = 2
+gcut_bins = 4
 gcut_start = 0
 gcut_end = gcut_bins
 
@@ -38,9 +38,9 @@ calibration_radius = 0.15 # need to be larger than the PSF and smaller than the 
 
 logE_min = 0
 logE_max = logE_nbins
-#matrix_rank = 2
-matrix_rank = 3
-xoff_bins = [7,7,7,5,5,5,3,3,1]
+matrix_rank = 15
+#xoff_bins = [7,7,7,5,5,5,3,3,1]
+xoff_bins = [5,5,5,3,3,3,1,1,1]
 yoff_bins = xoff_bins
 
 #chi2_cut = 0.03
@@ -494,7 +494,11 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
 
         data_xyoff_map_1d = np.array(big_on_matrix[0])
         print (f'data_xyoff_map_1d.shape = {data_xyoff_map_1d.shape}')
-        init_params = [1e-4] * matrix_rank
+        truth_params = big_eigenvectors @ data_xyoff_map_1d
+        truth_xyoff_map_1d = big_eigenvectors.T @ truth_params
+
+        #init_params = [10.] * matrix_rank
+        init_params = truth_params
         stepsize = [1e-4] * matrix_rank
         solution = minimize(
             cosmic_ray_like_chi2,
@@ -507,12 +511,11 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
         fit_params = solution['x']
         fit_xyoff_map_1d = big_eigenvectors.T @ fit_params
 
-        truth_params = big_eigenvectors @ data_xyoff_map_1d
+        print (f'truth_params = {truth_params}')
+        print (f'fit_params   = {fit_params}')
 
         cr_chi2 = cosmic_ray_like_chi2(fit_params,big_eigenvectors,data_xyoff_map_1d)
         sr_chi2 = cosmic_ray_like_chi2(fit_params,big_eigenvectors,data_xyoff_map_1d,is_blind=False)
-        #cr_count = cosmic_ray_like_count(data_xyoff_map_1d)
-        #sr_count = cosmic_ray_like_count(data_xyoff_map_1d,is_blind=False)
         #if cr_count>0.:
         #    cr_chi2 = pow(cr_chi2,0.5)/cr_count
         #else:
@@ -528,11 +531,20 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
         idx_1d = 0
         for gcut in range(0,gcut_bins):
             for logE in range(0,logE_nbins):
+                cr_data_count = cosmic_ray_like_count(data_xyoff_map_1d,logE_select=logE)
+                sr_data_count = cosmic_ray_like_count(data_xyoff_map_1d,is_blind=False,logE_select=logE)
+                cr_truth_count = cosmic_ray_like_count(truth_xyoff_map_1d,logE_select=logE)
+                sr_truth_count = cosmic_ray_like_count(truth_xyoff_map_1d,is_blind=False,logE_select=logE)
+                cr_fit_count = cosmic_ray_like_count(fit_xyoff_map_1d,logE_select=logE)
+                sr_fit_count = cosmic_ray_like_count(fit_xyoff_map_1d,is_blind=False,logE_select=logE)
+                bias_fit = 1.
+                #if cr_fit_count>0.: 
+                #    bias_fit = cr_data_count/cr_fit_count
                 for idx_x in range(0,xoff_bins[logE]):
                     for idx_y in range(0,yoff_bins[logE]):
                         idx_1d += 1
                         data_xyoff_map[logE].waxis[idx_x,idx_y,gcut] += data_xyoff_map_1d[idx_1d-1]
-                        fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] += fit_xyoff_map_1d[idx_1d-1]
+                        fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] += fit_xyoff_map_1d[idx_1d-1] * bias_fit
 
         for gcut in range(0,gcut_bins):
             for logE in range(0,logE_nbins):
@@ -655,7 +667,7 @@ def cosmic_ray_like_chi2(try_params,eigenvectors,xyoff_map,is_blind=True):
     try_params = np.array(try_params)
     try_xyoff_map = eigenvectors.T @ try_params
 
-    chi2 = 0.
+    sum_log_likelihood = 0.
     idx_1d = 0
     for gcut in range(0,gcut_bins):
         for logE in range(0,logE_nbins):
@@ -663,14 +675,25 @@ def cosmic_ray_like_chi2(try_params,eigenvectors,xyoff_map,is_blind=True):
                 for idx_y in range(0,yoff_bins[logE]):
                     idx_1d += 1
                     if is_blind and gcut==0: continue
-                    if not is_blind and gcut!=0: continue
+
                     #stat_err = max(1.,pow(xyoff_map[idx_1d-1],0.5))
-                    stat_err = 1.
-                    chi2 += pow((try_xyoff_map[idx_1d-1]-xyoff_map[idx_1d-1])/stat_err,2)
+                    ##stat_err = 1.
+                    #chi2 += pow((try_xyoff_map[idx_1d-1]-xyoff_map[idx_1d-1])/stat_err,2)
 
-    return chi2
+                    #n_expect = max(0.001,try_xyoff_map[idx_1d-1])
+                    #n_data = xyoff_map[idx_1d-1]
+                    #if n_data==0.:
+                    #    sum_log_likelihood += n_expect
+                    #else:
+                    #    sum_log_likelihood += -1.*(n_data*np.log(n_expect) - n_expect - (n_data*np.log(n_data)-n_data))
 
-def cosmic_ray_like_count(xyoff_map,is_blind=True):
+                    n_expect = try_xyoff_map[idx_1d-1]
+                    n_data = xyoff_map[idx_1d-1]
+                    sum_log_likelihood += pow(n_expect-n_data,2)
+
+    return sum_log_likelihood
+
+def cosmic_ray_like_count(xyoff_map,is_blind=True,logE_select=-1):
 
     count = 0.
     idx_1d = 0
@@ -681,7 +704,9 @@ def cosmic_ray_like_count(xyoff_map,is_blind=True):
                     idx_1d += 1
                     if is_blind and gcut==0: continue
                     if not is_blind and gcut!=0: continue
-                    count += xyoff_map[idx_1d-1]
+                    if gcut>1: continue
+                    if logE_select==logE:
+                        count += xyoff_map[idx_1d-1]
 
     return count
 
