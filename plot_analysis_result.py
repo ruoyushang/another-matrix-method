@@ -162,6 +162,11 @@ for logE in range(0,logE_nbins):
                 data_err = max(1.,pow(data,0.5))
                 sum_err_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = (data-model)/data_err
 
+for logE in range(0,logE_nbins):
+    sum_data_xyoff_map[logE].scale(1./total_exposure)
+    sum_fit_xyoff_map[logE].scale(1./total_exposure)
+
+for logE in range(0,logE_nbins):
     sum_data_sky_map_smooth[logE].reset()
     sum_bkgd_sky_map_smooth[logE].reset()
     sum_excess_sky_map_smooth[logE].reset()
@@ -202,7 +207,7 @@ for logE in range(0,logE_nbins):
 PrintFluxCalibration(fig,sum_flux_sky_map,sum_flux_err_sky_map,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
 
 for logE in range(0,logE_nbins):
-    radial_axis, profile_axis, profile_err_axis = GetRadialProfile(sum_flux_sky_map[logE],sum_flux_err_sky_map[logE],roi_x[0],roi_y[0],1.5)
+    radial_axis, profile_axis, profile_err_axis = GetRadialProfile(sum_flux_sky_map[logE],sum_flux_err_sky_map[logE],roi_x[0],roi_y[0],2.5)
     baseline_yaxis = [0. for i in range(0,len(radial_axis))]
     fig.clf()
     axbig = fig.add_subplot()
@@ -263,20 +268,20 @@ for logE in range(0,logE_nbins):
         fig.savefig(f'output_plots/{source_name}_xyoff_map_logE{logE}_gcut{gcut}_data.png',bbox_inches='tight')
         axbig.remove()
 
-        fig.clf()
-        axbig = fig.add_subplot()
-        label_x = 'Xoff'
-        label_y = 'Yoff'
-        axbig.set_xlabel(label_x)
-        axbig.set_ylabel(label_y)
-        xmin = sum_fit_xyoff_map[logE].xaxis.min()
-        xmax = sum_fit_xyoff_map[logE].xaxis.max()
-        ymin = sum_fit_xyoff_map[logE].yaxis.min()
-        ymax = sum_fit_xyoff_map[logE].yaxis.max()
-        im = axbig.imshow(sum_fit_xyoff_map[logE].waxis[:,:,gcut].T,origin='lower',extent=(xmin,xmax,ymin,ymax),aspect='auto')
-        cbar = fig.colorbar(im)
-        fig.savefig(f'output_plots/{source_name}_xyoff_map_logE{logE}_gcut{gcut}_fit.png',bbox_inches='tight')
-        axbig.remove()
+        #fig.clf()
+        #axbig = fig.add_subplot()
+        #label_x = 'Xoff'
+        #label_y = 'Yoff'
+        #axbig.set_xlabel(label_x)
+        #axbig.set_ylabel(label_y)
+        #xmin = sum_fit_xyoff_map[logE].xaxis.min()
+        #xmax = sum_fit_xyoff_map[logE].xaxis.max()
+        #ymin = sum_fit_xyoff_map[logE].yaxis.min()
+        #ymax = sum_fit_xyoff_map[logE].yaxis.max()
+        #im = axbig.imshow(sum_fit_xyoff_map[logE].waxis[:,:,gcut].T,origin='lower',extent=(xmin,xmax,ymin,ymax),aspect='auto')
+        #cbar = fig.colorbar(im)
+        #fig.savefig(f'output_plots/{source_name}_xyoff_map_logE{logE}_gcut{gcut}_fit.png',bbox_inches='tight')
+        #axbig.remove()
 
         fig.clf()
         axbig = fig.add_subplot()

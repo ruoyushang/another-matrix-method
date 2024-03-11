@@ -80,6 +80,8 @@ for logE in range(0,logE_nbins):
 total_runs = len(on_runlist)
 for run in range(0,total_runs):
 
+    print (f'analyzing {run}/{total_runs} runs...')
+
     run_info, run_all_sky_map, run_data_xyoff_map, run_fit_xyoff_map = build_skymap(smi_input,path_to_eigenvector,[on_runlist[run]],src_ra,src_dec)
     #run_info_ctl, run_all_sky_map_ctl, run_data_xyoff_map_ctl, run_fit_xyoff_map_ctl = build_skymap(smi_input,path_to_eigenvector_ctl,[on_runlist[run]],src_ra,src_dec,control_region=True)
 
@@ -91,7 +93,7 @@ for run in range(0,total_runs):
     sr_chi2 = run_info[5]
     cr_chi2 = run_info[6]
     if run_exposure_hours==0.: continue
-    if run_elev<55.: continue
+    #if run_elev<55.: continue
     exposure_hours += run_exposure_hours
     list_run_elev += [run_elev]
     list_run_azim += [run_azim]

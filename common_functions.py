@@ -24,11 +24,13 @@ xoff_start = -2.
 xoff_end = 2.
 yoff_start = -2.
 yoff_end = 2.
-gcut_bins = 4
+gcut_bins = 3
 gcut_start = 0
 gcut_end = gcut_bins
 
 logE_bins = [-0.75,-0.625,-0.50,-0.375,-0.25,0.00,0.25,0.50,0.75,1.0] # logE TeV
+#logE_bins = [-0.50,-0.4375,-0.375,-0.25,0.00,0.25,0.50,0.75,1.0] # logE TeV
+#logE_bins = [-0.50,-0.4375] # logE TeV
 logE_nbins = len(logE_bins)-1
 
 
@@ -38,9 +40,10 @@ calibration_radius = 0.15 # need to be larger than the PSF and smaller than the 
 
 logE_min = 0
 logE_max = logE_nbins
-matrix_rank = 15
-#xoff_bins = [7,7,7,5,5,5,3,3,1]
-xoff_bins = [5,5,5,3,3,3,1,1,1]
+matrix_rank = 3
+xoff_bins = [10,10,10,3,3,3,1,1,1]
+#xoff_bins = [5,5,3,3,3,1,1,1]
+#xoff_bins = [10]
 yoff_bins = xoff_bins
 
 #chi2_cut = 0.03
@@ -133,6 +136,12 @@ class MyArray3D:
             for idx_y in range(0,len(self.yaxis)-1):
                 for idx_z in range(0,len(self.zaxis)-1):
                     self.waxis[idx_x,idx_y,idx_z] = 0.
+
+    def scale(self, factor):
+        for idx_x in range(0,len(self.xaxis)-1):
+            for idx_y in range(0,len(self.yaxis)-1):
+                for idx_z in range(0,len(self.zaxis)-1):
+                    self.waxis[idx_x,idx_y,idx_z] = self.waxis[idx_x,idx_y,idx_z]*factor
 
     def add(self, add_array, factor=1.):
         for idx_x in range(0,len(self.xaxis)-1):
@@ -336,6 +345,8 @@ def build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_
 
     run_count = 0
     for run_number in runlist:
+
+        print (f'{run_count}/{len(runlist)} runs saved.')
     
         rootfile_name = f'{smi_input}/{run_number}.anasum.root'
         print (rootfile_name)
@@ -373,8 +384,8 @@ def build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_
             Yderot = EvtTree.Yderot
             MSCW = EvtTree.MSCW/MSCW_cut
             MSCL = EvtTree.MSCL/MSCL_cut
-            GammaCut = abs(MSCW)
-            #GammaCut = pow(MSCW*MSCW+MSCL*MSCL,0.5)
+            #GammaCut = abs(MSCW)
+            GammaCut = pow(MSCW*MSCW+MSCL*MSCL,0.5)
             #MVA = EvtTree.MVA
             #GammaCut = (1.-MVA)/(1.-MVA_cut)
             Energy = EvtTree.Energy
@@ -394,27 +405,27 @@ def build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_
             if Rcore>max_Rcore: continue
             if Energy<min_Energy_cut: continue
             if Energy>max_Energy_cut: continue
-            if not control_region:
-                if MSCL>1.0: continue
-            else:
-                if MSCL<1.0: continue
-                if MSCL>2.0: continue
+            #if not control_region:
+            #    if MSCL>1.0: continue
+            #else:
+            #    if MSCL<1.0: continue
+            #    if MSCL>2.0: continue
             if GammaCut>float(gcut_end): continue
 
             Xsky = TelRAJ2000 + Xderot
             Ysky = TelDecJ2000 + Yderot
-            mirror_Xsky = TelRAJ2000 - Xderot
-            mirror_Ysky = TelDecJ2000 + Yderot
-            found_bright_star = CoincideWithBrightStars(Xsky, Ysky, bright_star_coord)
-            found_gamma_source = CoincideWithBrightStars(Xsky, Ysky, gamma_source_coord)
-            found_mirror_star = CoincideWithBrightStars(mirror_Xsky, mirror_Ysky, bright_star_coord)
-            found_mirror_gamma_source = CoincideWithBrightStars(mirror_Xsky, mirror_Ysky, gamma_source_coord)
+            #mirror_Xsky = TelRAJ2000 - Xderot
+            #mirror_Ysky = TelDecJ2000 + Yderot
+            #found_bright_star = CoincideWithBrightStars(Xsky, Ysky, bright_star_coord)
+            #found_gamma_source = CoincideWithBrightStars(Xsky, Ysky, gamma_source_coord)
+            #found_mirror_star = CoincideWithBrightStars(mirror_Xsky, mirror_Ysky, bright_star_coord)
+            #found_mirror_gamma_source = CoincideWithBrightStars(mirror_Xsky, mirror_Ysky, gamma_source_coord)
 
-            if not is_on:
-                if found_bright_star: continue
-                if found_gamma_source: continue
-                if found_mirror_star or found_mirror_gamma_source:
-                    xyoff_map[logE].fill(-Xoff,Yoff,GammaCut)
+            #if not is_on:
+            #    if found_bright_star: continue
+            #    if found_gamma_source: continue
+            #    if found_mirror_star or found_mirror_gamma_source:
+            #        xyoff_map[logE].fill(-Xoff,Yoff,GammaCut)
 
             xyoff_map[logE].fill(Xoff,Yoff,GammaCut)
     
@@ -511,17 +522,19 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
         fit_params = solution['x']
         fit_xyoff_map_1d = big_eigenvectors.T @ fit_params
 
-        print (f'truth_params = {truth_params}')
-        print (f'fit_params   = {fit_params}')
+        for entry in range(0,len(truth_params)):
+            print (f'truth_params = {truth_params[entry]:0.1f}, fit_params = {fit_params[entry]: 0.1f}')
 
-        cr_chi2 = cosmic_ray_like_chi2(fit_params,big_eigenvectors,data_xyoff_map_1d)
-        sr_chi2 = cosmic_ray_like_chi2(fit_params,big_eigenvectors,data_xyoff_map_1d,is_blind=False)
-        #if cr_count>0.:
-        #    cr_chi2 = pow(cr_chi2,0.5)/cr_count
+        cr_chi2 = cosmic_ray_like_chi2(fit_params,big_eigenvectors,data_xyoff_map_1d,region_type=2)
+        sr_chi2 = cosmic_ray_like_chi2(fit_params,big_eigenvectors,data_xyoff_map_1d,region_type=1)
+        #cr_data_count = cosmic_ray_like_count(data_xyoff_map_1d,region_type=2)
+        #sr_data_count = cosmic_ray_like_count(data_xyoff_map_1d,region_type=1)
+        #if cr_data_count>0.:
+        #    cr_chi2 = pow(cr_chi2,0.5)/cr_data_count
         #else:
         #    cr_chi2 = 0.
-        #if sr_count>0.:
-        #    sr_chi2 = pow(sr_chi2,0.5)/sr_count
+        #if sr_data_count>0.:
+        #    sr_chi2 = pow(sr_chi2,0.5)/sr_data_count
         #else: 
         #    sr_chi2 = 0.
 
@@ -531,20 +544,11 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
         idx_1d = 0
         for gcut in range(0,gcut_bins):
             for logE in range(0,logE_nbins):
-                cr_data_count = cosmic_ray_like_count(data_xyoff_map_1d,logE_select=logE)
-                sr_data_count = cosmic_ray_like_count(data_xyoff_map_1d,is_blind=False,logE_select=logE)
-                cr_truth_count = cosmic_ray_like_count(truth_xyoff_map_1d,logE_select=logE)
-                sr_truth_count = cosmic_ray_like_count(truth_xyoff_map_1d,is_blind=False,logE_select=logE)
-                cr_fit_count = cosmic_ray_like_count(fit_xyoff_map_1d,logE_select=logE)
-                sr_fit_count = cosmic_ray_like_count(fit_xyoff_map_1d,is_blind=False,logE_select=logE)
-                bias_fit = 1.
-                #if cr_fit_count>0.: 
-                #    bias_fit = cr_data_count/cr_fit_count
                 for idx_x in range(0,xoff_bins[logE]):
                     for idx_y in range(0,yoff_bins[logE]):
                         idx_1d += 1
                         data_xyoff_map[logE].waxis[idx_x,idx_y,gcut] += data_xyoff_map_1d[idx_1d-1]
-                        fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] += fit_xyoff_map_1d[idx_1d-1] * bias_fit
+                        fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] += fit_xyoff_map_1d[idx_1d-1]
 
         for gcut in range(0,gcut_bins):
             for logE in range(0,logE_nbins):
@@ -613,8 +617,8 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
             Yderot = EvtTree.Yderot
             MSCW = EvtTree.MSCW/MSCW_cut
             MSCL = EvtTree.MSCL/MSCL_cut
-            GammaCut = abs(MSCW)
-            #GammaCut = pow(MSCW*MSCW+MSCL*MSCL,0.5)
+            #GammaCut = abs(MSCW)
+            GammaCut = pow(MSCW*MSCW+MSCL*MSCL,0.5)
             #MVA = EvtTree.MVA
             #GammaCut = (1.-MVA)/(1.-MVA_cut)
             Energy = EvtTree.Energy
@@ -634,11 +638,11 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
             if Rcore>max_Rcore: continue
             if Energy<min_Energy_cut: continue
             if Energy>max_Energy_cut: continue
-            if not control_region:
-                if MSCL>1.0: continue
-            else:
-                if MSCL<1.0: continue
-                if MSCL>2.0: continue
+            #if not control_region:
+            #    if MSCL>1.0: continue
+            #else:
+            #    if MSCL<1.0: continue
+            #    if MSCL>2.0: continue
             if GammaCut>float(gcut_end): continue
 
             Xsky = TelRAJ2000 + Xderot
@@ -662,7 +666,7 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
     return [exposure_hours,avg_tel_elev,avg_tel_azim,truth_params,fit_params,sr_chi2,cr_chi2], all_sky_map, data_xyoff_map, fit_xyoff_map
 
 
-def cosmic_ray_like_chi2(try_params,eigenvectors,xyoff_map,is_blind=True):
+def cosmic_ray_like_chi2(try_params,eigenvectors,xyoff_map,region_type=0):
 
     try_params = np.array(try_params)
     try_xyoff_map = eigenvectors.T @ try_params
@@ -674,7 +678,13 @@ def cosmic_ray_like_chi2(try_params,eigenvectors,xyoff_map,is_blind=True):
             for idx_x in range(0,xoff_bins[logE]):
                 for idx_y in range(0,yoff_bins[logE]):
                     idx_1d += 1
-                    if is_blind and gcut==0: continue
+                    if region_type==0:
+                        if gcut==0: continue
+                        #if gcut==gcut_bins-1: continue
+                    elif region_type==1:
+                        if gcut!=0: continue
+                    elif region_type==2:
+                        if gcut!=gcut_bins-1: continue
 
                     #stat_err = max(1.,pow(xyoff_map[idx_1d-1],0.5))
                     ##stat_err = 1.
@@ -693,7 +703,7 @@ def cosmic_ray_like_chi2(try_params,eigenvectors,xyoff_map,is_blind=True):
 
     return sum_log_likelihood
 
-def cosmic_ray_like_count(xyoff_map,is_blind=True,logE_select=-1):
+def cosmic_ray_like_count(xyoff_map,region_type=0):
 
     count = 0.
     idx_1d = 0
@@ -702,11 +712,14 @@ def cosmic_ray_like_count(xyoff_map,is_blind=True,logE_select=-1):
             for idx_x in range(0,xoff_bins[logE]):
                 for idx_y in range(0,yoff_bins[logE]):
                     idx_1d += 1
-                    if is_blind and gcut==0: continue
-                    if not is_blind and gcut!=0: continue
-                    if gcut>1: continue
-                    if logE_select==logE:
-                        count += xyoff_map[idx_1d-1]
+                    if region_type==0:
+                        if gcut==0: continue
+                        #if gcut==gcut_bins-1: continue
+                    elif region_type==1:
+                        if gcut!=0: continue
+                    elif region_type==2:
+                        if gcut!=gcut_bins-1: continue
+                    count += xyoff_map[idx_1d-1]
 
     return count
 
