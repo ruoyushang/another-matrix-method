@@ -207,7 +207,7 @@ for logE in range(0,logE_nbins):
 PrintFluxCalibration(fig,sum_flux_sky_map,sum_flux_err_sky_map,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
 
 for logE in range(0,logE_nbins):
-    radial_axis, profile_axis, profile_err_axis = GetRadialProfile(sum_flux_sky_map[logE],sum_flux_err_sky_map[logE],roi_x[0],roi_y[0],2.5)
+    radial_axis, profile_axis, profile_err_axis = GetRadialProfile(sum_flux_sky_map[logE],sum_flux_err_sky_map[logE],roi_x[0],roi_y[0],2.0)
     baseline_yaxis = [0. for i in range(0,len(radial_axis))]
     fig.clf()
     axbig = fig.add_subplot()
@@ -219,7 +219,7 @@ for logE in range(0,logE_nbins):
     axbig.errorbar(radial_axis,profile_axis,profile_err_axis,color='k',marker='s',ls='none')
     fig.savefig(f'output_plots/{source_name}_surface_brightness_logE{logE}.png',bbox_inches='tight')
     axbig.remove()
-radial_axis, profile_axis, profile_err_axis = GetRadialProfile(sum_flux_sky_map_allE,sum_flux_err_sky_map_allE,roi_x[0],roi_y[0],1.5)
+radial_axis, profile_axis, profile_err_axis = GetRadialProfile(sum_flux_sky_map_allE,sum_flux_err_sky_map_allE,roi_x[0],roi_y[0],2.0)
 baseline_yaxis = [0. for i in range(0,len(radial_axis))]
 fig.clf()
 axbig = fig.add_subplot()
@@ -355,19 +355,19 @@ axbig.hist(total_list_run_elev, bins=20)
 fig.savefig(f'output_plots/{source_name}_elev.png',bbox_inches='tight')
 axbig.remove()
 
-for par1 in range(0,matrix_rank):
-    for par2 in range(par1+1,matrix_rank):
-        fig.clf()
-        axbig = fig.add_subplot()
-        label_x = 'c%s'%(par1)
-        label_y = 'c%s'%(par2)
-        axbig.set_xlabel(label_x)
-        axbig.set_ylabel(label_y)
-        for entry in range(0,len(total_list_truth_params)):
-            axbig.scatter(total_list_truth_params[entry][par1],total_list_truth_params[entry][par2],color='b',alpha=0.5)
-            axbig.scatter(total_list_fit_params[entry][par1],total_list_fit_params[entry][par2],color='r',alpha=0.5)
-        fig.savefig(f'output_plots/{source_name}_truth_params_c{par1}_c{par2}.png',bbox_inches='tight')
-        axbig.remove()
+#for par1 in range(0,matrix_rank):
+#    for par2 in range(par1+1,matrix_rank):
+#        fig.clf()
+#        axbig = fig.add_subplot()
+#        label_x = 'c%s'%(par1)
+#        label_y = 'c%s'%(par2)
+#        axbig.set_xlabel(label_x)
+#        axbig.set_ylabel(label_y)
+#        for entry in range(0,len(total_list_truth_params)):
+#            axbig.scatter(total_list_truth_params[entry][par1],total_list_truth_params[entry][par2],color='b',alpha=0.5)
+#            axbig.scatter(total_list_fit_params[entry][par1],total_list_fit_params[entry][par2],color='r',alpha=0.5)
+#        fig.savefig(f'output_plots/{source_name}_truth_params_c{par1}_c{par2}.png',bbox_inches='tight')
+#        axbig.remove()
 
 for par1 in range(0,matrix_rank):
     fig.clf()

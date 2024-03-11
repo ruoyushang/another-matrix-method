@@ -30,6 +30,7 @@ input_epoch = sys.argv[2] # 'V4', 'V5' or 'V6'
 
 print ('loading matrix pickle data... ')
 input_filename = f'{smi_output}/big_off_matrix_{source_name}_{input_epoch}.pkl'
+print (f'input_filename = {input_filename}')
 big_matrix = pickle.load(open(input_filename, "rb"))
 
 #input_filename = f'{smi_output}/big_off_matrix_ctl_{source_name}_{input_epoch}.pkl'
@@ -37,8 +38,9 @@ big_matrix = pickle.load(open(input_filename, "rb"))
 
 print ('Computing SVD eigenvectors...')
 U_full, S_full, VT_full = np.linalg.svd(big_matrix,full_matrices=False)
-U_eco = U_full[:, :matrix_rank]
-VT_eco = VT_full[:matrix_rank, :]
+print (f'S_full length = {len(S_full)}')
+U_eco = U_full[:, :min(matrix_rank,len(S_full))]
+VT_eco = VT_full[:min(matrix_rank,len(S_full)), :]
 big_eigenvectors = VT_eco
 
 #u_full, s_full, vT_full = np.linalg.svd(big_matrix_ctl,full_matrices=False)

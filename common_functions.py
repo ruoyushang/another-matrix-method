@@ -28,22 +28,20 @@ gcut_bins = 3
 gcut_start = 0
 gcut_end = gcut_bins
 
-logE_bins = [-0.75,-0.625,-0.50,-0.375,-0.25,0.00,0.25,0.50,0.75,1.0] # logE TeV
-#logE_bins = [-0.50,-0.4375,-0.375,-0.25,0.00,0.25,0.50,0.75,1.0] # logE TeV
-#logE_bins = [-0.50,-0.4375] # logE TeV
+#logE_bins = [-0.75,-0.625,-0.50,-0.375,-0.25,0.00,0.25,0.50,0.75,1.0] # logE TeV
+logE_bins = [-0.625,-0.50,-0.375,-0.25,0.00,0.25,0.50,0.75,1.0] # logE TeV
 logE_nbins = len(logE_bins)-1
 
 
-#doFluxCalibration = True
-doFluxCalibration = False
+doFluxCalibration = True
+#doFluxCalibration = False
 calibration_radius = 0.15 # need to be larger than the PSF and smaller than the integration radius
 
 logE_min = 0
 logE_max = logE_nbins
-matrix_rank = 3
-xoff_bins = [10,10,10,3,3,3,1,1,1]
-#xoff_bins = [5,5,3,3,3,1,1,1]
-#xoff_bins = [10]
+matrix_rank = 20
+#xoff_bins = [10,10,10,3,3,3,1,1,1]
+xoff_bins = [10,10,3,3,3,1,1,1]
 yoff_bins = xoff_bins
 
 #chi2_cut = 0.03
@@ -473,12 +471,14 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
         fit_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
         ratio_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
 
-    truth_params = [1e-3] * matrix_rank
-    fit_params = [1e-3] * matrix_rank
+    effective_matrix_rank = min(matrix_rank,big_eigenvectors.shape[0])
+
+    truth_params = [1e-3] * effective_matrix_rank
+    fit_params = [1e-3] * effective_matrix_rank
     cr_chi2 = 0.
     sr_chi2 = 0.
     print (f'big_eigenvectors.shape = {big_eigenvectors.shape}') 
-    if matrix_rank>big_eigenvectors.shape[0]:
+    if effective_matrix_rank>big_eigenvectors.shape[0]:
         print (f'Not enough vectors. Break.')
         return [exposure_hours,avg_tel_elev,avg_tel_azim,truth_params,fit_params,sr_chi2,cr_chi2], all_sky_map, data_xyoff_map, fit_xyoff_map
 
@@ -508,9 +508,9 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
         truth_params = big_eigenvectors @ data_xyoff_map_1d
         truth_xyoff_map_1d = big_eigenvectors.T @ truth_params
 
-        #init_params = [10.] * matrix_rank
+        #init_params = [10.] * effective_matrix_rank
         init_params = truth_params
-        stepsize = [1e-4] * matrix_rank
+        stepsize = [1e-4] * effective_matrix_rank
         solution = minimize(
             cosmic_ray_like_chi2,
             x0=init_params,
@@ -690,16 +690,16 @@ def cosmic_ray_like_chi2(try_params,eigenvectors,xyoff_map,region_type=0):
                     ##stat_err = 1.
                     #chi2 += pow((try_xyoff_map[idx_1d-1]-xyoff_map[idx_1d-1])/stat_err,2)
 
-                    #n_expect = max(0.001,try_xyoff_map[idx_1d-1])
-                    #n_data = xyoff_map[idx_1d-1]
-                    #if n_data==0.:
-                    #    sum_log_likelihood += n_expect
-                    #else:
-                    #    sum_log_likelihood += -1.*(n_data*np.log(n_expect) - n_expect - (n_data*np.log(n_data)-n_data))
-
-                    n_expect = try_xyoff_map[idx_1d-1]
+                    n_expect = max(0.001,try_xyoff_map[idx_1d-1])
                     n_data = xyoff_map[idx_1d-1]
-                    sum_log_likelihood += pow(n_expect-n_data,2)
+                    if n_data==0.:
+                        sum_log_likelihood += n_expect
+                    else:
+                        sum_log_likelihood += -1.*(n_data*np.log(n_expect) - n_expect - (n_data*np.log(n_data)-n_data))
+
+                    #n_expect = try_xyoff_map[idx_1d-1]
+                    #n_data = xyoff_map[idx_1d-1]
+                    #sum_log_likelihood += pow(n_expect-n_data,2)
 
     return sum_log_likelihood
 

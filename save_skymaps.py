@@ -146,9 +146,11 @@ for run in range(0,total_runs):
         data_sum = np.sum(data_sky_map[logE].waxis[:,:,0])
         bkgd_sum = np.sum(bkgd_sky_map[logE].waxis[:,:,0])
         error = 0.
+        stat_error = 0.
         if data_sum>0.:
             error = 100.*(data_sum-bkgd_sum)/data_sum
-        print (f'Sky, data_sum = {data_sum}, bkgd_sum = {bkgd_sum:0.1f}, error = {error:0.1f} %')
+            stat_error = 100.*pow(data_sum,0.5)/data_sum
+        print (f'Sky, data_sum = {data_sum}, bkgd_sum = {bkgd_sum:0.1f}, error = {error:0.1f} +/- {stat_error:0.1f} %')
         #data_sum = np.sum(data_xyoff_map[logE].waxis[:,:,0])
         #bkgd_sum = np.sum(fit_xyoff_map[logE].waxis[:,:,0])
         #print (f'SR , data_sum = {data_sum}, bkgd_sum = {bkgd_sum:0.1f}')
