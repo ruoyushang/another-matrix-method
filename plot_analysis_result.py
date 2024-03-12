@@ -184,9 +184,11 @@ for logE in range(0,logE_nbins):
     data_sum = np.sum(sum_data_sky_map[logE].waxis[:,:,0])
     bkgd_sum = np.sum(sum_bkgd_sky_map[logE].waxis[:,:,1])
     error = 0.
+    stat_error = 0.
     if data_sum>0.:
         error = 100.*(data_sum-bkgd_sum)/data_sum
-    print (f'logE = {logE}, data_sum = {data_sum}, bkgd_sum = {bkgd_sum}, error = {error:0.1f} %')
+        stat_error = 100.*pow(data_sum,0.5)/data_sum
+    print (f'logE = {logE}, data_sum = {data_sum}, bkgd_sum = {bkgd_sum}, error = {error:0.1f} +/- {stat_error:0.1f} %')
 
 for logE in range(0,logE_nbins):
     make_significance_map(sum_data_sky_map_smooth[logE],sum_bkgd_sky_map_smooth[logE],sum_significance_sky_map[logE],sum_excess_sky_map_smooth[logE])

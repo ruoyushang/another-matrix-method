@@ -40,7 +40,6 @@ input_epoch = sys.argv[4] # 'V4', 'V5' or 'V6'
 
 path_to_eigenvector = f'{smi_output}/eigenvectors_{source_name}_{input_epoch}.pkl'
 print (f'path_to_eigenvector = {path_to_eigenvector}')
-#path_to_eigenvector_ctl = f'{smi_output}/eigenvectors_ctl_{source_name}_{input_epoch}.pkl'
 
 
 data_xyoff_map = []
@@ -53,7 +52,9 @@ for logE in range(0,logE_nbins):
     data_xyoff_map_ctl += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
     fit_xyoff_map_ctl += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
 
-on_runlist = ReadRunListFromFile(f'/nevis/tehanu/home/ryshang/veritas_analysis/another-matrix-method/output_vts_query/RunList_{source_name}_{input_epoch}.txt')
+on_file = f'/nevis/tehanu/home/ryshang/veritas_analysis/another-matrix-method/output_vts_query/RunList_{source_name}_{input_epoch}.txt'
+off_file = f'/nevis/tehanu/home/ryshang/veritas_analysis/another-matrix-method/output_vts_query/PairList_{source_name}_{input_epoch}.txt'
+on_runlist, off_runlist = ReadRunListFromFile(on_file,off_file)
 
 skymap_size = 3.
 skymap_bins = 100
@@ -78,12 +79,21 @@ for logE in range(0,logE_nbins):
 
 
 total_runs = len(on_runlist)
+big_runlist = []
+small_runlist = []
+nruns_in_small_list = 20
 for run in range(0,total_runs):
+    small_runlist += [on_runlist[run]]
+    if (run % nruns_in_small_list)==0 and run>=nruns_in_small_list:
+        big_runlist += [small_runlist]
+        small_runlist = []
+
+
+for small_runlist in big_runlist:
 
     print (f'analyzing {run}/{total_runs} runs...')
 
-    run_info, run_all_sky_map, run_data_xyoff_map, run_fit_xyoff_map = build_skymap(smi_input,path_to_eigenvector,[on_runlist[run]],src_ra,src_dec)
-    #run_info_ctl, run_all_sky_map_ctl, run_data_xyoff_map_ctl, run_fit_xyoff_map_ctl = build_skymap(smi_input,path_to_eigenvector_ctl,[on_runlist[run]],src_ra,src_dec,control_region=True)
+    run_info, run_all_sky_map, run_data_xyoff_map, run_fit_xyoff_map = build_skymap(smi_input,path_to_eigenvector,small_runlist,src_ra,src_dec)
 
     run_exposure_hours = run_info[0]
     run_elev = run_info[1]
@@ -143,20 +153,15 @@ for run in range(0,total_runs):
     print ('=================================================================================')
     for logE in range(0,logE_nbins):
         print (f'logE = {logE}')
-        data_sum = np.sum(data_sky_map[logE].waxis[:,:,0])
-        bkgd_sum = np.sum(bkgd_sky_map[logE].waxis[:,:,0])
+        data_sum = np.sum(data_xyoff_map[logE].waxis[:,:,0])
+        bkgd_sum = np.sum(fit_xyoff_map[logE].waxis[:,:,0])
         error = 0.
         stat_error = 0.
         if data_sum>0.:
             error = 100.*(data_sum-bkgd_sum)/data_sum
             stat_error = 100.*pow(data_sum,0.5)/data_sum
-        print (f'Sky, data_sum = {data_sum}, bkgd_sum = {bkgd_sum:0.1f}, error = {error:0.1f} +/- {stat_error:0.1f} %')
-        #data_sum = np.sum(data_xyoff_map[logE].waxis[:,:,0])
-        #bkgd_sum = np.sum(fit_xyoff_map[logE].waxis[:,:,0])
-        #print (f'SR , data_sum = {data_sum}, bkgd_sum = {bkgd_sum:0.1f}')
-        #data_sum = np.sum(data_xyoff_map_ctl[logE].waxis[:,:,0])
-        #bkgd_sum = np.sum(fit_xyoff_map_ctl[logE].waxis[:,:,0])
-        #print (f'CR , data_sum = {data_sum}, bkgd_sum = {bkgd_sum:0.1f}')
+        print (f'On data,  data_sum = {data_sum}, bkgd_sum = {bkgd_sum:0.1f}, error = {error:0.1f} +/- {stat_error:0.1f} %')
+
 
     all_skymaps = [[exposure_hours, list_run_elev, list_run_azim, list_truth_params, list_fit_params, list_sr_chi2, list_cr_chi2], data_sky_map, bkgd_sky_map, data_xyoff_map, fit_xyoff_map]
     output_filename = f'{smi_output}/skymaps_{source_name}_{input_epoch}.pkl'
