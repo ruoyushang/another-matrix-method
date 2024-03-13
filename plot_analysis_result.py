@@ -371,7 +371,7 @@ axbig.remove()
 #        fig.savefig(f'output_plots/{source_name}_truth_params_c{par1}_c{par2}.png',bbox_inches='tight')
 #        axbig.remove()
 
-for par1 in range(0,matrix_rank):
+for par1 in range(0,len(total_list_truth_params[0])):
     fig.clf()
     axbig = fig.add_subplot()
     label_x = 'truth'

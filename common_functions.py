@@ -24,7 +24,7 @@ xoff_start = -2.
 xoff_end = 2.
 yoff_start = -2.
 yoff_end = 2.
-gcut_bins = 5
+gcut_bins = 2
 gcut_start = 0
 gcut_end = gcut_bins
 
@@ -39,7 +39,7 @@ calibration_radius = 0.15 # need to be larger than the PSF and smaller than the 
 
 logE_min = 0
 logE_max = logE_nbins
-matrix_rank = 0.05
+matrix_rank = 0.1
 #xoff_bins = [10,10,10,3,3,3,1,1,1]
 xoff_bins = [10,10,3,3,3,1,1,1]
 yoff_bins = xoff_bins

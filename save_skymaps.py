@@ -81,7 +81,7 @@ for logE in range(0,logE_nbins):
 total_runs = len(on_runlist)
 big_runlist = []
 small_runlist = []
-nruns_in_small_list = 20
+nruns_in_small_list = 40
 for run in range(0,total_runs):
     small_runlist += [on_runlist[run]]
     if (run % nruns_in_small_list)==0 and run>=nruns_in_small_list:
