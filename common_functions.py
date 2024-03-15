@@ -24,7 +24,7 @@ xoff_start = -2.
 xoff_end = 2.
 yoff_start = -2.
 yoff_end = 2.
-gcut_bins = 2
+gcut_bins = 4
 gcut_start = 0
 gcut_end = gcut_bins
 

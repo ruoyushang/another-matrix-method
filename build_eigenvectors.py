@@ -42,6 +42,7 @@ for logE in range(0,logE_nbins):
     U_full, S_full, VT_full = np.linalg.svd(big_matrix[logE],full_matrices=False)
     print (f'S_full length = {len(S_full)}')
     effective_matrix_rank = max(1,int(matrix_rank*len(S_full)))
+    effective_matrix_rank = min(5,effective_matrix_rank)
     print (f'effective_matrix_rank = {effective_matrix_rank}')
     U_eco = U_full[:, :effective_matrix_rank]
     VT_eco = VT_full[:effective_matrix_rank, :]

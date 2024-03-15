@@ -82,11 +82,17 @@ total_runs = len(on_runlist)
 big_runlist = []
 small_runlist = []
 nruns_in_small_list = 20
+run_count = 0
 for run in range(0,total_runs):
+    if len(off_runlist[run])==0: 
+        print (f'ON run {on_runlist[run]} rejected: zero matched OFF run')
+        continue
     small_runlist += [on_runlist[run]]
-    if (run % nruns_in_small_list)==0 and run>=nruns_in_small_list:
+    run_count += 1
+    if (run % nruns_in_small_list)==0 and run_count>=nruns_in_small_list:
         big_runlist += [small_runlist]
         small_runlist = []
+        run_count = 0
 
 
 for small_runlist in big_runlist:
