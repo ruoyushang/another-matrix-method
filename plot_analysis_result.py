@@ -305,38 +305,40 @@ PlotSkyMap(fig,sum_excess_sky_map_allE,f'{source_name}_excess_sky_map_allE',roi_
 
 print (f'total_exposure = {total_exposure}')
 
-fig.clf()
-axbig = fig.add_subplot()
-label_x = 'CR chi2'
-label_y = 'SR chi2'
-axbig.set_xlabel(label_x)
-axbig.set_ylabel(label_y)
-for entry in range(0,len(total_list_sr_chi2)):
-    axbig.scatter(total_list_cr_chi2[entry],total_list_sr_chi2[entry],color='b',alpha=0.5)
-fig.savefig(f'output_plots/{source_name}_crsr_chi2.png',bbox_inches='tight')
-axbig.remove()
+for logE in range(0,logE_nbins):
 
-fig.clf()
-axbig = fig.add_subplot()
-label_x = 'Run elevation'
-label_y = 'SR chi2'
-axbig.set_xlabel(label_x)
-axbig.set_ylabel(label_y)
-for entry in range(0,len(total_list_sr_chi2)):
-    axbig.scatter(total_list_run_elev[entry],total_list_sr_chi2[entry],color='b',alpha=0.5)
-fig.savefig(f'output_plots/{source_name}_elev_sr_chi2.png',bbox_inches='tight')
-axbig.remove()
+    fig.clf()
+    axbig = fig.add_subplot()
+    label_x = 'CR chi2'
+    label_y = 'SR chi2'
+    axbig.set_xlabel(label_x)
+    axbig.set_ylabel(label_y)
+    for entry in range(0,len(total_list_sr_chi2)):
+        axbig.scatter(total_list_cr_chi2[entry][logE],total_list_sr_chi2[entry][logE],color='b',alpha=0.5)
+    fig.savefig(f'output_plots/{source_name}_crsr_chi2_logE{logE}.png',bbox_inches='tight')
+    axbig.remove()
 
-fig.clf()
-axbig = fig.add_subplot()
-label_x = 'Run azimuth'
-label_y = 'SR chi2'
-axbig.set_xlabel(label_x)
-axbig.set_ylabel(label_y)
-for entry in range(0,len(total_list_sr_chi2)):
-    axbig.scatter(total_list_run_azim[entry],total_list_sr_chi2[entry],color='b',alpha=0.5)
-fig.savefig(f'output_plots/{source_name}_azim_sr_chi2.png',bbox_inches='tight')
-axbig.remove()
+    fig.clf()
+    axbig = fig.add_subplot()
+    label_x = 'Run elevation'
+    label_y = 'SR chi2'
+    axbig.set_xlabel(label_x)
+    axbig.set_ylabel(label_y)
+    for entry in range(0,len(total_list_sr_chi2)):
+        axbig.scatter(total_list_run_elev[entry],total_list_sr_chi2[entry][logE],color='b',alpha=0.5)
+    fig.savefig(f'output_plots/{source_name}_elev_sr_chi2_logE{logE}.png',bbox_inches='tight')
+    axbig.remove()
+    
+    fig.clf()
+    axbig = fig.add_subplot()
+    label_x = 'Run azimuth'
+    label_y = 'SR chi2'
+    axbig.set_xlabel(label_x)
+    axbig.set_ylabel(label_y)
+    for entry in range(0,len(total_list_sr_chi2)):
+        axbig.scatter(total_list_run_azim[entry],total_list_sr_chi2[entry][logE],color='b',alpha=0.5)
+    fig.savefig(f'output_plots/{source_name}_azim_sr_chi2_logE{logE}.png',bbox_inches='tight')
+    axbig.remove()
 
 fig.clf()
 axbig = fig.add_subplot()

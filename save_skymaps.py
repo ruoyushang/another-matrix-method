@@ -81,12 +81,13 @@ for logE in range(0,logE_nbins):
 total_runs = len(on_runlist)
 big_runlist = []
 small_runlist = []
-nruns_in_small_list = 20
+nruns_in_small_list = 1
+#nruns_in_small_list = 20
 run_count = 0
 for run in range(0,total_runs):
-    if len(off_runlist[run])==0: 
-        print (f'ON run {on_runlist[run]} rejected: zero matched OFF run')
-        continue
+    #if len(off_runlist[run])==0: 
+    #    print (f'ON run {on_runlist[run]} rejected: zero matched OFF run')
+    #    continue
     small_runlist += [on_runlist[run]]
     run_count += 1
     if (run % nruns_in_small_list)==0 and run_count>=nruns_in_small_list:
@@ -94,10 +95,11 @@ for run in range(0,total_runs):
         small_runlist = []
         run_count = 0
 
-
+run_list_count = 0
 for small_runlist in big_runlist:
 
-    print (f'analyzing {run}/{total_runs} runs...')
+    run_list_count += 1
+    print (f'analyzing {run_list_count}/{len(big_runlist)} lists...')
 
     run_info, run_all_sky_map, run_data_xyoff_map, run_fit_xyoff_map = build_skymap(smi_input,path_to_eigenvector,small_runlist,src_ra,src_dec)
 
