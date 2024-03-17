@@ -39,7 +39,7 @@ calibration_radius = 0.15 # need to be larger than the PSF and smaller than the 
 
 logE_min = 0
 logE_max = logE_nbins
-matrix_rank = 0.05
+matrix_rank = 0.1
 #xoff_bins = [20,10,10,5,5,5,1,1]
 xoff_bins = [10,5,4,4,3,3,1,1]
 yoff_bins = xoff_bins
@@ -573,8 +573,10 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
         cr_chi2 += [run_cr_chi2]
         sr_chi2 += [run_sr_chi2]
 
-        #if cr_chi2>chi2_cut: 
-        #    return [exposure_hours,avg_tel_elev,avg_tel_azim,truth_params,fit_params,sr_chi2,cr_chi2], all_sky_map, data_xyoff_map, fit_xyoff_map
+        if fit_data_count>100. and run_cr_chi2>2.0:
+            print (f'Bad model. Break.')
+            exposure_hours = 0.
+            return [exposure_hours,avg_tel_elev,avg_tel_azim,truth_params,fit_params,sr_chi2,cr_chi2], all_sky_map, data_xyoff_map, fit_xyoff_map
 
         idx_1d = 0
         for gcut in range(0,gcut_bins):
@@ -594,6 +596,7 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
 
             if xoff_bins[logE]==1: continue
             if yoff_bins[logE]==1: continue
+            if np.sum(data_xyoff_map[logE].waxis[:,:,0])==0.: continue
 
             avg_ratio = 0.
             count = 0.
@@ -610,6 +613,26 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
                     rms_ratio += pow(ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut]-avg_ratio,2)
                     count += 1.
             rms_ratio = pow(rms_ratio/count,0.5)
+
+            new_avg_ratio = 0.
+            count = 0.
+            for idx_x in range(0,xoff_bins[logE]):
+                for idx_y in range(0,yoff_bins[logE]):
+                    deviation = (ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut] - avg_ratio)/rms_ratio
+                    if abs(deviation)<2.:
+                        new_avg_ratio += ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
+                        count += 1.
+            avg_ratio = new_avg_ratio/count
+
+            new_rms_ratio = 0.
+            count = 0.
+            for idx_x in range(0,xoff_bins[logE]):
+                for idx_y in range(0,yoff_bins[logE]):
+                    deviation = (ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut] - avg_ratio)/rms_ratio
+                    if abs(deviation)<2.:
+                        new_rms_ratio += pow(ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut]-avg_ratio,2)
+                        count += 1.
+            rms_ratio = pow(new_rms_ratio/count,0.5)
 
             for idx_x in range(0,xoff_bins[logE]):
                 for idx_y in range(0,yoff_bins[logE]):
@@ -717,6 +740,7 @@ def cosmic_ray_like_chi2(try_params,eigenvectors,xyoff_map,logE,region_type):
 
     sum_log_likelihood = 0.
     idx_1d = 0
+    nbins = 0.
     for gcut in range(0,gcut_bins):
         for idx_x in range(0,xoff_bins[logE]):
             for idx_y in range(0,yoff_bins[logE]):
@@ -741,11 +765,13 @@ def cosmic_ray_like_chi2(try_params,eigenvectors,xyoff_map,logE,region_type):
                 #    sum_log_likelihood += n_expect
                 #else:
                 #    sum_log_likelihood += -1.*(n_data*np.log(n_expect) - n_expect - (n_data*np.log(n_data)-n_data))
+                #nbins += 1.
 
                 n_expect = try_xyoff_map[idx_1d-1]
                 n_data = xyoff_map[idx_1d-1]
                 sum_log_likelihood += pow(n_expect-n_data,2)
 
+    #return sum_log_likelihood/nbins
     return sum_log_likelihood
 
 def cosmic_ray_like_count(xyoff_map,logE,region_type=0):
