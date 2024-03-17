@@ -132,8 +132,8 @@ for small_runlist in big_runlist:
             run_fit_sky_sum_sr += 1./float(gcut_bins-1)*np.sum(run_all_sky_map[logE].waxis[:,:,gcut])
 
         renormalization = 1.
-        if run_fit_sky_sum_sr>0.:
-            renormalization = run_fit_xyoff_sum_sr/run_fit_sky_sum_sr
+        #if run_fit_sky_sum_sr>0.:
+        #    renormalization = run_fit_xyoff_sum_sr/run_fit_sky_sum_sr
 
         #run_data_xyoff_sum_ctl = np.sum(run_data_xyoff_map_ctl[logE].waxis[:,:,0])
         #run_fit_xyoff_sum_ctl = np.sum(run_fit_xyoff_map_ctl[logE].waxis[:,:,0])

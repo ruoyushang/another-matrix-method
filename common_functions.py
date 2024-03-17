@@ -33,15 +33,15 @@ logE_bins = [-0.625,-0.50,-0.375,-0.25,0.00,0.25,0.50,0.75,1.0] # logE TeV
 logE_nbins = len(logE_bins)-1
 
 
-doFluxCalibration = True
-#doFluxCalibration = False
+#doFluxCalibration = True
+doFluxCalibration = False
 calibration_radius = 0.15 # need to be larger than the PSF and smaller than the integration radius
 
 logE_min = 0
 logE_max = logE_nbins
 matrix_rank = 0.05
-#xoff_bins = [10,10,10,3,3,3,1,1,1]
-xoff_bins = [20,20,10,10,5,5,1,1]
+#xoff_bins = [20,10,10,5,5,5,1,1]
+xoff_bins = [10,5,4,4,3,3,1,1]
 yoff_bins = xoff_bins
 
 #chi2_cut = 0.03
@@ -519,13 +519,12 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
         truth_params = big_eigenvectors[logE] @ data_xyoff_map_1d
         truth_xyoff_map_1d = big_eigenvectors[logE].T @ truth_params
 
-        #init_params = [10.] * effective_matrix_rank
         init_params = truth_params
         stepsize = [1e-4] * effective_matrix_rank
         solution = minimize(
             cosmic_ray_like_chi2,
             x0=init_params,
-            args=(big_eigenvectors[logE],data_xyoff_map_1d,logE),
+            args=(big_eigenvectors[logE],data_xyoff_map_1d,logE,0),
             method='L-BFGS-B',
             jac=None,
             options={'eps':stepsize,'ftol':0.0001},
@@ -533,22 +532,43 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
         fit_params = solution['x']
         fit_xyoff_map_1d = big_eigenvectors[logE].T @ fit_params
 
+        init_params = truth_params
+        stepsize = [1e-4] * effective_matrix_rank
+        solution = minimize(
+            cosmic_ray_like_chi2,
+            x0=init_params,
+            args=(big_eigenvectors[logE],data_xyoff_map_1d,logE,2),
+            method='L-BFGS-B',
+            jac=None,
+            options={'eps':stepsize,'ftol':0.0001},
+        )
+        fit_cr_params = solution['x']
+        fit_cr_xyoff_map_1d = big_eigenvectors[logE].T @ fit_cr_params
+
         for entry in range(0,len(truth_params)):
             print (f'truth_params = {truth_params[entry]:0.1f}, fit_params = {fit_params[entry]: 0.1f}')
 
-        run_cr_chi2 = cosmic_ray_like_chi2(fit_params,big_eigenvectors[logE],data_xyoff_map_1d,logE,region_type=0)
-        run_sr_chi2 = cosmic_ray_like_chi2(fit_params,big_eigenvectors[logE],data_xyoff_map_1d,logE,region_type=1)
-        cr_data_count = cosmic_ray_like_count(data_xyoff_map_1d,logE,region_type=0)
+        run_sr_chi2 = cosmic_ray_like_chi2(fit_params,big_eigenvectors[logE],data_xyoff_map_1d,logE,1)
+        run_cr_chi2 = cosmic_ray_like_chi2(fit_cr_params,big_eigenvectors[logE],data_xyoff_map_1d,logE,3)
         sr_data_count = cosmic_ray_like_count(data_xyoff_map_1d,logE,region_type=1)
         fit_data_count = cosmic_ray_like_count(fit_xyoff_map_1d,logE,region_type=1)
+        cr_data_count = cosmic_ray_like_count(data_xyoff_map_1d,logE,region_type=3)
+
         if cr_data_count>0.:
             run_cr_chi2 = pow(run_cr_chi2,0.5)/pow(cr_data_count,0.5)
         else:
             run_cr_chi2 = 0.
         if sr_data_count>0.:
-            run_sr_chi2 = (sr_data_count-fit_data_count)/pow(sr_data_count,0.5)
+            run_sr_chi2 = pow(run_sr_chi2,0.5)/pow(sr_data_count,0.5)
         else: 
             run_sr_chi2 = 0.
+
+        print ('=================================================================================')
+        print (f'logE = {logE}')
+        print (f'sr_data_count = {sr_data_count:0.1f}, fit_data_count = {fit_data_count:0.1f}')
+        print (f'run_sr_chi2 = {run_sr_chi2:0.1f}, run_cr_chi2 = {run_cr_chi2:0.1f}')
+        best_binning = pow(sr_data_count/10.,0.5)
+        print (f'best_binning = {best_binning:0.1f}')
 
         cr_chi2 += [run_cr_chi2]
         sr_chi2 += [run_sr_chi2]
@@ -690,7 +710,7 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
     return [exposure_hours,avg_tel_elev,avg_tel_azim,truth_params,fit_params,sr_chi2,cr_chi2], all_sky_map, data_xyoff_map, fit_xyoff_map
 
 
-def cosmic_ray_like_chi2(try_params,eigenvectors,xyoff_map,logE,region_type=0):
+def cosmic_ray_like_chi2(try_params,eigenvectors,xyoff_map,logE,region_type):
 
     try_params = np.array(try_params)
     try_xyoff_map = eigenvectors.T @ try_params
@@ -703,11 +723,13 @@ def cosmic_ray_like_chi2(try_params,eigenvectors,xyoff_map,logE,region_type=0):
                 idx_1d += 1
                 if region_type==0:
                     if gcut==0: continue
-                    #if gcut==gcut_bins-1: continue
                 elif region_type==1:
                     if gcut!=0: continue
                 elif region_type==2:
-                    if gcut!=gcut_bins-1: continue
+                    if gcut==0: continue
+                    if gcut==1: continue
+                elif region_type==3:
+                    if gcut!=1: continue
 
                 #stat_err = max(1.,pow(xyoff_map[idx_1d-1],0.5))
                 ##stat_err = 1.
@@ -736,11 +758,13 @@ def cosmic_ray_like_count(xyoff_map,logE,region_type=0):
                 idx_1d += 1
                 if region_type==0:
                     if gcut==0: continue
-                    #if gcut==gcut_bins-1: continue
                 elif region_type==1:
                     if gcut!=0: continue
                 elif region_type==2:
-                    if gcut!=gcut_bins-1: continue
+                    if gcut==0: continue
+                    if gcut==1: continue
+                elif region_type==3:
+                    if gcut!=1: continue
                 count += xyoff_map[idx_1d-1]
 
     return count
@@ -1161,7 +1185,7 @@ def GetFluxCalibration(energy):
     if doFluxCalibration:
         return 1.
 
-    str_flux_calibration = ['5.75e+00', '8.81e+00', '1.10e+01', '1.06e+01', '1.70e+01', '1.78e+01', '1.36e+01', '1.36e+01', '1.36e+01']
+    str_flux_calibration = ['2.23e+01', '3.12e+01', '3.17e+01', '1.38e+01', '1.24e+01', '1.28e+01', '1.35e+01', '1.32e+01']
 
     flux_calibration = []
     for string in str_flux_calibration:
@@ -1333,6 +1357,7 @@ def PrintFluxCalibration(fig,hist_flux_skymap,hist_error_skymap,roi_x,roi_y,roi_
     label_y = 'Flux in C.U.'
     axbig.set_xlabel(label_x)
     axbig.set_ylabel(label_y)
+    axbig.set_xscale('log')
     axbig.plot(energy_axis, calibration_new, color='b', ls='dashed')
     fig.savefig(f'output_plots/flux_crab_unit.png',bbox_inches='tight')
     axbig.remove()
