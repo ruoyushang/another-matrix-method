@@ -9,11 +9,11 @@ import matplotlib.pyplot as plt
 import tracemalloc
 
 min_NImages = 3
-max_Roff = 1.8
+max_Roff = 2.0
 max_EmissionHeight_cut = 20.
 min_EmissionHeight_cut = 6.
-max_Rcore = 400.
-min_Rcore = 0.
+max_Rcore = 250.
+min_Rcore = 50.
 min_Energy_cut = 0.2
 max_Energy_cut = 10.0
 MSCW_cut = 0.6
@@ -24,28 +24,29 @@ xoff_start = -2.
 xoff_end = 2.
 yoff_start = -2.
 yoff_end = 2.
-gcut_bins = 4
+gcut_bins = 3
 gcut_start = 0
 gcut_end = gcut_bins
 
-#logE_bins = [-0.75,-0.625,-0.50,-0.375,-0.25,0.00,0.25,0.50,0.75,1.0] # logE TeV
-logE_bins = [-0.625,-0.50,-0.375,-0.25,0.00,0.25,0.50,0.75,1.0] # logE TeV
+logE_bins = [-0.75,-0.625,-0.50,-0.375,-0.25,0.00,0.25,0.50,0.75,1.0] # logE TeV
+#logE_bins = [-0.625,-0.50,-0.375,-0.25,0.00,0.25,0.50,0.75,1.0] # logE TeV
 logE_nbins = len(logE_bins)-1
 
 
-#doFluxCalibration = True
-doFluxCalibration = False
+doFluxCalibration = True
+#doFluxCalibration = False
 calibration_radius = 0.15 # need to be larger than the PSF and smaller than the integration radius
 
 logE_min = 0
 logE_max = logE_nbins
 matrix_rank = 0.1
-#xoff_bins = [20,10,10,5,5,5,1,1]
-xoff_bins = [10,5,4,4,3,3,1,1]
+#xoff_bins = [10,5,4,4,3,3,1,1]
+#xoff_bins = [10,10,10,10,3,3,1,1]
+xoff_bins = [7,7,7,7,7,7,7,7,7]
 yoff_bins = xoff_bins
 
-#chi2_cut = 0.03
-chi2_cut = 1e10
+chi2_cut = 0.5
+#chi2_cut = 1e10
 
 smi_aux = os.environ.get("SMI_AUX")
 smi_dir = os.environ.get("SMI_DIR")
@@ -349,9 +350,11 @@ def CoincideWithBrightStars(ra, dec, bright_stars_coord):
 
 def build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_run=0,control_region=False):
 
+    #big_matrix = []
+    #for logE in range(0,logE_nbins):
+    #    big_matrix += [None]
+
     big_matrix = []
-    for logE in range(0,logE_nbins):
-        big_matrix += [None]
 
     run_count = 0
     for run_number in runlist:
@@ -413,6 +416,7 @@ def build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_
             if EmissionHeight<min_EmissionHeight_cut: continue
             if Roff>max_Roff: continue
             if Rcore>max_Rcore: continue
+            if Rcore<min_Rcore: continue
             if Energy<min_Energy_cut: continue
             if Energy>max_Energy_cut: continue
             #if not control_region:
@@ -435,20 +439,29 @@ def build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_
             #    if found_bright_star: continue
             #    if found_gamma_source: continue
             #    if found_mirror_star or found_mirror_gamma_source:
-            #        xyoff_map[logE].fill(-Xoff,Yoff,GammaCut)
+            #        xyoff_map[logE].fill(-Xderot,Yderot,GammaCut)
 
             xyoff_map[logE].fill(Xoff,Yoff,GammaCut)
     
-        for logE in range(0,logE_nbins):
-            xyoff_map_1d = []
-            for gcut in range(0,gcut_bins):
+        #for logE in range(0,logE_nbins):
+        #    xyoff_map_1d = []
+        #    for gcut in range(0,gcut_bins):
+        #        for idx_x in range(0,xoff_bins[logE]):
+        #            for idx_y in range(0,yoff_bins[logE]):
+        #                xyoff_map_1d += [xyoff_map[logE].waxis[idx_x,idx_y,gcut]]
+        #    if big_matrix[logE]==None:
+        #        big_matrix[logE] = [xyoff_map_1d]
+        #    else:
+        #        big_matrix[logE] += [xyoff_map_1d]
+
+        xyoff_map_1d = []
+        for gcut in range(0,gcut_bins):
+            for logE in range(0,logE_nbins):
                 for idx_x in range(0,xoff_bins[logE]):
                     for idx_y in range(0,yoff_bins[logE]):
                         xyoff_map_1d += [xyoff_map[logE].waxis[idx_x,idx_y,gcut]]
-            if big_matrix[logE]==None:
-                big_matrix[logE] = [xyoff_map_1d]
-            else:
-                big_matrix[logE] += [xyoff_map_1d]
+        big_matrix += [xyoff_map_1d]
+
 
         InputFile.Close()
         if run_count==max_runs: break
@@ -474,9 +487,11 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
     exposure_hours = 0.
     avg_tel_elev = 0.
     avg_tel_azim = 0.
-    all_sky_map = []
+    data_sky_map = []
+    fit_sky_map = []
     for logE in range(0,logE_nbins):
-        all_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+        data_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+        fit_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
 
     data_xyoff_map = []
     fit_xyoff_map = []
@@ -486,19 +501,23 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
         fit_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
         ratio_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
 
-    effective_matrix_rank = max(1,big_eigenvectors[0].shape[0])
+    #effective_matrix_rank = max(1,big_eigenvectors[0].shape[0])
+    effective_matrix_rank = max(1,big_eigenvectors.shape[0])
     truth_params = [1e-3] * effective_matrix_rank
     fit_params = [1e-3] * effective_matrix_rank
     cr_chi2 = []
     sr_chi2 = []
-    #print (f'big_eigenvectors.shape = {big_eigenvectors.shape}') 
+    #cr_chi2 = 0.
+    #sr_chi2 = 0.
+    print (f'big_eigenvectors.shape = {big_eigenvectors.shape}') 
 
     print ('build big matrix...')
     big_on_matrix = build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,control_region=control_region)
 
-    if big_on_matrix[0]==None:
+    #if big_on_matrix[0]==None:
+    if len(big_on_matrix)==0:
         print (f'No data. Break.')
-        return [exposure_hours,avg_tel_elev,avg_tel_azim,truth_params,fit_params,sr_chi2,cr_chi2], all_sky_map, data_xyoff_map, fit_xyoff_map
+        return [exposure_hours,avg_tel_elev,avg_tel_azim,truth_params,fit_params,sr_chi2,cr_chi2], data_sky_map, fit_sky_map, data_xyoff_map, fit_xyoff_map
 
     for logE in range(0,logE_nbins):
         data_xyoff_map[logE].reset()
@@ -507,96 +526,140 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
 
     print ('fitting xyoff maps...')
 
+    #for logE in range(0,logE_nbins):
+
+    #effective_matrix_rank = max(1,big_eigenvectors[logE].shape[0])
+    effective_matrix_rank = max(1,big_eigenvectors.shape[0])
+
+    #data_xyoff_map_1d = np.array(big_on_matrix[logE][0])
+    #for entry in range(1,len(big_on_matrix[logE])):
+    #    data_xyoff_map_1d += np.array(big_on_matrix[logE][entry])
+    data_xyoff_map_1d = np.array(big_on_matrix[0])
+    for entry in range(1,len(big_on_matrix)):
+        data_xyoff_map_1d += np.array(big_on_matrix[entry])
+
+    print (f'data_xyoff_map_1d.shape = {data_xyoff_map_1d.shape}')
+    #truth_params = big_eigenvectors[logE] @ data_xyoff_map_1d
+    #truth_xyoff_map_1d = big_eigenvectors[logE].T @ truth_params
+    truth_params = big_eigenvectors @ data_xyoff_map_1d
+    truth_xyoff_map_1d = big_eigenvectors.T @ truth_params
+
+    init_params = truth_params
+    stepsize = [1e-4] * effective_matrix_rank
+    solution = minimize(
+        cosmic_ray_like_chi2,
+        x0=init_params,
+        #args=(big_eigenvectors[logE],data_xyoff_map_1d,logE,0),
+        args=(big_eigenvectors,data_xyoff_map_1d,0),
+        #args=(big_eigenvectors,data_xyoff_map_1d,-1),
+        method='L-BFGS-B',
+        jac=None,
+        options={'eps':stepsize,'ftol':0.0001},
+    )
+    fit_params = solution['x']
+    #fit_xyoff_map_1d = big_eigenvectors[logE].T @ fit_params
+    fit_xyoff_map_1d = big_eigenvectors.T @ fit_params
+
+    init_params = truth_params
+    stepsize = [1e-4] * effective_matrix_rank
+    solution = minimize(
+        cosmic_ray_like_chi2,
+        x0=init_params,
+        #args=(big_eigenvectors[logE],data_xyoff_map_1d,logE,2),
+        args=(big_eigenvectors,data_xyoff_map_1d,2),
+        method='L-BFGS-B',
+        jac=None,
+        options={'eps':stepsize,'ftol':0.0001},
+    )
+    fit_cr_params = solution['x']
+    #fit_cr_xyoff_map_1d = big_eigenvectors[logE].T @ fit_cr_params
+    fit_cr_xyoff_map_1d = big_eigenvectors.T @ fit_cr_params
+
+    for entry in range(0,len(truth_params)):
+        print (f'truth_params = {truth_params[entry]:0.1f}, fit_params = {fit_params[entry]: 0.1f}')
+
+    #run_sr_chi2 = cosmic_ray_like_chi2(fit_params,big_eigenvectors[logE],data_xyoff_map_1d,logE,1)
+    #run_cr_chi2 = cosmic_ray_like_chi2(fit_cr_params,big_eigenvectors[logE],data_xyoff_map_1d,logE,3)
+    #sr_data_count = cosmic_ray_like_count(data_xyoff_map_1d,logE,region_type=1)
+    #fit_data_count = cosmic_ray_like_count(fit_xyoff_map_1d,logE,region_type=1)
+    #cr_data_count = cosmic_ray_like_count(data_xyoff_map_1d,logE,region_type=3)
+    run_sr_chi2 = cosmic_ray_like_chi2(fit_params,big_eigenvectors,data_xyoff_map_1d,1)
+    run_cr_chi2 = cosmic_ray_like_chi2(fit_cr_params,big_eigenvectors,data_xyoff_map_1d,3)
+
+    sr_data_count = []
+    fit_data_count = []
+    cr_data_count = []
+    fit_cr_data_count = []
     for logE in range(0,logE_nbins):
+        sr_data_count += [cosmic_ray_like_count(data_xyoff_map_1d,logE,region_type=1)]
+        fit_data_count += [cosmic_ray_like_count(fit_xyoff_map_1d,logE,region_type=1)]
+        cr_data_count += [cosmic_ray_like_count(data_xyoff_map_1d,logE,region_type=0)]
+        fit_cr_data_count += [cosmic_ray_like_count(fit_xyoff_map_1d,logE,region_type=0)]
 
-        effective_matrix_rank = max(1,big_eigenvectors[logE].shape[0])
+    #if cr_data_count>0.:
+    #    run_cr_chi2 = pow(run_cr_chi2,0.5)/pow(cr_data_count,0.5)
+    #else:
+    #    run_cr_chi2 = 0.
+    #if sr_data_count>0.:
+    #    run_sr_chi2 = pow(run_sr_chi2,0.5)/pow(sr_data_count,0.5)
+    #else: 
+    #    run_sr_chi2 = 0.
 
-        data_xyoff_map_1d = np.array(big_on_matrix[logE][0])
-        for entry in range(1,len(big_on_matrix[logE])):
-            data_xyoff_map_1d += np.array(big_on_matrix[logE][entry])
+    #print ('=================================================================================')
+    #print (f'sr_data_count = {sr_data_count:0.1f}, fit_data_count = {fit_data_count:0.1f}')
+    #print (f'run_sr_chi2 = {run_sr_chi2:0.1f}, run_cr_chi2 = {run_cr_chi2:0.1f}')
+    #best_binning = pow(sr_data_count/10.,0.5)
+    #print (f'best_binning = {best_binning:0.1f}')
 
-        print (f'data_xyoff_map_1d.shape = {data_xyoff_map_1d.shape}')
-        truth_params = big_eigenvectors[logE] @ data_xyoff_map_1d
-        truth_xyoff_map_1d = big_eigenvectors[logE].T @ truth_params
+    #cr_chi2 += [run_cr_chi2]
+    #sr_chi2 += [run_sr_chi2]
+    #cr_chi2 = run_cr_chi2
+    #sr_chi2 = run_sr_chi2
 
-        init_params = truth_params
-        stepsize = [1e-4] * effective_matrix_rank
-        solution = minimize(
-            cosmic_ray_like_chi2,
-            x0=init_params,
-            args=(big_eigenvectors[logE],data_xyoff_map_1d,logE,0),
-            method='L-BFGS-B',
-            jac=None,
-            options={'eps':stepsize,'ftol':0.0001},
-        )
-        fit_params = solution['x']
-        fit_xyoff_map_1d = big_eigenvectors[logE].T @ fit_params
-
-        init_params = truth_params
-        stepsize = [1e-4] * effective_matrix_rank
-        solution = minimize(
-            cosmic_ray_like_chi2,
-            x0=init_params,
-            args=(big_eigenvectors[logE],data_xyoff_map_1d,logE,2),
-            method='L-BFGS-B',
-            jac=None,
-            options={'eps':stepsize,'ftol':0.0001},
-        )
-        fit_cr_params = solution['x']
-        fit_cr_xyoff_map_1d = big_eigenvectors[logE].T @ fit_cr_params
-
-        for entry in range(0,len(truth_params)):
-            print (f'truth_params = {truth_params[entry]:0.1f}, fit_params = {fit_params[entry]: 0.1f}')
-
-        run_sr_chi2 = cosmic_ray_like_chi2(fit_params,big_eigenvectors[logE],data_xyoff_map_1d,logE,1)
-        run_cr_chi2 = cosmic_ray_like_chi2(fit_cr_params,big_eigenvectors[logE],data_xyoff_map_1d,logE,3)
-        sr_data_count = cosmic_ray_like_count(data_xyoff_map_1d,logE,region_type=1)
-        fit_data_count = cosmic_ray_like_count(fit_xyoff_map_1d,logE,region_type=1)
-        cr_data_count = cosmic_ray_like_count(data_xyoff_map_1d,logE,region_type=3)
-
-        if cr_data_count>0.:
-            run_cr_chi2 = pow(run_cr_chi2,0.5)/pow(cr_data_count,0.5)
+    for logE in range(0,logE_nbins):
+        if fit_cr_data_count[logE]==0.:
+            cr_chi2 += [0.]
+            sr_chi2 += [0.]
         else:
-            run_cr_chi2 = 0.
-        if sr_data_count>0.:
-            run_sr_chi2 = pow(run_sr_chi2,0.5)/pow(sr_data_count,0.5)
-        else: 
-            run_sr_chi2 = 0.
+            cr_chi2 += [cr_data_count[logE]/fit_cr_data_count[logE]]
+            sr_chi2 += [sr_data_count[logE]/fit_data_count[logE]]
 
-        print ('=================================================================================')
-        print (f'logE = {logE}')
-        print (f'sr_data_count = {sr_data_count:0.1f}, fit_data_count = {fit_data_count:0.1f}')
-        print (f'run_sr_chi2 = {run_sr_chi2:0.1f}, run_cr_chi2 = {run_cr_chi2:0.1f}')
-        best_binning = pow(sr_data_count/10.,0.5)
-        print (f'best_binning = {best_binning:0.1f}')
+    #if cr_chi2>chi2_cut: 
+    #    return [exposure_hours,avg_tel_elev,avg_tel_azim,truth_params,fit_params,sr_chi2,cr_chi2], data_sky_map, fit_sky_map, data_xyoff_map, fit_xyoff_map
 
-        cr_chi2 += [run_cr_chi2]
-        sr_chi2 += [run_sr_chi2]
-
-        if fit_data_count>100. and run_cr_chi2>2.0:
-            print (f'Bad model. Break.')
-            exposure_hours = 0.
-            return [exposure_hours,avg_tel_elev,avg_tel_azim,truth_params,fit_params,sr_chi2,cr_chi2], all_sky_map, data_xyoff_map, fit_xyoff_map
-
-        idx_1d = 0
-        for gcut in range(0,gcut_bins):
+    idx_1d = 0
+    for gcut in range(0,gcut_bins):
+        for logE in range(0,logE_nbins):
             for idx_x in range(0,xoff_bins[logE]):
                 for idx_y in range(0,yoff_bins[logE]):
                     idx_1d += 1
-                    data_xyoff_map[logE].waxis[idx_x,idx_y,gcut] += data_xyoff_map_1d[idx_1d-1]
-                    fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] += fit_xyoff_map_1d[idx_1d-1]
 
-        for gcut in range(0,gcut_bins):
+                    cr_correct = cr_chi2[logE]
+                    if cr_correct==0.:
+                        cr_correct = 1.
+                    #if pow(cr_data_count[logE]-fit_cr_data_count[logE],2)/fit_cr_data_count[logE]<4.:
+                    #    cr_correct = 1.
+                    cr_correct = 1.
+
+                    data_xyoff_map[logE].waxis[idx_x,idx_y,gcut] += data_xyoff_map_1d[idx_1d-1]
+                    fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] += fit_xyoff_map_1d[idx_1d-1]*cr_correct
+
+    for gcut in range(0,gcut_bins):
+        for logE in range(0,logE_nbins):
             for idx_x in range(0,xoff_bins[logE]):
                 for idx_y in range(0,yoff_bins[logE]):
+                    original_ratio = 1.
+                    #if data_xyoff_map[logE].waxis[idx_x,idx_y,gcut]==0.: continue
+                    #original_ratio = fit_xyoff_map[logE].waxis[idx_x,idx_y,0]/data_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
                     if fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut]==0.: continue
-                    ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = fit_xyoff_map[logE].waxis[idx_x,idx_y,0]/fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
+                    original_ratio = fit_xyoff_map[logE].waxis[idx_x,idx_y,0]/fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
+                    ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = original_ratio
 
-        for gcut in range(1,gcut_bins):
+    for gcut in range(1,gcut_bins):
+        for logE in range(0,logE_nbins):
 
             if xoff_bins[logE]==1: continue
             if yoff_bins[logE]==1: continue
-            if np.sum(data_xyoff_map[logE].waxis[:,:,0])==0.: continue
 
             avg_ratio = 0.
             count = 0.
@@ -604,6 +667,7 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
                 for idx_y in range(0,yoff_bins[logE]):
                     avg_ratio += ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
                     count += 1.
+            if count==0.: continue
             avg_ratio = avg_ratio/count
 
             rms_ratio = 0.
@@ -612,32 +676,39 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
                 for idx_y in range(0,yoff_bins[logE]):
                     rms_ratio += pow(ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut]-avg_ratio,2)
                     count += 1.
+            if count==0.: continue
             rms_ratio = pow(rms_ratio/count,0.5)
 
             new_avg_ratio = 0.
             count = 0.
             for idx_x in range(0,xoff_bins[logE]):
                 for idx_y in range(0,yoff_bins[logE]):
+                    if rms_ratio==0.: continue
                     deviation = (ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut] - avg_ratio)/rms_ratio
                     if abs(deviation)<2.:
                         new_avg_ratio += ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
                         count += 1.
+            if count==0.: continue
             avg_ratio = new_avg_ratio/count
 
             new_rms_ratio = 0.
             count = 0.
             for idx_x in range(0,xoff_bins[logE]):
                 for idx_y in range(0,yoff_bins[logE]):
+                    if rms_ratio==0.: continue
                     deviation = (ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut] - avg_ratio)/rms_ratio
                     if abs(deviation)<2.:
                         new_rms_ratio += pow(ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut]-avg_ratio,2)
                         count += 1.
+            if count==0.: continue
             rms_ratio = pow(new_rms_ratio/count,0.5)
+
 
             for idx_x in range(0,xoff_bins[logE]):
                 for idx_y in range(0,yoff_bins[logE]):
+                    if rms_ratio==0.: continue
                     deviation = (ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut] - avg_ratio)/rms_ratio
-                    if abs(deviation)>2.:
+                    if abs(deviation)>5.:
                         ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = avg_ratio
 
     run_count = 0
@@ -697,12 +768,13 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
             Rcore = pow(Xcore*Xcore+Ycore*Ycore,0.5)
             logE = logE_axis.get_bin(np.log10(Energy))
             if logE<0: continue
-            if logE>=len(all_sky_map): continue
+            if logE>=len(data_sky_map): continue
             if NImages<min_NImages: continue
             if EmissionHeight>max_EmissionHeight_cut: continue
             if EmissionHeight<min_EmissionHeight_cut: continue
             if Roff>max_Roff: continue
             if Rcore>max_Rcore: continue
+            if Rcore<min_Rcore: continue
             if Energy<min_Energy_cut: continue
             if Energy>max_Energy_cut: continue
             #if not control_region:
@@ -719,7 +791,8 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
             if GammaCut<1.:
                 cr_correction = 1.
 
-            all_sky_map[logE].fill(Xsky,Ysky,GammaCut,weight=cr_correction)
+            data_sky_map[logE].fill(Xsky,Ysky,GammaCut)
+            fit_sky_map[logE].fill(Xsky,Ysky,GammaCut,weight=cr_correction)
     
         print(f'memory usage (current,peak) = {tracemalloc.get_traced_memory()}')
 
@@ -730,10 +803,11 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
         avg_tel_elev = avg_tel_elev/exposure_hours
         avg_tel_azim = avg_tel_azim/exposure_hours
 
-    return [exposure_hours,avg_tel_elev,avg_tel_azim,truth_params,fit_params,sr_chi2,cr_chi2], all_sky_map, data_xyoff_map, fit_xyoff_map
+    return [exposure_hours,avg_tel_elev,avg_tel_azim,truth_params,fit_params,sr_chi2,cr_chi2], data_sky_map, fit_sky_map, data_xyoff_map, fit_xyoff_map
 
 
-def cosmic_ray_like_chi2(try_params,eigenvectors,xyoff_map,logE,region_type):
+#def cosmic_ray_like_chi2(try_params,eigenvectors,xyoff_map,logE,region_type):
+def cosmic_ray_like_chi2(try_params,eigenvectors,xyoff_map,region_type):
 
     try_params = np.array(try_params)
     try_xyoff_map = eigenvectors.T @ try_params
@@ -742,56 +816,75 @@ def cosmic_ray_like_chi2(try_params,eigenvectors,xyoff_map,logE,region_type):
     idx_1d = 0
     nbins = 0.
     for gcut in range(0,gcut_bins):
-        for idx_x in range(0,xoff_bins[logE]):
-            for idx_y in range(0,yoff_bins[logE]):
-                idx_1d += 1
-                if region_type==0:
-                    if gcut==0: continue
-                elif region_type==1:
-                    if gcut!=0: continue
-                elif region_type==2:
-                    if gcut==0: continue
-                    if gcut==1: continue
-                elif region_type==3:
-                    if gcut!=1: continue
+        for logE in range(0,logE_nbins):
+            n_expect_total = 0.
+            n_data_total = 0.
+            for idx_x in range(0,xoff_bins[logE]):
+                for idx_y in range(0,yoff_bins[logE]):
+                    idx_1d += 1
+                    if region_type==0:
+                        if gcut==0: continue
+                    elif region_type==1:
+                        if gcut!=0: continue
+                    elif region_type==2:
+                        if gcut==0: continue
+                        if gcut==1: continue
+                    elif region_type==3:
+                        if gcut!=1: continue
 
-                #stat_err = max(1.,pow(xyoff_map[idx_1d-1],0.5))
-                ##stat_err = 1.
-                #chi2 += pow((try_xyoff_map[idx_1d-1]-xyoff_map[idx_1d-1])/stat_err,2)
+                    weight = 1.
+                    #weight = 1./float(gcut+1)
 
-                #n_expect = max(0.001,try_xyoff_map[idx_1d-1])
-                #n_data = xyoff_map[idx_1d-1]
-                #if n_data==0.:
-                #    sum_log_likelihood += n_expect
-                #else:
-                #    sum_log_likelihood += -1.*(n_data*np.log(n_expect) - n_expect - (n_data*np.log(n_data)-n_data))
-                #nbins += 1.
+                    n_expect_total += try_xyoff_map[idx_1d-1]
+                    n_data_total += xyoff_map[idx_1d-1]
 
-                n_expect = try_xyoff_map[idx_1d-1]
-                n_data = xyoff_map[idx_1d-1]
-                sum_log_likelihood += pow(n_expect-n_data,2)
+                    #n_expect = max(0.001,try_xyoff_map[idx_1d-1])
+                    #n_data = xyoff_map[idx_1d-1]
+                    #if n_data==0.:
+                    #    sum_log_likelihood += n_expect
+                    #else:
+                    #    sum_log_likelihood += -1.*(n_data*np.log(n_expect) - n_expect - (n_data*np.log(n_data)-n_data))
+                    #nbins += 1.
+
+                    n_expect = try_xyoff_map[idx_1d-1]
+                    n_data = xyoff_map[idx_1d-1]
+                    sum_log_likelihood += pow(n_expect-n_data,2)*weight
+
+            #if n_data_total==0.:
+            #    sum_log_likelihood += n_expect_total
+            #else:
+            #    sum_log_likelihood += -1.*(n_data_total*np.log(n_expect_total) - n_expect_total - (n_data_total*np.log(n_data_total)-n_data_total))
+            #nbins += 1.
+
+            #sum_log_likelihood += pow(n_expect_total-n_data_total,2)
 
     #return sum_log_likelihood/nbins
     return sum_log_likelihood
 
-def cosmic_ray_like_count(xyoff_map,logE,region_type=0):
+def cosmic_ray_like_count(xyoff_map,logE_interest,region_type=0):
 
     count = 0.
     idx_1d = 0
     for gcut in range(0,gcut_bins):
-        for idx_x in range(0,xoff_bins[logE]):
-            for idx_y in range(0,yoff_bins[logE]):
-                idx_1d += 1
-                if region_type==0:
-                    if gcut==0: continue
-                elif region_type==1:
-                    if gcut!=0: continue
-                elif region_type==2:
-                    if gcut==0: continue
-                    if gcut==1: continue
-                elif region_type==3:
-                    if gcut!=1: continue
-                count += xyoff_map[idx_1d-1]
+        for logE in range(0,logE_nbins):
+            for idx_x in range(0,xoff_bins[logE]):
+                for idx_y in range(0,yoff_bins[logE]):
+                    idx_1d += 1
+                    if logE!=logE_interest: continue
+                    if region_type==0:
+                        if gcut==0: continue
+                    elif region_type==1:
+                        if gcut!=0: continue
+                    elif region_type==2:
+                        if gcut==0: continue
+                        if gcut==1: continue
+                    elif region_type==3:
+                        if gcut!=1: continue
+
+                    weight = 1.
+                    #weight = 1./float(gcut+1)
+
+                    count += xyoff_map[idx_1d-1]*weight
 
     return count
 
@@ -1223,12 +1316,20 @@ def make_significance_map(data_sky_map,bkgd_sky_map,significance_sky_map,excess_
   
     skymap_bins = len(data_sky_map.xaxis)-1
 
+    gcut_weight = []
+    for gcut in range(0,gcut_bins):
+        gcut_weight += [pow(np.sum(bkgd_sky_map.waxis[:,:,gcut]),1.0)]
+
     for idx_x in range(0,skymap_bins):
         for idx_y in range(0,skymap_bins):
             data = data_sky_map.waxis[idx_x,idx_y,0]
             bkgd = 0.
+            gcut_norm = 0.
             for gcut in range(1,gcut_bins):
-                bkgd += 1./float(gcut_bins-1)*bkgd_sky_map.waxis[idx_x,idx_y,gcut]
+                gcut_norm += gcut_weight[gcut]
+            for gcut in range(1,gcut_bins):
+               bkgd += gcut_weight[gcut]/gcut_norm*bkgd_sky_map.waxis[idx_x,idx_y,gcut]
+            #bkgd = bkgd_sky_map.waxis[idx_x,idx_y,1]
             data_err = pow(data,0.5)
             if data_err==0.: continue
             significance_sky_map.waxis[idx_x,idx_y,0] = (data-bkgd)/data_err
@@ -1237,6 +1338,10 @@ def make_significance_map(data_sky_map,bkgd_sky_map,significance_sky_map,excess_
 def make_flux_map(data_sky_map,bkgd_sky_map,flux_sky_map,flux_err_sky_map,avg_energy,delta_energy):
   
     skymap_bins = len(data_sky_map.xaxis)-1
+
+    gcut_weight = []
+    for gcut in range(0,gcut_bins):
+        gcut_weight += [pow(np.sum(bkgd_sky_map.waxis[:,:,gcut]),1.0)]
 
     norm_content_max = 0.
     for idx_x in range(0,skymap_bins):
@@ -1250,8 +1355,12 @@ def make_flux_map(data_sky_map,bkgd_sky_map,flux_sky_map,flux_err_sky_map,avg_en
             data = data_sky_map.waxis[idx_x,idx_y,0]
             norm = bkgd_sky_map.waxis[idx_x,idx_y,0]
             bkgd = 0.
+            gcut_norm = 0.
             for gcut in range(1,gcut_bins):
-                bkgd += 1./float(gcut_bins-1)*bkgd_sky_map.waxis[idx_x,idx_y,gcut]
+                gcut_norm += gcut_weight[gcut]
+            for gcut in range(1,gcut_bins):
+                bkgd += gcut_weight[gcut]/gcut_norm*bkgd_sky_map.waxis[idx_x,idx_y,gcut]
+            #bkgd = bkgd_sky_map.waxis[idx_x,idx_y,1]
             if norm>0.:
                 excess = data-bkgd
                 error = pow(data,0.5)
@@ -1384,6 +1493,7 @@ def PrintFluxCalibration(fig,hist_flux_skymap,hist_error_skymap,roi_x,roi_y,roi_
     axbig.set_xlabel(label_x)
     axbig.set_ylabel(label_y)
     axbig.set_xscale('log')
+    axbig.set_yscale('log')
     axbig.plot(energy_axis, calibration_new, color='b', ls='dashed')
     fig.savefig(f'output_plots/flux_crab_unit.png',bbox_inches='tight')
     axbig.remove()

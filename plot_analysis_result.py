@@ -47,7 +47,8 @@ source_name = sys.argv[1]
 src_ra = float(sys.argv[2])
 src_dec = float(sys.argv[3])
 #input_epoch = ['V4']
-#input_epoch = ['V5','V6']
+#input_epoch = ['V5']
+#input_epoch = ['V6']
 input_epoch = ['V4','V5','V6']
 
 skymap_size = 3.
@@ -181,14 +182,25 @@ for logE in range(0,logE_nbins):
 
 print ('=================================================================================')
 for logE in range(0,logE_nbins):
+
+    gcut_weight = []
+    for gcut in range(0,gcut_bins):
+        gcut_weight += [pow(np.sum(sum_bkgd_sky_map[logE].waxis[:,:,gcut]),1.0)]
+
     data_sum = np.sum(sum_data_sky_map[logE].waxis[:,:,0])
-    bkgd_sum = np.sum(sum_bkgd_sky_map[logE].waxis[:,:,1])
+    bkgd_sum = 0.
+    gcut_norm = 0.
+    for gcut in range(1,gcut_bins):
+        gcut_norm += gcut_weight[gcut]
+    for gcut in range(1,gcut_bins):
+        bkgd_sum += gcut_weight[gcut]/gcut_norm*np.sum(sum_bkgd_sky_map[logE].waxis[:,:,gcut])
+
     error = 0.
     stat_error = 0.
     if data_sum>0.:
         error = 100.*(data_sum-bkgd_sum)/data_sum
         stat_error = 100.*pow(data_sum,0.5)/data_sum
-    print (f'logE = {logE}, data_sum = {data_sum}, bkgd_sum = {bkgd_sum}, error = {error:0.1f} +/- {stat_error:0.1f} %')
+    print (f'logE = {logE}, data_sum = {data_sum}, bkgd_sum = {bkgd_sum:0.1f}, error = {error:0.1f} +/- {stat_error:0.1f} %')
 
 for logE in range(0,logE_nbins):
     make_significance_map(sum_data_sky_map_smooth[logE],sum_bkgd_sky_map_smooth[logE],sum_significance_sky_map[logE],sum_excess_sky_map_smooth[logE])
@@ -306,18 +318,24 @@ PlotSkyMap(fig,sum_excess_sky_map_allE,f'{source_name}_excess_sky_map_allE',roi_
 print (f'total_exposure = {total_exposure}')
 
 for logE in range(0,logE_nbins):
-
     fig.clf()
     axbig = fig.add_subplot()
     label_x = 'CR chi2'
     label_y = 'SR chi2'
     axbig.set_xlabel(label_x)
     axbig.set_ylabel(label_y)
+    #max_cr_chi2 = np.max(total_list_cr_chi2[:][logE])
+    #min_cr_chi2 = np.min(total_list_cr_chi2[:][logE])
+    max_cr_chi2 = 1.3
+    min_cr_chi2 = 0.7
     for entry in range(0,len(total_list_sr_chi2)):
         axbig.scatter(total_list_cr_chi2[entry][logE],total_list_sr_chi2[entry][logE],color='b',alpha=0.5)
+    axbig.plot([max_cr_chi2,min_cr_chi2],[max_cr_chi2,min_cr_chi2])
+    #axbig.set_xscale('log')
+    #axbig.set_yscale('log')
     fig.savefig(f'output_plots/{source_name}_crsr_chi2_logE{logE}.png',bbox_inches='tight')
     axbig.remove()
-
+    
     fig.clf()
     axbig = fig.add_subplot()
     label_x = 'Run elevation'

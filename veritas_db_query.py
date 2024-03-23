@@ -1025,7 +1025,7 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
 
     require_nmatch = 5
     if not is_imposter:
-        require_nmatch = 3
+        require_nmatch = 4
 
     # setup database connection
     dbcnx=pymysql.connect(host='romulus.ucsc.edu', db='VERITAS', user='readonly', cursorclass=pymysql.cursors.DictCursor)
@@ -1067,10 +1067,10 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
         on_run_nsb = get_run_nsb_from_aux_file(list_on_run_ids[on_run])
         number_off_runs = 0
 
-        total_nsb_diff = 0.
-        total_azim_diff = 0.
-        total_elev_diff = 0.
-        total_runnum_diff = 0.
+        #total_nsb_diff = 0.
+        #total_azim_diff = 0.
+        #total_elev_diff = 0.
+        #total_runnum_diff = 0.
 
         for run in range(0,len(all_runs_info)):
 
@@ -1131,46 +1131,67 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
             significance_diff_runnum = abs(total_runnum_diff/range_runnum)
 
             if is_imposter:
-                if abs(delta_elev)>0.1: continue
+                if abs(delta_elev)>0.05: continue
                 if abs(delta_azim)>0.1: continue
                 if abs(delta_nsb)>0.5: continue
 
-                if significance_diff_azim>significance_diff_elev and significance_diff_azim>significance_diff_nsb:
-                    if total_azim_diff>0.:
-                        if delta_azim>0.: continue
-                    else:
-                        if delta_azim<0.: continue
-                elif significance_diff_nsb>significance_diff_azim and significance_diff_nsb>significance_diff_elev:
-                    if total_nsb_diff>0.:
-                        if delta_nsb>0.: continue
-                    else:
-                        if delta_nsb<0.: continue
+                #if significance_diff_azim>significance_diff_elev and significance_diff_azim>significance_diff_nsb:
+                #    if total_azim_diff>0.:
+                #        if delta_azim>0.: continue
+                #    else:
+                #        if delta_azim<0.: continue
+                #elif significance_diff_nsb>significance_diff_azim and significance_diff_nsb>significance_diff_elev:
+                #    if total_nsb_diff>0.:
+                #        if delta_nsb>0.: continue
+                #    else:
+                #        if delta_nsb<0.: continue
+                #else:
+                #    if total_elev_diff>0.:
+                #        if delta_elev>0.: continue
+                #    else:
+                #        if delta_elev<0.: continue
+
+                #if total_elev_diff>0.:
+                #    if delta_elev>0.: continue
+                #else:
+                #    if delta_elev<0.: continue
+
+                if total_nsb_diff>0.:
+                    if delta_nsb>0.: continue
                 else:
-                    if total_elev_diff>0.:
-                        if delta_elev>0.: continue
-                    else:
-                        if delta_elev<0.: continue
+                    if delta_nsb<0.: continue
 
             else:
-                if abs(delta_elev)>0.1: continue
+                if abs(delta_elev)>0.05: continue
                 if abs(delta_azim)>0.1: continue
                 if abs(delta_nsb)>0.5: continue
 
-                if significance_diff_azim>significance_diff_elev and significance_diff_azim>significance_diff_nsb:
-                    if total_azim_diff>0.:
-                        if delta_azim>0.: continue
-                    else:
-                        if delta_azim<0.: continue
-                elif significance_diff_nsb>significance_diff_azim and significance_diff_nsb>significance_diff_elev:
-                    if total_nsb_diff>0.:
-                        if delta_nsb>0.: continue
-                    else:
-                        if delta_nsb<0.: continue
+                #if significance_diff_azim>significance_diff_elev and significance_diff_azim>significance_diff_nsb:
+                #    if total_azim_diff>0.:
+                #        if delta_azim>0.: continue
+                #    else:
+                #        if delta_azim<0.: continue
+                #elif significance_diff_nsb>significance_diff_azim and significance_diff_nsb>significance_diff_elev:
+                #    if total_nsb_diff>0.:
+                #        if delta_nsb>0.: continue
+                #    else:
+                #        if delta_nsb<0.: continue
+                #else:
+                #    if total_elev_diff>0.:
+                #        if delta_elev>0.: continue
+                #    else:
+                #        if delta_elev<0.: continue
+
+                #if total_elev_diff>0.:
+                #    if delta_elev>0.: continue
+                #else:
+                #    if delta_elev<0.: continue
+
+                if total_nsb_diff>0.:
+                    if delta_nsb>0.: continue
                 else:
-                    if total_elev_diff>0.:
-                        if delta_elev>0.: continue
-                    else:
-                        if delta_elev<0.: continue
+                    if delta_nsb<0.: continue
+
 
             list_off_run_ids += [[int(list_on_run_ids[on_run]),int(all_runs_info[run][0]),on_run_el,off_run_el]]
             number_off_runs += 1

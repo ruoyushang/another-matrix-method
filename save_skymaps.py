@@ -85,9 +85,9 @@ nruns_in_small_list = 1
 #nruns_in_small_list = 20
 run_count = 0
 for run in range(0,total_runs):
-    #if len(off_runlist[run])==0: 
-    #    print (f'ON run {on_runlist[run]} rejected: zero matched OFF run')
-    #    continue
+    if len(off_runlist[run])<2: 
+        print (f'ON run {on_runlist[run]} rejected: zero matched OFF run')
+        continue
     small_runlist += [on_runlist[run]]
     run_count += 1
     if (run % nruns_in_small_list)==0 and run_count>=nruns_in_small_list:
@@ -101,7 +101,7 @@ for small_runlist in big_runlist:
     run_list_count += 1
     print (f'analyzing {run_list_count}/{len(big_runlist)} lists...')
 
-    run_info, run_all_sky_map, run_data_xyoff_map, run_fit_xyoff_map = build_skymap(smi_input,path_to_eigenvector,small_runlist,src_ra,src_dec)
+    run_info, run_data_sky_map, run_fit_sky_map, run_data_xyoff_map, run_fit_xyoff_map = build_skymap(smi_input,path_to_eigenvector,small_runlist,src_ra,src_dec)
 
     run_exposure_hours = run_info[0]
     run_elev = run_info[1]
@@ -126,37 +126,33 @@ for small_runlist in big_runlist:
         #data_xyoff_map_ctl[logE].add(run_data_xyoff_map_ctl[logE])
         #fit_xyoff_map_ctl[logE].add(run_fit_xyoff_map_ctl[logE])
 
+        run_data_xyoff_sum_cr = np.sum(run_data_xyoff_map[logE].waxis[:,:,1])
+        run_data_sky_sum_cr = np.sum(run_data_sky_map[logE].waxis[:,:,1])
         run_fit_xyoff_sum_sr = np.sum(run_fit_xyoff_map[logE].waxis[:,:,0])
         run_fit_sky_sum_sr = 0.
         for gcut in range(1,gcut_bins):
-            run_fit_sky_sum_sr += 1./float(gcut_bins-1)*np.sum(run_all_sky_map[logE].waxis[:,:,gcut])
+            run_fit_sky_sum_sr += 1./float(gcut_bins-1)*np.sum(run_fit_sky_map[logE].waxis[:,:,gcut])
 
         renormalization = 1.
-        #if run_fit_sky_sum_sr>0.:
-        #    renormalization = run_fit_xyoff_sum_sr/run_fit_sky_sum_sr
-
-        #run_data_xyoff_sum_ctl = np.sum(run_data_xyoff_map_ctl[logE].waxis[:,:,0])
-        #run_fit_xyoff_sum_ctl = np.sum(run_fit_xyoff_map_ctl[logE].waxis[:,:,0])
-        ctl_correction = 1.
-        #if run_fit_xyoff_sum_ctl>0.:
-        #    ctl_correction = run_data_xyoff_sum_ctl/run_fit_xyoff_sum_ctl
+        if run_data_xyoff_sum_cr>0.:
+            renormalization = run_data_sky_sum_cr/run_data_xyoff_sum_cr*run_fit_xyoff_sum_sr/run_fit_sky_sum_sr
+            #renormalization = run_fit_xyoff_sum_sr/run_fit_sky_sum_sr
 
         for idx_x in range(0,skymap_bins):
             for idx_y in range(0,skymap_bins):
                 for gcut in range(1,gcut_bins):
-                    if run_fit_sky_sum_sr==0.: continue
-                    run_all_sky_map[logE].waxis[idx_x,idx_y,gcut] = run_all_sky_map[logE].waxis[idx_x,idx_y,gcut]*renormalization*ctl_correction
+                    run_fit_sky_map[logE].waxis[idx_x,idx_y,gcut] = run_fit_sky_map[logE].waxis[idx_x,idx_y,gcut]*renormalization
 
         for idx_x in range(0,skymap_bins):
             for idx_y in range(0,skymap_bins):
-                data = run_all_sky_map[logE].waxis[idx_x,idx_y,0]
+                data = run_data_sky_map[logE].waxis[idx_x,idx_y,0]
                 data_sky_map[logE].waxis[idx_x,idx_y,0] += data
                 bkgd = 0.
                 for gcut in range(1,gcut_bins):
-                    bkgd += 1./float(gcut_bins-1)*run_all_sky_map[logE].waxis[idx_x,idx_y,gcut]
+                    bkgd += 1./float(gcut_bins-1)*run_fit_sky_map[logE].waxis[idx_x,idx_y,gcut]
                 bkgd_sky_map[logE].waxis[idx_x,idx_y,0] += bkgd
                 for gcut in range(1,gcut_bins):
-                    bkgd_sky_map[logE].waxis[idx_x,idx_y,gcut] += run_all_sky_map[logE].waxis[idx_x,idx_y,gcut]
+                    bkgd_sky_map[logE].waxis[idx_x,idx_y,gcut] += run_fit_sky_map[logE].waxis[idx_x,idx_y,gcut]
 
     print ('=================================================================================')
     for logE in range(0,logE_nbins):
