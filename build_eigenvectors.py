@@ -48,11 +48,11 @@ print ('Computing SVD eigenvectors...')
 #    VT_eco = VT_full[:effective_matrix_rank, :]
 #    big_eigenvectors += [VT_eco]
 
-min_rank = 7
+min_rank = 5
 U_full, S_full, VT_full = np.linalg.svd(big_matrix,full_matrices=False)
 print (f'S_full length = {len(S_full)}')
 #effective_matrix_rank = max(1,int(matrix_rank*len(S_full)))
-effective_matrix_rank = min(min_rank,len(S_full)-1)
+effective_matrix_rank = min(min_rank,int(0.5*(len(S_full)-1)))
 print (f'effective_matrix_rank = {effective_matrix_rank}')
 U_eco = U_full[:, :effective_matrix_rank]
 VT_eco = VT_full[:effective_matrix_rank, :]
