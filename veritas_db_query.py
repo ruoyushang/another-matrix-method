@@ -1067,10 +1067,10 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
         on_run_nsb = get_run_nsb_from_aux_file(list_on_run_ids[on_run])
         number_off_runs = 0
 
-        #total_nsb_diff = 0.
-        #total_azim_diff = 0.
-        #total_elev_diff = 0.
-        #total_runnum_diff = 0.
+        total_nsb_diff = 0.
+        total_azim_diff = 0.
+        total_elev_diff = 0.
+        total_runnum_diff = 0.
 
         for run in range(0,len(all_runs_info)):
 
@@ -1151,6 +1151,7 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
                 #    else:
                 #        if delta_elev<0.: continue
 
+                ## this is bad
                 #if total_elev_diff>0.:
                 #    if delta_elev>0.: continue
                 #else:
@@ -1182,6 +1183,7 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
                 #    else:
                 #        if delta_elev<0.: continue
 
+                ## this is bad
                 #if total_elev_diff>0.:
                 #    if delta_elev>0.: continue
                 #else:

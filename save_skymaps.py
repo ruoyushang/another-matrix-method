@@ -24,6 +24,7 @@ build_skymap = common_functions.build_skymap
 smooth_image = common_functions.smooth_image
 skymap_size = common_functions.skymap_size
 skymap_bins = common_functions.skymap_bins
+ana_tag = common_functions.ana_tag
 
 fig, ax = plt.subplots()
 figsize_x = 8.6
@@ -44,8 +45,8 @@ path_to_eigenvector = f'{smi_output}/eigenvectors_{source_name}_{input_epoch}.pk
 print (f'path_to_eigenvector = {path_to_eigenvector}')
 
 
-on_file = f'/nevis/tehanu/home/ryshang/veritas_analysis/another-matrix-method/output_vts_query/RunList_{source_name}_{input_epoch}.txt'
-off_file = f'/nevis/tehanu/home/ryshang/veritas_analysis/another-matrix-method/output_vts_query/PairList_{source_name}_{input_epoch}.txt'
+on_file = f'/nevis/tehanu/home/ryshang/veritas_analysis/another-matrix-method/output_vts_query/nsb_opt/RunList_{source_name}_{input_epoch}.txt'
+off_file = f'/nevis/tehanu/home/ryshang/veritas_analysis/another-matrix-method/output_vts_query/nsb_opt/PairList_{source_name}_{input_epoch}.txt'
 on_runlist, off_runlist = ReadRunListFromFile(on_file,off_file)
 
 xsky_start = src_ra+skymap_size
@@ -59,7 +60,7 @@ total_runs = len(on_runlist)
 big_runlist = []
 small_runlist = []
 nruns_in_small_list = 1
-#nruns_in_small_list = 20
+#nruns_in_small_list = 10
 run_count = 0
 for run in range(0,total_runs):
     #if len(off_runlist[run])<2: 
@@ -78,6 +79,11 @@ for logE in range(0,logE_nbins):
     total_data_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
     total_fit_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
 
+total_data_sky_map = []
+total_bkgd_sky_map = []
+for logE in range(0,logE_nbins):
+    total_data_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
+    total_bkgd_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
 
 run_list_count = 0
 all_skymaps = []
@@ -126,8 +132,6 @@ for small_runlist in big_runlist:
         renormalization = 1.
         if run_data_xyoff_sum_cr>0. and run_fit_sky_sum_sr>0.:
             renormalization = run_data_sky_sum_cr/run_data_xyoff_sum_cr*run_fit_xyoff_sum_sr/run_fit_sky_sum_sr
-            #renormalization = run_fit_xyoff_sum_sr/run_fit_sky_sum_sr
-
         for idx_x in range(0,skymap_bins):
             for idx_y in range(0,skymap_bins):
                 for gcut in range(1,gcut_bins):
@@ -137,18 +141,21 @@ for small_runlist in big_runlist:
             for idx_y in range(0,skymap_bins):
                 data = run_data_sky_map[logE].waxis[idx_x,idx_y,0]
                 data_sky_map[logE].waxis[idx_x,idx_y,0] += data
+                total_data_sky_map[logE].waxis[idx_x,idx_y,0] += data
                 bkgd = 0.
                 for gcut in range(1,gcut_bins):
                     bkgd += 1./float(gcut_bins-1)*run_fit_sky_map[logE].waxis[idx_x,idx_y,gcut]
                 bkgd_sky_map[logE].waxis[idx_x,idx_y,0] += bkgd
+                total_bkgd_sky_map[logE].waxis[idx_x,idx_y,0] += bkgd
                 for gcut in range(1,gcut_bins):
                     bkgd_sky_map[logE].waxis[idx_x,idx_y,gcut] += run_fit_sky_map[logE].waxis[idx_x,idx_y,gcut]
+                    total_bkgd_sky_map[logE].waxis[idx_x,idx_y,gcut] += run_fit_sky_map[logE].waxis[idx_x,idx_y,gcut]
 
     print ('=================================================================================')
     for logE in range(0,logE_nbins):
         print (f'logE = {logE}')
-        data_sum = np.sum(data_sky_map[logE].waxis[:,:,0])
-        bkgd_sum = np.sum(bkgd_sky_map[logE].waxis[:,:,0])
+        data_sum = np.sum(total_data_sky_map[logE].waxis[:,:,0])
+        bkgd_sum = np.sum(total_bkgd_sky_map[logE].waxis[:,:,0])
         #data_sum = np.sum(total_data_xyoff_map[logE].waxis[:,:,0])
         #bkgd_sum = np.sum(total_fit_xyoff_map[logE].waxis[:,:,0])
         error = 0.
@@ -161,7 +168,7 @@ for small_runlist in big_runlist:
 
     all_skymaps += [[[run_exposure_hours, run_elev, run_azim, truth_params, fit_params, sr_qual, cr_qual], data_sky_map, bkgd_sky_map, data_xyoff_map, fit_xyoff_map]]
 
-    output_filename = f'{smi_output}/skymaps_{source_name}_{input_epoch}.pkl'
+    output_filename = f'{smi_output}/skymaps_{source_name}_{input_epoch}_{ana_tag}.pkl'
     with open(output_filename,"wb") as file:
         pickle.dump(all_skymaps, file)
 

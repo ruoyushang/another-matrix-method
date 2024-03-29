@@ -37,51 +37,51 @@ big_matrix = pickle.load(open(input_filename, "rb"))
 #big_matrix_ctl = pickle.load(open(input_filename, "rb"))
 
 print ('Computing SVD eigenvectors...')
-#big_eigenvectors = []
-#for logE in range(0,logE_nbins):
-#    U_full, S_full, VT_full = np.linalg.svd(big_matrix[logE],full_matrices=False)
-#    print (f'S_full length = {len(S_full)}')
-#    effective_matrix_rank = max(1,int(matrix_rank*len(S_full)))
-#    effective_matrix_rank = min(5,effective_matrix_rank)
-#    print (f'effective_matrix_rank = {effective_matrix_rank}')
-#    U_eco = U_full[:, :effective_matrix_rank]
-#    VT_eco = VT_full[:effective_matrix_rank, :]
-#    big_eigenvectors += [VT_eco]
+min_rank = 4
+big_eigenvectors = []
+for logE in range(0,logE_nbins):
+    U_full, S_full, VT_full = np.linalg.svd(big_matrix[logE],full_matrices=False)
+    print (f'S_full length = {len(S_full)}')
+    effective_matrix_rank = min(min_rank,int(0.5*(len(S_full)-1)))
+    print (f'effective_matrix_rank = {effective_matrix_rank}')
+    U_eco = U_full[:, :effective_matrix_rank]
+    VT_eco = VT_full[:effective_matrix_rank, :]
+    big_eigenvectors += [VT_eco]
 
-min_rank = 5
-U_full, S_full, VT_full = np.linalg.svd(big_matrix,full_matrices=False)
-print (f'S_full length = {len(S_full)}')
-#effective_matrix_rank = max(1,int(matrix_rank*len(S_full)))
-effective_matrix_rank = min(min_rank,int(0.5*(len(S_full)-1)))
-print (f'effective_matrix_rank = {effective_matrix_rank}')
-U_eco = U_full[:, :effective_matrix_rank]
-VT_eco = VT_full[:effective_matrix_rank, :]
-big_eigenvectors = VT_eco
+#min_rank = 5
+#U_full, S_full, VT_full = np.linalg.svd(big_matrix,full_matrices=False)
+#print (f'S_full length = {len(S_full)}')
+##effective_matrix_rank = max(1,int(matrix_rank*len(S_full)))
+#effective_matrix_rank = min(min_rank,int(0.5*(len(S_full)-1)))
+#print (f'effective_matrix_rank = {effective_matrix_rank}')
+#U_eco = U_full[:, :effective_matrix_rank]
+#VT_eco = VT_full[:effective_matrix_rank, :]
+#big_eigenvectors = VT_eco
 
 #u_full, s_full, vT_full = np.linalg.svd(big_matrix_ctl,full_matrices=False)
 #u_eco = u_full[:, :matrix_rank]
 #vT_eco = vT_full[:matrix_rank, :]
 #big_eigenvectors_ctl = vT_eco
 
-rank_index = []
-for entry in range(0,len(S_full)):
-    rank_index += [entry+1]
-
-plot_max_rank = min(int(0.5*len(S_full)),300)
-
-fig.clf()
-axbig = fig.add_subplot()
-label_x = 'Rank'
-label_y = 'Signular value'
-axbig.set_xlabel(label_x)
-axbig.set_ylabel(label_y)
-axbig.set_xlim(1,plot_max_rank)
-axbig.set_ylim(S_full[plot_max_rank-1],2.*S_full[0])
-axbig.set_xscale('log')
-axbig.set_yscale('log')
-axbig.plot(rank_index,S_full)
-fig.savefig(f'{smi_dir}/output_plots/signularvalue_{source_name}_{input_epoch}.png',bbox_inches='tight')
-axbig.remove()
+    rank_index = []
+    for entry in range(0,len(S_full)):
+        rank_index += [entry+1]
+    
+    plot_max_rank = min(int(0.5*len(S_full)),300)
+    
+    fig.clf()
+    axbig = fig.add_subplot()
+    label_x = 'Rank'
+    label_y = 'Signular value'
+    axbig.set_xlabel(label_x)
+    axbig.set_ylabel(label_y)
+    axbig.set_xlim(1,plot_max_rank)
+    axbig.set_ylim(S_full[plot_max_rank-1],2.*S_full[0])
+    axbig.set_xscale('log')
+    axbig.set_yscale('log')
+    axbig.plot(rank_index,S_full)
+    fig.savefig(f'{smi_dir}/output_plots/signularvalue_{source_name}_{input_epoch}_logE{logE}.png',bbox_inches='tight')
+    axbig.remove()
 
 output_filename = f'{smi_output}/eigenvectors_{source_name}_{input_epoch}.pkl'
 with open(output_filename,"wb") as file:

@@ -45,6 +45,8 @@ smi_input = os.environ.get("SMI_INPUT")
 smi_output = os.environ.get("SMI_OUTPUT")
 smi_dir = os.environ.get("SMI_DIR")
 
+ana_tag = 'scale1'
+
 source_name = sys.argv[1]
 src_ra = float(sys.argv[2])
 src_dec = float(sys.argv[3])
@@ -103,7 +105,7 @@ for logE in range(0,logE_nbins):
 
 for epoch in input_epoch:
 
-    input_filename = f'{smi_output}/skymaps_{source_name}_{epoch}.pkl'
+    input_filename = f'{smi_output}/skymaps_{source_name}_{epoch}_{ana_tag}.pkl'
     print (f'reading {input_filename}...')
     if not os.path.exists(input_filename):
         print (f'{input_filename} does not exist.')
@@ -121,9 +123,16 @@ for epoch in input_epoch:
         sr_qual = run_info[5]
         cr_qual = run_info[6]
 
-        if cr_qual>1.6:
-            print (f'bad fitting. reject the run.')
-            continue
+        if run_azim>270.:
+            run_azim = run_azim-360.
+
+        #is_good_run = True
+        #for logE in range(0,3):
+        #    if cr_qual[logE]>0.6:
+        #        is_good_run = False
+        #if not is_good_run: 
+        #    print (f'bad fitting. reject the run.')
+        #    continue
 
         data_sky_map = analysis_result[run][1] 
         bkgd_sky_map = analysis_result[run][2] 
@@ -324,40 +333,43 @@ PlotSkyMap(fig,sum_excess_sky_map_allE,f'{source_name}_excess_sky_map_allE',roi_
 
 print (f'total_exposure = {total_exposure}')
 
-fig.clf()
-axbig = fig.add_subplot()
-label_x = 'CR chi2'
-label_y = 'SR chi2'
-axbig.set_xlabel(label_x)
-axbig.set_ylabel(label_y)
-for entry in range(0,len(list_sr_qual)):
-    axbig.scatter(list_cr_qual[entry],list_sr_qual[entry],color='b',alpha=0.5)
-#axbig.set_xscale('log')
-#axbig.set_yscale('log')
-fig.savefig(f'output_plots/{source_name}_crsr_qual.png',bbox_inches='tight')
-axbig.remove()
+for logE in range(0,logE_nbins):
 
-fig.clf()
-axbig = fig.add_subplot()
-label_x = 'Run elevation'
-label_y = 'SR chi2'
-axbig.set_xlabel(label_x)
-axbig.set_ylabel(label_y)
-for entry in range(0,len(list_sr_qual)):
-    axbig.scatter(list_run_elev[entry],list_sr_qual[entry],color='b',alpha=0.5)
-fig.savefig(f'output_plots/{source_name}_elev_sr_qual.png',bbox_inches='tight')
-axbig.remove()
-
-fig.clf()
-axbig = fig.add_subplot()
-label_x = 'Run azimuth'
-label_y = 'SR chi2'
-axbig.set_xlabel(label_x)
-axbig.set_ylabel(label_y)
-for entry in range(0,len(list_sr_qual)):
-    axbig.scatter(list_run_azim[entry],list_sr_qual[entry],color='b',alpha=0.5)
-fig.savefig(f'output_plots/{source_name}_azim_sr_qual.png',bbox_inches='tight')
-axbig.remove()
+    fig.clf()
+    axbig = fig.add_subplot()
+    label_x = 'CR chi2'
+    label_y = 'SR chi2'
+    axbig.set_xlabel(label_x)
+    axbig.set_ylabel(label_y)
+    for entry in range(0,len(list_sr_qual)):
+        axbig.scatter(list_cr_qual[entry][logE],list_sr_qual[entry][logE],color='b',alpha=0.5)
+    #axbig.set_xscale('log')
+    #axbig.set_yscale('log')
+    #axbig.set_xlim(0.1,10.)
+    fig.savefig(f'output_plots/{source_name}_crsr_qual_logE{logE}.png',bbox_inches='tight')
+    axbig.remove()
+    
+    fig.clf()
+    axbig = fig.add_subplot()
+    label_x = 'Run elevation'
+    label_y = 'SR chi2'
+    axbig.set_xlabel(label_x)
+    axbig.set_ylabel(label_y)
+    for entry in range(0,len(list_sr_qual)):
+        axbig.scatter(list_run_elev[entry],list_sr_qual[entry][logE],color='b',alpha=0.5)
+    fig.savefig(f'output_plots/{source_name}_elev_sr_qual_logE{logE}.png',bbox_inches='tight')
+    axbig.remove()
+    
+    fig.clf()
+    axbig = fig.add_subplot()
+    label_x = 'Run azimuth'
+    label_y = 'SR chi2'
+    axbig.set_xlabel(label_x)
+    axbig.set_ylabel(label_y)
+    for entry in range(0,len(list_sr_qual)):
+        axbig.scatter(list_run_azim[entry],list_sr_qual[entry][logE],color='b',alpha=0.5)
+    fig.savefig(f'output_plots/{source_name}_azim_sr_qual_logE{logE}.png',bbox_inches='tight')
+    axbig.remove()
 
 fig.clf()
 axbig = fig.add_subplot()
@@ -393,6 +405,7 @@ axbig.remove()
 #        axbig.remove()
 
 for par1 in range(0,len(list_truth_params[0])):
+
     fig.clf()
     axbig = fig.add_subplot()
     label_x = 'truth'
