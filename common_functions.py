@@ -8,10 +8,21 @@ from scipy.optimize import least_squares, minimize
 import matplotlib.pyplot as plt
 import tracemalloc
 
-#ana_tag = 'scale0'
-#nuclear_norm_scale = 0.
-ana_tag = 'scale1'
-nuclear_norm_scale = 1.
+sky_tag = os.environ.get("SKY_TAG")
+
+nuclear_norm_scale = 0.
+if sky_tag=='scale0':
+    nuclear_norm_scale = 0.
+if sky_tag=='scale0p01':
+    nuclear_norm_scale = 0.01
+if sky_tag=='scale0p1':
+    nuclear_norm_scale = 0.1
+if sky_tag=='scale0p2':
+    nuclear_norm_scale = 0.2
+if sky_tag=='scale0p5':
+    nuclear_norm_scale = 0.5
+if sky_tag=='scale1p0':
+    nuclear_norm_scale = 1.0
 
 min_NImages = 3
 max_Roff = 2.0
@@ -39,13 +50,11 @@ logE_bins = [-0.75,-0.625,-0.50,-0.375,-0.25,0.00,0.25,0.50,0.75,1.0] # logE TeV
 logE_nbins = len(logE_bins)-1
 
 skymap_size = 3.
-skymap_bins = 60
+skymap_bins = 30
 
 doFluxCalibration = True
 #doFluxCalibration = False
 calibration_radius = 0.15 # need to be larger than the PSF and smaller than the integration radius
-
-is_gamma_free = True
 
 logE_min = 0
 logE_max = logE_nbins
@@ -374,7 +383,7 @@ def EventGammaCut(MSCL,MSCW):
 
     return GammaCut
 
-def build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_run=0,control_region=False):
+def build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_run=0):
 
     big_matrix = []
     for logE in range(0,logE_nbins):
@@ -442,11 +451,6 @@ def build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_
             if Rcore<min_Rcore: continue
             if Energy<min_Energy_cut: continue
             if Energy>max_Energy_cut: continue
-            #if not control_region:
-            #    if MSCL>1.0: continue
-            #else:
-            #    if MSCL<1.0: continue
-            #    if MSCL>2.0: continue
             if GammaCut>float(gcut_end): continue
 
             Xsky = TelRAJ2000 + Xderot
@@ -491,7 +495,11 @@ def build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_
 
     return big_matrix
 
-def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10,control_region=False):
+def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,onoff,max_runs=1e10):
+
+    global skymap_bins
+    if onoff=='ON':
+        skymap_bins = 100
 
     # start memory profiling
     tracemalloc.start()
@@ -508,9 +516,11 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
     exposure_hours = 0.
     avg_tel_elev = 0.
     avg_tel_azim = 0.
+    incl_sky_map = []
     data_sky_map = []
     fit_sky_map = []
     for logE in range(0,logE_nbins):
+        incl_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=1)]
         data_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
         fit_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
 
@@ -531,12 +541,12 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
     #print (f'big_eigenvectors.shape = {big_eigenvectors.shape}') 
 
     print ('build big matrix...')
-    big_on_matrix = build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,control_region=control_region)
+    big_on_matrix = build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True)
 
     if big_on_matrix[0]==None:
     #if len(big_on_matrix)==0:
         print (f'No data. Break.')
-        return [exposure_hours,avg_tel_elev,avg_tel_azim,truth_params,fit_params,sr_qual,cr_qual], data_sky_map, fit_sky_map, data_xyoff_map, fit_xyoff_map
+        return [exposure_hours,avg_tel_elev,avg_tel_azim,truth_params,fit_params,sr_qual,cr_qual], incl_sky_map, data_sky_map, fit_sky_map, data_xyoff_map, fit_xyoff_map
 
     for logE in range(0,logE_nbins):
         data_xyoff_map[logE].reset()
@@ -578,7 +588,7 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
             print ('===================================================================================')
             for entry in range(0,len(truth_params)):
                 print (f'truth_params = {truth_params[entry]:0.1f}, fit_params = {fit_params[entry]: 0.1f}')
-            print (f'run_cr_chi2 = {run_cr_chi2:0.3f}, run_nuclear_norm = {run_nuclear_norm:0.3f}')
+            print (f'nuclear_norm_scale = {nuclear_norm_scale}, run_cr_chi2 = {run_cr_chi2:0.3f}, run_nuclear_norm = {run_nuclear_norm:0.3f}')
 
         sr_data_count = cosmic_ray_like_count(data_xyoff_map_1d,logE,region_type=1)
         fit_data_count = cosmic_ray_like_count(fit_xyoff_map_1d,logE,region_type=1)
@@ -591,8 +601,8 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
         #print (f'run_cr_chi2 = {run_cr_chi2}')
         #print (f'nuclear_norm = {nuclear_norm}')
 
-        cr_qual += [run_cr_chi2]
-        sr_qual += [run_sr_chi2]
+        cr_qual += [run_nuclear_norm/run_cr_chi2]
+        sr_qual += [sr_data_count/fit_data_count]
 
         #if fit_cr_data_count>0.:
         #    cr_qual += [(cr_data_count-fit_cr_data_count)/pow(fit_cr_data_count,0.5)]
@@ -738,19 +748,16 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
             if Rcore<min_Rcore: continue
             if Energy<min_Energy_cut: continue
             if Energy>max_Energy_cut: continue
-            #if not control_region:
-            #    if MSCL>1.0: continue
-            #else:
-            #    if MSCL<1.0: continue
-            #    if MSCL>2.0: continue
-            if GammaCut>float(gcut_end): continue
 
             Xsky = TelRAJ2000 + Xderot
             Ysky = TelDecJ2000 + Yderot
 
-            if is_gamma_free:
+            if onoff=='OFF':
                 found_gamma_source = CoincideWithBrightStars(Xsky, Ysky, gamma_source_coord)
                 if found_gamma_source: continue
+
+            incl_sky_map[logE].fill(Xsky,Ysky,0.5)
+            if GammaCut>float(gcut_end): continue
 
             cr_correction = ratio_xyoff_map[logE].get_bin_content(Xoff,Yoff,GammaCut)
             if GammaCut<1.:
@@ -768,7 +775,7 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,max_runs=1e10
         avg_tel_elev = avg_tel_elev/exposure_hours
         avg_tel_azim = avg_tel_azim/exposure_hours
 
-    return [exposure_hours,avg_tel_elev,avg_tel_azim,truth_params,fit_params,sr_qual,cr_qual], data_sky_map, fit_sky_map, data_xyoff_map, fit_xyoff_map
+    return [exposure_hours,avg_tel_elev,avg_tel_azim,truth_params,fit_params,sr_qual,cr_qual], incl_sky_map, data_sky_map, fit_sky_map, data_xyoff_map, fit_xyoff_map
 
 
 def cosmic_ray_like_chi2(try_params,eigenvectors,xyoff_map,logE,region_type,chi2_type):
@@ -812,20 +819,21 @@ def cosmic_ray_like_chi2(try_params,eigenvectors,xyoff_map,logE,region_type,chi2
                 n_expect_total += try_xyoff_map[idx_1d-1]
                 n_data_total += xyoff_map[idx_1d-1]
 
-                #n_expect = max(0.0001,try_xyoff_map[idx_1d-1])
-                #n_data = xyoff_map[idx_1d-1]
-                #if n_data==0.:
-                #    sum_log_likelihood += n_expect
-                #else:
-                #    sum_log_likelihood += -1.*(n_data*np.log(n_expect) - n_expect - (n_data*np.log(n_data)-n_data))
-                #nbins += 1.
-
-                n_expect = try_xyoff_map[idx_1d-1]
+                n_expect = max(0.0001,try_xyoff_map[idx_1d-1])
                 n_data = xyoff_map[idx_1d-1]
-                sum_log_likelihood += pow(n_expect-n_data,2)
+                if n_data==0.:
+                    sum_log_likelihood += n_expect
+                else:
+                    sum_log_likelihood += -1.*(n_data*np.log(n_expect) - n_expect - (n_data*np.log(n_data)-n_data))
+                nbins += 1.
 
-    #sum_log_likelihood = sum_log_likelihood/nbins
-    sum_log_likelihood = sum_log_likelihood/n_data_total
+                #n_expect = try_xyoff_map[idx_1d-1]
+                #n_data = xyoff_map[idx_1d-1]
+                #sum_log_likelihood += pow(n_expect-n_data,2)
+
+    sum_log_likelihood = sum_log_likelihood/nbins
+    #sum_log_likelihood = sum_log_likelihood/n_data_total
+
     if chi2_type==1:
         return sum_log_likelihood
 
@@ -834,14 +842,14 @@ def cosmic_ray_like_chi2(try_params,eigenvectors,xyoff_map,logE,region_type,chi2
     #    nuclear_norm += abs(try_params[entry])
     #sum_log_likelihood += nuclear_norm_scale*nuclear_norm/n_data_total
     #if chi2_type==2:
-    #    return nuclear_norm_scale*nuclear_norm/n_data_total
+    #    return nuclear_norm/n_data_total
 
     rel_nuclear_norm = 0.
     for entry in range(1,len(try_params)):
-        rel_nuclear_norm += abs(try_params[entry])/abs(try_params[entry-1])
+        rel_nuclear_norm += abs(try_params[entry])/pow(abs(try_params[entry-1]),0.5)
     sum_log_likelihood += nuclear_norm_scale*rel_nuclear_norm
     if chi2_type==2:
-        return nuclear_norm_scale*rel_nuclear_norm
+        return rel_nuclear_norm
 
     return sum_log_likelihood
 

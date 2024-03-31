@@ -45,24 +45,31 @@ smi_input = os.environ.get("SMI_INPUT")
 smi_output = os.environ.get("SMI_OUTPUT")
 smi_dir = os.environ.get("SMI_DIR")
 
-ana_tag = 'scale1'
+ana_tag = 'scale0p1'
+
+#onoff = 'ON'
+onoff = 'OFF'
 
 source_name = sys.argv[1]
 src_ra = float(sys.argv[2])
 src_dec = float(sys.argv[3])
 #input_epoch = ['V4']
-#input_epoch = ['V5']
+input_epoch = ['V5']
 #input_epoch = ['V6']
-input_epoch = ['V4','V5','V6']
+#input_epoch = ['V4','V5','V6']
 
 xsky_start = src_ra+skymap_size
 xsky_end = src_ra-skymap_size
 ysky_start = src_dec-skymap_size
 ysky_end = src_dec+skymap_size
 
+if onoff=='ON':
+    skymap_bins = 100
+
 roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r = DefineRegionOfInterest(source_name,src_ra,src_dec)
 
 total_exposure = 0.
+good_exposure = 0.
 list_run_elev = []
 list_run_azim = []
 list_truth_params = []
@@ -105,7 +112,7 @@ for logE in range(0,logE_nbins):
 
 for epoch in input_epoch:
 
-    input_filename = f'{smi_output}/skymaps_{source_name}_{epoch}_{ana_tag}.pkl'
+    input_filename = f'{smi_output}/skymaps_{source_name}_{epoch}_{onoff}_{ana_tag}.pkl'
     print (f'reading {input_filename}...')
     if not os.path.exists(input_filename):
         print (f'{input_filename} does not exist.')
@@ -126,20 +133,23 @@ for epoch in input_epoch:
         if run_azim>270.:
             run_azim = run_azim-360.
 
-        #is_good_run = True
-        #for logE in range(0,3):
-        #    if cr_qual[logE]>0.6:
-        #        is_good_run = False
-        #if not is_good_run: 
-        #    print (f'bad fitting. reject the run.')
-        #    continue
-
-        data_sky_map = analysis_result[run][1] 
-        bkgd_sky_map = analysis_result[run][2] 
-        data_xyoff_map = analysis_result[run][3]
-        fit_xyoff_map = analysis_result[run][4]
-
         total_exposure += exposure
+
+        is_good_run = True
+        for logE in range(0,3):
+            if cr_qual[logE]<0.2:
+                is_good_run = False
+        if not is_good_run: 
+            print (f'bad fitting. reject the run.')
+            continue
+
+        incl_sky_map = analysis_result[run][1] 
+        data_sky_map = analysis_result[run][2] 
+        bkgd_sky_map = analysis_result[run][3] 
+        data_xyoff_map = analysis_result[run][4]
+        fit_xyoff_map = analysis_result[run][5]
+
+        good_exposure += exposure
         list_run_elev += [run_elev]
         list_run_azim += [run_azim]
         list_truth_params += [truth_params]
@@ -180,8 +190,8 @@ for logE in range(0,logE_nbins):
                 sum_err_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = (data-model)/data_err
 
 for logE in range(0,logE_nbins):
-    sum_data_xyoff_map[logE].scale(1./total_exposure)
-    sum_fit_xyoff_map[logE].scale(1./total_exposure)
+    sum_data_xyoff_map[logE].scale(1./good_exposure)
+    sum_fit_xyoff_map[logE].scale(1./good_exposure)
 
 for logE in range(0,logE_nbins):
     sum_data_sky_map_smooth[logE].reset()
@@ -332,6 +342,7 @@ PlotSkyMap(fig,sum_significance_sky_map_allE,f'{source_name}_significance_sky_ma
 PlotSkyMap(fig,sum_excess_sky_map_allE,f'{source_name}_excess_sky_map_allE',roi_x=[],roi_y=[],roi_r=[])
 
 print (f'total_exposure = {total_exposure}')
+print (f'good_exposure = {good_exposure}')
 
 for logE in range(0,logE_nbins):
 
@@ -343,9 +354,8 @@ for logE in range(0,logE_nbins):
     axbig.set_ylabel(label_y)
     for entry in range(0,len(list_sr_qual)):
         axbig.scatter(list_cr_qual[entry][logE],list_sr_qual[entry][logE],color='b',alpha=0.5)
-    #axbig.set_xscale('log')
-    #axbig.set_yscale('log')
-    #axbig.set_xlim(0.1,10.)
+    axbig.set_xscale('log')
+    axbig.set_ylim(0.,2.)
     fig.savefig(f'output_plots/{source_name}_crsr_qual_logE{logE}.png',bbox_inches='tight')
     axbig.remove()
     

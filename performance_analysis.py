@@ -46,9 +46,13 @@ smi_input = os.environ.get("SMI_INPUT")
 smi_output = os.environ.get("SMI_OUTPUT")
 smi_dir = os.environ.get("SMI_DIR")
 
-ana_tag = 'scale1'
+ana_tag = 'scale0p1'
+#ana_tag = 'scale0p2'
+#ana_tag = 'scale1p0'
 
-exposure_per_group = 10.
+onoff = 'OFF'
+
+exposure_per_group = 80.
 
 min_elev = 25.
 
@@ -96,13 +100,18 @@ for logE in range(0,logE_nbins):
 grp_data_count = []
 grp_bkgd_count = []
 
+list_sr_qual = []
+list_cr_qual = []
+
 total_exposure = 0.
+good_exposure = 0.
+group_exposure = 0.
 for epoch in input_epoch:
     for src in input_sources:
 
         source_name = src[0]
 
-        input_filename = f'{smi_output}/skymaps_{source_name}_{epoch}_{ana_tag}.pkl'
+        input_filename = f'{smi_output}/skymaps_{source_name}_{epoch}_{onoff}_{ana_tag}.pkl'
         #print (f'reading {input_filename}...')
         if not os.path.exists(input_filename):
             #print (f'{input_filename} does not exist.')
@@ -119,8 +128,8 @@ for epoch in input_epoch:
             fit_params = run_info[4]
             sr_qual = run_info[5]
             cr_qual = run_info[6]
-            data_sky_map = analysis_result[run][1] 
-            bkgd_sky_map = analysis_result[run][2] 
+            data_sky_map = analysis_result[run][2] 
+            bkgd_sky_map = analysis_result[run][3] 
 
             if run_azim>270.:
                 run_azim = run_azim-360.
@@ -128,7 +137,20 @@ for epoch in input_epoch:
             if run_elev<min_elev:
                 continue
 
+            list_sr_qual += [sr_qual]
+            list_cr_qual += [cr_qual]
+
             total_exposure += exposure
+
+            is_good_run = True
+            for logE in range(0,3):
+                if cr_qual[logE]<0.2:
+                    is_good_run = False
+            if not is_good_run: 
+                continue
+
+            good_exposure += exposure
+            group_exposure += exposure
 
             for logE in range(0,logE_nbins):
             
@@ -148,10 +170,10 @@ for epoch in input_epoch:
 
                 bkgd_count[logE] += bkgd_sum
 
-            if total_exposure>exposure_per_group or run==len(analysis_result)-1:
-            #if total_exposure>exposure_per_group:
+            #if group_exposure>exposure_per_group or run==len(analysis_result)-1:
+            if group_exposure>exposure_per_group:
 
-                if total_exposure>0.5*exposure_per_group:
+                if group_exposure>0.5*exposure_per_group:
                     tmp_data_count = []
                     tmp_bkgd_count = []
                     for logE in range(0,logE_nbins):
@@ -169,18 +191,17 @@ for epoch in input_epoch:
                 #        stat_error = 100.*pow(data_count[logE],0.5)/data_count[logE]
                 #    print (f'E = {pow(10.,logE_bins[logE]):0.3f} TeV, data_sum = {data_count[logE]}, bkgd_sum = {bkgd_count[logE]:0.1f}, error = {error:0.1f} +/- {stat_error:0.1f} %')
 
-                total_exposure = 0.
+                group_exposure = 0.
                 for logE in range(0,logE_nbins):
                     data_count[logE] = 0.
                     bkgd_count[logE] = 0.
 
-print (f'len(grp_data_count) = {len(grp_data_count)}')
+print (f'total_exposure = {total_exposure:0.1f}, good_exposure = {good_exposure:0.1f}')
+print (f'ana_tag = {ana_tag}, len(grp_data_count) = {len(grp_data_count)}, exposure_per_group = {exposure_per_group}')
 print ('=================================================================================')
 for logE in range(0,logE_nbins):
     avg_data = 0.
     avg_bkgd = 0.
-    avg_error = 0.
-    avg_stat_error = 0.
     sum_weight = 0.
     for grp in range(0,len(grp_data_count)):
         data = grp_data_count[grp][logE]
@@ -189,16 +210,62 @@ for logE in range(0,logE_nbins):
         if data>0.:
             avg_data += data*weight
             avg_bkgd += bkgd*weight
-            avg_error += abs(data-bkgd)/data*weight
-            avg_stat_error += pow(data,0.5)/data*weight
-            #avg_error += pow(data-bkgd,2)*weight
-            #avg_stat_error += data*weight
             sum_weight += weight
     avg_data = avg_data/sum_weight
     avg_bkgd = avg_bkgd/sum_weight
-    avg_error = 100.*avg_error/sum_weight
-    avg_stat_error = 100.*avg_stat_error/sum_weight
-    #avg_error = 100.*pow(avg_error/sum_weight,0.5)/avg_data
-    #avg_stat_error = 100.*pow(avg_stat_error/sum_weight,0.5)/avg_data
-    print (f'E = {pow(10.,logE_bins[logE]):0.3f} TeV, avg_data = {avg_data:0.1f}, avg_bkgd = {avg_bkgd:0.1f}, error = {avg_error:0.1f} +/- {avg_stat_error:0.1f} %')
+    avg_bias = 100.*(avg_data-avg_bkgd)/avg_data
+    avg_error = 0.
+    avg_stat_error = 0.
+    sum_weight = 0.
+    for grp in range(0,len(grp_data_count)):
+        data = grp_data_count[grp][logE]
+        bkgd = grp_bkgd_count[grp][logE] * (1.+avg_bias/100.)
+        weight = data
+        if data>0.:
+            avg_error += pow((data-bkgd)/data,2)*weight
+            avg_stat_error += 1./data*weight
+            #avg_error += abs(data-bkgd)/data*weight
+            #avg_stat_error += pow(data,0.5)/data*weight
+            sum_weight += weight
+    avg_error = 100.*pow(avg_error/sum_weight,0.5)
+    avg_stat_error = 100.*pow(avg_stat_error/sum_weight,0.5)
+    #avg_error = 100.*avg_error/sum_weight
+    #avg_stat_error = 100.*avg_stat_error/sum_weight
+    print (f'E = {pow(10.,logE_bins[logE]):0.3f} TeV, avg_data = {avg_data:0.1f}, avg_bkgd = {avg_bkgd:0.1f}, bias = {avg_bias:0.1f} %, error = {avg_error:0.1f} +/- {avg_stat_error:0.1f} %')
 
+new_list_cr_qual = []
+new_list_sr_qual = []
+for logE in range(0,logE_nbins):
+    tmp_list_cr_qual = []
+    tmp_list_sr_qual = []
+    for entry in range(0,len(list_sr_qual)):
+        if np.isnan(list_cr_qual[entry][logE]): continue
+        if np.isnan(list_sr_qual[entry][logE]): continue
+        if np.isinf(list_cr_qual[entry][logE]): continue
+        if np.isinf(list_sr_qual[entry][logE]): continue
+        if list_cr_qual[entry][logE]==0.: continue
+        tmp_list_cr_qual += [np.log10(list_cr_qual[entry][logE])]
+        tmp_list_sr_qual += [list_sr_qual[entry][logE]]
+    new_list_cr_qual += [tmp_list_cr_qual]
+    new_list_sr_qual += [tmp_list_sr_qual]
+
+hist_range = [[-3.,  1.], [0.5, 1.5]]
+
+for logE in range(0,logE_nbins):
+
+    fig.clf()
+    axbig = fig.add_subplot()
+    label_x = 'CR chi2'
+    label_y = 'SR chi2'
+    axbig.set_xlabel(label_x)
+    axbig.set_ylabel(label_y)
+    #axbig.scatter(new_list_cr_qual[logE],new_list_sr_qual[logE],color='b',alpha=0.5)
+    axbig.hist2d(new_list_cr_qual[logE],new_list_sr_qual[logE], bins=50, range=hist_range)
+    #axbig.set_xscale('log')
+    #axbig.set_yscale('log')
+    #axbig.set_ylim(0.1,10.)
+    fig.savefig(f'output_plots/all_src_crsr_qual_logE{logE}_{ana_tag}.png',bbox_inches='tight')
+    axbig.remove()
+
+exit()
+    
