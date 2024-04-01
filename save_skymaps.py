@@ -134,13 +134,13 @@ for small_runlist in big_runlist:
         for gcut in range(1,gcut_bins):
             run_fit_sky_sum_sr += 1./float(gcut_bins-1)*np.sum(run_fit_sky_map[logE].waxis[:,:,gcut])
 
-        renormalization = 1.
-        if run_data_xyoff_sum_cr>0. and run_fit_sky_sum_sr>0.:
-            renormalization = run_data_sky_sum_cr/run_data_xyoff_sum_cr*run_fit_xyoff_sum_sr/run_fit_sky_sum_sr
-        for idx_x in range(0,skymap_bins):
-            for idx_y in range(0,skymap_bins):
-                for gcut in range(1,gcut_bins):
-                    run_fit_sky_map[logE].waxis[idx_x,idx_y,gcut] = run_fit_sky_map[logE].waxis[idx_x,idx_y,gcut]*renormalization
+        #renormalization = 1.
+        #if run_data_xyoff_sum_cr>0. and run_fit_sky_sum_sr>0.:
+        #    renormalization = run_data_sky_sum_cr/run_data_xyoff_sum_cr*run_fit_xyoff_sum_sr/run_fit_sky_sum_sr
+        #for idx_x in range(0,skymap_bins):
+        #    for idx_y in range(0,skymap_bins):
+        #        for gcut in range(1,gcut_bins):
+        #            run_fit_sky_map[logE].waxis[idx_x,idx_y,gcut] = run_fit_sky_map[logE].waxis[idx_x,idx_y,gcut]*renormalization
 
         for idx_x in range(0,skymap_bins):
             for idx_y in range(0,skymap_bins):
@@ -173,7 +173,7 @@ for small_runlist in big_runlist:
         print (f'On data,  data_sum = {data_sum}, bkgd_sum = {bkgd_sum:0.1f}, error = {error:0.1f} +/- {stat_error:0.1f} %')
 
 
-    all_skymaps += [[[run_exposure_hours, run_elev, run_azim, truth_params, fit_params, sr_qual, cr_qual], incl_data, data_sky_map, bkgd_sky_map, data_xyoff_map, fit_xyoff_map]]
+    all_skymaps += [[[run_exposure_hours, run_elev, run_azim, truth_params, fit_params, sr_qual, cr_qual], incl_sky_map, data_sky_map, bkgd_sky_map, data_xyoff_map, fit_xyoff_map]]
 
     output_filename = f'{smi_output}/skymaps_{source_name}_{input_epoch}_{onoff}_{sky_tag}.pkl'
     with open(output_filename,"wb") as file:

@@ -15,6 +15,8 @@ if sky_tag=='scale0':
     nuclear_norm_scale = 0.
 if sky_tag=='scale0p01':
     nuclear_norm_scale = 0.01
+if sky_tag=='scale0p02':
+    nuclear_norm_scale = 0.02
 if sky_tag=='scale0p1':
     nuclear_norm_scale = 0.1
 if sky_tag=='scale0p2':
@@ -23,6 +25,15 @@ if sky_tag=='scale0p5':
     nuclear_norm_scale = 0.5
 if sky_tag=='scale1p0':
     nuclear_norm_scale = 1.0
+if sky_tag=='scale2p0':
+    nuclear_norm_scale = 2.0
+if sky_tag=='scale10p0':
+    nuclear_norm_scale = 10.0
+if sky_tag=='scale100p0':
+    nuclear_norm_scale = 100.0
+
+if sky_tag=='test':
+    nuclear_norm_scale = 10.0
 
 min_NImages = 3
 max_Roff = 2.0
@@ -511,7 +522,9 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,onoff,max_run
 
     print ('loading svd pickle data... ')
     input_filename = eigenvector_path
-    big_eigenvectors = pickle.load(open(input_filename, "rb"))
+    eigen_stuff = pickle.load(open(input_filename, "rb"))
+    big_eigenvalues = eigen_stuff[0]
+    big_eigenvectors = eigen_stuff[1]
 
     exposure_hours = 0.
     avg_tel_elev = 0.
@@ -571,7 +584,25 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,onoff,max_run
         solution = minimize(
             cosmic_ray_like_chi2,
             x0=init_params,
-            args=(big_eigenvectors[logE],data_xyoff_map_1d,logE,0,0),
+            args=(big_eigenvalues[logE],big_eigenvectors[logE],data_xyoff_map_1d,logE,0,1),
+            method='L-BFGS-B',
+            jac=None,
+            options={'eps':stepsize,'ftol':0.0001},
+        )
+        fit_params = solution['x']
+        fit_xyoff_map_1d = big_eigenvectors[logE].T @ fit_params
+
+        #init_params = truth_params
+        init_params = fit_params
+        #init_params = [1e-4] * effective_matrix_rank
+        init_nuclear_norm = np.sum(np.abs(fit_params))
+        big_nuclear_norm = np.sum(np.abs(big_eigenvalues[logE]))
+        rescale_eigenvalues = np.array(big_eigenvalues[logE])*init_nuclear_norm/big_nuclear_norm
+        stepsize = [1e-4] * effective_matrix_rank
+        solution = minimize(
+            cosmic_ray_like_chi2,
+            x0=init_params,
+            args=(big_eigenvalues[logE],big_eigenvectors[logE],data_xyoff_map_1d,logE,0,0),
             method='L-BFGS-B',
             jac=None,
             options={'eps':stepsize,'ftol':0.0001},
@@ -580,14 +611,14 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,onoff,max_run
         fit_xyoff_map_1d = big_eigenvectors[logE].T @ fit_params
 
 
-        run_sr_chi2 = cosmic_ray_like_chi2(fit_params,big_eigenvectors[logE],data_xyoff_map_1d,logE,1,1)
-        run_cr_chi2 = cosmic_ray_like_chi2(fit_params,big_eigenvectors[logE],data_xyoff_map_1d,logE,0,1)
-        run_nuclear_norm = cosmic_ray_like_chi2(fit_params,big_eigenvectors[logE],data_xyoff_map_1d,logE,0,2)
+        run_sr_chi2 = cosmic_ray_like_chi2(fit_params,big_eigenvalues[logE],big_eigenvectors[logE],data_xyoff_map_1d,logE,1,1)
+        run_cr_chi2 = cosmic_ray_like_chi2(fit_params,big_eigenvalues[logE],big_eigenvectors[logE],data_xyoff_map_1d,logE,0,1)
+        run_nuclear_norm = cosmic_ray_like_chi2(fit_params,big_eigenvalues[logE],big_eigenvectors[logE],data_xyoff_map_1d,logE,0,2)
 
-        if logE==2:
+        if logE==1:
             print ('===================================================================================')
             for entry in range(0,len(truth_params)):
-                print (f'truth_params = {truth_params[entry]:0.1f}, fit_params = {fit_params[entry]: 0.1f}')
+                print (f'truth_params = {truth_params[entry]:0.1f}, init_params = {init_params[entry]:0.1f}, rescale_eigenvalues = {rescale_eigenvalues[entry]:0.1f}, fit_params = {fit_params[entry]:0.1f}')
             print (f'nuclear_norm_scale = {nuclear_norm_scale}, run_cr_chi2 = {run_cr_chi2:0.3f}, run_nuclear_norm = {run_nuclear_norm:0.3f}')
 
         sr_data_count = cosmic_ray_like_count(data_xyoff_map_1d,logE,region_type=1)
@@ -601,8 +632,8 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,onoff,max_run
         #print (f'run_cr_chi2 = {run_cr_chi2}')
         #print (f'nuclear_norm = {nuclear_norm}')
 
-        cr_qual += [run_nuclear_norm/run_cr_chi2]
-        sr_qual += [sr_data_count/fit_data_count]
+        cr_qual += [run_cr_chi2]
+        sr_qual += [(sr_data_count-fit_data_count)/pow(max(1.,sr_data_count),0.5)]
 
         #if fit_cr_data_count>0.:
         #    cr_qual += [(cr_data_count-fit_cr_data_count)/pow(fit_cr_data_count,0.5)]
@@ -778,7 +809,7 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,onoff,max_run
     return [exposure_hours,avg_tel_elev,avg_tel_azim,truth_params,fit_params,sr_qual,cr_qual], incl_sky_map, data_sky_map, fit_sky_map, data_xyoff_map, fit_xyoff_map
 
 
-def cosmic_ray_like_chi2(try_params,eigenvectors,xyoff_map,logE,region_type,chi2_type):
+def cosmic_ray_like_chi2(try_params,eigenvalues,eigenvectors,xyoff_map,logE,region_type,chi2_type):
 
     try_params = np.array(try_params)
     try_xyoff_map = eigenvectors.T @ try_params
@@ -819,20 +850,20 @@ def cosmic_ray_like_chi2(try_params,eigenvectors,xyoff_map,logE,region_type,chi2
                 n_expect_total += try_xyoff_map[idx_1d-1]
                 n_data_total += xyoff_map[idx_1d-1]
 
-                n_expect = max(0.0001,try_xyoff_map[idx_1d-1])
-                n_data = xyoff_map[idx_1d-1]
-                if n_data==0.:
-                    sum_log_likelihood += n_expect
-                else:
-                    sum_log_likelihood += -1.*(n_data*np.log(n_expect) - n_expect - (n_data*np.log(n_data)-n_data))
-                nbins += 1.
-
-                #n_expect = try_xyoff_map[idx_1d-1]
+                #n_expect = max(0.0001,try_xyoff_map[idx_1d-1])
                 #n_data = xyoff_map[idx_1d-1]
-                #sum_log_likelihood += pow(n_expect-n_data,2)
+                #if n_data==0.:
+                #    sum_log_likelihood += n_expect
+                #else:
+                #    sum_log_likelihood += -1.*(n_data*np.log(n_expect) - n_expect - (n_data*np.log(n_data)-n_data))
+                #nbins += 1.
 
-    sum_log_likelihood = sum_log_likelihood/nbins
-    #sum_log_likelihood = sum_log_likelihood/n_data_total
+                n_expect = try_xyoff_map[idx_1d-1]
+                n_data = xyoff_map[idx_1d-1]
+                sum_log_likelihood += pow(n_expect-n_data,2)
+
+    #sum_log_likelihood = sum_log_likelihood/nbins
+    sum_log_likelihood = sum_log_likelihood/n_data_total
 
     if chi2_type==1:
         return sum_log_likelihood
@@ -842,14 +873,16 @@ def cosmic_ray_like_chi2(try_params,eigenvectors,xyoff_map,logE,region_type,chi2
     #    nuclear_norm += abs(try_params[entry])
     #sum_log_likelihood += nuclear_norm_scale*nuclear_norm/n_data_total
     #if chi2_type==2:
-    #    return nuclear_norm/n_data_total
+    #    return nuclear_norm_scale*nuclear_norm/n_data_total
 
+    try_nuclear_norm = np.sum(np.abs(try_params))
+    big_nuclear_norm = np.sum(np.abs(eigenvalues))
     rel_nuclear_norm = 0.
-    for entry in range(1,len(try_params)):
-        rel_nuclear_norm += abs(try_params[entry])/pow(abs(try_params[entry-1]),0.5)
+    for entry in range(0,len(try_params)):
+        rel_nuclear_norm += pow(abs(try_params[entry])/try_nuclear_norm-abs(eigenvalues[entry])/big_nuclear_norm,2)
     sum_log_likelihood += nuclear_norm_scale*rel_nuclear_norm
     if chi2_type==2:
-        return rel_nuclear_norm
+        return nuclear_norm_scale*rel_nuclear_norm
 
     return sum_log_likelihood
 
@@ -1339,7 +1372,7 @@ def make_significance_map(data_sky_map,bkgd_sky_map,significance_sky_map,excess_
             significance_sky_map.waxis[idx_x,idx_y,0] = (data-bkgd)/data_err
             excess_sky_map.waxis[idx_x,idx_y,0] = (data-bkgd)
 
-def make_flux_map(data_sky_map,bkgd_sky_map,flux_sky_map,flux_err_sky_map,avg_energy,delta_energy):
+def make_flux_map(incl_sky_map,data_sky_map,bkgd_sky_map,flux_sky_map,flux_err_sky_map,avg_energy,delta_energy):
   
     skymap_bins = len(data_sky_map.xaxis)-1
 
@@ -1357,14 +1390,13 @@ def make_flux_map(data_sky_map,bkgd_sky_map,flux_sky_map,flux_err_sky_map,avg_en
     for idx_x in range(0,skymap_bins):
         for idx_y in range(0,skymap_bins):
             data = data_sky_map.waxis[idx_x,idx_y,0]
-            norm = bkgd_sky_map.waxis[idx_x,idx_y,0]
+            norm = incl_sky_map.waxis[idx_x,idx_y,0]
             bkgd = 0.
             gcut_norm = 0.
             for gcut in range(1,gcut_bins):
                 gcut_norm += gcut_weight[gcut]
             for gcut in range(1,gcut_bins):
                 bkgd += gcut_weight[gcut]/gcut_norm*bkgd_sky_map.waxis[idx_x,idx_y,gcut]
-            #bkgd = bkgd_sky_map.waxis[idx_x,idx_y,1]
             if norm>0.:
                 excess = data-bkgd
                 error = max(pow(data,0.5),1.)
@@ -1382,7 +1414,8 @@ def make_flux_map(data_sky_map,bkgd_sky_map,flux_sky_map,flux_err_sky_map,avg_en
 
 def GetRadialProfile(hist_flux_skymap,hist_error_skymap,roi_x,roi_y,roi_r):
 
-    radial_axis = MyArray1D(x_nbins=15,start_x=0.,end_x=roi_r)
+    pix_size = hist_flux_skymap.yaxis[1]-hist_flux_skymap.yaxis[0]
+    radial_axis = MyArray1D(x_nbins=int(roi_r/pix_size),start_x=0.,end_x=roi_r)
 
     radius_array = []
     brightness_array = []

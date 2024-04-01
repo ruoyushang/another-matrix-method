@@ -3,6 +3,7 @@ import os, sys
 import ROOT
 import numpy as np
 import pickle
+import matplotlib as mpl
 from matplotlib import pyplot as plt
 from common_functions import MyArray1D
 from common_functions import MyArray3D
@@ -46,13 +47,18 @@ smi_input = os.environ.get("SMI_INPUT")
 smi_output = os.environ.get("SMI_OUTPUT")
 smi_dir = os.environ.get("SMI_DIR")
 
-ana_tag = 'scale0p1'
+#ana_tag = 'scale0'
+#ana_tag = 'scale0p01'
+#ana_tag = 'scale0p1'
 #ana_tag = 'scale0p2'
 #ana_tag = 'scale1p0'
+ana_tag = 'scale10p0'
 
 onoff = 'OFF'
 
-exposure_per_group = 80.
+exposure_per_group = 20.
+cr_qual_cut = 0.0
+#cr_qual_cut = 0.1
 
 min_elev = 25.
 
@@ -70,7 +76,7 @@ input_sources += [ ['1ES0229'               ,38.222  ,20.273 ] ]
 input_sources += [ ['M82'                   ,148.970 ,69.679 ] ]
 input_sources += [ ['3C264'                 ,176.271 ,19.606 ] ]
 input_sources += [ ['BLLac'                 ,330.680 ,42.277 ] ]
-input_sources += [ ['Draco'                 ,260.059 ,57.921 ] ]
+#input_sources += [ ['Draco'                 ,260.059 ,57.921 ] ]
 input_sources += [ ['OJ287'                 ,133.705 ,20.100 ] ]
 input_sources += [ ['H1426'                 ,217.136  ,42.673 ] ]
 input_sources += [ ['NGC1275'               ,49.950  ,41.512 ] ]
@@ -81,6 +87,7 @@ input_sources += [ ['PKS1424'               ,216.750 ,23.783 ] ]
 input_sources += [ ['RGB_J0710_p591'        ,107.61  ,59.15  ] ]
 input_sources += [ ['UrsaMinor'             ,227.285 ,67.222 ] ]
 input_sources += [ ['UrsaMajorII'           ,132.875 ,63.13  ] ]
+input_sources += [ ['1ES1959_p650'          ,300.00 ,65.15 ] ]
 input_sources += [ ['CrabNebula_elev_80_90' ,83.633  ,22.014 ] ]
 input_sources += [ ['CrabNebula_elev_70_80' ,83.633  ,22.014 ] ]
 input_sources += [ ['CrabNebula_elev_60_70' ,83.633  ,22.014 ] ]
@@ -89,7 +96,6 @@ input_sources += [ ['CrabNebula_elev_40_50' ,83.633  ,22.014 ] ]
 input_sources += [ ['CrabNebula_elev_30_40' ,83.633  ,22.014 ] ]
 input_sources += [ ['CrabNebula_1p0wobble' ,83.633  ,22.014 ] ]
 input_sources += [ ['CrabNebula_1p5wobble' ,83.633  ,22.014 ] ]
-input_sources += [ ['1ES1959_p650'          ,300.00 ,65.15 ] ]
 
 data_count = []
 bkgd_count = []
@@ -143,9 +149,14 @@ for epoch in input_epoch:
             total_exposure += exposure
 
             is_good_run = True
-            for logE in range(0,3):
-                if cr_qual[logE]<0.2:
-                    is_good_run = False
+            sum_cr_qual = 0.
+            for logE in range(0,5):
+                sum_cr_qual += cr_qual[logE]
+                #if cr_qual[logE]<cr_qual_cut:
+                #    is_good_run = False
+            sum_cr_qual = sum_cr_qual/5.
+            if sum_cr_qual<cr_qual_cut:
+                is_good_run = False
             if not is_good_run: 
                 continue
 
@@ -199,6 +210,7 @@ for epoch in input_epoch:
 print (f'total_exposure = {total_exposure:0.1f}, good_exposure = {good_exposure:0.1f}')
 print (f'ana_tag = {ana_tag}, len(grp_data_count) = {len(grp_data_count)}, exposure_per_group = {exposure_per_group}')
 print ('=================================================================================')
+bias_array = []
 for logE in range(0,logE_nbins):
     avg_data = 0.
     avg_bkgd = 0.
@@ -214,16 +226,18 @@ for logE in range(0,logE_nbins):
     avg_data = avg_data/sum_weight
     avg_bkgd = avg_bkgd/sum_weight
     avg_bias = 100.*(avg_data-avg_bkgd)/avg_data
+    bias_array += [avg_bias/100.]
     avg_error = 0.
     avg_stat_error = 0.
     sum_weight = 0.
     for grp in range(0,len(grp_data_count)):
         data = grp_data_count[grp][logE]
+        #bkgd = grp_bkgd_count[grp][logE]
         bkgd = grp_bkgd_count[grp][logE] * (1.+avg_bias/100.)
         weight = data
         if data>0.:
             avg_error += pow((data-bkgd)/data,2)*weight
-            avg_stat_error += 1./data*weight
+            avg_stat_error += 2.*1./data*weight
             #avg_error += abs(data-bkgd)/data*weight
             #avg_stat_error += pow(data,0.5)/data*weight
             sum_weight += weight
@@ -232,6 +246,8 @@ for logE in range(0,logE_nbins):
     #avg_error = 100.*avg_error/sum_weight
     #avg_stat_error = 100.*avg_stat_error/sum_weight
     print (f'E = {pow(10.,logE_bins[logE]):0.3f} TeV, avg_data = {avg_data:0.1f}, avg_bkgd = {avg_bkgd:0.1f}, bias = {avg_bias:0.1f} %, error = {avg_error:0.1f} +/- {avg_stat_error:0.1f} %')
+
+print (f'bias_array = {np.around(bias_array,3)}')
 
 new_list_cr_qual = []
 new_list_sr_qual = []
@@ -244,12 +260,12 @@ for logE in range(0,logE_nbins):
         if np.isinf(list_cr_qual[entry][logE]): continue
         if np.isinf(list_sr_qual[entry][logE]): continue
         if list_cr_qual[entry][logE]==0.: continue
-        tmp_list_cr_qual += [np.log10(list_cr_qual[entry][logE])]
+        tmp_list_cr_qual += [list_cr_qual[entry][logE]]
         tmp_list_sr_qual += [list_sr_qual[entry][logE]]
     new_list_cr_qual += [tmp_list_cr_qual]
     new_list_sr_qual += [tmp_list_sr_qual]
 
-hist_range = [[-3.,  1.], [0.5, 1.5]]
+hist_range = [[0.,  1.], [-5., 5.]]
 
 for logE in range(0,logE_nbins):
 
@@ -260,10 +276,10 @@ for logE in range(0,logE_nbins):
     axbig.set_xlabel(label_x)
     axbig.set_ylabel(label_y)
     #axbig.scatter(new_list_cr_qual[logE],new_list_sr_qual[logE],color='b',alpha=0.5)
-    axbig.hist2d(new_list_cr_qual[logE],new_list_sr_qual[logE], bins=50, range=hist_range)
+    axbig.hist2d(new_list_cr_qual[logE],new_list_sr_qual[logE], norm=mpl.colors.LogNorm(), bins=50, range=hist_range)
     #axbig.set_xscale('log')
     #axbig.set_yscale('log')
-    #axbig.set_ylim(0.1,10.)
+    #axbig.set_ylim(-5.,5.)
     fig.savefig(f'output_plots/all_src_crsr_qual_logE{logE}_{ana_tag}.png',bbox_inches='tight')
     axbig.remove()
 

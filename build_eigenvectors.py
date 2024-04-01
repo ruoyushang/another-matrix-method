@@ -37,7 +37,8 @@ big_matrix = pickle.load(open(input_filename, "rb"))
 #big_matrix_ctl = pickle.load(open(input_filename, "rb"))
 
 print ('Computing SVD eigenvectors...')
-min_rank = 4
+min_rank = 3
+big_eigenvalues = []
 big_eigenvectors = []
 for logE in range(0,logE_nbins):
     U_full, S_full, VT_full = np.linalg.svd(big_matrix[logE],full_matrices=False)
@@ -46,6 +47,8 @@ for logE in range(0,logE_nbins):
     print (f'effective_matrix_rank = {effective_matrix_rank}')
     U_eco = U_full[:, :effective_matrix_rank]
     VT_eco = VT_full[:effective_matrix_rank, :]
+    S_eco = S_full[:effective_matrix_rank]
+    big_eigenvalues += [S_eco]
     big_eigenvectors += [VT_eco]
 
 #min_rank = 5
@@ -63,6 +66,11 @@ for logE in range(0,logE_nbins):
 #vT_eco = vT_full[:matrix_rank, :]
 #big_eigenvectors_ctl = vT_eco
 
+output_filename = f'{smi_output}/eigenvectors_{source_name}_{input_epoch}.pkl'
+with open(output_filename,"wb") as file:
+    pickle.dump([big_eigenvalues,big_eigenvectors], file)
+
+for logE in range(0,logE_nbins):
     rank_index = []
     for entry in range(0,len(S_full)):
         rank_index += [entry+1]
@@ -82,10 +90,6 @@ for logE in range(0,logE_nbins):
     axbig.plot(rank_index,S_full)
     fig.savefig(f'{smi_dir}/output_plots/signularvalue_{source_name}_{input_epoch}_logE{logE}.png',bbox_inches='tight')
     axbig.remove()
-
-output_filename = f'{smi_output}/eigenvectors_{source_name}_{input_epoch}.pkl'
-with open(output_filename,"wb") as file:
-    pickle.dump(big_eigenvectors, file)
 
 #output_filename = f'{smi_output}/eigenvectors_ctl_{source_name}_{input_epoch}.pkl'
 #with open(output_filename,"wb") as file:
