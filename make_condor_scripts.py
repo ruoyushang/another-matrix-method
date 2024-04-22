@@ -10,35 +10,35 @@ print (f'SMI_OUTPUT = {SMI_OUTPUT}')
 
 input_params = []
 
-#input_params += [ ['1ES0647'               ,102.694 ,25.050 , 'OFF'] ]
-#input_params += [ ['1ES1011'               ,153.767 ,49.434 , 'OFF'] ]
-#input_params += [ ['1ES0414'               ,64.220  ,1.089  , 'OFF'] ]
-#input_params += [ ['1ES0502'               ,76.983  ,67.623 , 'OFF'] ]
-#input_params += [ ['1ES0229'               ,38.222  ,20.273 , 'OFF'] ]
-#input_params += [ ['M82'                   ,148.970 ,69.679 , 'OFF'] ]
-#input_params += [ ['3C264'                 ,176.271 ,19.606 , 'OFF'] ]
-#input_params += [ ['BLLac'                 ,330.680 ,42.277 , 'OFF'] ]
-#input_params += [ ['Draco'                 ,260.059 ,57.921 , 'OFF'] ]
-#input_params += [ ['OJ287'                 ,133.705 ,20.100 , 'OFF'] ]
-#input_params += [ ['H1426'                 ,217.136  ,42.673, 'OFF' ] ]
-#input_params += [ ['NGC1275'               ,49.950  ,41.512 , 'OFF'] ]
-#input_params += [ ['Segue1'                ,151.767 ,16.082 , 'OFF'] ]
-#input_params += [ ['3C273'                 ,187.277 ,2.05   , 'OFF'] ]
-#input_params += [ ['PG1553'                ,238.936 ,11.195 , 'OFF'] ]
-#input_params += [ ['PKS1424'               ,216.750 ,23.783 , 'OFF'] ]
-#input_params += [ ['RGB_J0710_p591'        ,107.61  ,59.15  , 'OFF'] ]
-#input_params += [ ['UrsaMinor'             ,227.285 ,67.222 , 'OFF'] ]
-#input_params += [ ['UrsaMajorII'           ,132.875 ,63.13  , 'OFF'] ]
-#input_params += [ ['CrabNebula_elev_80_90' ,83.633  ,22.014 , 'OFF'] ]
-#input_params += [ ['CrabNebula_elev_70_80' ,83.633  ,22.014 , 'OFF'] ]
-#input_params += [ ['CrabNebula_elev_60_70' ,83.633  ,22.014 , 'OFF'] ]
-#input_params += [ ['CrabNebula_elev_50_60' ,83.633  ,22.014 , 'OFF'] ]
-#input_params += [ ['CrabNebula_elev_40_50' ,83.633  ,22.014 , 'OFF'] ]
-#input_params += [ ['CrabNebula_elev_30_40' ,83.633  ,22.014 , 'OFF'] ]
-#input_params += [ ['CrabNebula_1p0wobble' ,83.633  ,22.014 , 'OFF'] ]
-#input_params += [ ['CrabNebula_1p5wobble' ,83.633  ,22.014 , 'OFF'] ]
-#input_params += [ ['1ES1959_p650'          ,300.00 ,65.15  , 'OFF'] ]
-
+input_params += [ ['1ES0647'               ,102.694 ,25.050 , 'OFF'] ]
+input_params += [ ['1ES1011'               ,153.767 ,49.434 , 'OFF'] ]
+input_params += [ ['1ES0414'               ,64.220  ,1.089  , 'OFF'] ]
+input_params += [ ['1ES0502'               ,76.983  ,67.623 , 'OFF'] ]
+input_params += [ ['1ES0229'               ,38.222  ,20.273 , 'OFF'] ]
+input_params += [ ['M82'                   ,148.970 ,69.679 , 'OFF'] ]
+input_params += [ ['3C264'                 ,176.271 ,19.606 , 'OFF'] ]
+input_params += [ ['BLLac'                 ,330.680 ,42.277 , 'OFF'] ]
+input_params += [ ['Draco'                 ,260.059 ,57.921 , 'OFF'] ]
+input_params += [ ['OJ287'                 ,133.705 ,20.100 , 'OFF'] ]
+input_params += [ ['H1426'                 ,217.136  ,42.673, 'OFF' ] ]
+input_params += [ ['NGC1275'               ,49.950  ,41.512 , 'OFF'] ]
+input_params += [ ['Segue1'                ,151.767 ,16.082 , 'OFF'] ]
+input_params += [ ['3C273'                 ,187.277 ,2.05   , 'OFF'] ]
+input_params += [ ['PG1553'                ,238.936 ,11.195 , 'OFF'] ]
+input_params += [ ['PKS1424'               ,216.750 ,23.783 , 'OFF'] ]
+input_params += [ ['RGB_J0710_p591'        ,107.61  ,59.15  , 'OFF'] ]
+input_params += [ ['UrsaMinor'             ,227.285 ,67.222 , 'OFF'] ]
+input_params += [ ['UrsaMajorII'           ,132.875 ,63.13  , 'OFF'] ]
+input_params += [ ['CrabNebula_elev_80_90' ,83.633  ,22.014 , 'OFF'] ]
+input_params += [ ['CrabNebula_elev_70_80' ,83.633  ,22.014 , 'OFF'] ]
+input_params += [ ['CrabNebula_elev_60_70' ,83.633  ,22.014 , 'OFF'] ]
+input_params += [ ['CrabNebula_elev_50_60' ,83.633  ,22.014 , 'OFF'] ]
+input_params += [ ['CrabNebula_elev_40_50' ,83.633  ,22.014 , 'OFF'] ]
+input_params += [ ['CrabNebula_elev_30_40' ,83.633  ,22.014 , 'OFF'] ]
+input_params += [ ['CrabNebula_1p0wobble' ,83.633  ,22.014 , 'OFF'] ]
+input_params += [ ['CrabNebula_1p5wobble' ,83.633  ,22.014 , 'OFF'] ]
+input_params += [ ['1ES1959_p650'          ,300.00 ,65.15  , 'OFF'] ]
+#
 #input_params += [ ['CrabNebula_elev_80_90' ,83.633  ,22.014 , 'ON'] ]
 #input_params += [ ['CrabNebula_elev_70_80' ,83.633  ,22.014 , 'ON'] ]
 #input_params += [ ['CrabNebula_elev_60_70' ,83.633  ,22.014 , 'ON'] ]
@@ -47,15 +47,15 @@ input_params = []
 #input_params += [ ['CrabNebula_elev_30_40' ,83.633  ,22.014 , 'ON'] ]
 #input_params += [ ['CrabNebula_1p0wobble' ,83.633  ,22.014 , 'ON'] ]
 #input_params += [ ['CrabNebula_1p5wobble' ,83.633  ,22.014 , 'ON'] ]
-#
-#input_params += [ ['SNR_G189_p03'          ,94.213  ,22.503, 'ON' ] ] # ic 443
-#input_params += [ ['PSR_J1907_p0602'       ,286.975 ,6.337 , 'ON' ] ]
+
+input_params += [ ['SNR_G189_p03'          ,94.213  ,22.503, 'ON' ] ] # ic 443
+input_params += [ ['PSR_J1907_p0602'       ,286.975 ,6.337 , 'ON' ] ]
 #input_params += [ ['PSR_J2021_p4026'       ,305.37  ,40.45 , 'ON' ] ] # gamma cygni
 #input_params += [ ['PSR_J2021_p3651'       ,305.27  ,36.85 , 'ON' ] ] # Dragonfly
 #input_params += [ ['PSR_J2032_p4127', 308.05  , 41.46 , 'ON' ] ]
 #input_params += [ ['PSR_J2032_p4127_baseline', 308.05  , 41.46 , 'ON'  ] ]
 #input_params += [ ['PSR_J1856_p0245', 284.21  , 2.76 , 'ON' ] ]
-input_params += [ ['SS433'       ,288.404, 4.930 , 'ON' ] ]
+#input_params += [ ['SS433'       ,288.404, 4.930 , 'ON' ] ]
 #input_params += [ ['PSR_J1928_p1746', 292.15, 17.78 , 'ON' ] ]
 #input_params += [ ['LHAASO_J0622_p3754', 95.50  , 37.90 , 'ON' ] ]
 #input_params += [ ['Cas_A', 350.8075  , 58.8072 , 'ON' ] ]
@@ -84,7 +84,7 @@ for s in range(0,len(input_params)):
     file.write(f'python3 save_big_matrices.py "{source}" "V4"\n')
     file.close() 
 
-qfile = open("run/condor_save_mtx.sh","w") 
+qfile = open("run/sub_condor_save_mtx.sh","w") 
 for s in range(0,len(input_params)):
     source = input_params[s][0]
     qfile.write('universe = vanilla \n')
@@ -109,7 +109,7 @@ for s in range(0,len(input_params)):
     file.write(f'python3 build_eigenvectors.py "{source}" "V4"\n')
     file.close() 
 
-qfile = open("run/condor_eigenvtr.sh","w") 
+qfile = open("run/sub_condor_eigenvtr.sh","w") 
 for s in range(0,len(input_params)):
     source = input_params[s][0]
     qfile.write('universe = vanilla \n')
@@ -137,7 +137,7 @@ for s in range(0,len(input_params)):
     file.write(f'python3 save_skymaps.py "{source}" {src_ra} {src_dec} "{onoff}" "V4"\n')
     file.close() 
 
-qfile = open("run/condor_skymap.sh","w") 
+qfile = open("run/sub_condor_skymap.sh","w") 
 for s in range(0,len(input_params)):
     source = input_params[s][0]
     onoff = input_params[s][3]

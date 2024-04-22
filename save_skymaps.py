@@ -24,6 +24,7 @@ build_skymap = common_functions.build_skymap
 smooth_image = common_functions.smooth_image
 skymap_size = common_functions.skymap_size
 skymap_bins = common_functions.skymap_bins
+fine_skymap_bins = common_functions.fine_skymap_bins
 
 fig, ax = plt.subplots()
 figsize_x = 8.6
@@ -46,7 +47,7 @@ path_to_eigenvector = f'{smi_output}/eigenvectors_{source_name}_{input_epoch}.pk
 print (f'path_to_eigenvector = {path_to_eigenvector}')
 
 if onoff=='ON':
-    skymap_bins = 100
+    skymap_bins = fine_skymap_bins
 
 on_file = f'/nevis/tehanu/home/ryshang/veritas_analysis/another-matrix-method/output_vts_query/nsb_opt/RunList_{source_name}_{input_epoch}.txt'
 off_file = f'/nevis/tehanu/home/ryshang/veritas_analysis/another-matrix-method/output_vts_query/nsb_opt/PairList_{source_name}_{input_epoch}.txt'
@@ -62,18 +63,24 @@ ysky_end = src_dec+skymap_size
 total_runs = len(on_runlist)
 big_runlist = []
 small_runlist = []
-nruns_in_small_list = 1
-#nruns_in_small_list = 10
+big_off_runlist = []
+small_off_runlist = []
+#nruns_in_small_list = 1
+nruns_in_small_list = 10
 run_count = 0
 for run in range(0,total_runs):
     #if len(off_runlist[run])<2: 
     #    print (f'ON run {on_runlist[run]} rejected: zero matched OFF run')
     #    continue
     small_runlist += [on_runlist[run]]
+    small_off_runlist += [off_runlist[run]]
     run_count += 1
-    if (run % nruns_in_small_list)==0 and run_count>=nruns_in_small_list:
+    #if (run % nruns_in_small_list)==0 and run_count>=nruns_in_small_list:
+    if (run % nruns_in_small_list)==(nruns_in_small_list-1):
         big_runlist += [small_runlist]
         small_runlist = []
+        big_off_runlist += [small_off_runlist]
+        small_off_runlist = []
         run_count = 0
 
 total_data_xyoff_map = []
@@ -90,7 +97,7 @@ for logE in range(0,logE_nbins):
 
 run_list_count = 0
 all_skymaps = []
-for small_runlist in big_runlist:
+for small_runlist in range(0,len(big_runlist)):
 
     incl_sky_map = []
     data_sky_map = []
@@ -110,7 +117,7 @@ for small_runlist in big_runlist:
     run_list_count += 1
     print (f'analyzing {run_list_count}/{len(big_runlist)} lists...')
 
-    run_info, run_incl_sky_map, run_data_sky_map, run_fit_sky_map, run_data_xyoff_map, run_fit_xyoff_map = build_skymap(smi_input,path_to_eigenvector,small_runlist,src_ra,src_dec,onoff,sky_tag)
+    run_info, run_incl_sky_map, run_data_sky_map, run_fit_sky_map, run_data_xyoff_map, run_fit_xyoff_map = build_skymap(smi_input,path_to_eigenvector,big_runlist[small_runlist],big_off_runlist[small_runlist],src_ra,src_dec,onoff,sky_tag)
 
     run_exposure_hours = run_info[0]
     run_elev = run_info[1]

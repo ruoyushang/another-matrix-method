@@ -34,6 +34,7 @@ GetRadialProfile = common_functions.GetRadialProfile
 matrix_rank = common_functions.matrix_rank
 skymap_size = common_functions.skymap_size
 skymap_bins = common_functions.skymap_bins
+fine_skymap_bins = common_functions.fine_skymap_bins
 
 fig, ax = plt.subplots()
 figsize_x = 8.6
@@ -45,24 +46,27 @@ smi_input = os.environ.get("SMI_INPUT")
 smi_output = os.environ.get("SMI_OUTPUT")
 smi_dir = os.environ.get("SMI_DIR")
 
+ana_tag = 'nominal'
+#ana_tag = 'poisson'
 #ana_tag = 'scale0'
 #ana_tag = 'scale0p01'
 #ana_tag = 'scale0p1'
 #ana_tag = 'scale1p0'
-ana_tag = 'scale10p0'
+#ana_tag = 'scale10p0'
 #ana_tag = 'scale100p0'
 
-cr_qual_cut = 0.
-#cr_qual_cut = 0.2
+qual_cut = 0.
+#qual_cut = 20.
 
-#onoff = 'ON'
-onoff = 'OFF'
+elev_cut = 25.
 
 bias_array = [-0.023, -0.011, -0.022, -0.03,  -0.025,  0.018, -0.048, -0.378, -0.271]
 
 source_name = sys.argv[1]
 src_ra = float(sys.argv[2])
 src_dec = float(sys.argv[3])
+onoff = sys.argv[4]
+
 #input_epoch = ['V4']
 #input_epoch = ['V5']
 #input_epoch = ['V6']
@@ -74,7 +78,7 @@ ysky_start = src_dec-skymap_size
 ysky_end = src_dec+skymap_size
 
 if onoff=='ON':
-    skymap_bins = 100
+    skymap_bins = fine_skymap_bins
 
 roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r = DefineRegionOfInterest(source_name,src_ra,src_dec)
 
@@ -147,17 +151,16 @@ for epoch in input_epoch:
         if run_azim>270.:
             run_azim = run_azim-360.
 
+        if run_elev<elev_cut:
+            continue
+
         total_exposure += exposure
 
         is_good_run = True
-        sum_cr_qual = 0.
-        for logE in range(0,3):
-            sum_cr_qual += cr_qual[logE]
-            #if cr_qual[logE]<cr_qual_cut:
-            #    is_good_run = False
-        sum_cr_qual = sum_cr_qual/3.
-        if cr_qual[logE]<cr_qual_cut:
-            is_good_run = False
+        #if cr_qual<cr_qual_cut:
+        #    is_good_run = False
+        #if abs(fit_params[1])<qual_cut:
+        #    is_good_run = False
         if not is_good_run: 
             print (f'bad fitting. reject the run.')
             continue
@@ -222,11 +225,13 @@ for logE in range(0,logE_nbins):
     sum_incl_sky_map_smooth[logE].add(sum_incl_sky_map[logE])
     sum_data_sky_map_smooth[logE].add(sum_data_sky_map[logE])
     sum_bkgd_sky_map_smooth[logE].add(sum_bkgd_sky_map[logE])
+    #smooth_size = 0.07
+    smooth_size = 0.14
     smooth_image(sum_bkgd_sky_map_smooth[logE].waxis[:,:,0],sum_bkgd_sky_map_smooth[logE].xaxis,sum_bkgd_sky_map_smooth[logE].yaxis,kernel_radius=0.14)
     for gcut in range(1,gcut_bins):
-        smooth_image(sum_bkgd_sky_map_smooth[logE].waxis[:,:,gcut],sum_bkgd_sky_map_smooth[logE].xaxis,sum_bkgd_sky_map_smooth[logE].yaxis,kernel_radius=0.07)
-    smooth_image(sum_incl_sky_map_smooth[logE].waxis[:,:,0],sum_incl_sky_map_smooth[logE].xaxis,sum_incl_sky_map_smooth[logE].yaxis,kernel_radius=0.07)
-    smooth_image(sum_data_sky_map_smooth[logE].waxis[:,:,0],sum_data_sky_map_smooth[logE].xaxis,sum_data_sky_map_smooth[logE].yaxis,kernel_radius=0.07)
+        smooth_image(sum_bkgd_sky_map_smooth[logE].waxis[:,:,gcut],sum_bkgd_sky_map_smooth[logE].xaxis,sum_bkgd_sky_map_smooth[logE].yaxis,kernel_radius=smooth_size)
+    smooth_image(sum_incl_sky_map_smooth[logE].waxis[:,:,0],sum_incl_sky_map_smooth[logE].xaxis,sum_incl_sky_map_smooth[logE].yaxis,kernel_radius=smooth_size)
+    smooth_image(sum_data_sky_map_smooth[logE].waxis[:,:,0],sum_data_sky_map_smooth[logE].xaxis,sum_data_sky_map_smooth[logE].yaxis,kernel_radius=smooth_size)
     sum_data_sky_map_allE.add(sum_data_sky_map_smooth[logE])
     sum_bkgd_sky_map_allE.add(sum_bkgd_sky_map_smooth[logE])
 
@@ -368,56 +373,56 @@ PlotSkyMap(fig,sum_excess_sky_map_allE,f'{source_name}_excess_sky_map_allE',roi_
 print (f'total_exposure = {total_exposure}')
 print (f'good_exposure = {good_exposure}')
 
-new_list_cr_qual = []
-new_list_sr_qual = []
-for logE in range(0,logE_nbins):
-    tmp_list_cr_qual = []
-    tmp_list_sr_qual = []
-    for entry in range(0,len(list_sr_qual)):
-        #if np.isnan(list_cr_qual[entry][logE]): continue
-        #if np.isnan(list_sr_qual[entry][logE]): continue
-        #if np.isinf(list_cr_qual[entry][logE]): continue
-        #if np.isinf(list_sr_qual[entry][logE]): continue
-        #if list_cr_qual[entry][logE]==0.: continue
-        tmp_list_cr_qual += [list_cr_qual[entry][logE]]
-        tmp_list_sr_qual += [list_sr_qual[entry][logE]]
-    new_list_cr_qual += [tmp_list_cr_qual]
-    new_list_sr_qual += [tmp_list_sr_qual]
+#new_list_cr_qual = []
+#new_list_sr_qual = []
+#for logE in range(0,logE_nbins):
+#    tmp_list_cr_qual = []
+#    tmp_list_sr_qual = []
+#    for entry in range(0,len(list_sr_qual)):
+#        #if np.isnan(list_cr_qual[entry][logE]): continue
+#        #if np.isnan(list_sr_qual[entry][logE]): continue
+#        #if np.isinf(list_cr_qual[entry][logE]): continue
+#        #if np.isinf(list_sr_qual[entry][logE]): continue
+#        #if list_cr_qual[entry][logE]==0.: continue
+#        tmp_list_cr_qual += [list_cr_qual[entry][logE]]
+#        tmp_list_sr_qual += [list_sr_qual[entry][logE]]
+#    new_list_cr_qual += [tmp_list_cr_qual]
+#    new_list_sr_qual += [tmp_list_sr_qual]
 
 
-for logE in range(0,logE_nbins):
 
-    fig.clf()
-    axbig = fig.add_subplot()
-    label_x = 'CR chi2'
-    label_y = 'SR chi2'
-    axbig.set_xlabel(label_x)
-    axbig.set_ylabel(label_y)
-    axbig.scatter(new_list_cr_qual[logE],new_list_sr_qual[logE],color='b',alpha=0.5)
-    axbig.set_xscale('log')
-    axbig.set_ylim(0.,2.)
-    fig.savefig(f'output_plots/{source_name}_crsr_qual_logE{logE}.png',bbox_inches='tight')
-    axbig.remove()
-    
-    fig.clf()
-    axbig = fig.add_subplot()
-    label_x = 'Run elevation'
-    label_y = 'SR chi2'
-    axbig.set_xlabel(label_x)
-    axbig.set_ylabel(label_y)
-    axbig.scatter(list_run_elev,new_list_sr_qual[logE],color='b',alpha=0.5)
-    fig.savefig(f'output_plots/{source_name}_elev_sr_qual_logE{logE}.png',bbox_inches='tight')
-    axbig.remove()
-    
-    fig.clf()
-    axbig = fig.add_subplot()
-    label_x = 'Run azimuth'
-    label_y = 'SR chi2'
-    axbig.set_xlabel(label_x)
-    axbig.set_ylabel(label_y)
-    axbig.scatter(list_run_azim,new_list_sr_qual[logE],color='b',alpha=0.5)
-    fig.savefig(f'output_plots/{source_name}_azim_sr_qual_logE{logE}.png',bbox_inches='tight')
-    axbig.remove()
+fig.clf()
+axbig = fig.add_subplot()
+label_x = 'CR chi2'
+label_y = 'SR chi2'
+axbig.set_xlabel(label_x)
+axbig.set_ylabel(label_y)
+axbig.scatter(list_cr_qual,list_sr_qual,color='b',alpha=0.5)
+#axbig.set_xscale('log')
+#axbig.set_ylim(0.,2.)
+#axbig.set_xlim(0.5,1.5)
+fig.savefig(f'output_plots/{source_name}_crsr_qual.png',bbox_inches='tight')
+axbig.remove()
+
+fig.clf()
+axbig = fig.add_subplot()
+label_x = 'Run elevation'
+label_y = 'SR chi2'
+axbig.set_xlabel(label_x)
+axbig.set_ylabel(label_y)
+axbig.scatter(list_run_elev,list_sr_qual,color='b',alpha=0.5)
+fig.savefig(f'output_plots/{source_name}_elev_sr_qual.png',bbox_inches='tight')
+axbig.remove()
+
+fig.clf()
+axbig = fig.add_subplot()
+label_x = 'Run azimuth'
+label_y = 'SR chi2'
+axbig.set_xlabel(label_x)
+axbig.set_ylabel(label_y)
+axbig.scatter(list_run_azim,list_sr_qual,color='b',alpha=0.5)
+fig.savefig(f'output_plots/{source_name}_azim_sr_qual.png',bbox_inches='tight')
+axbig.remove()
 
 fig.clf()
 axbig = fig.add_subplot()
@@ -452,16 +457,20 @@ axbig.remove()
 #        fig.savefig(f'output_plots/{source_name}_truth_params_c{par1}_c{par2}.png',bbox_inches='tight')
 #        axbig.remove()
 
-#for par1 in range(0,len(list_truth_params[0])):
-#
-#    fig.clf()
-#    axbig = fig.add_subplot()
-#    label_x = 'truth'
-#    label_y = 'fit'
-#    axbig.set_xlabel(label_x)
-#    axbig.set_ylabel(label_y)
-#    for entry in range(0,len(list_truth_params)):
-#        axbig.scatter(list_truth_params[entry][par1],list_fit_params[entry][par1],color='b',alpha=0.5)
-#    fig.savefig(f'output_plots/{source_name}_truth_fit_params_c{par1}.png',bbox_inches='tight')
-#    axbig.remove()
+for par1 in range(0,len(list_truth_params[0])):
+
+    fig.clf()
+    axbig = fig.add_subplot()
+    label_x = 'fit'
+    label_y = 'error'
+    axbig.set_xlabel(label_x)
+    axbig.set_ylabel(label_y)
+    for entry in range(0,len(list_truth_params)):
+        truth = list_truth_params[entry][par1]
+        fit = list_fit_params[entry][par1]
+        error = list_sr_qual[entry]
+        if truth==0.: continue
+        axbig.scatter(abs(fit),error,color='b',alpha=0.5)
+    fig.savefig(f'output_plots/{source_name}_truth_fit_params_c{par1}.png',bbox_inches='tight')
+    axbig.remove()
 

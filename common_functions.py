@@ -11,29 +11,13 @@ import tracemalloc
 sky_tag = os.environ.get("SKY_TAG")
 
 nuclear_norm_scale = 0.
-if sky_tag=='scale0':
-    nuclear_norm_scale = 0.
-if sky_tag=='scale0p01':
-    nuclear_norm_scale = 0.01
-if sky_tag=='scale0p02':
-    nuclear_norm_scale = 0.02
-if sky_tag=='scale0p1':
-    nuclear_norm_scale = 0.1
-if sky_tag=='scale0p2':
-    nuclear_norm_scale = 0.2
-if sky_tag=='scale0p5':
-    nuclear_norm_scale = 0.5
-if sky_tag=='scale1p0':
-    nuclear_norm_scale = 1.0
-if sky_tag=='scale2p0':
-    nuclear_norm_scale = 2.0
-if sky_tag=='scale10p0':
-    nuclear_norm_scale = 10.0
-if sky_tag=='scale100p0':
-    nuclear_norm_scale = 100.0
 
-if sky_tag=='test':
-    nuclear_norm_scale = 10.0
+#use_poisson_likelihood = False
+use_poisson_likelihood = True
+#if sky_tag=='poisson':
+#    use_poisson_likelihood = True
+
+run_elev_cut = 45.
 
 min_NImages = 3
 max_Roff = 2.0
@@ -43,16 +27,16 @@ max_Rcore = 250.
 min_Rcore = 50.
 min_Energy_cut = 0.2
 max_Energy_cut = 10.0
-MSCW_cut = 0.6
-MSCL_cut = 0.6
+MSCW_cut = 0.7
+MSCL_cut = 0.7
 MVA_cut = 0.5
 
 xoff_start = -2.
 xoff_end = 2.
 yoff_start = -2.
 yoff_end = 2.
-gcut_bins = 3
-#gcut_bins = 4
+#gcut_bins = 5
+gcut_bins = 4
 gcut_start = 0
 gcut_end = gcut_bins
 
@@ -62,16 +46,17 @@ logE_nbins = len(logE_bins)-1
 
 skymap_size = 3.
 skymap_bins = 30
+fine_skymap_bins = 60
 
-doFluxCalibration = True
-#doFluxCalibration = False
+#doFluxCalibration = True
+doFluxCalibration = False
 calibration_radius = 0.15 # need to be larger than the PSF and smaller than the integration radius
 
 logE_min = 0
 logE_max = logE_nbins
 matrix_rank = 0.1
 #xoff_bins = [7,7,7,7,7,7,7,7,7]
-xoff_bins = [7,7,7,5,5,3,3,1,1]
+xoff_bins = [5,5,5,3,3,3,1,1,1]
 yoff_bins = xoff_bins
 
 chi2_cut = 0.5
@@ -112,6 +97,8 @@ def ReadOffRunListFromFile(input_file):
     return runlist
 
 def smooth_image(image_data,xaxis,yaxis,kernel_radius=0.07):
+
+    #return
 
     image_smooth = np.zeros_like(image_data)
 
@@ -341,7 +328,7 @@ def GetGammaSources(tele_point_ra, tele_point_dec):
         if distance>2.: continue
         #print (f'{line_split}')
         bright_stars_coord += [[star_ra,star_dec]]
-    print (f'Found {len(bright_stars_coord)} Gamma-ray sources.')
+    #print (f'Found {len(bright_stars_coord)} Gamma-ray sources.')
     return bright_stars_coord
 
 def GetBrightStars(tele_point_ra, tele_point_dec):
@@ -364,7 +351,7 @@ def GetBrightStars(tele_point_ra, tele_point_dec):
         if star_brightness<brightness_cut:
             bright_stars_coord += [[star_ra,star_dec]]
 
-    print (f'Found {len(bright_stars_coord)} bright stars.')
+    #print (f'Found {len(bright_stars_coord)} bright stars.')
     return bright_stars_coord
 
 
@@ -389,8 +376,11 @@ def EventGammaCut(MSCL,MSCW):
         GammaCut = 1.5
     elif abs(MSCL)<2. and abs(MSCW)<1.:
         GammaCut = 2.5
-    #elif abs(MSCL)<2. and abs(MSCW)<2.:
-    #    GammaCut = 3.5
+    elif abs(MSCL)<2. and abs(MSCW)<2.:
+        GammaCut = 3.5
+
+    #if abs(MSCL)<1.:
+    #    GammaCut = int(abs(MSCW))
 
     return GammaCut
 
@@ -428,13 +418,18 @@ def build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_
         TelTree.GetEntry(int(float(TelTree.GetEntries())/2.))
         TelRAJ2000 = TelTree.TelRAJ2000*180./np.pi
         TelDecJ2000 = TelTree.TelDecJ2000*180./np.pi
+        TelElevation = TelTree.TelElevation
+        TelAzimuth = TelTree.TelAzimuth
         bright_star_coord = GetBrightStars(TelRAJ2000,TelDecJ2000)
         gamma_source_coord = GetGammaSources(TelRAJ2000,TelDecJ2000)
+        
+        if is_on:
+            if TelElevation<run_elev_cut: continue
 
         TreeName = f'run_{run_number}/stereo/DL3EventTree'
         EvtTree = InputFile.Get(TreeName)
         total_entries = EvtTree.GetEntries()
-        print (f'total_entries = {total_entries}')
+        #print (f'total_entries = {total_entries}')
         for entry in range(0,total_entries):
             EvtTree.GetEntry(entry)
             Xoff = EvtTree.Xoff
@@ -506,11 +501,11 @@ def build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_
 
     return big_matrix
 
-def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,onoff,max_runs=1e10):
+def build_skymap(smi_input,eigenvector_path,runlist,off_runlist,src_ra,src_dec,onoff,max_runs=1e10):
 
     global skymap_bins
     if onoff=='ON':
-        skymap_bins = 100
+        skymap_bins = fine_skymap_bins
 
     # start memory profiling
     tracemalloc.start()
@@ -525,6 +520,7 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,onoff,max_run
     eigen_stuff = pickle.load(open(input_filename, "rb"))
     big_eigenvalues = eigen_stuff[0]
     big_eigenvectors = eigen_stuff[1]
+    big_xyoff_map_1d = eigen_stuff[2]
 
     exposure_hours = 0.
     avg_tel_elev = 0.
@@ -549,14 +545,19 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,onoff,max_run
     #effective_matrix_rank = max(1,big_eigenvectors.shape[0])
     truth_params = [1e-3] * effective_matrix_rank
     fit_params = [1e-3] * effective_matrix_rank
-    cr_qual = []
-    sr_qual = []
+    cr_qual = 0.
+    sr_qual = 0.
     #print (f'big_eigenvectors.shape = {big_eigenvectors.shape}') 
 
     print ('build big matrix...')
+    print (f'runlist = {runlist}')
+    print (f'off_runlist = {off_runlist}')
     big_on_matrix = build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True)
+    #big_off_matrix = build_big_camera_matrix(smi_input,off_runlist[0],max_runs=1e10,is_on=True)
 
+    #if big_on_matrix[0]==None or big_off_matrix[0]==None:
     if big_on_matrix[0]==None:
+    #if len(big_on_matrix)==0 or len(big_off_matrix)==0:
     #if len(big_on_matrix)==0:
         print (f'No data. Break.')
         return [exposure_hours,avg_tel_elev,avg_tel_azim,truth_params,fit_params,sr_qual,cr_qual], incl_sky_map, data_sky_map, fit_sky_map, data_xyoff_map, fit_xyoff_map
@@ -575,74 +576,53 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,onoff,max_run
         data_xyoff_map_1d = np.array(big_on_matrix[logE][0])
         for entry in range(1,len(big_on_matrix[logE])):
             data_xyoff_map_1d += np.array(big_on_matrix[logE][entry])
-
         truth_params = big_eigenvectors[logE] @ data_xyoff_map_1d
         truth_xyoff_map_1d = big_eigenvectors[logE].T @ truth_params
 
-        init_params = truth_params
+        off_data_xyoff_map_1d = np.zeros_like(big_xyoff_map_1d[logE])
+        for pix in range(0,len(off_data_xyoff_map_1d)):
+            off_data_xyoff_map_1d[pix] = big_xyoff_map_1d[logE][pix]
+
+        off_truth_params_norm = cosmic_ray_like_count(off_data_xyoff_map_1d,logE,region_type=0)
+        on_truth_params_norm = cosmic_ray_like_count(data_xyoff_map_1d,logE,region_type=0)
+        if off_truth_params_norm==0.: continue
+        off_data_xyoff_map_1d = np.array(off_data_xyoff_map_1d)*on_truth_params_norm/off_truth_params_norm
+
+        diff_xyoff_map_1d = data_xyoff_map_1d - off_data_xyoff_map_1d
+
+        init_params = [1e-4] * effective_matrix_rank
         stepsize = [1e-4] * effective_matrix_rank
         solution = minimize(
             cosmic_ray_like_chi2,
             x0=init_params,
-            args=(big_eigenvalues[logE],big_eigenvectors[logE],data_xyoff_map_1d,logE,0,1),
+            args=(init_params,big_eigenvectors[logE],diff_xyoff_map_1d,off_data_xyoff_map_1d,logE,0,0),
+            #args=(init_params,big_eigenvectors[logE],diff_xyoff_map_1d,off_data_xyoff_map_1d,logE,-1,1),  # unblind, no weight
             method='L-BFGS-B',
             jac=None,
             options={'eps':stepsize,'ftol':0.0001},
         )
+        raw_params = solution['x']
         fit_params = solution['x']
-        fit_xyoff_map_1d = big_eigenvectors[logE].T @ fit_params
+        fit_xyoff_map_1d = big_eigenvectors[logE].T @ fit_params + off_data_xyoff_map_1d
 
-        #init_params = truth_params
-        init_params = fit_params
-        #init_params = [1e-4] * effective_matrix_rank
-        init_nuclear_norm = np.sum(np.abs(fit_params))
-        big_nuclear_norm = np.sum(np.abs(big_eigenvalues[logE]))
-        rescale_eigenvalues = np.array(big_eigenvalues[logE])*init_nuclear_norm/big_nuclear_norm
-        stepsize = [1e-4] * effective_matrix_rank
-        solution = minimize(
-            cosmic_ray_like_chi2,
-            x0=init_params,
-            args=(big_eigenvalues[logE],big_eigenvectors[logE],data_xyoff_map_1d,logE,0,0),
-            method='L-BFGS-B',
-            jac=None,
-            options={'eps':stepsize,'ftol':0.0001},
-        )
-        fit_params = solution['x']
-        fit_xyoff_map_1d = big_eigenvectors[logE].T @ fit_params
+        run_sr_chi2 = cosmic_ray_like_chi2(fit_params,big_eigenvalues[logE],big_eigenvectors[logE],diff_xyoff_map_1d,off_data_xyoff_map_1d,logE,1,1)
+        run_cr_chi2 = cosmic_ray_like_chi2(fit_params,big_eigenvalues[logE],big_eigenvectors[logE],diff_xyoff_map_1d,off_data_xyoff_map_1d,logE,0,1)
+        run_nuclear_norm = cosmic_ray_like_chi2(fit_params,big_eigenvalues[logE],big_eigenvectors[logE],diff_xyoff_map_1d,off_data_xyoff_map_1d,logE,0,2)
 
-
-        run_sr_chi2 = cosmic_ray_like_chi2(fit_params,big_eigenvalues[logE],big_eigenvectors[logE],data_xyoff_map_1d,logE,1,1)
-        run_cr_chi2 = cosmic_ray_like_chi2(fit_params,big_eigenvalues[logE],big_eigenvectors[logE],data_xyoff_map_1d,logE,0,1)
-        run_nuclear_norm = cosmic_ray_like_chi2(fit_params,big_eigenvalues[logE],big_eigenvectors[logE],data_xyoff_map_1d,logE,0,2)
-
-        if logE==1:
+        if logE==2:
             print ('===================================================================================')
-            for entry in range(0,len(truth_params)):
-                print (f'truth_params = {truth_params[entry]:0.1f}, init_params = {init_params[entry]:0.1f}, rescale_eigenvalues = {rescale_eigenvalues[entry]:0.1f}, fit_params = {fit_params[entry]:0.1f}')
-            print (f'nuclear_norm_scale = {nuclear_norm_scale}, run_cr_chi2 = {run_cr_chi2:0.3f}, run_nuclear_norm = {run_nuclear_norm:0.3f}')
+            print (f'logE = {logE}, effective_matrix_rank = {effective_matrix_rank}')
+            for entry in range(0,min(5,len(truth_params))):
+                print (f'truth_params = {truth_params[entry]:0.1f}, fit_params = {fit_params[entry]:0.1f}')
+            print (f'run_sr_chi2 = {run_sr_chi2:0.3f}, run_cr_chi2 = {run_cr_chi2:0.3f}, run_nuclear_norm = {run_nuclear_norm:0.3f}')
 
         sr_data_count = cosmic_ray_like_count(data_xyoff_map_1d,logE,region_type=1)
         fit_data_count = cosmic_ray_like_count(fit_xyoff_map_1d,logE,region_type=1)
         cr_data_count = cosmic_ray_like_count(data_xyoff_map_1d,logE,region_type=0)
         fit_cr_data_count = cosmic_ray_like_count(fit_xyoff_map_1d,logE,region_type=0)
 
-        #nuclear_norm = 0.
-        #for entry in range(0,len(fit_params)):
-        #    nuclear_norm += abs(fit_params[entry])
-        #print (f'run_cr_chi2 = {run_cr_chi2}')
-        #print (f'nuclear_norm = {nuclear_norm}')
-
-        cr_qual += [run_cr_chi2]
-        sr_qual += [(sr_data_count-fit_data_count)/pow(max(1.,sr_data_count),0.5)]
-
-        #if fit_cr_data_count>0.:
-        #    cr_qual += [(cr_data_count-fit_cr_data_count)/pow(fit_cr_data_count,0.5)]
-        #else:
-        #    cr_qual += [0.]
-        #if fit_data_count>0.:
-        #    sr_qual += [(sr_data_count-fit_data_count)/pow(fit_data_count,0.5)]
-        #else:
-        #    sr_qual += [0.]
+        cr_qual = run_cr_chi2
+        sr_qual = (sr_data_count-fit_data_count)/pow(max(1.,sr_data_count),0.5)
 
         idx_1d = 0
         for gcut in range(0,gcut_bins):
@@ -663,57 +643,57 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,onoff,max_run
 
         for gcut in range(1,gcut_bins):
 
-            if xoff_bins[logE]==1: continue
-            if yoff_bins[logE]==1: continue
+           if xoff_bins[logE]==1: continue
+           if yoff_bins[logE]==1: continue
 
-            avg_ratio = 0.
-            count = 0.
-            for idx_x in range(0,xoff_bins[logE]):
-                for idx_y in range(0,yoff_bins[logE]):
-                    avg_ratio += ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
-                    count += 1.
-            if count==0.: continue
-            avg_ratio = avg_ratio/count
+           avg_ratio = 0.
+           count = 0.
+           for idx_x in range(0,xoff_bins[logE]):
+               for idx_y in range(0,yoff_bins[logE]):
+                   avg_ratio += ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
+                   count += 1.
+           if count==0.: continue
+           avg_ratio = avg_ratio/count
 
-            rms_ratio = 0.
-            count = 0.
-            for idx_x in range(0,xoff_bins[logE]):
-                for idx_y in range(0,yoff_bins[logE]):
-                    rms_ratio += pow(ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut]-avg_ratio,2)
-                    count += 1.
-            if count==0.: continue
-            rms_ratio = pow(rms_ratio/count,0.5)
+           rms_ratio = 0.
+           count = 0.
+           for idx_x in range(0,xoff_bins[logE]):
+               for idx_y in range(0,yoff_bins[logE]):
+                   rms_ratio += pow(ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut]-avg_ratio,2)
+                   count += 1.
+           if count==0.: continue
+           rms_ratio = pow(rms_ratio/count,0.5)
 
-            new_avg_ratio = 0.
-            count = 0.
-            for idx_x in range(0,xoff_bins[logE]):
-                for idx_y in range(0,yoff_bins[logE]):
-                    if rms_ratio==0.: continue
-                    deviation = (ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut] - avg_ratio)/rms_ratio
-                    if abs(deviation)<2.:
-                        new_avg_ratio += ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
-                        count += 1.
-            if count==0.: continue
-            avg_ratio = new_avg_ratio/count
+           new_avg_ratio = 0.
+           count = 0.
+           for idx_x in range(0,xoff_bins[logE]):
+               for idx_y in range(0,yoff_bins[logE]):
+                   if rms_ratio==0.: continue
+                   deviation = (ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut] - avg_ratio)/rms_ratio
+                   if abs(deviation)<2.:
+                       new_avg_ratio += ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
+                       count += 1.
+           if count==0.: continue
+           avg_ratio = new_avg_ratio/count
 
-            new_rms_ratio = 0.
-            count = 0.
-            for idx_x in range(0,xoff_bins[logE]):
-                for idx_y in range(0,yoff_bins[logE]):
-                    if rms_ratio==0.: continue
-                    deviation = (ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut] - avg_ratio)/rms_ratio
-                    if abs(deviation)<2.:
-                        new_rms_ratio += pow(ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut]-avg_ratio,2)
-                        count += 1.
-            if count==0.: continue
-            rms_ratio = pow(new_rms_ratio/count,0.5)
+           new_rms_ratio = 0.
+           count = 0.
+           for idx_x in range(0,xoff_bins[logE]):
+               for idx_y in range(0,yoff_bins[logE]):
+                   if rms_ratio==0.: continue
+                   deviation = (ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut] - avg_ratio)/rms_ratio
+                   if abs(deviation)<2.:
+                       new_rms_ratio += pow(ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut]-avg_ratio,2)
+                       count += 1.
+           if count==0.: continue
+           rms_ratio = pow(new_rms_ratio/count,0.5)
 
-            for idx_x in range(0,xoff_bins[logE]):
-                for idx_y in range(0,yoff_bins[logE]):
-                    if rms_ratio==0.: continue
-                    deviation = (ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut] - avg_ratio)/rms_ratio
-                    if abs(deviation)>5.:
-                        ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = avg_ratio
+           for idx_x in range(0,xoff_bins[logE]):
+               for idx_y in range(0,yoff_bins[logE]):
+                   if rms_ratio==0.: continue
+                   deviation = (ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut] - avg_ratio)/rms_ratio
+                   if abs(deviation)>5.:
+                       ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = avg_ratio
 
 
     run_count = 0
@@ -741,10 +721,12 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,onoff,max_run
         bright_star_coord = GetBrightStars(TelRAJ2000,TelDecJ2000)
         gamma_source_coord = GetGammaSources(TelRAJ2000,TelDecJ2000)
 
+        if TelElevation<run_elev_cut: continue
+
         TreeName = f'run_{run_number}/stereo/DL3EventTree'
         EvtTree = InputFile.Get(TreeName)
         total_entries = EvtTree.GetEntries()
-        print (f'total_entries = {total_entries}')
+        #print (f'total_entries = {total_entries}')
         EvtTree.GetEntry(0)
         time_start = EvtTree.timeOfDay
         EvtTree.GetEntry(total_entries-1)
@@ -809,10 +791,10 @@ def build_skymap(smi_input,eigenvector_path,runlist,src_ra,src_dec,onoff,max_run
     return [exposure_hours,avg_tel_elev,avg_tel_azim,truth_params,fit_params,sr_qual,cr_qual], incl_sky_map, data_sky_map, fit_sky_map, data_xyoff_map, fit_xyoff_map
 
 
-def cosmic_ray_like_chi2(try_params,eigenvalues,eigenvectors,xyoff_map,logE,region_type,chi2_type):
+def cosmic_ray_like_chi2(try_params,ref_params,eigenvectors,diff_xyoff_map,init_xyoff_map,logE,region_type,chi2_type):
 
     try_params = np.array(try_params)
-    try_xyoff_map = eigenvectors.T @ try_params
+    try_xyoff_map = eigenvectors.T @ try_params + init_xyoff_map
 
     sum_log_likelihood = 0.
     idx_1d = 0
@@ -827,62 +809,40 @@ def cosmic_ray_like_chi2(try_params,eigenvalues,eigenvectors,xyoff_map,logE,regi
                     if gcut==0: continue
                 elif region_type==1:
                     if gcut!=0: continue
-                #if region_type==0:
-                #    if gcut==0: continue
-                #elif region_type==1:
-                #    if gcut!=0: continue
-                #elif region_type==2:
-                #    if gcut==0: continue
-                #    if gcut==1: continue
-                #elif region_type==3:
-                #    if gcut!=1: continue
-                #elif region_type==4:
-                #    if gcut==0: continue
-                #    if gcut==2: continue
-                #elif region_type==5:
-                #    if gcut!=2: continue
-                #elif region_type==6:
-                #    if gcut==0: continue
-                #    if gcut==3: continue
-                #elif region_type==7:
-                #    if gcut!=3: continue
 
                 n_expect_total += try_xyoff_map[idx_1d-1]
-                n_data_total += xyoff_map[idx_1d-1]
+                n_data_total += diff_xyoff_map[idx_1d-1] + init_xyoff_map[idx_1d-1]
+ 
+                if use_poisson_likelihood:
+                    n_expect = max(0.0001,try_xyoff_map[idx_1d-1])
+                    n_data = diff_xyoff_map[idx_1d-1] + init_xyoff_map[idx_1d-1]
+                    if n_data==0.:
+                        sum_log_likelihood += n_expect
+                    else:
+                        sum_log_likelihood += -1.*(n_data*np.log(n_expect) - n_expect - (n_data*np.log(n_data)-n_data))
+                    nbins += 1.
+                else:
+                    n_expect = try_xyoff_map[idx_1d-1]
+                    n_data = diff_xyoff_map[idx_1d-1] + init_xyoff_map[idx_1d-1]
+                    sum_log_likelihood += pow(n_expect-n_data,2)
 
-                #n_expect = max(0.0001,try_xyoff_map[idx_1d-1])
-                #n_data = xyoff_map[idx_1d-1]
-                #if n_data==0.:
-                #    sum_log_likelihood += n_expect
-                #else:
-                #    sum_log_likelihood += -1.*(n_data*np.log(n_expect) - n_expect - (n_data*np.log(n_data)-n_data))
-                #nbins += 1.
-
-                n_expect = try_xyoff_map[idx_1d-1]
-                n_data = xyoff_map[idx_1d-1]
-                sum_log_likelihood += pow(n_expect-n_data,2)
-
-    #sum_log_likelihood = sum_log_likelihood/nbins
-    sum_log_likelihood = sum_log_likelihood/n_data_total
+    if use_poisson_likelihood:
+        sum_log_likelihood = sum_log_likelihood/nbins
+    else:
+        #sum_log_likelihood = sum_log_likelihood
+        sum_log_likelihood = sum_log_likelihood/n_data_total
 
     if chi2_type==1:
         return sum_log_likelihood
 
-    #nuclear_norm = 0.
-    #for entry in range(0,len(try_params)):
-    #    nuclear_norm += abs(try_params[entry])
-    #sum_log_likelihood += nuclear_norm_scale*nuclear_norm/n_data_total
+    #rel_nuclear_norm = 0.
+    #try_nuclear_norm = np.sum(np.abs(try_params))
+    #ref_nuclear_norm = np.sum(np.abs(ref_params))
+    #for entry in range(4,len(try_params)):
+    #    rel_nuclear_norm += pow(try_params[entry]-ref_params[entry],2)/abs(ref_params[entry])
+    #sum_log_likelihood += nuclear_norm_scale*rel_nuclear_norm
     #if chi2_type==2:
-    #    return nuclear_norm_scale*nuclear_norm/n_data_total
-
-    try_nuclear_norm = np.sum(np.abs(try_params))
-    big_nuclear_norm = np.sum(np.abs(eigenvalues))
-    rel_nuclear_norm = 0.
-    for entry in range(0,len(try_params)):
-        rel_nuclear_norm += pow(abs(try_params[entry])/try_nuclear_norm-abs(eigenvalues[entry])/big_nuclear_norm,2)
-    sum_log_likelihood += nuclear_norm_scale*rel_nuclear_norm
-    if chi2_type==2:
-        return nuclear_norm_scale*rel_nuclear_norm
+    #    return nuclear_norm_scale*rel_nuclear_norm
 
     return sum_log_likelihood
 
@@ -898,25 +858,6 @@ def cosmic_ray_like_count(xyoff_map,logE,region_type=0):
                     if gcut==0: continue
                 elif region_type==1:
                     if gcut!=0: continue
-                #if region_type==0:
-                #    if gcut==0: continue
-                #elif region_type==1:
-                #    if gcut!=0: continue
-                #elif region_type==2:
-                #    if gcut==0: continue
-                #    if gcut==1: continue
-                #elif region_type==3:
-                #    if gcut!=1: continue
-                #elif region_type==4:
-                #    if gcut==0: continue
-                #    if gcut==2: continue
-                #elif region_type==5:
-                #    if gcut!=2: continue
-                #elif region_type==6:
-                #    if gcut==0: continue
-                #    if gcut==3: continue
-                #elif region_type==7:
-                #    if gcut!=3: continue
 
                 weight = 1.
                 #weight = 1./float(gcut+1)
@@ -1291,8 +1232,8 @@ def PlotSkyMap(fig,hist_map,plotname,roi_x=[],roi_y=[],roi_r=[],max_z=0.,colorma
         other_star_labels += ['%s'%(other_stars[star])]
         other_star_types += [other_star_type[star]]
         n_stars += 1
-    for star in range(0,len(other_star_markers)):
-        print (f'Star {other_star_labels[star]} RA = {other_star_markers[star][0]:0.1f}, Dec = {other_star_markers[star][1]:0.1f}')
+    #for star in range(0,len(other_star_markers)):
+    #    print (f'Star {other_star_labels[star]} RA = {other_star_markers[star][0]:0.1f}, Dec = {other_star_markers[star][1]:0.1f}')
 
     fig.clf()
     axbig = fig.add_subplot()
@@ -1341,7 +1282,7 @@ def GetFluxCalibration(energy):
     if doFluxCalibration:
         return 1.
 
-    str_flux_calibration = ['2.23e+01', '3.12e+01', '3.17e+01', '1.38e+01', '1.24e+01', '1.28e+01', '1.35e+01', '1.32e+01']
+    str_flux_calibration = ['7.38e+00', '4.78e+00', '3.52e+00', '2.83e+00', '8.46e-01', '4.76e-01', '2.78e-01', '2.20e-01', '1.62e-01']
 
     flux_calibration = []
     for string in str_flux_calibration:

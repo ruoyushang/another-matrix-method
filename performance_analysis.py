@@ -47,20 +47,22 @@ smi_input = os.environ.get("SMI_INPUT")
 smi_output = os.environ.get("SMI_OUTPUT")
 smi_dir = os.environ.get("SMI_DIR")
 
+ana_tag = 'nominal'
+#ana_tag = 'poisson'
 #ana_tag = 'scale0'
 #ana_tag = 'scale0p01'
 #ana_tag = 'scale0p1'
 #ana_tag = 'scale0p2'
 #ana_tag = 'scale1p0'
-ana_tag = 'scale10p0'
+#ana_tag = 'scale10p0'
 
 onoff = 'OFF'
 
-exposure_per_group = 20.
-cr_qual_cut = 0.0
-#cr_qual_cut = 0.1
+exposure_per_group = 4.
+cr_qual_cut = 1e10
+#cr_qual_cut = 1.0
 
-min_elev = 25.
+min_elev = 65.
 
 #input_epoch = ['V4']
 #input_epoch = ['V5']
@@ -76,7 +78,7 @@ input_sources += [ ['1ES0229'               ,38.222  ,20.273 ] ]
 input_sources += [ ['M82'                   ,148.970 ,69.679 ] ]
 input_sources += [ ['3C264'                 ,176.271 ,19.606 ] ]
 input_sources += [ ['BLLac'                 ,330.680 ,42.277 ] ]
-#input_sources += [ ['Draco'                 ,260.059 ,57.921 ] ]
+input_sources += [ ['Draco'                 ,260.059 ,57.921 ] ]
 input_sources += [ ['OJ287'                 ,133.705 ,20.100 ] ]
 input_sources += [ ['H1426'                 ,217.136  ,42.673 ] ]
 input_sources += [ ['NGC1275'               ,49.950  ,41.512 ] ]
@@ -108,6 +110,8 @@ grp_bkgd_count = []
 
 list_sr_qual = []
 list_cr_qual = []
+list_truth_params = []
+list_fit_params = []
 
 total_exposure = 0.
 good_exposure = 0.
@@ -143,22 +147,25 @@ for epoch in input_epoch:
             if run_elev<min_elev:
                 continue
 
-            list_sr_qual += [sr_qual]
-            list_cr_qual += [cr_qual]
-
             total_exposure += exposure
 
+            bkgd_sum = 0.
+            for logE in range(0,logE_nbins):
+                bkgd_sum += np.sum(bkgd_sky_map[logE].waxis[:,:,:])
+
             is_good_run = True
-            sum_cr_qual = 0.
-            for logE in range(0,5):
-                sum_cr_qual += cr_qual[logE]
-                #if cr_qual[logE]<cr_qual_cut:
-                #    is_good_run = False
-            sum_cr_qual = sum_cr_qual/5.
-            if sum_cr_qual<cr_qual_cut:
+            if np.isnan(bkgd_sum):
                 is_good_run = False
+                print (f'bkgd_sum = nan!!!')
+            #if fit_params[1]<20.:
+            #    is_good_run = False
             if not is_good_run: 
                 continue
+
+            list_sr_qual += [sr_qual]
+            list_cr_qual += [cr_qual]
+            list_truth_params += [truth_params]
+            list_fit_params += [fit_params]
 
             good_exposure += exposure
             group_exposure += exposure
@@ -249,39 +256,55 @@ for logE in range(0,logE_nbins):
 
 print (f'bias_array = {np.around(bias_array,3)}')
 
-new_list_cr_qual = []
-new_list_sr_qual = []
-for logE in range(0,logE_nbins):
-    tmp_list_cr_qual = []
-    tmp_list_sr_qual = []
-    for entry in range(0,len(list_sr_qual)):
-        if np.isnan(list_cr_qual[entry][logE]): continue
-        if np.isnan(list_sr_qual[entry][logE]): continue
-        if np.isinf(list_cr_qual[entry][logE]): continue
-        if np.isinf(list_sr_qual[entry][logE]): continue
-        if list_cr_qual[entry][logE]==0.: continue
-        tmp_list_cr_qual += [list_cr_qual[entry][logE]]
-        tmp_list_sr_qual += [list_sr_qual[entry][logE]]
-    new_list_cr_qual += [tmp_list_cr_qual]
-    new_list_sr_qual += [tmp_list_sr_qual]
-
 hist_range = [[0.,  1.], [-5., 5.]]
 
-for logE in range(0,logE_nbins):
+fig.clf()
+axbig = fig.add_subplot()
+label_x = 'CR chi2'
+label_y = 'SR chi2'
+axbig.set_xlabel(label_x)
+axbig.set_ylabel(label_y)
+axbig.scatter(list_cr_qual,list_sr_qual,color='b',alpha=0.5)
+#axbig.hist2d(list_cr_qual,list_sr_qual, norm=mpl.colors.LogNorm(), bins=50, range=hist_range)
+axbig.set_xscale('log')
+#axbig.set_yscale('log')
+#axbig.set_ylim(-5.,5.)
+fig.savefig(f'output_plots/all_src_crsr_qual_{ana_tag}.png',bbox_inches='tight')
+axbig.remove()
 
-    fig.clf()
-    axbig = fig.add_subplot()
-    label_x = 'CR chi2'
-    label_y = 'SR chi2'
-    axbig.set_xlabel(label_x)
-    axbig.set_ylabel(label_y)
-    #axbig.scatter(new_list_cr_qual[logE],new_list_sr_qual[logE],color='b',alpha=0.5)
-    axbig.hist2d(new_list_cr_qual[logE],new_list_sr_qual[logE], norm=mpl.colors.LogNorm(), bins=50, range=hist_range)
-    #axbig.set_xscale('log')
-    #axbig.set_yscale('log')
-    #axbig.set_ylim(-5.,5.)
-    fig.savefig(f'output_plots/all_src_crsr_qual_logE{logE}_{ana_tag}.png',bbox_inches='tight')
-    axbig.remove()
+plot_n_params = 3
+plot_truth_params = []
+plot_fit_params = []
+for par in range(0,plot_n_params):
+    plot_truth_params += [None]
+    plot_fit_params += [None]
+
+for entry in range(0,len(list_truth_params)):
+    for par in range(0,len(list_truth_params[entry])):
+        if par>=plot_n_params: continue
+        truth = list_truth_params[entry][par]
+        fit = list_fit_params[entry][par]
+        if truth==0.: continue
+        if plot_truth_params[par]==None:
+            plot_truth_params[par] = [truth]
+            plot_fit_params[par] = [fit]
+        else:
+            plot_truth_params[par] += [truth]
+            plot_fit_params[par] += [fit]
+
+
+#for par in range(0,plot_n_params):
+#    fig.clf()
+#    axbig = fig.add_subplot()
+#    label_x = 'fit'
+#    label_y = 'error'
+#    axbig.set_xlabel(label_x)
+#    axbig.set_ylabel(label_y)
+#    truth = np.array(plot_truth_params[par])
+#    fit = np.array(plot_fit_params[par])
+#    axbig.scatter(abs(fit),(fit-truth)/pow(abs(truth),0.5),color='b',alpha=0.5)
+#    fig.savefig(f'output_plots/truth_fit_params_c{par}.png',bbox_inches='tight')
+#    axbig.remove()
 
 exit()
     
