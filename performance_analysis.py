@@ -58,11 +58,11 @@ ana_tag = 'nominal'
 
 onoff = 'OFF'
 
-exposure_per_group = 4.
+exposure_per_group = 100.
 cr_qual_cut = 1e10
 #cr_qual_cut = 1.0
 
-min_elev = 65.
+min_elev = 35.
 
 #input_epoch = ['V4']
 #input_epoch = ['V5']

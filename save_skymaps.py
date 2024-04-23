@@ -49,8 +49,8 @@ print (f'path_to_eigenvector = {path_to_eigenvector}')
 if onoff=='ON':
     skymap_bins = fine_skymap_bins
 
-on_file = f'/nevis/tehanu/home/ryshang/veritas_analysis/another-matrix-method/output_vts_query/nsb_opt/RunList_{source_name}_{input_epoch}.txt'
-off_file = f'/nevis/tehanu/home/ryshang/veritas_analysis/another-matrix-method/output_vts_query/nsb_opt/PairList_{source_name}_{input_epoch}.txt'
+on_file = f'/nevis/tehanu/home/ryshang/veritas_analysis/another-matrix-method/output_vts_query/RunList_{source_name}_{input_epoch}.txt'
+off_file = f'/nevis/tehanu/home/ryshang/veritas_analysis/another-matrix-method/output_vts_query/PairList_{source_name}_{input_epoch}.txt'
 on_runlist, off_runlist = ReadRunListFromFile(on_file,off_file)
 
 xsky_start = src_ra+skymap_size

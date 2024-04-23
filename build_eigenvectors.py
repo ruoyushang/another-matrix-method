@@ -37,7 +37,7 @@ big_matrix = pickle.load(open(input_filename, "rb"))
 #big_matrix_ctl = pickle.load(open(input_filename, "rb"))
 
 print ('Computing SVD eigenvectors...')
-min_rank = 3
+min_rank = 2
 big_xyoff_map_1d = []
 big_eigenvalues = []
 big_eigenvectors = []
@@ -49,8 +49,19 @@ for logE in range(0,logE_nbins):
         for pix in range(0,len(big_matrix[logE][entry])):
             big_xyoff_map_1d[logE][pix] += big_matrix[logE][entry][pix]
 
+big_diff_matrix = []
 for logE in range(0,logE_nbins):
-    U_full, S_full, VT_full = np.linalg.svd(big_matrix[logE],full_matrices=False)
+    big_diff_matrix += [np.zeros_like(big_matrix[logE])]
+for logE in range(0,logE_nbins):
+    for entry in range(0,len(big_matrix[logE])):
+        big_norm = np.sum(big_xyoff_map_1d[logE])
+        small_norm = np.sum(big_matrix[logE][entry])
+        rescale = small_norm/big_norm
+        for pix in range(0,len(big_matrix[logE][entry])):
+            big_diff_matrix[logE][entry][pix] = big_matrix[logE][entry][pix]-big_xyoff_map_1d[logE][pix]*rescale
+
+for logE in range(0,logE_nbins):
+    U_full, S_full, VT_full = np.linalg.svd(big_diff_matrix[logE],full_matrices=False)
     print (f'S_full length = {len(S_full)}')
     effective_matrix_rank = min(min_rank,int(0.5*(len(S_full)-1)))
     print (f'effective_matrix_rank = {effective_matrix_rank}')

@@ -10,7 +10,7 @@ import tracemalloc
 
 sky_tag = os.environ.get("SKY_TAG")
 
-nuclear_norm_scale = 0.
+nuclear_norm_scale = 0.1
 
 #use_poisson_likelihood = False
 use_poisson_likelihood = True
@@ -98,7 +98,7 @@ def ReadOffRunListFromFile(input_file):
 
 def smooth_image(image_data,xaxis,yaxis,kernel_radius=0.07):
 
-    #return
+    return
 
     image_smooth = np.zeros_like(image_data)
 
@@ -576,8 +576,7 @@ def build_skymap(smi_input,eigenvector_path,runlist,off_runlist,src_ra,src_dec,o
         data_xyoff_map_1d = np.array(big_on_matrix[logE][0])
         for entry in range(1,len(big_on_matrix[logE])):
             data_xyoff_map_1d += np.array(big_on_matrix[logE][entry])
-        truth_params = big_eigenvectors[logE] @ data_xyoff_map_1d
-        truth_xyoff_map_1d = big_eigenvectors[logE].T @ truth_params
+
 
         off_data_xyoff_map_1d = np.zeros_like(big_xyoff_map_1d[logE])
         for pix in range(0,len(off_data_xyoff_map_1d)):
@@ -590,19 +589,34 @@ def build_skymap(smi_input,eigenvector_path,runlist,off_runlist,src_ra,src_dec,o
 
         diff_xyoff_map_1d = data_xyoff_map_1d - off_data_xyoff_map_1d
 
+        truth_params = big_eigenvectors[logE] @ diff_xyoff_map_1d
+
         init_params = [1e-4] * effective_matrix_rank
         stepsize = [1e-4] * effective_matrix_rank
         solution = minimize(
             cosmic_ray_like_chi2,
             x0=init_params,
-            args=(init_params,big_eigenvectors[logE],diff_xyoff_map_1d,off_data_xyoff_map_1d,logE,0,0),
+            args=(init_params,big_eigenvectors[logE],diff_xyoff_map_1d,off_data_xyoff_map_1d,logE,0,1),
             #args=(init_params,big_eigenvectors[logE],diff_xyoff_map_1d,off_data_xyoff_map_1d,logE,-1,1),  # unblind, no weight
             method='L-BFGS-B',
             jac=None,
             options={'eps':stepsize,'ftol':0.0001},
         )
-        raw_params = solution['x']
         fit_params = solution['x']
+
+        #init_params = fit_params
+        #stepsize = [1e-4] * effective_matrix_rank
+        #solution = minimize(
+        #    cosmic_ray_like_chi2,
+        #    x0=init_params,
+        #    args=(init_params,big_eigenvectors[logE],diff_xyoff_map_1d,off_data_xyoff_map_1d,logE,0,0),
+        #    #args=(init_params,big_eigenvectors[logE],diff_xyoff_map_1d,off_data_xyoff_map_1d,logE,-1,1),  # unblind, no weight
+        #    method='L-BFGS-B',
+        #    jac=None,
+        #    options={'eps':stepsize,'ftol':0.0001},
+        #)
+        #fit_params = solution['x']
+
         fit_xyoff_map_1d = big_eigenvectors[logE].T @ fit_params + off_data_xyoff_map_1d
 
         run_sr_chi2 = cosmic_ray_like_chi2(fit_params,big_eigenvalues[logE],big_eigenvectors[logE],diff_xyoff_map_1d,off_data_xyoff_map_1d,logE,1,1)
@@ -614,7 +628,7 @@ def build_skymap(smi_input,eigenvector_path,runlist,off_runlist,src_ra,src_dec,o
             print (f'logE = {logE}, effective_matrix_rank = {effective_matrix_rank}')
             for entry in range(0,min(5,len(truth_params))):
                 print (f'truth_params = {truth_params[entry]:0.1f}, fit_params = {fit_params[entry]:0.1f}')
-            print (f'run_sr_chi2 = {run_sr_chi2:0.3f}, run_cr_chi2 = {run_cr_chi2:0.3f}, run_nuclear_norm = {run_nuclear_norm:0.3f}')
+            print (f'run_sr_chi2 = {run_sr_chi2:0.3f}, run_cr_chi2 = {run_cr_chi2:0.3f}, run_nuclear_norm = {run_nuclear_norm:0.3e}')
 
         sr_data_count = cosmic_ray_like_count(data_xyoff_map_1d,logE,region_type=1)
         fit_data_count = cosmic_ray_like_count(fit_xyoff_map_1d,logE,region_type=1)
@@ -829,20 +843,18 @@ def cosmic_ray_like_chi2(try_params,ref_params,eigenvectors,diff_xyoff_map,init_
     if use_poisson_likelihood:
         sum_log_likelihood = sum_log_likelihood/nbins
     else:
-        #sum_log_likelihood = sum_log_likelihood
         sum_log_likelihood = sum_log_likelihood/n_data_total
 
     if chi2_type==1:
         return sum_log_likelihood
 
-    #rel_nuclear_norm = 0.
-    #try_nuclear_norm = np.sum(np.abs(try_params))
-    #ref_nuclear_norm = np.sum(np.abs(ref_params))
-    #for entry in range(4,len(try_params)):
-    #    rel_nuclear_norm += pow(try_params[entry]-ref_params[entry],2)/abs(ref_params[entry])
-    #sum_log_likelihood += nuclear_norm_scale*rel_nuclear_norm
-    #if chi2_type==2:
-    #    return nuclear_norm_scale*rel_nuclear_norm
+    rel_nuclear_norm = 0.
+    ref_nuclear_norm = np.sum(np.abs(ref_params))
+    for entry in range(1,len(try_params)):
+        rel_nuclear_norm += pow(try_params[entry],2)/pow(try_params[entry-1],2)
+    if chi2_type==2:
+        return nuclear_norm_scale*rel_nuclear_norm
+    sum_log_likelihood += nuclear_norm_scale*rel_nuclear_norm
 
     return sum_log_likelihood
 
