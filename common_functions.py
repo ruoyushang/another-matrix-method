@@ -33,7 +33,7 @@ min_Rcore = 0.
 min_Energy_cut = 0.2
 max_Energy_cut = 10.0
 MSCW_cut = 0.7
-MSCL_cut = 0.6
+MSCL_cut = 0.8
 MVA_cut = 0.5
 
 xoff_start = -2.
@@ -131,7 +131,7 @@ def ReadOffRunListFromFile(input_file):
 
 def smooth_image(image_data,xaxis,yaxis,kernel_radius=0.07):
 
-    return
+    #return
 
     image_smooth = np.zeros_like(image_data)
 

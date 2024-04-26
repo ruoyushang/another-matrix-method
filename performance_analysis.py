@@ -164,10 +164,13 @@ for epoch in input_epoch:
 
             for logE in range(0,logE_nbins):
             
-                data_count[logE] += np.sum(data_sky_map[logE].waxis[:,:,0])
-
+                data_sum = np.sum(data_sky_map[logE].waxis[:,:,0])
                 bkgd_sum = np.sum(bkgd_sky_map[logE].waxis[:,:,0])
-
+                if data_sum>0.:
+                    significance = (data_sum-bkgd_sum)/pow(data_sum,0.5)
+                    if significance>1000.:
+                        print (f'large error in input_filename = {input_filename}')
+                data_count[logE] += data_sum
                 bkgd_count[logE] += bkgd_sum
 
             if group_exposure>exposure_per_group or run==len(analysis_result)-1:
