@@ -48,21 +48,15 @@ smi_output = os.environ.get("SMI_OUTPUT")
 smi_dir = os.environ.get("SMI_DIR")
 
 ana_tag = 'nominal'
-#ana_tag = 'poisson'
 #ana_tag = 'scale0'
-#ana_tag = 'scale0p01'
-#ana_tag = 'scale0p1'
-#ana_tag = 'scale0p2'
-#ana_tag = 'scale1p0'
-#ana_tag = 'scale10p0'
 
 onoff = 'OFF'
 
-exposure_per_group = 100.
+exposure_per_group = 1.
 cr_qual_cut = 1e10
-#cr_qual_cut = 1.0
+#cr_qual_cut = 230
 
-min_elev = 35.
+min_elev = 20.
 
 #input_epoch = ['V4']
 #input_epoch = ['V5']
@@ -154,12 +148,10 @@ for epoch in input_epoch:
                 bkgd_sum += np.sum(bkgd_sky_map[logE].waxis[:,:,:])
 
             is_good_run = True
-            if np.isnan(bkgd_sum):
+            if cr_qual>cr_qual_cut:
                 is_good_run = False
-                print (f'bkgd_sum = nan!!!')
-            #if fit_params[1]<20.:
-            #    is_good_run = False
             if not is_good_run: 
+                print (f'bad fitting. reject the run.')
                 continue
 
             list_sr_qual += [sr_qual]
@@ -174,22 +166,11 @@ for epoch in input_epoch:
             
                 data_count[logE] += np.sum(data_sky_map[logE].waxis[:,:,0])
 
-                gcut_weight = []
-                for gcut in range(0,gcut_bins):
-                    gcut_weight += [pow(np.sum(bkgd_sky_map[logE].waxis[:,:,gcut]),1.0)]
-            
-                bkgd_sum = 0.
-                gcut_norm = 0.
-                for gcut in range(1,gcut_bins):
-                    gcut_norm += gcut_weight[gcut]
-                for gcut in range(1,gcut_bins):
-                    if gcut_norm==0.: continue
-                    bkgd_sum += gcut_weight[gcut]/gcut_norm*np.sum(bkgd_sky_map[logE].waxis[:,:,gcut])
+                bkgd_sum = np.sum(bkgd_sky_map[logE].waxis[:,:,0])
 
                 bkgd_count[logE] += bkgd_sum
 
-            #if group_exposure>exposure_per_group or run==len(analysis_result)-1:
-            if group_exposure>exposure_per_group:
+            if group_exposure>exposure_per_group or run==len(analysis_result)-1:
 
                 if group_exposure>0.5*exposure_per_group:
                     tmp_data_count = []
@@ -243,15 +224,15 @@ for logE in range(0,logE_nbins):
         bkgd = grp_bkgd_count[grp][logE] * (1.+avg_bias/100.)
         weight = data
         if data>0.:
-            avg_error += pow((data-bkgd)/data,2)*weight
-            avg_stat_error += 2.*1./data*weight
-            #avg_error += abs(data-bkgd)/data*weight
-            #avg_stat_error += pow(data,0.5)/data*weight
+            #avg_error += pow((data-bkgd)/data,2)*weight
+            #avg_stat_error += 2.*1./data*weight
+            avg_error += abs(data-bkgd)/data*weight
+            avg_stat_error += pow(data,0.5)/data*weight
             sum_weight += weight
-    avg_error = 100.*pow(avg_error/sum_weight,0.5)
-    avg_stat_error = 100.*pow(avg_stat_error/sum_weight,0.5)
-    #avg_error = 100.*avg_error/sum_weight
-    #avg_stat_error = 100.*avg_stat_error/sum_weight
+    #avg_error = 100.*pow(avg_error/sum_weight,0.5)
+    #avg_stat_error = 100.*pow(avg_stat_error/sum_weight,0.5)
+    avg_error = 100.*avg_error/sum_weight
+    avg_stat_error = 100.*avg_stat_error/sum_weight
     print (f'E = {pow(10.,logE_bins[logE]):0.3f} TeV, avg_data = {avg_data:0.1f}, avg_bkgd = {avg_bkgd:0.1f}, bias = {avg_bias:0.1f} %, error = {avg_error:0.1f} +/- {avg_stat_error:0.1f} %')
 
 print (f'bias_array = {np.around(bias_array,3)}')
