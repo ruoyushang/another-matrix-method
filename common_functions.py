@@ -13,11 +13,9 @@ sky_tag = os.environ.get("SKY_TAG")
 
 use_poisson_likelihood = False
 nuclear_norm_scale = 0.001
-#nuclear_norm_scale = 0.05
 
 #use_poisson_likelihood = True
-#nuclear_norm_scale = 0.1
-#nuclear_norm_scale = 0.01
+#nuclear_norm_scale = 0.001
 
 #if sky_tag=='poisson':
 #    use_poisson_likelihood = True
@@ -51,7 +49,7 @@ logE_nbins = len(logE_bins)-1
 
 skymap_size = 3.
 skymap_bins = 30
-fine_skymap_bins = 60
+fine_skymap_bins = 120
 
 #doFluxCalibration = True
 doFluxCalibration = False
@@ -598,7 +596,7 @@ def build_skymap(smi_input,eigenvector_path,big_matrix_path,runlist,off_runlist,
     #if len(big_on_matrix)==0 or len(big_off_matrix)==0:
     if len(big_on_matrix)==0:
         print (f'No data. Break.')
-        return [exposure_hours,avg_tel_elev,avg_tel_azim,truth_params,fit_params,sr_qual,cr_qual], incl_sky_map, data_sky_map, fit_sky_map, data_xyoff_map, fit_xyoff_map
+        return [exposure_hours,avg_tel_elev,avg_tel_azim,truth_params,fit_params,sr_qual,cr_qual], incl_sky_map, data_sky_map, fit_sky_map, data_xyoff_map, fit_xyoff_map, ratio_xyoff_map
 
     for logE in range(0,logE_nbins):
         data_xyoff_map[logE].reset()
@@ -706,60 +704,85 @@ def build_skymap(smi_input,eigenvector_path,big_matrix_path,runlist,off_runlist,
                     ratio = sum_xyoff_map_sr/sum_xyoff_map_cr
                 ratio_xyoff_map[logE].waxis[idx_x,idx_y,0] = ratio
 
-    #for gcut in range(1,gcut_bins):
-    #    for logE in range(0,logE_nbins):
+    for logE in range(0,logE_nbins):
 
-    #        if xoff_bins[logE]==1: continue
-    #        if yoff_bins[logE]==1: continue
+        if xoff_bins[logE]==1: continue
+        if yoff_bins[logE]==1: continue
 
-    #        avg_ratio = 0.
-    #        count = 0.
-    #        for idx_x in range(0,xoff_bins[logE]):
-    #            for idx_y in range(0,yoff_bins[logE]):
-    #                avg_ratio += ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
-    #                count += 1.
-    #        if count==0.: continue
-    #        avg_ratio = avg_ratio/count
+        for idx_x in range(0,xoff_bins[logE]):
+            for idx_y in range(0,yoff_bins[logE]):
+                if abs(ratio_xyoff_map[logE].waxis[idx_x,idx_y,0])>100.:
+                    print (f'Very large ratio!!! Reset to 1.')
+                    ratio_xyoff_map[logE].waxis[idx_x,idx_y,0] = 1.
 
-    #        rms_ratio = 0.
-    #        count = 0.
-    #        for idx_x in range(0,xoff_bins[logE]):
-    #            for idx_y in range(0,yoff_bins[logE]):
-    #                rms_ratio += pow(ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut]-avg_ratio,2)
-    #                count += 1.
-    #        if count==0.: continue
-    #        rms_ratio = pow(rms_ratio/count,0.5)
 
-    #        new_avg_ratio = 0.
-    #        count = 0.
-    #        for idx_x in range(0,xoff_bins[logE]):
-    #            for idx_y in range(0,yoff_bins[logE]):
-    #                if rms_ratio==0.: continue
-    #                deviation = (ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut] - avg_ratio)/rms_ratio
-    #                if abs(deviation)<2.:
-    #                    new_avg_ratio += ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
-    #                    count += 1.
-    #        if count==0.: continue
-    #        avg_ratio = new_avg_ratio/count
+    for logE in range(0,logE_nbins):
 
-    #        new_rms_ratio = 0.
-    #        count = 0.
-    #        for idx_x in range(0,xoff_bins[logE]):
-    #            for idx_y in range(0,yoff_bins[logE]):
-    #                if rms_ratio==0.: continue
-    #                deviation = (ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut] - avg_ratio)/rms_ratio
-    #                if abs(deviation)<2.:
-    #                    new_rms_ratio += pow(ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut]-avg_ratio,2)
-    #                    count += 1.
-    #        if count==0.: continue
-    #        rms_ratio = pow(new_rms_ratio/count,0.5)
+        if xoff_bins[logE]==1: continue
+        if yoff_bins[logE]==1: continue
 
-    #        for idx_x in range(0,xoff_bins[logE]):
-    #            for idx_y in range(0,yoff_bins[logE]):
-    #                if rms_ratio==0.: continue
-    #                deviation = (ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut] - avg_ratio)/rms_ratio
-    #                if abs(deviation)>5.:
-    #                    ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = avg_ratio
+        avg_ratio = 0.
+        count = 0.
+        for idx_x in range(0,xoff_bins[logE]):
+            for idx_y in range(0,yoff_bins[logE]):
+                avg_ratio += ratio_xyoff_map[logE].waxis[idx_x,idx_y,0]
+                count += 1.
+        if count==0.: continue
+        avg_ratio = avg_ratio/count
+
+        rms_ratio = 0.
+        count = 0.
+        for idx_x in range(0,xoff_bins[logE]):
+            for idx_y in range(0,yoff_bins[logE]):
+                rms_ratio += pow(ratio_xyoff_map[logE].waxis[idx_x,idx_y,0]-avg_ratio,2)
+                count += 1.
+        if count==0.: continue
+        rms_ratio = pow(rms_ratio/count,0.5)
+
+        new_avg_ratio = 0.
+        count = 0.
+        for idx_x in range(0,xoff_bins[logE]):
+            for idx_y in range(0,yoff_bins[logE]):
+                if rms_ratio==0.: continue
+                deviation = (ratio_xyoff_map[logE].waxis[idx_x,idx_y,0] - avg_ratio)/rms_ratio
+                if abs(deviation)<2.:
+                    new_avg_ratio += ratio_xyoff_map[logE].waxis[idx_x,idx_y,0]
+                    count += 1.
+        if count==0.: continue
+        avg_ratio = new_avg_ratio/count
+
+        new_rms_ratio = 0.
+        count = 0.
+        for idx_x in range(0,xoff_bins[logE]):
+            for idx_y in range(0,yoff_bins[logE]):
+                if rms_ratio==0.: continue
+                deviation = (ratio_xyoff_map[logE].waxis[idx_x,idx_y,0] - avg_ratio)/rms_ratio
+                if abs(deviation)<2.:
+                    new_rms_ratio += pow(ratio_xyoff_map[logE].waxis[idx_x,idx_y,0]-avg_ratio,2)
+                    count += 1.
+        if count==0.: continue
+        rms_ratio = pow(new_rms_ratio/count,0.5)
+
+        for idx_x in range(0,xoff_bins[logE]):
+            for idx_y in range(0,yoff_bins[logE]):
+                if rms_ratio==0.: continue
+                deviation = (ratio_xyoff_map[logE].waxis[idx_x,idx_y,0] - avg_ratio)/rms_ratio
+                if abs(deviation)>3.:
+                    ratio_xyoff_map[logE].waxis[idx_x,idx_y,0] = avg_ratio
+
+    #abort_job = False
+    #for logE in range(0,logE_nbins):
+
+    #    if xoff_bins[logE]==1: continue
+    #    if yoff_bins[logE]==1: continue
+
+    #    max_ratio = np.max(ratio_xyoff_map[logE].waxis[:,:,0])
+    #    if max_ratio>100.:
+    #        print (f'Very large ratio!!! Abort job.')
+    #        abort_job = True
+
+    #if abort_job:
+    #    return [exposure_hours,avg_tel_elev,avg_tel_azim,truth_params,fit_params,sr_qual,cr_qual], incl_sky_map, data_sky_map, fit_sky_map, data_xyoff_map, fit_xyoff_map, ratio_xyoff_map
 
 
     run_count = 0
@@ -856,7 +879,7 @@ def build_skymap(smi_input,eigenvector_path,big_matrix_path,runlist,off_runlist,
 
     print (f'avg_tel_elev = {avg_tel_elev}')
 
-    return [exposure_hours,avg_tel_elev,avg_tel_azim,truth_params,fit_params,sr_qual,cr_qual], incl_sky_map, data_sky_map, fit_sky_map, data_xyoff_map, fit_xyoff_map
+    return [exposure_hours,avg_tel_elev,avg_tel_azim,truth_params,fit_params,sr_qual,cr_qual], incl_sky_map, data_sky_map, fit_sky_map, data_xyoff_map, fit_xyoff_map, ratio_xyoff_map
 
 
 def cosmic_ray_like_chi2(try_params,ref_params,eigenvectors,diff_xyoff_map,init_xyoff_map,region_type):
@@ -1371,12 +1394,7 @@ def make_flux_map(incl_sky_map,data_sky_map,bkgd_sky_map,flux_sky_map,flux_err_s
   
     skymap_bins = len(data_sky_map.xaxis)-1
 
-    norm_content_max = 0.
-    for idx_x in range(0,skymap_bins):
-        for idx_y in range(0,skymap_bins):
-            norm = bkgd_sky_map.waxis[idx_x,idx_y,0]
-            if norm_content_max<norm:
-                norm_content_max = norm
+    norm_content_max = np.max(incl_sky_map.waxis[:,:,0])
 
     for idx_x in range(0,skymap_bins):
         for idx_y in range(0,skymap_bins):
@@ -1400,7 +1418,7 @@ def make_flux_map(incl_sky_map,data_sky_map,bkgd_sky_map,flux_sky_map,flux_err_s
 
 def GetRadialProfile(hist_flux_skymap,hist_error_skymap,roi_x,roi_y,roi_r):
 
-    pix_size = hist_flux_skymap.yaxis[1]-hist_flux_skymap.yaxis[0]
+    pix_size = 2.*(hist_flux_skymap.yaxis[1]-hist_flux_skymap.yaxis[0])
     radial_axis = MyArray1D(x_nbins=int(roi_r/pix_size),start_x=0.,end_x=roi_r)
 
     radius_array = []

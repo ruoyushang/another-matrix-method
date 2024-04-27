@@ -111,15 +111,17 @@ for small_runlist in range(0,len(big_runlist)):
 
     data_xyoff_map = []
     fit_xyoff_map = []
+    ratio_xyoff_map = []
     for logE in range(0,logE_nbins):
         data_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
         fit_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+        ratio_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
 
 
     run_list_count += 1
     print (f'analyzing {run_list_count}/{len(big_runlist)} lists...')
 
-    run_info, run_incl_sky_map, run_data_sky_map, run_fit_sky_map, run_data_xyoff_map, run_fit_xyoff_map = build_skymap(smi_input,path_to_eigenvector,path_to_big_matrix,big_runlist[small_runlist],big_off_runlist[small_runlist],src_ra,src_dec,onoff,sky_tag)
+    run_info, run_incl_sky_map, run_data_sky_map, run_fit_sky_map, run_data_xyoff_map, run_fit_xyoff_map, run_ratio_xyoff_map = build_skymap(smi_input,path_to_eigenvector,path_to_big_matrix,big_runlist[small_runlist],big_off_runlist[small_runlist],src_ra,src_dec,onoff,sky_tag)
 
     run_exposure_hours = run_info[0]
     run_elev = run_info[1]
@@ -145,6 +147,7 @@ for small_runlist in range(0,len(big_runlist)):
     for logE in range(0,logE_nbins):
         data_xyoff_map[logE].add(run_data_xyoff_map[logE])
         fit_xyoff_map[logE].add(run_fit_xyoff_map[logE])
+        ratio_xyoff_map[logE].add(run_ratio_xyoff_map[logE])
         total_data_xyoff_map[logE].add(run_data_xyoff_map[logE])
         total_fit_xyoff_map[logE].add(run_fit_xyoff_map[logE])
 
@@ -191,12 +194,12 @@ for small_runlist in range(0,len(big_runlist)):
     print (f'total_data_sum = {total_data_sum:0.1f}, total_bkgd_sum = {total_bkgd_sum:0.1f}')
 
 
-    all_skymaps += [[[run_exposure_hours, run_elev, run_azim, truth_params, fit_params, sr_qual, cr_qual], incl_sky_map, data_sky_map, bkgd_sky_map, data_xyoff_map, fit_xyoff_map]]
+    all_skymaps += [[[run_exposure_hours, run_elev, run_azim, truth_params, fit_params, sr_qual, cr_qual], incl_sky_map, data_sky_map, bkgd_sky_map, data_xyoff_map, fit_xyoff_map,ratio_xyoff_map]]
 
     output_filename = f'{smi_output}/skymaps_{source_name}_{input_epoch}_{onoff}_{sky_tag}.pkl'
     with open(output_filename,"wb") as file:
         pickle.dump(all_skymaps, file)
 
-
+    #exit()
 
 

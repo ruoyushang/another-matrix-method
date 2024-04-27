@@ -52,7 +52,7 @@ ana_tag = 'nominal'
 
 onoff = 'OFF'
 
-exposure_per_group = 1.
+exposure_per_group = 100.
 cr_qual_cut = 1e10
 #cr_qual_cut = 230
 
@@ -166,9 +166,10 @@ for epoch in input_epoch:
             
                 data_sum = np.sum(data_sky_map[logE].waxis[:,:,0])
                 bkgd_sum = np.sum(bkgd_sky_map[logE].waxis[:,:,0])
-                if data_sum>0.:
-                    significance = (data_sum-bkgd_sum)/pow(data_sum,0.5)
-                    if significance>1000.:
+                norm_sum = pow(data_sum*data_sum+bkgd_sum*bkgd_sum,0.5)
+                if norm_sum>0.:
+                    significance = (data_sum-bkgd_sum)/pow(norm_sum,0.5)
+                    if significance>10.:
                         print (f'large error in input_filename = {input_filename}')
                 data_count[logE] += data_sum
                 bkgd_count[logE] += bkgd_sum

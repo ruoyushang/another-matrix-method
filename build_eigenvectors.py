@@ -51,7 +51,7 @@ for entry in range(0,len(big_matrix)):
     for pix in range(0,len(big_matrix[entry])):
         big_diff_matrix[entry][pix] = big_matrix[entry][pix]-big_xyoff_map_1d[pix]*rescale
 
-U_full, S_full, VT_full = np.linalg.svd(big_matrix,full_matrices=False)
+U_full, S_full, VT_full = np.linalg.svd(big_matrix,full_matrices=False) # perform better for perturbation method
 #U_full, S_full, VT_full = np.linalg.svd(big_diff_matrix,full_matrices=False)
 print (f'S_full length = {len(S_full)}')
 effective_matrix_rank = min(min_rank,int(0.5*(len(S_full)-1)))
