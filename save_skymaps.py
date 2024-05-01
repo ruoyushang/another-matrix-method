@@ -67,8 +67,8 @@ big_runlist = []
 small_runlist = []
 big_off_runlist = []
 small_off_runlist = []
-#nruns_in_small_list = 1
-nruns_in_small_list = 10
+nruns_in_small_list = 1
+#nruns_in_small_list = 10
 run_count = 0
 for run in range(0,total_runs):
     #if len(off_runlist[run])<2: 

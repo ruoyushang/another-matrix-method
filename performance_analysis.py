@@ -10,8 +10,6 @@ from common_functions import MyArray3D
 
 import common_functions
 
-logE_min = common_functions.logE_min
-logE_max = common_functions.logE_max
 logE_axis = common_functions.logE_axis
 logE_nbins = common_functions.logE_nbins
 logE_bins = common_functions.logE_bins
@@ -47,16 +45,24 @@ smi_input = os.environ.get("SMI_INPUT")
 smi_output = os.environ.get("SMI_OUTPUT")
 smi_dir = os.environ.get("SMI_DIR")
 
-ana_tag = 'nominal'
-#ana_tag = 'scale0'
+#ana_tag = 'nominal'
+#ana_tag = 'poisson'
+ana_tag = '1em2'
 
 onoff = 'OFF'
 
-exposure_per_group = 100.
+exposure_per_group = 0.2
+#exposure_per_group = 1.
+#exposure_per_group = 5.
+#exposure_per_group = 10.
+#exposure_per_group = 20.
+#exposure_per_group = 50.
+#exposure_per_group = 100.
 cr_qual_cut = 1e10
 #cr_qual_cut = 230
 
 min_elev = 20.
+#min_elev = 55.
 
 #input_epoch = ['V4']
 #input_epoch = ['V5']
@@ -99,6 +105,7 @@ for logE in range(0,logE_nbins):
     data_count += [0.]
     bkgd_count += [0.]
 
+grp_avg_elev = []
 grp_data_count = []
 grp_bkgd_count = []
 
@@ -110,6 +117,7 @@ list_fit_params = []
 total_exposure = 0.
 good_exposure = 0.
 group_exposure = 0.
+avg_elev = 0.
 for epoch in input_epoch:
     for src in input_sources:
 
@@ -161,6 +169,7 @@ for epoch in input_epoch:
 
             good_exposure += exposure
             group_exposure += exposure
+            avg_elev += exposure*run_elev
 
             for logE in range(0,logE_nbins):
             
@@ -182,6 +191,8 @@ for epoch in input_epoch:
                     for logE in range(0,logE_nbins):
                         tmp_data_count += [data_count[logE]]
                         tmp_bkgd_count += [bkgd_count[logE]]
+                    avg_elev = avg_elev/group_exposure
+                    grp_avg_elev += [avg_elev]
                     grp_data_count += [tmp_data_count]
                     grp_bkgd_count += [tmp_bkgd_count]
 
@@ -195,6 +206,7 @@ for epoch in input_epoch:
                 #    print (f'E = {pow(10.,logE_bins[logE]):0.3f} TeV, data_sum = {data_count[logE]}, bkgd_sum = {bkgd_count[logE]:0.1f}, error = {error:0.1f} +/- {stat_error:0.1f} %')
 
                 group_exposure = 0.
+                avg_elev = 0.
                 for logE in range(0,logE_nbins):
                     data_count[logE] = 0.
                     bkgd_count[logE] = 0.
@@ -224,8 +236,8 @@ for logE in range(0,logE_nbins):
     sum_weight = 0.
     for grp in range(0,len(grp_data_count)):
         data = grp_data_count[grp][logE]
-        #bkgd = grp_bkgd_count[grp][logE]
-        bkgd = grp_bkgd_count[grp][logE] * (1.+avg_bias/100.)
+        bkgd = grp_bkgd_count[grp][logE]
+        #bkgd = grp_bkgd_count[grp][logE] * (1.+avg_bias/100.)
         weight = data
         if data>0.:
             #avg_error += pow((data-bkgd)/data,2)*weight
@@ -240,6 +252,27 @@ for logE in range(0,logE_nbins):
     print (f'E = {pow(10.,logE_bins[logE]):0.3f} TeV, avg_data = {avg_data:0.1f}, avg_bkgd = {avg_bkgd:0.1f}, bias = {avg_bias:0.1f} %, error = {avg_error:0.1f} +/- {avg_stat_error:0.1f} %')
 
 print (f'bias_array = {np.around(bias_array,3)}')
+
+for logE in range(0,logE_nbins):
+    list_error_significance = []
+    list_elev = []
+    for grp in range(0,len(grp_data_count)):
+        elev = grp_avg_elev[grp]
+        data = grp_data_count[grp][logE]
+        bkgd = grp_bkgd_count[grp][logE]
+        if data==0.: continue
+        list_elev += [elev]
+        list_error_significance += [(data-bkgd)/pow(data,0.5)]
+    fig.clf()
+    axbig = fig.add_subplot()
+    label_x = 'Elevation [deg]'
+    label_y = 'Error significance'
+    axbig.set_xlabel(label_x)
+    axbig.set_ylabel(label_y)
+    axbig.scatter(list_elev,list_error_significance,color='b',alpha=0.1)
+    fig.savefig(f'output_plots/error_vs_elev_logE{logE}_{ana_tag}.png',bbox_inches='tight')
+    axbig.remove()
+
 
 hist_range = [[0.,  1.], [-5., 5.]]
 

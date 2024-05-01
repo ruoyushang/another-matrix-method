@@ -7,18 +7,37 @@ import csv
 from scipy.optimize import least_squares, minimize
 import matplotlib.pyplot as plt
 import tracemalloc
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 sky_tag = os.environ.get("SKY_TAG")
 
 
 use_poisson_likelihood = False
-nuclear_norm_scale = 0.001
+nuclear_norm_scale = 1e-2
+matrix_rank = 10
 
-#use_poisson_likelihood = True
-#nuclear_norm_scale = 0.001
+if sky_tag=='poisson':
+    use_poisson_likelihood = True
 
-#if sky_tag=='poisson':
-#    use_poisson_likelihood = True
+if sky_tag=='5em3':
+    nuclear_norm_scale = 5e-3
+if sky_tag=='1em2':
+    nuclear_norm_scale = 1e-2
+if sky_tag=='2em2':
+    nuclear_norm_scale = 2e-2
+if sky_tag=='5em2':
+    nuclear_norm_scale = 5e-2
+
+if sky_tag=='r5':
+    matrix_rank = 5
+if sky_tag=='r10':
+    matrix_rank = 10
+if sky_tag=='r15':
+    matrix_rank = 15
+if sky_tag=='r20':
+    matrix_rank = 20
+if sky_tag=='r25':
+    matrix_rank = 25
 
 run_elev_cut = 25.
 
@@ -55,9 +74,9 @@ fine_skymap_bins = 120
 doFluxCalibration = False
 calibration_radius = 0.15 # need to be larger than the PSF and smaller than the integration radius
 
-logE_min = 0
-logE_max = logE_nbins
-matrix_rank = 0.1
+#logE_min = 3
+#logE_mid = 7
+#logE_max = logE_nbins
 #xoff_bins = [7,7,7,7,7,7,7,7,7]
 xoff_bins = [7,7,7,5,5,3,3,1,1]
 yoff_bins = xoff_bins
@@ -107,8 +126,8 @@ def ReadRunListFromFile(smi_input,input_on_file,input_off_file):
                 paired_off_runs += [off_run]
         all_runlist += [(onrun_elev,int(on_line),paired_off_runs)]
 
-    #all_runlist.sort(key=sortFirst,reverse=True)
-    all_runlist.sort(key=sortFirst)
+    all_runlist.sort(key=sortFirst,reverse=True)
+    #all_runlist.sort(key=sortFirst)
 
     for run in range(0,len(all_runlist)):
         on_runlist += [all_runlist[run][1]]
@@ -155,8 +174,8 @@ def smooth_image(image_data,xaxis,yaxis,kernel_radius=0.07):
     for idx_x1 in range(0,len(xaxis)-1):
         for idx_y1 in range(0,len(yaxis)-1):
             image_smooth[idx_y1,idx_x1] = 0.
-            for idx_x2 in range(idx_x1-2*kernel_pix_size,idx_x1+2*kernel_pix_size):
-                for idx_y2 in range(idx_y1-2*kernel_pix_size,idx_y1+2*kernel_pix_size):
+            for idx_x2 in range(idx_x1-3*kernel_pix_size,idx_x1+3*kernel_pix_size):
+                for idx_y2 in range(idx_y1-3*kernel_pix_size,idx_y1+3*kernel_pix_size):
                     if idx_x2<0: continue
                     if idx_y2<0: continue
                     if idx_x2>=len(xaxis)-1: continue
@@ -410,8 +429,14 @@ def EventGammaCut(MSCL,MSCW):
     elif abs(MSCL)<2. and abs(MSCW)<2.:
         GammaCut = 3.5
 
-    #if abs(MSCL)<1.:
-    #    GammaCut = int(abs(MSCW))
+    #if abs(MSCL)<1. and abs(MSCW)<1.:
+    #    GammaCut = 0.5
+    #elif abs(MSCL)<1. and abs(MSCW)<2.:
+    #    GammaCut = 1.5
+    #elif abs(MSCL)<1. and abs(MSCW)<3.:
+    #    GammaCut = 2.5
+    #elif abs(MSCL)<1. and abs(MSCW)<4.:
+    #    GammaCut = 3.5
 
     return GammaCut
 
@@ -1293,7 +1318,39 @@ def GetGammaSourceInfo():
     return other_stars, other_stars_type, other_star_coord
 
 
-def PlotSkyMap(fig,hist_map,plotname,roi_x=[],roi_y=[],roi_r=[],max_z=0.,colormap='coolwarm',layer=0):
+def MakeSkymapCutout(skymap_input,cutout_frac):
+
+    input_skymap_bins = len(skymap_input.xaxis)-1
+    new_skymap_bins = int(cutout_frac*input_skymap_bins)
+    xsky_start = skymap_input.xaxis[0]
+    xsky_end = skymap_input.xaxis[len(skymap_input.xaxis)-1]
+    ysky_start = skymap_input.yaxis[0]
+    ysky_end = skymap_input.yaxis[len(skymap_input.yaxis)-1]
+    xsky_center = 0.5*(xsky_start+xsky_end)
+    ysky_center = 0.5*(ysky_start+ysky_end)
+    new_xsky_start = xsky_center-0.5*(xsky_end-xsky_start)*cutout_frac
+    new_xsky_end = xsky_center+0.5*(xsky_end-xsky_start)*cutout_frac
+    new_ysky_start = ysky_center-0.5*(ysky_end-ysky_start)*cutout_frac
+    new_ysky_end = ysky_center+0.5*(ysky_end-ysky_start)*cutout_frac
+    #print (f'new_skymap_bins = {new_skymap_bins}')
+    #print (f'xsky_start = {xsky_start}, xsky_end = {xsky_end}')
+    #print (f'ysky_start = {ysky_start}, ysky_end = {ysky_end}')
+    #print (f'new_xsky_start = {new_xsky_start}, new_xsky_end = {new_xsky_end}')
+    #print (f'new_ysky_start = {new_ysky_start}, new_ysky_end = {new_ysky_end}')
+    skymap_cutout = MyArray3D(x_bins=new_skymap_bins,start_x=new_xsky_start,end_x=new_xsky_end,y_bins=new_skymap_bins,start_y=new_ysky_start,end_y=new_ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
+
+    for idx_x in range(0,new_skymap_bins):
+        for idx_y in range(0,new_skymap_bins):
+            xsky = 0.5*(skymap_cutout.xaxis[idx_x]+skymap_cutout.xaxis[idx_x+1])
+            ysky = 0.5*(skymap_cutout.yaxis[idx_y]+skymap_cutout.yaxis[idx_y+1])
+            bin_content = skymap_input.get_bin_content(xsky,ysky,0.5)
+            skymap_cutout.waxis[idx_x,idx_y,0] = bin_content
+
+    return skymap_cutout
+
+def PlotSkyMap(fig,label_z,hist_map_input,plotname,roi_x=[],roi_y=[],roi_r=[],max_z=0.,colormap='coolwarm',layer=0):
+
+    hist_map = MakeSkymapCutout(hist_map_input,1.0)
 
     xmin = hist_map.xaxis.min()
     xmax = hist_map.xaxis.max()
@@ -1323,7 +1380,12 @@ def PlotSkyMap(fig,hist_map,plotname,roi_x=[],roi_y=[],roi_r=[],max_z=0.,colorma
     #    print (f'Star {other_star_labels[star]} RA = {other_star_markers[star][0]:0.1f}, Dec = {other_star_markers[star][1]:0.1f}')
 
     fig.clf()
+    figsize_x = 7
+    figsize_y = 7
+    fig.set_figheight(figsize_y)
+    fig.set_figwidth(figsize_x)
     axbig = fig.add_subplot()
+
     label_x = 'RA [deg]'
     label_y = 'Dec [deg]'
     axbig.set_xlabel(label_x)
@@ -1331,7 +1393,12 @@ def PlotSkyMap(fig,hist_map,plotname,roi_x=[],roi_y=[],roi_r=[],max_z=0.,colorma
     im = axbig.imshow(hist_map.waxis[:,:,layer].T,origin='lower',extent=(xmax,xmin,ymin,ymax),aspect='auto',cmap='coolwarm')
     if max_z!=0.:
         im = axbig.imshow(hist_map.waxis[:,:,layer].T,origin='lower',extent=(xmax,xmin,ymin,ymax),vmin=-max_z,vmax=max_z,aspect='auto',cmap='coolwarm')
-    cbar = fig.colorbar(im)
+    #cbar = fig.colorbar(im)
+
+    divider = make_axes_locatable(axbig)
+    cax = divider.append_axes("bottom", size="5%", pad=0.7)
+    cbar = fig.colorbar(im,orientation="horizontal",cax=cax)
+    cbar.set_label(label_z)
 
     font = {'family': 'serif', 'color':  'k', 'weight': 'normal', 'size': 10, 'rotation': 0.,}
 
@@ -1369,7 +1436,8 @@ def GetFluxCalibration(energy):
     if doFluxCalibration:
         return 1.
 
-    str_flux_calibration = ['7.38e+00', '4.78e+00', '3.52e+00', '2.83e+00', '8.46e-01', '4.76e-01', '2.78e-01', '2.20e-01', '1.62e-01']
+    #str_flux_calibration = ['6.95e-01', '5.36e-01', '4.30e-01', '3.46e-01', '1.16e-01', '6.97e-02', '4.52e-02', '2.92e-02', '1.79e-02']
+    str_flux_calibration = ['2.62e+02', '3.81e+02', '5.78e+02', '8.78e+02', '8.22e+02', '1.76e+03', '4.06e+03', '9.38e+03', '2.04e+04']
 
     flux_calibration = []
     for string in str_flux_calibration:
@@ -1403,7 +1471,8 @@ def make_flux_map(incl_sky_map,data_sky_map,bkgd_sky_map,flux_sky_map,flux_err_s
             bkgd = bkgd_sky_map.waxis[idx_x,idx_y,0]
             if norm>0.:
                 excess = data-bkgd
-                error = max(pow(data,0.5),1.)
+                #error = max(pow(data,0.5),1.)
+                error = pow(data,0.5)
                 logE = logE_axis.get_bin(np.log10(avg_energy))
                 correction = GetFluxCalibration(logE)/norm*pow(avg_energy,2)/(100.*100.*3600.)/delta_energy
                 norm_ratio = norm/norm_content_max
@@ -1418,8 +1487,9 @@ def make_flux_map(incl_sky_map,data_sky_map,bkgd_sky_map,flux_sky_map,flux_err_s
 
 def GetRadialProfile(hist_flux_skymap,hist_error_skymap,roi_x,roi_y,roi_r):
 
-    pix_size = 2.*(hist_flux_skymap.yaxis[1]-hist_flux_skymap.yaxis[0])
-    radial_axis = MyArray1D(x_nbins=int(roi_r/pix_size),start_x=0.,end_x=roi_r)
+    pix_size = abs((hist_flux_skymap.yaxis[1]-hist_flux_skymap.yaxis[0])*(hist_flux_skymap.xaxis[1]-hist_flux_skymap.xaxis[0]))
+    bin_size = min(0.2,4.*(hist_flux_skymap.yaxis[1]-hist_flux_skymap.yaxis[0]))
+    radial_axis = MyArray1D(x_nbins=int(roi_r/bin_size),start_x=0.,end_x=roi_r)
 
     radius_array = []
     brightness_array = []
@@ -1443,20 +1513,22 @@ def GetRadialProfile(hist_flux_skymap,hist_error_skymap,roi_x,roi_y,roi_r):
                 if distance<radial_axis.xaxis[br+1] and distance>=radial_axis.xaxis[br]: 
                     keep_event = True
                 if keep_event:
-                    pixel_array[br] += 1.
-                    if not hist_flux_skymap.waxis[bx,by,0]==0.:
-                        brightness_array[br] += hist_flux_skymap.waxis[bx,by,0]
-                        brightness_err_array[br] += pow(hist_error_skymap.waxis[bx,by,0],2)
-                    else:
-                        brightness_array[br] += 0.
-                        brightness_err_array[br] = max(pow(hist_error_skymap.waxis[bx,by,0],2),brightness_err_array[br])
+                    pixel_array[br] += 1.*pix_size
+                    brightness_array[br] += hist_flux_skymap.waxis[bx,by,0]
+                    brightness_err_array[br] += pow(hist_error_skymap.waxis[bx,by,0],2)
+                    #if not hist_flux_skymap.waxis[bx,by,0]==0.:
+                    #    brightness_array[br] += hist_flux_skymap.waxis[bx,by,0]
+                    #    brightness_err_array[br] += pow(hist_error_skymap.waxis[bx,by,0],2)
+                    #else:
+                    #    brightness_array[br] += 0.
+                    #    brightness_err_array[br] = max(pow(hist_error_skymap.waxis[bx,by,0],2),brightness_err_array[br])
         if pixel_array[br]==0.: continue
         brightness_array[br] = brightness_array[br]/pixel_array[br]
-        brightness_err_array[br] = pow(brightness_err_array[br],0.5)/pixel_array[br]
+        brightness_err_array[br] = pow(brightness_err_array[br]/pixel_array[br],0.5)
 
     return radius_array, brightness_array, brightness_err_array
 
-def GetRegionIntegral(hist_flux_skymap,hist_error_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r):
+def GetRegionIntegral(hist_flux_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,hist_error_skymap=None):
 
     flux_sum = 0.
     flux_stat_err = 0.
@@ -1476,14 +1548,20 @@ def GetRegionIntegral(hist_flux_skymap,hist_error_skymap,roi_x,roi_y,roi_r,excl_
             if keep_event:
                 if not hist_flux_skymap.waxis[bx,by,0]==0.:
                     flux_sum += hist_flux_skymap.waxis[bx,by,0]
-                    flux_stat_err += pow(hist_error_skymap.waxis[bx,by,0],2)
+                    if hist_error_skymap==None:
+                        flux_stat_err += hist_flux_skymap.waxis[bx,by,0]
+                    else:
+                        flux_stat_err += pow(hist_error_skymap.waxis[bx,by,0],2)
                 else:
                     flux_sum += 0.
-                    flux_stat_err = max(pow(hist_error_skymap.waxis[bx,by,0],2),flux_stat_err)
+                    if hist_error_skymap==None:
+                        flux_stat_err = max(hist_flux_skymap.waxis[bx,by,0],flux_stat_err)
+                    else:
+                        flux_stat_err = max(pow(hist_error_skymap.waxis[bx,by,0],2),flux_stat_err)
     flux_stat_err = pow(flux_stat_err,0.5)
     return flux_sum, flux_stat_err
 
-def GetRegionSpectrum(hist_flux_skymap,hist_error_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r):
+def GetRegionSpectrum(hist_flux_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,hist_error_skymap=None):
 
     x_axis = []
     x_error = []
@@ -1497,7 +1575,10 @@ def GetRegionSpectrum(hist_flux_skymap,hist_error_skymap,roi_x,roi_y,roi_r,excl_
         flux_sum = 0.
         flux_stat_err = 0.
         flux_syst_err = 0.
-        flux_sum, flux_stat_err = GetRegionIntegral(hist_flux_skymap[binE],hist_error_skymap[binE],roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
+        if hist_error_skymap==None:
+            flux_sum, flux_stat_err = GetRegionIntegral(hist_flux_skymap[binE],roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
+        else:
+            flux_sum, flux_stat_err = GetRegionIntegral(hist_flux_skymap[binE],roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,hist_error_skymap=hist_error_skymap[binE])
         x_axis += [0.5*(pow(10.,logE_axis.xaxis[binE+1])+pow(10.,logE_axis.xaxis[binE]))]
         x_error += [0.5*(pow(10.,logE_axis.xaxis[binE+1])-pow(10.,logE_axis.xaxis[binE]))]
         y_axis += [flux_sum]
@@ -1508,11 +1589,12 @@ def GetRegionSpectrum(hist_flux_skymap,hist_error_skymap,roi_x,roi_y,roi_r,excl_
 def flux_crab_func(x):
     # TeV^{-1}cm^{-2}s^{-1}
     # Crab https://arxiv.org/pdf/1508.06442.pdf
-    return 37.5*pow(10,-12)*pow(x*1./1000.,-2.467-0.16*np.log(x/1000.))
+    #return 37.5*pow(10,-12)*pow(x*1./1000.,-2.467-0.16*np.log(x/1000.))
+    return 37.5*pow(10,-12)*pow(x,-2.467-0.16*np.log(x))
 
 def PrintFluxCalibration(fig,hist_flux_skymap,hist_error_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r):
 
-    energy_axis, energy_error, flux, flux_stat_err = GetRegionSpectrum(hist_flux_skymap,hist_error_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
+    energy_axis, energy_error, flux, flux_stat_err = GetRegionSpectrum(hist_flux_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,hist_error_skymap=hist_error_skymap)
     print (f'energy_axis = {energy_axis}')
 
     vectorize_f_crab = np.vectorize(flux_crab_func)
@@ -1545,6 +1627,28 @@ def PrintFluxCalibration(fig,hist_flux_skymap,hist_error_skymap,roi_x,roi_y,roi_
     fig.savefig(f'output_plots/flux_crab_unit.png',bbox_inches='tight')
     axbig.remove()
 
+def PrintInformationRoI(fig,hist_data_skymap,hist_bkgd_skymap,hist_flux_skymap,hist_flux_err_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r):
+
+    energy_axis, energy_error, flux, flux_stat_err = GetRegionSpectrum(hist_flux_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,hist_error_skymap=hist_flux_err_skymap)
+    energy_axis, energy_error, data, data_stat_err = GetRegionSpectrum(hist_data_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
+    energy_axis, energy_error, bkgd, bkgd_stat_err = GetRegionSpectrum(hist_bkgd_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
+
+    vectorize_f_crab = np.vectorize(flux_crab_func)
+    ydata_crab_ref = pow(np.array(energy_axis),2)*vectorize_f_crab(energy_axis)
+
+    flux_cu = []
+    for binx in range(0,len(energy_axis)):
+        if flux[binx]>0.:
+            flux_cu += [flux[binx]/ydata_crab_ref[binx]]
+        else:
+            flux_cu += [0.]
+
+    print ('=======================================================================')
+    for binx in range(0,len(energy_axis)):
+        print (f'E = {energy_axis[binx]:0.2f} TeV, data = {data[binx]:0.1f}, bkgd = {bkgd[binx]:0.1f}, flux = {flux[binx]:0.2e} TeV/cm2/s ({flux_cu[binx]:0.2f} CU)')
+    print ('=======================================================================')
+
+
 def DefineRegionOfInterest(src_name,src_ra,src_dec):
 
     excl_region_x = [src_ra]
@@ -1558,6 +1662,12 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
         region_x = [src_ra]
         region_y = [src_dec]
         region_r = [calibration_radius]
+    elif 'SNR_G189_p03' in src_name:
+        src_x = 94.25
+        src_y = 22.57
+        region_x = [src_x]
+        region_y = [src_y]
+        region_r = [1.0]
 
     return region_x, region_y, region_r, excl_region_x, excl_region_y, excl_region_r
 
