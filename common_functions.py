@@ -8,17 +8,25 @@ from scipy.optimize import least_squares, minimize
 import matplotlib.pyplot as plt
 import tracemalloc
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+from astropy import wcs
+from astropy.io import fits
 
 sky_tag = os.environ.get("SKY_TAG")
 
 
 use_poisson_likelihood = False
-nuclear_norm_scale = 1e-2
+nuclear_norm_scale = 0.
 matrix_rank = 10
 
 if sky_tag=='poisson':
     use_poisson_likelihood = True
 
+if sky_tag=='zero':
+    nuclear_norm_scale = 0.
+if sky_tag=='1em3':
+    nuclear_norm_scale = 1e-3
+if sky_tag=='2em3':
+    nuclear_norm_scale = 2e-3
 if sky_tag=='5em3':
     nuclear_norm_scale = 5e-3
 if sky_tag=='1em2':
@@ -27,17 +35,19 @@ if sky_tag=='2em2':
     nuclear_norm_scale = 2e-2
 if sky_tag=='5em2':
     nuclear_norm_scale = 5e-2
+if sky_tag=='1em1':
+    nuclear_norm_scale = 1e-1
+if sky_tag=='1ep5':
+    nuclear_norm_scale = 1e5
 
 if sky_tag=='r5':
     matrix_rank = 5
 if sky_tag=='r10':
     matrix_rank = 10
-if sky_tag=='r15':
-    matrix_rank = 15
 if sky_tag=='r20':
     matrix_rank = 20
-if sky_tag=='r25':
-    matrix_rank = 25
+if sky_tag=='r40':
+    matrix_rank = 40
 
 run_elev_cut = 25.
 
@@ -62,8 +72,8 @@ gcut_bins = 4
 gcut_start = 0
 gcut_end = gcut_bins
 
-logE_bins = [-0.75,-0.625,-0.50,-0.375,-0.25,0.00,0.25,0.50,0.75,1.0] # logE TeV
 #logE_bins = [-0.625,-0.50,-0.375,-0.25,0.00,0.25,0.50,0.75,1.0] # logE TeV
+logE_bins = [-0.75,-0.625,-0.50,-0.375,-0.25,0.00,0.25,0.50,0.75,1.0] # logE TeV
 logE_nbins = len(logE_bins)-1
 
 skymap_size = 3.
@@ -77,8 +87,9 @@ calibration_radius = 0.15 # need to be larger than the PSF and smaller than the 
 #logE_min = 3
 #logE_mid = 7
 #logE_max = logE_nbins
-#xoff_bins = [7,7,7,7,7,7,7,7,7]
+#xoff_bins = [7,7,5,5,3,3,1,1]
 xoff_bins = [7,7,7,5,5,3,3,1,1]
+#xoff_bins = [20,20,20,20,20,20,20,20,20]
 yoff_bins = xoff_bins
 
 chi2_cut = 0.5
@@ -1200,7 +1211,7 @@ def GetGammaSourceInfo():
 
     drawBrightStar = False
     drawPulsar = True
-    drawSNR = True
+    drawSNR = False
     drawLHAASO = False
     drawFermi = False
     drawHAWC = False
@@ -1348,7 +1359,10 @@ def MakeSkymapCutout(skymap_input,cutout_frac):
 
     return skymap_cutout
 
-def PlotSkyMap(fig,label_z,hist_map_input,plotname,roi_x=[],roi_y=[],roi_r=[],max_z=0.,colormap='coolwarm',layer=0):
+def PlotSkyMap(fig,label_z,logE_min,logE_max,hist_map_input,plotname,roi_x=[],roi_y=[],roi_r=[],max_z=0.,colormap='coolwarm',layer=0):
+
+    E_min = pow(10.,logE_bins[logE_min])
+    E_max = pow(10.,logE_bins[logE_max])
 
     hist_map = MakeSkymapCutout(hist_map_input,1.0)
 
@@ -1390,9 +1404,9 @@ def PlotSkyMap(fig,label_z,hist_map_input,plotname,roi_x=[],roi_y=[],roi_r=[],ma
     label_y = 'Dec [deg]'
     axbig.set_xlabel(label_x)
     axbig.set_ylabel(label_y)
-    im = axbig.imshow(hist_map.waxis[:,:,layer].T,origin='lower',extent=(xmax,xmin,ymin,ymax),aspect='auto',cmap='coolwarm')
+    im = axbig.imshow(hist_map.waxis[:,:,layer].T,origin='lower',extent=(xmax,xmin,ymin,ymax),aspect='auto',cmap=colormap)
     if max_z!=0.:
-        im = axbig.imshow(hist_map.waxis[:,:,layer].T,origin='lower',extent=(xmax,xmin,ymin,ymax),vmin=-max_z,vmax=max_z,aspect='auto',cmap='coolwarm')
+        im = axbig.imshow(hist_map.waxis[:,:,layer].T,origin='lower',extent=(xmax,xmin,ymin,ymax),vmin=-max_z,vmax=max_z,aspect='auto',cmap=colormap)
     #cbar = fig.colorbar(im)
 
     divider = make_axes_locatable(axbig)
@@ -1403,10 +1417,8 @@ def PlotSkyMap(fig,label_z,hist_map_input,plotname,roi_x=[],roi_y=[],roi_r=[],ma
     font = {'family': 'serif', 'color':  'k', 'weight': 'normal', 'size': 10, 'rotation': 0.,}
 
     favorite_color = 'k'
-    if colormap=='gray':
-        favorite_color = 'r'
     if colormap=='magma':
-        favorite_color = 'g'
+        favorite_color = 'deepskyblue'
     for star in range(0,len(other_star_markers)):
         marker_size = 60
         if other_star_types[star]=='PSR':
@@ -1421,12 +1433,19 @@ def PlotSkyMap(fig,label_z,hist_map_input,plotname,roi_x=[],roi_y=[],roi_r=[],ma
         if other_star_types[star]=='Fermi':
             axbig.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c=favorite_color, marker='+', label=other_star_labels[star])
         if other_star_types[star]=='MSP':
-            axbig.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c='tomato', marker='+', label=other_star_labels[star])
+            axbig.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c=favorite_color, marker='+', label=other_star_labels[star])
         if other_star_types[star]=='TeV':
-            axbig.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c='lime', marker='+', label=other_star_labels[star])
+            axbig.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c=favorite_color, marker='+', label=other_star_labels[star])
         if other_star_types[star]=='Star':
             axbig.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c='k', marker='+', label=other_star_labels[star])
-        txt = axbig.text(other_star_markers[star][0]-0.07, other_star_markers[star][1]+0.07, other_star_labels[star], fontdict=font)
+        txt = axbig.text(other_star_markers[star][0]-0.07, other_star_markers[star][1]+0.07, other_star_labels[star], fontdict=font, c=favorite_color)
+
+    for roi in range(0,len(roi_x)):
+        mycircle = plt.Circle( (roi_x[roi], roi_y[roi]), roi_r[roi], fill = False, color='white')
+        axbig.add_patch(mycircle)
+
+    lable_energy_range = f'E = {E_min:0.2f}-{E_max:0.2f} TeV'
+    txt = axbig.text(xmax-0.14, ymax-0.21, lable_energy_range, fontdict=font)
 
     fig.savefig(f'output_plots/{plotname}.png',bbox_inches='tight')
     axbig.remove()
@@ -1592,41 +1611,6 @@ def flux_crab_func(x):
     #return 37.5*pow(10,-12)*pow(x*1./1000.,-2.467-0.16*np.log(x/1000.))
     return 37.5*pow(10,-12)*pow(x,-2.467-0.16*np.log(x))
 
-def PrintFluxCalibration(fig,hist_flux_skymap,hist_error_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r):
-
-    energy_axis, energy_error, flux, flux_stat_err = GetRegionSpectrum(hist_flux_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,hist_error_skymap=hist_error_skymap)
-    print (f'energy_axis = {energy_axis}')
-
-    vectorize_f_crab = np.vectorize(flux_crab_func)
-    ydata_crab_ref = pow(np.array(energy_axis),2)*vectorize_f_crab(energy_axis)
-
-    #log_energy = np.linspace(np.log10(2e2),np.log10(1.2e4),50)
-    #xdata = pow(10.,log_energy)
-    #ydata_crab = pow(xdata/1e3,2)*vectorize_f_crab(xdata)
-
-    calibration_new = []
-    for binx in range(0,len(energy_axis)):
-        if flux[binx]>0.:
-            calibration_new += [flux[binx]/ydata_crab_ref[binx]]
-        else:
-            calibration_new += [0.]
-    print ('=======================================================================')
-    formatted_numbers = ['%0.2e' % num for num in calibration_new]
-    print ('new flux_calibration = %s'%(formatted_numbers))
-    print ('=======================================================================')
-
-    fig.clf()
-    axbig = fig.add_subplot()
-    label_x = 'Energy [TeV]'
-    label_y = 'Flux in C.U.'
-    axbig.set_xlabel(label_x)
-    axbig.set_ylabel(label_y)
-    axbig.set_xscale('log')
-    axbig.set_yscale('log')
-    axbig.plot(energy_axis, calibration_new, color='b', ls='dashed')
-    fig.savefig(f'output_plots/flux_crab_unit.png',bbox_inches='tight')
-    axbig.remove()
-
 def PrintInformationRoI(fig,hist_data_skymap,hist_bkgd_skymap,hist_flux_skymap,hist_flux_err_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r):
 
     energy_axis, energy_error, flux, flux_stat_err = GetRegionSpectrum(hist_flux_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,hist_error_skymap=hist_flux_err_skymap)
@@ -1637,16 +1621,58 @@ def PrintInformationRoI(fig,hist_data_skymap,hist_bkgd_skymap,hist_flux_skymap,h
     ydata_crab_ref = pow(np.array(energy_axis),2)*vectorize_f_crab(energy_axis)
 
     flux_cu = []
+    flux_err_cu = []
     for binx in range(0,len(energy_axis)):
         if flux[binx]>0.:
             flux_cu += [flux[binx]/ydata_crab_ref[binx]]
+            flux_err_cu += [flux_stat_err[binx]/ydata_crab_ref[binx]]
         else:
             flux_cu += [0.]
+            flux_err_cu += [0.]
+
+    print ('=======================================================================')
+    formatted_numbers = ['%0.2e' % num for num in energy_axis]
+    print ('energy_axis = %s'%(formatted_numbers))
+    formatted_numbers = ['%0.2e' % num for num in flux_cu]
+    print ('new flux_calibration = %s'%(formatted_numbers))
+    print ('=======================================================================')
 
     print ('=======================================================================')
     for binx in range(0,len(energy_axis)):
         print (f'E = {energy_axis[binx]:0.2f} TeV, data = {data[binx]:0.1f}, bkgd = {bkgd[binx]:0.1f}, flux = {flux[binx]:0.2e} TeV/cm2/s ({flux_cu[binx]:0.2f} CU)')
     print ('=======================================================================')
+
+    fig.clf()
+    figsize_x = 7
+    figsize_y = 5
+    fig.set_figheight(figsize_y)
+    fig.set_figwidth(figsize_x)
+    axbig = fig.add_subplot()
+    label_x = 'Energy [TeV]'
+    label_y = 'Flux in C.U.'
+    axbig.set_xlabel(label_x)
+    axbig.set_ylabel(label_y)
+    axbig.set_xscale('log')
+    axbig.set_yscale('log')
+    axbig.errorbar(energy_axis,flux_cu,flux_err_cu,xerr=energy_error,color='k',marker='_',ls='none',zorder=1)
+    fig.savefig(f'output_plots/roi_flux_crab_unit.png',bbox_inches='tight')
+    axbig.remove()
+
+    fig.clf()
+    figsize_x = 7
+    figsize_y = 5
+    fig.set_figheight(figsize_y)
+    fig.set_figwidth(figsize_x)
+    axbig = fig.add_subplot()
+    label_x = 'Energy [TeV]'
+    label_y = 'Flux [TeV/cm2/s]'
+    axbig.set_xlabel(label_x)
+    axbig.set_ylabel(label_y)
+    axbig.set_xscale('log')
+    axbig.set_yscale('log')
+    axbig.errorbar(energy_axis,flux,flux_stat_err,xerr=energy_error,color='k',marker='_',ls='none',label='VERITAS (this work)',zorder=1)
+    fig.savefig(f'output_plots/roi_energy_flux.png',bbox_inches='tight')
+    axbig.remove()
 
 
 def DefineRegionOfInterest(src_name,src_ra,src_dec):
@@ -1659,15 +1685,61 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
     region_r = [calibration_radius]
 
     if 'Crab' in src_name:
+
         region_x = [src_ra]
         region_y = [src_dec]
         region_r = [calibration_radius]
+
     elif 'SNR_G189_p03' in src_name:
+
         src_x = 94.25
         src_y = 22.57
         region_x = [src_x]
         region_y = [src_y]
         region_r = [1.0]
 
+    elif 'SS433' in src_name:
+    
+        #SS 433 SNR
+        #region_x = [288.0833333]
+        #region_y = [4.9166667]
+        #region_r = [0.3]
+    
+        #SS 433 e1
+        #region_x = [288.404]
+        #region_y = [4.930]
+        #region_r = [0.3]
+        #region_x = [288.35,288.50,288.65,288.8]
+        #region_y = [4.93,4.92,4.93,4.94]
+        #region_r = [0.1,0.1,0.1,0.1]
+    
+        #SS 433 w1
+        region_x = [287.654]
+        region_y = [5.037]
+        region_r = [0.3]
+
     return region_x, region_y, region_r, excl_region_x, excl_region_y, excl_region_r
+
+def SaveFITS(skymap_input,filename):
+
+    image_length_x = len(skymap_input.xaxis)-1
+    image_length_y = len(skymap_input.yaxis)-1
+    array_shape = (image_length_y,image_length_x)
+    new_image_data = np.zeros(array_shape)
+
+    ref_pix = 1
+    central_ra = skymap_input.xaxis[ref_pix]
+    central_dec = skymap_input.yaxis[ref_pix]
+    pixel_size = skymap_input.yaxis[1]-skymap_input.yaxis[0]
+    reduced_wcs = wcs.WCS(naxis=2)
+    reduced_wcs.wcs.ctype = ['RA---TAN','DEC--TAN']
+    reduced_wcs.wcs.crpix = [ref_pix,ref_pix] # Set the reference pixel coordinates
+    reduced_wcs.wcs.crval = [central_ra, central_dec] # Set the reference values for the physical coordinates
+    reduced_wcs.wcs.cdelt = [pixel_size,pixel_size]
+
+    for pix_x in range(0,new_image_data.shape[0]):
+        for pix_y in range(0,new_image_data.shape[1]):
+            new_image_data[pix_x,pix_y] += skymap_input.waxis[pix_x,pix_y,0]
+
+    fits.writeto('output_plots/%s.fits'%(filename), new_image_data, reduced_wcs.to_header(), overwrite=True)
 

@@ -636,7 +636,7 @@ def get_run_type(run_id):
 
 def find_runs_near_galactic_plane(obs_name,epoch,obs_type,gal_b_low,gal_b_up):
 
-    out_file = open('output_vts_query/%s.txt'%(obs_name),"w")
+    out_file = open('output_vts_hours/%s.txt'%(obs_name),"w")
 
     list_on_run_ids = []
     list_on_sources = []
@@ -802,7 +802,7 @@ def find_runs_near_galactic_plane(obs_name,epoch,obs_type,gal_b_low,gal_b_up):
 
 def find_on_runs_from_a_list(input_file_name):
 
-    input_file = open('output_vts_query/RunList_'+input_file_name+'.txt')
+    input_file = open('output_vts_hours/RunList_'+input_file_name+'.txt')
     on_run_list = []
     for line in input_file:
         on_run_list += [int(line.strip('\n'))]
@@ -813,8 +813,8 @@ def find_on_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_range
 
     global all_runs_info
 
-    out_file = open('output_vts_query/%s.txt'%(obs_name),"w")
-    out_run_file = open('output_vts_query/RunList_%s.txt'%(obs_name),"w")
+    out_file = open('output_vts_hours/%s.txt'%(obs_name),"w")
+    out_run_file = open('output_vts_hours/RunList_%s.txt'%(obs_name),"w")
 
     list_on_run_ids = []
     list_on_run_elev = []
@@ -1003,7 +1003,7 @@ def list_for_eventdisplay(all_lists,obs_name):
             if not run_exist:
                 runlist += [runnumber]
 
-    out_file = open('output_vts_query/EDlist_%s.txt'%(obs_name),"a")
+    out_file = open('output_vts_hours/EDlist_%s.txt'%(obs_name),"a")
     for run in range(0,len(runlist)):
         out_file.write('%s\n'%(runlist[run]))
 
@@ -1020,12 +1020,13 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
         print ('Empty ON run list. Exit.')
         return list_off_run_ids
 
-    out_pair_file = open('output_vts_query/%s_%s.txt'%(file_name,obs_name),"w")
-    out_off_file = open('output_vts_query/%s_OFFRuns_%s.txt'%(file_name,obs_name),"w")
+    out_pair_file = open('output_vts_hours/%s_%s.txt'%(file_name,obs_name),"w")
+    out_off_file = open('output_vts_hours/%s_OFFRuns_%s.txt'%(file_name,obs_name),"w")
 
     require_nmatch = 5
     if not is_imposter:
-        require_nmatch = 4
+        #require_nmatch = 1
+        require_nmatch = 2
 
     # setup database connection
     dbcnx=pymysql.connect(host='romulus.ucsc.edu', db='VERITAS', user='readonly', cursorclass=pymysql.cursors.DictCursor)
@@ -1066,11 +1067,6 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
         on_run_el, on_run_az = get_run_elaz_from_aux_file(list_on_run_ids[on_run])
         on_run_nsb = get_run_nsb_from_aux_file(list_on_run_ids[on_run])
         number_off_runs = 0
-
-        total_nsb_diff = 0.
-        total_azim_diff = 0.
-        total_elev_diff = 0.
-        total_runnum_diff = 0.
 
         for run in range(0,len(all_runs_info)):
 
@@ -1121,79 +1117,52 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
             delta_runnum = all_runs_info[run][0]-list_on_run_ids[on_run]
 
             range_elev = 0.02
-            range_azim = 0.02
-            range_nsb = 0.1
+            range_nsb = 1.
             range_runnum = 10000.
 
             significance_diff_elev = abs(total_elev_diff/range_elev)
             significance_diff_nsb = abs(total_nsb_diff/range_nsb)
-            significance_diff_azim = abs(total_azim_diff/range_azim)
             significance_diff_runnum = abs(total_runnum_diff/range_runnum)
 
             if is_imposter:
-                if abs(delta_elev)>0.05: continue
-                if abs(delta_azim)>0.1: continue
-                if abs(delta_nsb)>0.5: continue
+                if abs(delta_elev)>0.2: continue
+                if abs(delta_azim)>0.2: continue
 
-                #if significance_diff_azim>significance_diff_elev and significance_diff_azim>significance_diff_nsb:
-                #    if total_azim_diff>0.:
-                #        if delta_azim>0.: continue
-                #    else:
-                #        if delta_azim<0.: continue
-                #elif significance_diff_nsb>significance_diff_azim and significance_diff_nsb>significance_diff_elev:
-                #    if total_nsb_diff>0.:
-                #        if delta_nsb>0.: continue
-                #    else:
-                #        if delta_nsb<0.: continue
-                #else:
-                #    if total_elev_diff>0.:
-                #        if delta_elev>0.: continue
-                #    else:
-                #        if delta_elev<0.: continue
-
-                ## this is bad
-                #if total_elev_diff>0.:
-                #    if delta_elev>0.: continue
-                #else:
-                #    if delta_elev<0.: continue
-
-                if total_nsb_diff>0.:
-                    if delta_nsb>0.: continue
+                if significance_diff_runnum>significance_diff_elev and significance_diff_runnum>significance_diff_nsb:
+                    if total_runnum_diff>0.:
+                        if delta_runnum>0.: continue
+                    else:
+                        if delta_runnum<0.: continue
+                elif significance_diff_nsb>significance_diff_runnum and significance_diff_nsb>significance_diff_elev:
+                    if total_nsb_diff>0.:
+                        if delta_nsb>0.: continue
+                    else:
+                        if delta_nsb<0.: continue
                 else:
-                    if delta_nsb<0.: continue
+                    if total_elev_diff>0.:
+                        if delta_elev>0.: continue
+                    else:
+                        if delta_elev<0.: continue
 
             else:
-                if abs(delta_elev)>0.05: continue
-                if abs(delta_azim)>0.1: continue
-                if abs(delta_nsb)>0.5: continue
+                if abs(delta_elev)>0.2: continue
+                if abs(delta_azim)>0.2: continue
 
-                #if significance_diff_azim>significance_diff_elev and significance_diff_azim>significance_diff_nsb:
-                #    if total_azim_diff>0.:
-                #        if delta_azim>0.: continue
-                #    else:
-                #        if delta_azim<0.: continue
-                #elif significance_diff_nsb>significance_diff_azim and significance_diff_nsb>significance_diff_elev:
-                #    if total_nsb_diff>0.:
-                #        if delta_nsb>0.: continue
-                #    else:
-                #        if delta_nsb<0.: continue
-                #else:
-                #    if total_elev_diff>0.:
-                #        if delta_elev>0.: continue
-                #    else:
-                #        if delta_elev<0.: continue
-
-                ## this is bad
-                #if total_elev_diff>0.:
-                #    if delta_elev>0.: continue
-                #else:
-                #    if delta_elev<0.: continue
-
-                if total_nsb_diff>0.:
-                    if delta_nsb>0.: continue
+                if significance_diff_runnum>significance_diff_elev and significance_diff_runnum>significance_diff_nsb:
+                    if total_runnum_diff>0.:
+                        if delta_runnum>0.: continue
+                    else:
+                        if delta_runnum<0.: continue
+                elif significance_diff_nsb>significance_diff_runnum and significance_diff_nsb>significance_diff_elev:
+                    if total_nsb_diff>0.:
+                        if delta_nsb>0.: continue
+                    else:
+                        if delta_nsb<0.: continue
                 else:
-                    if delta_nsb<0.: continue
-
+                    if total_elev_diff>0.:
+                        if delta_elev>0.: continue
+                    else:
+                        if delta_elev<0.: continue
 
             list_off_run_ids += [[int(list_on_run_ids[on_run]),int(all_runs_info[run][0]),on_run_el,off_run_el]]
             number_off_runs += 1
@@ -1209,7 +1178,6 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
                 list_no_repeat_off_run_ids += [all_runs_info[run][0]]
 
         list_on_run_nmatch += [number_off_runs]
-        print (f'ON run {list_on_run_ids[on_run]}, matched OFF runs = {number_off_runs}')
 
     print ('++++++++++++++++++++++++++++++++++++++++++++++++++++')
     print ('%s list'%(file_name))
@@ -1218,7 +1186,7 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
         out_pair_file.write('%s %s\n'%(list_off_run_ids[run][0],list_off_run_ids[run][1]))
     out_pair_file.close()
 
-    out_file = open('output_vts_query/%s.txt'%(obs_name),"a")
+    out_file = open('output_vts_hours/%s.txt'%(obs_name),"a")
     out_file.write('++++++++++++++++++++++++++++++++++++++++++++++++++++\n')
     out_file.write('%s ON runs do not have enought matches\n'%(file_name))
     for run in range(0,len(list_on_run_ids)):
@@ -1322,8 +1290,8 @@ else:
     else:
         my_list_on_run_ids = find_on_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,search_radius)
     my_list_off_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_on_run_ids,False,'PairList')
-    #my_list_imposter_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_on_run_ids,True,'ImposterList')
-    #my_list_imposter_off_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_imposter_run_ids,False,'ImposterPairList')
+    my_list_imposter_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_on_run_ids,True,'ImposterList')
+    my_list_imposter_off_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_imposter_run_ids,False,'ImposterPairList')
 
     list_for_eventdisplay([my_list_on_run_ids,my_list_off_run_ids,my_list_imposter_run_ids,my_list_imposter_off_run_ids],obs_name)
 

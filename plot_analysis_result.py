@@ -24,6 +24,7 @@ yoff_start = common_functions.yoff_start
 yoff_end = common_functions.yoff_end
 gcut_start = common_functions.gcut_start
 gcut_end = common_functions.gcut_end
+SaveFITS = common_functions.SaveFITS
 ReadRunListFromFile = common_functions.ReadRunListFromFile
 build_skymap = common_functions.build_skymap
 smooth_image = common_functions.smooth_image
@@ -31,7 +32,6 @@ PlotSkyMap = common_functions.PlotSkyMap
 make_flux_map = common_functions.make_flux_map
 make_significance_map = common_functions.make_significance_map
 DefineRegionOfInterest = common_functions.DefineRegionOfInterest
-PrintFluxCalibration = common_functions.PrintFluxCalibration
 PrintInformationRoI = common_functions.PrintInformationRoI
 GetRadialProfile = common_functions.GetRadialProfile
 matrix_rank = common_functions.matrix_rank
@@ -39,12 +39,12 @@ skymap_size = common_functions.skymap_size
 skymap_bins = common_functions.skymap_bins
 fine_skymap_bins = common_functions.fine_skymap_bins
 
-#logE_min = 1
-#logE_mid = 6
-#logE_max = logE_nbins
-logE_min = 2
-logE_mid = 7
+logE_min = 1
+logE_mid = 6
 logE_max = logE_nbins
+#logE_min = 2
+#logE_mid = 7
+#logE_max = logE_nbins
 
 
 fig, ax = plt.subplots()
@@ -57,18 +57,20 @@ smi_input = os.environ.get("SMI_INPUT")
 smi_output = os.environ.get("SMI_OUTPUT")
 smi_dir = os.environ.get("SMI_DIR")
 
-#ana_tag = 'nominal'
+ana_tag = 'nominal'
 #ana_tag = 'poisson'
-ana_tag = '1em2'
+#ana_tag = '1em2'
+#ana_tag = 'zero'
+#ana_tag = 'r40'
 
 qual_cut = 0.
 #qual_cut = 20.
 
-#elev_cut = 20.
-elev_cut = 50.
+elev_cut = 20.
+#elev_cut = 50.
 cr_qual_cut = 1e10
 
-bias_array = [-0.023, -0.011, -0.022, -0.03,  -0.025,  0.018, -0.048, -0.378, -0.271]
+#bias_array = [-0.023, -0.011, -0.022, -0.03,  -0.025,  0.018, -0.048, -0.378, -0.271]
 
 source_name = sys.argv[1]
 src_ra = float(sys.argv[2])
@@ -124,9 +126,17 @@ for logE in range(0,logE_nbins):
     sum_flux_sky_map_smooth += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
     sum_flux_err_sky_map_smooth += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
 sum_data_sky_map_allE = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
+sum_data_sky_map_LE = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
+sum_data_sky_map_HE = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
 sum_bkgd_sky_map_allE = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
+sum_bkgd_sky_map_LE = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
+sum_bkgd_sky_map_HE = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
 sum_significance_sky_map_allE = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
+sum_significance_sky_map_LE = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
+sum_significance_sky_map_HE = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
 sum_excess_sky_map_allE = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
+sum_excess_sky_map_LE = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
+sum_excess_sky_map_HE = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
 sum_flux_sky_map_allE = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
 sum_flux_err_sky_map_allE = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
 sum_flux_sky_map_allE_smooth = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
@@ -205,7 +215,16 @@ for epoch in input_epoch:
 
         n_groups += 1.
 
+        logE_peak = 0
+        bkgd_peak = 0.
         for logE in range(0,logE_nbins):
+            bkgd = np.sum(fit_xyoff_map[logE].waxis[:,:,0])
+            if bkgd>bkgd_peak:
+                bkgd_peak = bkgd
+                logE_peak = logE
+
+        for logE in range(0,logE_nbins):
+            #if logE<logE_peak: continue
             if logE<logE_min: continue
             if logE>logE_max: continue
             sum_incl_sky_map[logE].add(incl_sky_map[logE])
@@ -260,6 +279,12 @@ for logE in range(0,logE_nbins):
     smooth_image(sum_data_sky_map_smooth[logE].waxis[:,:,0],sum_data_sky_map_smooth[logE].xaxis,sum_data_sky_map_smooth[logE].yaxis,kernel_radius=smooth_size)
     sum_data_sky_map_allE.add(sum_data_sky_map_smooth[logE])
     sum_bkgd_sky_map_allE.add(sum_bkgd_sky_map_smooth[logE])
+    if logE>=logE_min and logE<logE_mid:
+        sum_data_sky_map_LE.add(sum_data_sky_map_smooth[logE])
+        sum_bkgd_sky_map_LE.add(sum_bkgd_sky_map_smooth[logE])
+    if logE>=logE_mid and logE<=logE_max:
+        sum_data_sky_map_HE.add(sum_data_sky_map_smooth[logE])
+        sum_bkgd_sky_map_HE.add(sum_bkgd_sky_map_smooth[logE])
 
 print ('=================================================================================')
 for logE in range(0,logE_nbins):
@@ -277,6 +302,8 @@ for logE in range(0,logE_nbins):
 for logE in range(0,logE_nbins):
     make_significance_map(sum_data_sky_map_smooth[logE],sum_bkgd_sky_map_smooth[logE],sum_significance_sky_map[logE],sum_excess_sky_map_smooth[logE])
 make_significance_map(sum_data_sky_map_allE,sum_bkgd_sky_map_allE,sum_significance_sky_map_allE,sum_excess_sky_map_allE)
+make_significance_map(sum_data_sky_map_LE,sum_bkgd_sky_map_LE,sum_significance_sky_map_LE,sum_excess_sky_map_LE)
+make_significance_map(sum_data_sky_map_HE,sum_bkgd_sky_map_HE,sum_significance_sky_map_HE,sum_excess_sky_map_HE)
 
 for logE in range(0,logE_nbins):
     avg_energy = 0.5*(pow(10.,logE_axis.xaxis[logE])+pow(10.,logE_axis.xaxis[logE+1]))
@@ -285,9 +312,9 @@ for logE in range(0,logE_nbins):
     make_flux_map(sum_incl_sky_map_smooth[logE],sum_data_sky_map[logE],sum_bkgd_sky_map[logE],sum_flux_sky_map[logE],sum_flux_err_sky_map[logE],avg_energy,delta_energy)
 
 for logE in range(0,logE_nbins):
-    PlotSkyMap(fig,'$E^{2}$ dN/dE [$\mathrm{TeV}\cdot\mathrm{cm}^{-2}\mathrm{s}^{-1}$]',sum_flux_sky_map_smooth[logE],f'{source_name}_flux_sky_map_logE{logE}',roi_x=[],roi_y=[],roi_r=[])
-    PlotSkyMap(fig,'background count',sum_bkgd_sky_map_smooth[logE],f'{source_name}_bkgd_sky_map_logE{logE}',roi_x=[],roi_y=[],roi_r=[],layer=0)
-    PlotSkyMap(fig,'excess count',sum_excess_sky_map_smooth[logE],f'{source_name}_excess_sky_map_logE{logE}',roi_x=[],roi_y=[],roi_r=[],layer=0)
+    PlotSkyMap(fig,'$E^{2}$ dN/dE [$\mathrm{TeV}\cdot\mathrm{cm}^{-2}\mathrm{s}^{-1}$]',logE,logE+1,sum_flux_sky_map_smooth[logE],f'{source_name}_flux_sky_map_logE{logE}',roi_x=roi_x,roi_y=roi_y,roi_r=roi_r,colormap='magma')
+    PlotSkyMap(fig,'background count',logE,logE+1,sum_bkgd_sky_map_smooth[logE],f'{source_name}_bkgd_sky_map_logE{logE}',roi_x=roi_x,roi_y=roi_y,roi_r=roi_r,colormap='magma',layer=0)
+    PlotSkyMap(fig,'excess count',logE,logE+1,sum_excess_sky_map_smooth[logE],f'{source_name}_excess_sky_map_logE{logE}',roi_x=roi_x,roi_y=roi_y,roi_r=roi_r,colormap='magma',layer=0)
     sum_flux_sky_map_allE.add(sum_flux_sky_map[logE])
     sum_flux_err_sky_map_allE.addSquare(sum_flux_err_sky_map[logE])
     sum_flux_sky_map_allE_smooth.add(sum_flux_sky_map_smooth[logE])
@@ -304,11 +331,12 @@ for logE in range(0,logE_nbins):
         sum_flux_err_sky_map_HE.addSquare(sum_flux_err_sky_map[logE])
         sum_flux_sky_map_HE_smooth.add(sum_flux_sky_map_smooth[logE])
         sum_flux_err_sky_map_HE_smooth.addSquare(sum_flux_err_sky_map_smooth[logE])
-PlotSkyMap(fig,'$E^{2}$ dN/dE [$\mathrm{TeV}\cdot\mathrm{cm}^{-2}\mathrm{s}^{-1}$]',sum_flux_sky_map_allE_smooth,f'{source_name}_flux_sky_map_allE',roi_x=[],roi_y=[],roi_r=[])
-PlotSkyMap(fig,'$E^{2}$ dN/dE [$\mathrm{TeV}\cdot\mathrm{cm}^{-2}\mathrm{s}^{-1}$]',sum_flux_sky_map_LE_smooth,f'{source_name}_flux_sky_map_LE',roi_x=[],roi_y=[],roi_r=[])
-PlotSkyMap(fig,'$E^{2}$ dN/dE [$\mathrm{TeV}\cdot\mathrm{cm}^{-2}\mathrm{s}^{-1}$]',sum_flux_sky_map_HE_smooth,f'{source_name}_flux_sky_map_HE',roi_x=[],roi_y=[],roi_r=[])
+PlotSkyMap(fig,'$E^{2}$ dN/dE [$\mathrm{TeV}\cdot\mathrm{cm}^{-2}\mathrm{s}^{-1}$]',logE_min,logE_max,sum_flux_sky_map_allE_smooth,f'{source_name}_flux_sky_map_allE',roi_x=roi_x,roi_y=roi_y,roi_r=roi_r,colormap='magma')
+PlotSkyMap(fig,'$E^{2}$ dN/dE [$\mathrm{TeV}\cdot\mathrm{cm}^{-2}\mathrm{s}^{-1}$]',logE_min,logE_mid,sum_flux_sky_map_LE_smooth,f'{source_name}_flux_sky_map_LE',roi_x=roi_x,roi_y=roi_y,roi_r=roi_r,colormap='magma')
+PlotSkyMap(fig,'$E^{2}$ dN/dE [$\mathrm{TeV}\cdot\mathrm{cm}^{-2}\mathrm{s}^{-1}$]',logE_mid,logE_max,sum_flux_sky_map_HE_smooth,f'{source_name}_flux_sky_map_HE',roi_x=roi_x,roi_y=roi_y,roi_r=roi_r,colormap='magma')
+SaveFITS(sum_flux_sky_map_LE_smooth,'sum_flux_sky_map_LE_smooth')
+SaveFITS(sum_flux_sky_map_HE_smooth,'sum_flux_sky_map_HE_smooth')
 
-PrintFluxCalibration(fig,sum_flux_sky_map,sum_flux_err_sky_map,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
 PrintInformationRoI(fig,sum_data_sky_map,sum_bkgd_sky_map,sum_flux_sky_map,sum_flux_err_sky_map,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
 
 for logE in range(0,logE_nbins):
@@ -383,10 +411,14 @@ axbig.remove()
 
 for logE in range(0,logE_nbins):
 
-    PlotSkyMap(fig,'significance',sum_significance_sky_map[logE],f'{source_name}_significance_sky_map_logE{logE}',roi_x=[],roi_y=[],roi_r=[],max_z=5.)
+    PlotSkyMap(fig,'significance',logE,logE+1,sum_significance_sky_map[logE],f'{source_name}_significance_sky_map_logE{logE}',roi_x=roi_x,roi_y=roi_y,roi_r=roi_r,max_z=5.)
 
     max_z = 5.
     fig.clf()
+    figsize_x = 7
+    figsize_y = 7
+    fig.set_figheight(figsize_y)
+    fig.set_figwidth(figsize_x)
     axbig = fig.add_subplot()
     label_x = 'Xoff'
     label_y = 'Yoff'
@@ -402,6 +434,10 @@ for logE in range(0,logE_nbins):
     axbig.remove()
 
     fig.clf()
+    figsize_x = 7
+    figsize_y = 7
+    fig.set_figheight(figsize_y)
+    fig.set_figwidth(figsize_x)
     axbig = fig.add_subplot()
     label_x = 'Xoff'
     label_y = 'Yoff'
@@ -418,6 +454,10 @@ for logE in range(0,logE_nbins):
 
     for gcut in range(0,gcut_bins):
         fig.clf()
+        figsize_x = 7
+        figsize_y = 7
+        fig.set_figheight(figsize_y)
+        fig.set_figwidth(figsize_x)
         axbig = fig.add_subplot()
         label_x = 'Xoff'
         label_y = 'Yoff'
@@ -432,22 +472,11 @@ for logE in range(0,logE_nbins):
         fig.savefig(f'output_plots/{source_name}_xyoff_map_logE{logE}_gcut{gcut}_data_{ana_tag}.png',bbox_inches='tight')
         axbig.remove()
 
-        #fig.clf()
-        #axbig = fig.add_subplot()
-        #label_x = 'Xoff'
-        #label_y = 'Yoff'
-        #axbig.set_xlabel(label_x)
-        #axbig.set_ylabel(label_y)
-        #xmin = sum_fit_xyoff_map[logE].xaxis.min()
-        #xmax = sum_fit_xyoff_map[logE].xaxis.max()
-        #ymin = sum_fit_xyoff_map[logE].yaxis.min()
-        #ymax = sum_fit_xyoff_map[logE].yaxis.max()
-        #im = axbig.imshow(sum_fit_xyoff_map[logE].waxis[:,:,gcut].T,origin='lower',extent=(xmin,xmax,ymin,ymax),aspect='auto')
-        #cbar = fig.colorbar(im)
-        #fig.savefig(f'output_plots/{source_name}_xyoff_map_logE{logE}_gcut{gcut}_fit_{ana_tag}.png',bbox_inches='tight')
-        #axbig.remove()
-
         fig.clf()
+        figsize_x = 7
+        figsize_y = 7
+        fig.set_figheight(figsize_y)
+        fig.set_figwidth(figsize_x)
         axbig = fig.add_subplot()
         label_x = 'Xoff'
         label_y = 'Yoff'
@@ -462,8 +491,30 @@ for logE in range(0,logE_nbins):
         fig.savefig(f'output_plots/{source_name}_xyoff_err_map_logE{logE}_gcut{gcut}_{ana_tag}.png',bbox_inches='tight')
         axbig.remove()
 
-PlotSkyMap(fig,'significance',sum_significance_sky_map_allE,f'{source_name}_significance_sky_map_allE',roi_x=[],roi_y=[],roi_r=[],max_z=5.)
-PlotSkyMap(fig,'excess count',sum_excess_sky_map_allE,f'{source_name}_excess_sky_map_allE',roi_x=[],roi_y=[],roi_r=[])
+fig.clf()
+figsize_x = 2.*gcut_bins
+figsize_y = 2.*(logE_max-logE_min)
+fig.set_figheight(figsize_y)
+fig.set_figwidth(figsize_x)
+ax_idx = 0
+for logE in range(logE_min,logE_max):
+    for gcut in range(0,gcut_bins):
+        ax_idx = gcut + (logE-logE_min)*gcut_bins + 1
+        axbig = fig.add_subplot((logE_max-logE_min),gcut_bins,ax_idx)
+        xmin = sum_data_xyoff_map[logE].xaxis.min()
+        xmax = sum_data_xyoff_map[logE].xaxis.max()
+        ymin = sum_data_xyoff_map[logE].yaxis.min()
+        ymax = sum_data_xyoff_map[logE].yaxis.max()
+        im = axbig.imshow(sum_data_xyoff_map[logE].waxis[:,:,gcut].T,origin='lower',extent=(xmin,xmax,ymin,ymax),aspect='auto')
+fig.savefig(f'output_plots/{source_name}_xyoff_map_inclusive_data_{ana_tag}.png',bbox_inches='tight')
+axbig.remove()
+
+PlotSkyMap(fig,'significance',logE_min,logE_max,sum_significance_sky_map_allE,f'{source_name}_significance_sky_map_allE',roi_x=roi_x,roi_y=roi_y,roi_r=roi_r,max_z=5.)
+PlotSkyMap(fig,'excess count',logE_min,logE_max,sum_excess_sky_map_allE,f'{source_name}_excess_sky_map_allE',roi_x=roi_x,roi_y=roi_y,roi_r=roi_r,colormap='magma')
+PlotSkyMap(fig,'significance',logE_min,logE_mid,sum_significance_sky_map_LE,f'{source_name}_significance_sky_map_LE',roi_x=roi_x,roi_y=roi_y,roi_r=roi_r,max_z=5.)
+PlotSkyMap(fig,'excess count',logE_min,logE_mid,sum_excess_sky_map_LE,f'{source_name}_excess_sky_map_LE',roi_x=roi_x,roi_y=roi_y,roi_r=roi_r,colormap='magma')
+PlotSkyMap(fig,'significance',logE_mid,logE_max,sum_significance_sky_map_HE,f'{source_name}_significance_sky_map_HE',roi_x=roi_x,roi_y=roi_y,roi_r=roi_r,max_z=5.)
+PlotSkyMap(fig,'excess count',logE_mid,logE_max,sum_excess_sky_map_HE,f'{source_name}_excess_sky_map_HE',roi_x=roi_x,roi_y=roi_y,roi_r=roi_r,colormap='magma')
 
 print (f'total_exposure = {total_exposure}')
 print (f'good_exposure = {good_exposure}')
@@ -487,6 +538,10 @@ print (f'good_exposure = {good_exposure}')
 
 
 fig.clf()
+figsize_x = 7
+figsize_y = 7
+fig.set_figheight(figsize_y)
+fig.set_figwidth(figsize_x)
 axbig = fig.add_subplot()
 label_x = 'CR chi2'
 label_y = 'SR chi2'
@@ -500,6 +555,10 @@ fig.savefig(f'output_plots/{source_name}_crsr_qual_{ana_tag}.png',bbox_inches='t
 axbig.remove()
 
 fig.clf()
+figsize_x = 7
+figsize_y = 5
+fig.set_figheight(figsize_y)
+fig.set_figwidth(figsize_x)
 axbig = fig.add_subplot()
 label_x = 'Run elevation'
 label_y = 'SR chi2'
@@ -510,6 +569,10 @@ fig.savefig(f'output_plots/{source_name}_elev_sr_qual_{ana_tag}.png',bbox_inches
 axbig.remove()
 
 fig.clf()
+figsize_x = 7
+figsize_y = 5
+fig.set_figheight(figsize_y)
+fig.set_figwidth(figsize_x)
 axbig = fig.add_subplot()
 label_x = 'Run azimuth'
 label_y = 'SR chi2'
@@ -520,6 +583,10 @@ fig.savefig(f'output_plots/{source_name}_azim_sr_qual_{ana_tag}.png',bbox_inches
 axbig.remove()
 
 fig.clf()
+figsize_x = 7
+figsize_y = 7
+fig.set_figheight(figsize_y)
+fig.set_figwidth(figsize_x)
 axbig = fig.add_subplot()
 label_x = 'elevation'
 label_y = 'azimuth'
@@ -531,6 +598,10 @@ fig.savefig(f'output_plots/{source_name}_elevazim_{ana_tag}.png',bbox_inches='ti
 axbig.remove()
 
 fig.clf()
+figsize_x = 7
+figsize_y = 5
+fig.set_figheight(figsize_y)
+fig.set_figwidth(figsize_x)
 axbig = fig.add_subplot()
 label_x = 'elevation'
 axbig.set_xlabel(label_x)
