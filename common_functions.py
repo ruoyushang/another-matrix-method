@@ -14,30 +14,14 @@ from astropy.io import fits
 sky_tag = os.environ.get("SKY_TAG")
 
 
-use_poisson_likelihood = False
+use_poisson_likelihood = True
 nuclear_norm_scale = 0.
 matrix_rank = 10
 
-if sky_tag=='poisson':
-    use_poisson_likelihood = True
+if sky_tag=='linear':
+    use_poisson_likelihood = False
 
-if sky_tag=='zero':
-    nuclear_norm_scale = 0.
-if sky_tag=='1em3':
-    nuclear_norm_scale = 1e-3
-if sky_tag=='2em3':
-    nuclear_norm_scale = 2e-3
-if sky_tag=='5em3':
-    nuclear_norm_scale = 5e-3
-if sky_tag=='1em2':
-    nuclear_norm_scale = 1e-2
-if sky_tag=='2em2':
-    nuclear_norm_scale = 2e-2
-if sky_tag=='5em2':
-    nuclear_norm_scale = 5e-2
-if sky_tag=='1em1':
-    nuclear_norm_scale = 1e-1
-if sky_tag=='1ep5':
+if sky_tag=='init':
     nuclear_norm_scale = 1e5
 
 if sky_tag=='r5':
@@ -1211,7 +1195,7 @@ def GetGammaSourceInfo():
 
     drawBrightStar = False
     drawPulsar = True
-    drawSNR = False
+    drawSNR = True
     drawLHAASO = False
     drawFermi = False
     drawHAWC = False
@@ -1611,7 +1595,44 @@ def flux_crab_func(x):
     #return 37.5*pow(10,-12)*pow(x*1./1000.,-2.467-0.16*np.log(x/1000.))
     return 37.5*pow(10,-12)*pow(x,-2.467-0.16*np.log(x))
 
-def PrintInformationRoI(fig,hist_data_skymap,hist_bkgd_skymap,hist_flux_skymap,hist_flux_err_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r):
+def GetHessSS433e():
+
+    # https://indico.icc.ub.edu/event/46/contributions/1302/attachments/443/871/ID382_OliveraNieto_SS433.pdf
+
+    energies = [0.045,0.354,0.660,0.969,1.276,1.583]
+    fluxes = [-12.47,-12.57,-12.51,-12.53,-12.67,-12.70]
+    flux_errs_up = [-12.31,-12.40,-12.40,-12.43,-12.54,-12.54]
+    flux_errs_lo = [-12.69,-12.83,-12.66,-12.64,-12.83,-12.89]
+    flux_errs = []
+
+    erg_to_TeV = 0.62
+    for entry in range(0,len(energies)):
+        energies[entry] = pow(10.,energies[entry])
+        fluxes[entry] = pow(10.,fluxes[entry])*erg_to_TeV
+        flux_errs += [0.5*(pow(10.,flux_errs_up[entry])-pow(10.,flux_errs_lo[entry]))*erg_to_TeV]
+
+    return energies, fluxes, flux_errs
+
+def GetHessSS433w():
+
+    # https://indico.icc.ub.edu/event/46/contributions/1302/attachments/443/871/ID382_OliveraNieto_SS433.pdf
+
+    energies = [0.045,0.354,0.660,0.969,1.276,1.583]
+    fluxes = [-12.36,-12.44,-12.74,-12.56,-12.93,-12.80]
+    flux_errs_up = [-12.23,-12.30,-12.57,-12.46,-12.73,-12.61]
+    flux_errs_lo = [-12.55,-12.63,-13.00,-12.68,-13.24,-13.07]
+    flux_errs = []
+
+    erg_to_TeV = 0.62
+    for entry in range(0,len(energies)):
+        energies[entry] = pow(10.,energies[entry])
+        fluxes[entry] = pow(10.,fluxes[entry])*erg_to_TeV
+        flux_errs += [0.5*(pow(10.,flux_errs_up[entry])-pow(10.,flux_errs_lo[entry]))*erg_to_TeV]
+
+    return energies, fluxes, flux_errs
+
+
+def PrintInformationRoI(fig,source_name,hist_data_skymap,hist_bkgd_skymap,hist_flux_skymap,hist_flux_err_skymap,roi_name,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r):
 
     energy_axis, energy_error, flux, flux_stat_err = GetRegionSpectrum(hist_flux_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,hist_error_skymap=hist_flux_err_skymap)
     energy_axis, energy_error, data, data_stat_err = GetRegionSpectrum(hist_data_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
@@ -1655,7 +1676,7 @@ def PrintInformationRoI(fig,hist_data_skymap,hist_bkgd_skymap,hist_flux_skymap,h
     axbig.set_xscale('log')
     axbig.set_yscale('log')
     axbig.errorbar(energy_axis,flux_cu,flux_err_cu,xerr=energy_error,color='k',marker='_',ls='none',zorder=1)
-    fig.savefig(f'output_plots/roi_flux_crab_unit.png',bbox_inches='tight')
+    fig.savefig(f'output_plots/{source_name}_roi_flux_crab_unit_{roi_name}.png',bbox_inches='tight')
     axbig.remove()
 
     fig.clf()
@@ -1671,54 +1692,91 @@ def PrintInformationRoI(fig,hist_data_skymap,hist_bkgd_skymap,hist_flux_skymap,h
     axbig.set_xscale('log')
     axbig.set_yscale('log')
     axbig.errorbar(energy_axis,flux,flux_stat_err,xerr=energy_error,color='k',marker='_',ls='none',label='VERITAS (this work)',zorder=1)
-    fig.savefig(f'output_plots/roi_energy_flux.png',bbox_inches='tight')
+    if 'SS433' in source_name:
+        HessSS433e_energies, HessSS433e_fluxes, HessSS433e_flux_errs = GetHessSS433e()
+        HessSS433w_energies, HessSS433w_fluxes, HessSS433w_flux_errs = GetHessSS433w()
+        axbig.errorbar(HessSS433e_energies,HessSS433e_fluxes,HessSS433e_flux_errs,marker='s',ls='none',label='HESS eastern',zorder=2)
+        axbig.errorbar(HessSS433w_energies,HessSS433w_fluxes,HessSS433w_flux_errs,marker='s',ls='none',label='HESS western',zorder=3)
+    fig.savefig(f'output_plots/{source_name}_roi_energy_flux_{roi_name}.png',bbox_inches='tight')
     axbig.remove()
 
 
 def DefineRegionOfInterest(src_name,src_ra,src_dec):
 
-    excl_region_x = [src_ra]
-    excl_region_y = [src_dec]
-    excl_region_r = [0.0]
-    region_x = [src_ra]
-    region_y = [src_dec]
-    region_r = [calibration_radius]
+    excl_region_x = []
+    excl_region_y = []
+    excl_region_r = []
+    region_x = []
+    region_y = []
+    region_r = []
+    region_name = []
 
     if 'Crab' in src_name:
 
+        excl_region_x = [src_ra]
+        excl_region_y = [src_dec]
+        excl_region_r = [0.0]
         region_x = [src_ra]
         region_y = [src_dec]
         region_r = [calibration_radius]
+        region_name = ['center']
 
     elif 'SNR_G189_p03' in src_name:
 
         src_x = 94.25
         src_y = 22.57
-        region_x = [src_x]
-        region_y = [src_y]
-        region_r = [1.0]
+        excl_region_x += [src_ra]
+        excl_region_y += [src_dec]
+        excl_region_r += [0.0]
+        region_x += [src_x]
+        region_y += [src_y]
+        region_r += [1.0]
+        region_name += ['center']
 
     elif 'SS433' in src_name:
     
         #SS 433 SNR
-        #region_x = [288.0833333]
-        #region_y = [4.9166667]
-        #region_r = [0.3]
+        excl_region_x += [src_ra]
+        excl_region_y += [src_dec]
+        excl_region_r += [0.0]
+        region_x += [288.0833333]
+        region_y += [4.9166667]
+        region_r += [0.3]
+        region_name += ['SNR']
     
         #SS 433 e1
-        #region_x = [288.404]
-        #region_y = [4.930]
-        #region_r = [0.3]
+        excl_region_x += [src_ra]
+        excl_region_y += [src_dec]
+        excl_region_r += [0.0]
+        region_x += [288.404]
+        region_y += [4.930]
+        region_r += [0.3]
+        region_name += ['SS433e1']
         #region_x = [288.35,288.50,288.65,288.8]
         #region_y = [4.93,4.92,4.93,4.94]
         #region_r = [0.1,0.1,0.1,0.1]
     
         #SS 433 w1
-        region_x = [287.654]
-        region_y = [5.037]
-        region_r = [0.3]
+        excl_region_x += [src_ra]
+        excl_region_y += [src_dec]
+        excl_region_r += [0.0]
+        region_x += [287.654]
+        region_y += [5.037]
+        region_r += [0.3]
+        region_name += ['SS433w1']
 
-    return region_x, region_y, region_r, excl_region_x, excl_region_y, excl_region_r
+    else:
+
+        excl_region_x = [src_ra]
+        excl_region_y = [src_dec]
+        excl_region_r = [0.0]
+        region_x = [src_ra]
+        region_y = [src_dec]
+        region_r = [calibration_radius]
+        region_name = ['center']
+
+
+    return region_name, region_x, region_y, region_r, excl_region_x, excl_region_y, excl_region_r
 
 def SaveFITS(skymap_input,filename):
 

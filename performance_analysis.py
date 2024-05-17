@@ -48,14 +48,9 @@ smi_dir = os.environ.get("SMI_DIR")
 #ana_tag = 'poisson'
 
 ana_tag = []
-#ana_tag += [['1ep5','r']]
-#ana_tag += [['1em1','b']]
-#ana_tag += [['1em2','b']]
-#ana_tag += [['1em3','b']]
-#ana_tag += [['zero','b']]
-#ana_tag += [['r40','b']]
-#ana_tag += [['nominal','b']]
-ana_tag += [['poisson','b']]
+#ana_tag += [['nominal','r']]
+ana_tag += [['poisson','r']]
+ana_tag += [['r40','b']]
 
 onoff = 'OFF'
 
@@ -111,8 +106,8 @@ ana_avg_elev = []
 ana_data_count = []
 ana_bkgd_count = []
 
-list_chi2_sr = []
-list_chi2_cr = []
+ana_chi2_sr = []
+ana_chi2_cr = []
 
 for ana in range(0,len(ana_tag)):
 
@@ -130,6 +125,9 @@ for ana in range(0,len(ana_tag)):
     list_cr_qual = []
     list_truth_params = []
     list_fit_params = []
+
+    list_chi2_sr = []
+    list_chi2_cr = []
     
     total_exposure = 0.
     good_exposure = 0.
@@ -142,7 +140,7 @@ for ana in range(0,len(ana_tag)):
             source_name = src[0]
     
             input_filename = f'{smi_output}/skymaps_{source_name}_{epoch}_{onoff}_{ana_tag[ana][0]}.pkl'
-            print (f'reading {input_filename}...')
+            #print (f'reading {input_filename}...')
             if not os.path.exists(input_filename):
                 #print (f'{input_filename} does not exist.')
                 continue
@@ -295,6 +293,8 @@ for ana in range(0,len(ana_tag)):
     ana_data_count += [grp_data_count]
     ana_bkgd_count += [grp_bkgd_count]
 
+    ana_chi2_sr += [list_chi2_sr]
+    ana_chi2_cr += [list_chi2_cr]
 
 ratio_cut = 0.3
 for logE in range(0,logE_nbins):
@@ -347,38 +347,40 @@ for logE in range(0,logE_nbins):
     fig.savefig(f'output_plots/error_ratio_vs_elev_logE{logE}.png',bbox_inches='tight')
     axbig.remove()
 
-hist_binsize = 0.1
-chi2_axis = np.arange(-5., 5., 0.01)
-total_entries = len(list_chi2_sr)
-normal_dist = hist_binsize*total_entries/pow(2.*np.pi,0.5)*np.exp(-chi2_axis*chi2_axis/2.)
-fig.clf()
-axbig = fig.add_subplot()
-label_x = 'significance'
-label_y = 'number of entries'
-axbig.set_xlabel(label_x)
-axbig.set_ylabel(label_y)
-hist_chi2, bin_edges = np.histogram(list_chi2_sr,bins=100,range=(-5.,5.))
-axbig.hist(list_chi2_sr, bin_edges)
-axbig.plot(chi2_axis,normal_dist)
-#axbig.set_yscale('log')
-fig.savefig(f'output_plots/chi2_sr_distribution.png',bbox_inches='tight')
-axbig.remove()
+for ana in range(0,len(ana_tag)):
 
-chi2_axis = np.arange(-5., 5., 0.01)
-total_entries = len(list_chi2_cr)
-normal_dist = hist_binsize*total_entries/pow(2.*np.pi,0.5)*np.exp(-chi2_axis*chi2_axis/2.)
-fig.clf()
-axbig = fig.add_subplot()
-label_x = 'significance'
-label_y = 'number of entries'
-axbig.set_xlabel(label_x)
-axbig.set_ylabel(label_y)
-hist_chi2, bin_edges = np.histogram(list_chi2_cr,bins=100,range=(-5.,5.))
-axbig.hist(list_chi2_cr, bin_edges)
-axbig.plot(chi2_axis,normal_dist)
-#axbig.set_yscale('log')
-fig.savefig(f'output_plots/chi2_cr_distribution.png',bbox_inches='tight')
-axbig.remove()
+    hist_binsize = 0.1
+    chi2_axis = np.arange(-5., 5., 0.01)
+    total_entries = len(ana_chi2_sr[ana])
+    normal_dist = hist_binsize*total_entries/pow(2.*np.pi,0.5)*np.exp(-chi2_axis*chi2_axis/2.)
+    fig.clf()
+    axbig = fig.add_subplot()
+    label_x = 'significance'
+    label_y = 'number of entries'
+    axbig.set_xlabel(label_x)
+    axbig.set_ylabel(label_y)
+    hist_chi2, bin_edges = np.histogram(ana_chi2_sr[ana],bins=100,range=(-5.,5.))
+    axbig.hist(ana_chi2_sr[ana], bin_edges)
+    axbig.plot(chi2_axis,normal_dist)
+    #axbig.set_yscale('log')
+    fig.savefig(f'output_plots/chi2_sr_distribution_{ana_tag[ana][0]}.png',bbox_inches='tight')
+    axbig.remove()
+    
+    chi2_axis = np.arange(-5., 5., 0.01)
+    total_entries = len(ana_chi2_cr[ana])
+    normal_dist = hist_binsize*total_entries/pow(2.*np.pi,0.5)*np.exp(-chi2_axis*chi2_axis/2.)
+    fig.clf()
+    axbig = fig.add_subplot()
+    label_x = 'significance'
+    label_y = 'number of entries'
+    axbig.set_xlabel(label_x)
+    axbig.set_ylabel(label_y)
+    hist_chi2, bin_edges = np.histogram(ana_chi2_cr[ana],bins=100,range=(-5.,5.))
+    axbig.hist(ana_chi2_cr[ana], bin_edges)
+    axbig.plot(chi2_axis,normal_dist)
+    #axbig.set_yscale('log')
+    fig.savefig(f'output_plots/chi2_cr_distribution_{ana_tag[ana][0]}.png',bbox_inches='tight')
+    axbig.remove()
 
 #hist_range = [[0.,  1.], [-5., 5.]]
 #
