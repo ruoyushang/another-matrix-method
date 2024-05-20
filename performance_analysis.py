@@ -49,18 +49,21 @@ smi_dir = os.environ.get("SMI_DIR")
 
 ana_tag = []
 #ana_tag += [['nominal','r']]
-ana_tag += [['poisson','r']]
-ana_tag += [['r40','b']]
+#ana_tag += [['poisson','r']]
+ana_tag += [['rank5','b']]
+ana_tag += [['rank10','b']]
+ana_tag += [['rank15','b']]
+ana_tag += [['rank20','b']]
 
 onoff = 'OFF'
 
 #exposure_per_group = 0.2
 #exposure_per_group = 1.
 #exposure_per_group = 5.
-exposure_per_group = 10.
+#exposure_per_group = 10.
 #exposure_per_group = 20.
-#exposure_per_group = 50.
-#exposure_per_group = 100.
+#exposure_per_group = 40.
+exposure_per_group = 80.
 cr_qual_cut = 1e10
 #cr_qual_cut = 230
 
@@ -195,11 +198,11 @@ for ana in range(0,len(ana_tag)):
                     bkgd = np.sum(bkgd_sky_map[logE].waxis[:,:,0])
                     if bkgd>bkgd_peak:
                         bkgd_peak = bkgd
-                        logE_peak = logE
+                        logE_peak = logE+1
     
                 for logE in range(0,logE_nbins):
 
-                    #if logE<logE_peak: continue
+                    if logE<logE_peak: continue
                 
                     data_sum = np.sum(data_sky_map[logE].waxis[:,:,0])
                     bkgd_sum = np.sum(bkgd_sky_map[logE].waxis[:,:,0])
@@ -263,6 +266,7 @@ for ana in range(0,len(ana_tag)):
                 avg_data += data*weight
                 avg_bkgd += bkgd*weight
                 sum_weight += weight
+        if sum_weight==0.: continue
         avg_data = avg_data/sum_weight
         avg_bkgd = avg_bkgd/sum_weight
         avg_bias = 100.*(avg_data-avg_bkgd)/avg_data
@@ -285,7 +289,7 @@ for ana in range(0,len(ana_tag)):
         #avg_stat_error = 100.*pow(avg_stat_error/sum_weight,0.5)
         avg_error = 100.*avg_error/sum_weight
         avg_stat_error = 100.*avg_stat_error/sum_weight
-        print (f'E = {pow(10.,logE_bins[logE]):0.3f} TeV, avg_data = {avg_data:0.1f}, avg_bkgd = {avg_bkgd:0.1f}, bias = {avg_bias:0.1f} %, error = {avg_error:0.1f} +/- {avg_stat_error:0.1f} %')
+        print (f'E = {pow(10.,logE_bins[logE]):0.3f} TeV, avg_data = {avg_data:0.1f}, avg_bkgd = {avg_bkgd:0.1f}, bias = {avg_bias:0.2f} %, error = {avg_error:0.2f} +/- {avg_stat_error:0.2f} %')
     
     print (f'bias_array = {np.around(bias_array,3)}')
 

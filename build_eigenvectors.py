@@ -24,6 +24,7 @@ fig.set_figwidth(figsize_x)
 smi_input = os.environ.get("SMI_INPUT")
 smi_output = os.environ.get("SMI_OUTPUT")
 smi_dir = os.environ.get("SMI_DIR")
+sky_tag = os.environ.get("SKY_TAG")
 
 source_name = sys.argv[1]
 input_epoch = sys.argv[2] # 'V4', 'V5' or 'V6'
@@ -139,7 +140,7 @@ axbig.remove()
 
 
 
-output_filename = f'{smi_output}/eigenvectors_{source_name}_{input_epoch}.pkl'
+output_filename = f'{smi_output}/eigenvectors_{source_name}_{input_epoch}_{sky_tag}.pkl'
 with open(output_filename,"wb") as file:
     pickle.dump([big_eigenvalues,big_eigenvectors,big_xyoff_map_1d], file)
 

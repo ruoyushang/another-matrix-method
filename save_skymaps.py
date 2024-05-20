@@ -43,7 +43,7 @@ src_dec = float(sys.argv[3])
 onoff = sys.argv[4]
 input_epoch = sys.argv[5] # 'V4', 'V5' or 'V6'
 
-path_to_eigenvector = f'{smi_output}/eigenvectors_{source_name}_{input_epoch}.pkl'
+path_to_eigenvector = f'{smi_output}/eigenvectors_{source_name}_{input_epoch}_{sky_tag}.pkl'
 print (f'path_to_eigenvector = {path_to_eigenvector}')
 path_to_big_matrix = f'{smi_output}/big_off_matrix_{source_name}_{input_epoch}.pkl'
 print (f'path_to_big_matrix = {path_to_big_matrix}')

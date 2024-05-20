@@ -16,7 +16,7 @@ sky_tag = os.environ.get("SKY_TAG")
 
 use_poisson_likelihood = True
 nuclear_norm_scale = 0.
-matrix_rank = 10
+matrix_rank = 15
 
 if sky_tag=='linear':
     use_poisson_likelihood = False
@@ -24,14 +24,8 @@ if sky_tag=='linear':
 if sky_tag=='init':
     nuclear_norm_scale = 1e5
 
-if sky_tag=='r5':
-    matrix_rank = 5
-if sky_tag=='r10':
-    matrix_rank = 10
-if sky_tag=='r20':
-    matrix_rank = 20
-if sky_tag=='r40':
-    matrix_rank = 40
+if 'rank' in sky_tag:
+    matrix_rank = int(sky_tag.strip('rank'))
 
 run_elev_cut = 25.
 
@@ -1439,8 +1433,7 @@ def GetFluxCalibration(energy):
     if doFluxCalibration:
         return 1.
 
-    #str_flux_calibration = ['6.95e-01', '5.36e-01', '4.30e-01', '3.46e-01', '1.16e-01', '6.97e-02', '4.52e-02', '2.92e-02', '1.79e-02']
-    str_flux_calibration = ['2.62e+02', '3.81e+02', '5.78e+02', '8.78e+02', '8.22e+02', '1.76e+03', '4.06e+03', '9.38e+03', '2.04e+04']
+    str_flux_calibration = ['3.95e+02', '5.93e+02', '8.96e+02', '1.32e+03', '1.25e+03', '2.63e+03', '6.10e+03', '1.37e+04', '2.92e+04']
 
     flux_calibration = []
     for string in str_flux_calibration:
@@ -1651,17 +1644,17 @@ def PrintInformationRoI(fig,source_name,hist_data_skymap,hist_bkgd_skymap,hist_f
             flux_cu += [0.]
             flux_err_cu += [0.]
 
-    print ('=======================================================================')
+    print ('===============================================================================================================')
     formatted_numbers = ['%0.2e' % num for num in energy_axis]
     print ('energy_axis = %s'%(formatted_numbers))
     formatted_numbers = ['%0.2e' % num for num in flux_cu]
     print ('new flux_calibration = %s'%(formatted_numbers))
-    print ('=======================================================================')
 
-    print ('=======================================================================')
+    print ('===============================================================================================================')
+    print (f'RoI : {roi_name}')
     for binx in range(0,len(energy_axis)):
         print (f'E = {energy_axis[binx]:0.2f} TeV, data = {data[binx]:0.1f}, bkgd = {bkgd[binx]:0.1f}, flux = {flux[binx]:0.2e} TeV/cm2/s ({flux_cu[binx]:0.2f} CU)')
-    print ('=======================================================================')
+    print ('===============================================================================================================')
 
     fig.clf()
     figsize_x = 7
@@ -1691,12 +1684,13 @@ def PrintInformationRoI(fig,source_name,hist_data_skymap,hist_bkgd_skymap,hist_f
     axbig.set_ylabel(label_y)
     axbig.set_xscale('log')
     axbig.set_yscale('log')
-    axbig.errorbar(energy_axis,flux,flux_stat_err,xerr=energy_error,color='k',marker='_',ls='none',label='VERITAS (this work)',zorder=1)
+    axbig.errorbar(energy_axis,flux,flux_stat_err,xerr=energy_error,color='k',marker='_',ls='none',label=f'VERITAS ({roi_name})',zorder=1)
     if 'SS433' in source_name:
         HessSS433e_energies, HessSS433e_fluxes, HessSS433e_flux_errs = GetHessSS433e()
         HessSS433w_energies, HessSS433w_fluxes, HessSS433w_flux_errs = GetHessSS433w()
         axbig.errorbar(HessSS433e_energies,HessSS433e_fluxes,HessSS433e_flux_errs,marker='s',ls='none',label='HESS eastern',zorder=2)
         axbig.errorbar(HessSS433w_energies,HessSS433w_fluxes,HessSS433w_flux_errs,marker='s',ls='none',label='HESS western',zorder=3)
+    axbig.legend(loc='best')
     fig.savefig(f'output_plots/{source_name}_roi_energy_flux_{roi_name}.png',bbox_inches='tight')
     axbig.remove()
 
@@ -1721,6 +1715,16 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
         region_r = [calibration_radius]
         region_name = ['center']
 
+    elif 'Geminga' in src_name:
+
+        excl_region_x = [src_ra]
+        excl_region_y = [src_dec]
+        excl_region_r = [0.0]
+        region_x = [src_ra]
+        region_y = [src_dec]
+        region_r = [1.5]
+        region_name = ['center']
+
     elif 'SNR_G189_p03' in src_name:
 
         src_x = 94.25
@@ -1733,16 +1737,28 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
         region_r += [1.0]
         region_name += ['center']
 
-    elif 'SS433' in src_name:
-    
-        #SS 433 SNR
+    elif 'PSR_J2021_p4026' in src_name:
+
+        src_x = 305.21
+        src_y = 40.43
         excl_region_x += [src_ra]
         excl_region_y += [src_dec]
         excl_region_r += [0.0]
-        region_x += [288.0833333]
-        region_y += [4.9166667]
-        region_r += [0.3]
+        region_x += [src_x]
+        region_y += [src_y]
+        region_r += [0.5]
         region_name += ['SNR']
+
+    elif 'SS433' in src_name:
+    
+        #SS 433 SNR
+        #excl_region_x += [src_ra]
+        #excl_region_y += [src_dec]
+        #excl_region_r += [0.0]
+        #region_x += [288.0833333]
+        #region_y += [4.9166667]
+        #region_r += [0.2]
+        #region_name += ['SNR']
     
         #SS 433 e1
         excl_region_x += [src_ra]
@@ -1750,7 +1766,7 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
         excl_region_r += [0.0]
         region_x += [288.404]
         region_y += [4.930]
-        region_r += [0.3]
+        region_r += [0.2]
         region_name += ['SS433e1']
         #region_x = [288.35,288.50,288.65,288.8]
         #region_y = [4.93,4.92,4.93,4.94]
@@ -1762,7 +1778,7 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
         excl_region_r += [0.0]
         region_x += [287.654]
         region_y += [5.037]
-        region_r += [0.3]
+        region_r += [0.2]
         region_name += ['SS433w1']
 
     else:

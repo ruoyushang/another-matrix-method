@@ -39,12 +39,14 @@ skymap_size = common_functions.skymap_size
 skymap_bins = common_functions.skymap_bins
 fine_skymap_bins = common_functions.fine_skymap_bins
 
-logE_min = 0
-logE_mid = 5
-logE_max = logE_nbins
-#logE_min = 2
-#logE_mid = 7
+#logE_min = 0
+#logE_mid = 5
 #logE_max = logE_nbins
+
+# SS 433
+logE_min = 0
+logE_mid = 6
+logE_max = logE_nbins
 
 
 fig, ax = plt.subplots()
@@ -58,10 +60,8 @@ smi_output = os.environ.get("SMI_OUTPUT")
 smi_dir = os.environ.get("SMI_DIR")
 
 #ana_tag = 'nominal'
-#ana_tag = 'poisson'
-#ana_tag = '1em2'
-#ana_tag = 'zero'
-ana_tag = 'r40'
+ana_tag = 'poisson'
+#ana_tag = 'rank5'
 
 qual_cut = 0.
 #qual_cut = 20.
@@ -221,7 +221,7 @@ for epoch in input_epoch:
             bkgd = np.sum(fit_xyoff_map[logE].waxis[:,:,0])
             if bkgd>bkgd_peak:
                 bkgd_peak = bkgd
-                logE_peak = logE
+                logE_peak = logE+1
 
         for logE in range(0,logE_nbins):
             if logE<logE_peak: continue
@@ -334,8 +334,12 @@ for logE in range(0,logE_nbins):
 PlotSkyMap(fig,'$E^{2}$ dN/dE [$\mathrm{TeV}\cdot\mathrm{cm}^{-2}\mathrm{s}^{-1}$]',logE_min,logE_max,sum_flux_sky_map_allE_smooth,f'{source_name}_flux_sky_map_allE_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
 PlotSkyMap(fig,'$E^{2}$ dN/dE [$\mathrm{TeV}\cdot\mathrm{cm}^{-2}\mathrm{s}^{-1}$]',logE_min,logE_mid,sum_flux_sky_map_LE_smooth,f'{source_name}_flux_sky_map_LE_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
 PlotSkyMap(fig,'$E^{2}$ dN/dE [$\mathrm{TeV}\cdot\mathrm{cm}^{-2}\mathrm{s}^{-1}$]',logE_mid,logE_max,sum_flux_sky_map_HE_smooth,f'{source_name}_flux_sky_map_HE_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
-SaveFITS(sum_flux_sky_map_LE_smooth,'sum_flux_sky_map_LE_smooth')
-SaveFITS(sum_flux_sky_map_HE_smooth,'sum_flux_sky_map_HE_smooth')
+
+for logE in range(0,logE_nbins):
+    low_energy = int(1000.*pow(10.,logE_bins[logE]))
+    high_energy = int(1000.*pow(10.,logE_bins[logE+1]))
+    SaveFITS(sum_flux_sky_map_smooth[logE],f'sum_flux_sky_map_{low_energy}GeV_{high_energy}GeV')
+    SaveFITS(sum_flux_err_sky_map_smooth[logE],f'sum_flux_err_sky_map_{low_energy}GeV_{high_energy}GeV')
 
 for roi in range(0,len(all_roi_name)):
 
