@@ -8,8 +8,10 @@ SMI_OUTPUT = os.environ['SMI_OUTPUT']
 print (f'SMI_DIR = {SMI_DIR}')
 print (f'SMI_OUTPUT = {SMI_OUTPUT}')
 
-#is_training = True
-is_training = False
+is_training = True
+#is_training = False
+
+n_mimic = 5
 
 input_params = []
 
@@ -162,6 +164,11 @@ for s in range(0,len(input_params)):
     file.write(f'python3 save_skymaps.py "{source}" {src_ra} {src_dec} "{onoff}" "V6"\n')
     file.write(f'python3 save_skymaps.py "{source}" {src_ra} {src_dec} "{onoff}" "V5"\n')
     file.write(f'python3 save_skymaps.py "{source}" {src_ra} {src_dec} "{onoff}" "V4"\n')
+    if onoff=='ON':
+        for mimic in range(1,n_mimic+1):
+            file.write(f'python3 save_skymaps.py "{source}" {src_ra} {src_dec} "MIMIC{mimic}" "V6"\n')
+            file.write(f'python3 save_skymaps.py "{source}" {src_ra} {src_dec} "MIMIC{mimic}" "V5"\n')
+            file.write(f'python3 save_skymaps.py "{source}" {src_ra} {src_dec} "MIMIC{mimic}" "V4"\n')
     file.close() 
 
 qfile = open("run/sub_condor_skymap.sh","w") 

@@ -82,6 +82,8 @@ onoff = sys.argv[4]
 #input_epoch = ['V6']
 input_epoch = ['V4','V5','V6']
 
+n_mimic = 5
+
 xsky_start = src_ra+skymap_size
 xsky_end = src_ra-skymap_size
 ysky_start = src_dec-skymap_size
@@ -150,6 +152,131 @@ sum_flux_err_sky_map_LE_smooth = MyArray3D(x_bins=skymap_bins,start_x=xsky_start
 sum_flux_sky_map_HE_smooth = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
 sum_flux_err_sky_map_HE_smooth = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
 
+sum_mimic_incl_sky_map = []
+sum_mimic_data_sky_map = []
+sum_mimic_bkgd_sky_map = []
+sum_mimic_incl_sky_map_smooth = []
+sum_mimic_data_sky_map_smooth = []
+sum_mimic_bkgd_sky_map_smooth = []
+sum_mimic_excess_sky_map_smooth = []
+sum_mimic_significance_sky_map = []
+sum_mimic_flux_sky_map = []
+sum_mimic_flux_err_sky_map = []
+sum_mimic_flux_sky_map_smooth = []
+sum_mimic_flux_err_sky_map_smooth = []
+sum_mimic_data_sky_map_allE = []
+sum_mimic_data_sky_map_LE = []
+sum_mimic_data_sky_map_HE = []
+sum_mimic_bkgd_sky_map_allE = []
+sum_mimic_bkgd_sky_map_LE = []
+sum_mimic_bkgd_sky_map_HE = []
+sum_mimic_significance_sky_map_allE = []
+sum_mimic_significance_sky_map_LE = []
+sum_mimic_significance_sky_map_HE = []
+sum_mimic_excess_sky_map_allE = []
+sum_mimic_excess_sky_map_LE = []
+sum_mimic_excess_sky_map_HE = []
+sum_mimic_flux_sky_map_allE = []
+sum_mimic_flux_err_sky_map_allE = []
+sum_mimic_flux_sky_map_allE_smooth = []
+sum_mimic_flux_err_sky_map_allE_smooth = []
+sum_mimic_flux_sky_map_LE = []
+sum_mimic_flux_err_sky_map_LE = []
+sum_mimic_flux_sky_map_HE = []
+sum_mimic_flux_err_sky_map_HE = []
+sum_mimic_flux_sky_map_LE_smooth = []
+sum_mimic_flux_err_sky_map_LE_smooth = []
+sum_mimic_flux_sky_map_HE_smooth = []
+sum_mimic_flux_err_sky_map_HE_smooth = []
+for mimic in range(1,n_mimic+1):
+    mimic_incl_sky_map = []
+    mimic_data_sky_map = []
+    mimic_bkgd_sky_map = []
+    mimic_incl_sky_map_smooth = []
+    mimic_data_sky_map_smooth = []
+    mimic_bkgd_sky_map_smooth = []
+    mimic_excess_sky_map_smooth = []
+    mimic_significance_sky_map = []
+    mimic_flux_sky_map = []
+    mimic_flux_err_sky_map = []
+    mimic_flux_sky_map_smooth = []
+    mimic_flux_err_sky_map_smooth = []
+    for logE in range(0,logE_nbins):
+        mimic_incl_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
+        mimic_data_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
+        mimic_bkgd_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
+        mimic_incl_sky_map_smooth += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
+        mimic_data_sky_map_smooth += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
+        mimic_bkgd_sky_map_smooth += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
+        mimic_excess_sky_map_smooth += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
+        mimic_significance_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
+        mimic_flux_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
+        mimic_flux_err_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
+        mimic_flux_sky_map_smooth += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
+        mimic_flux_err_sky_map_smooth += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
+    sum_mimic_incl_sky_map += [mimic_incl_sky_map]
+    sum_mimic_data_sky_map += [mimic_data_sky_map]
+    sum_mimic_bkgd_sky_map += [mimic_bkgd_sky_map]
+    sum_mimic_incl_sky_map_smooth += [mimic_incl_sky_map_smooth]
+    sum_mimic_data_sky_map_smooth += [mimic_data_sky_map_smooth]
+    sum_mimic_bkgd_sky_map_smooth += [mimic_bkgd_sky_map_smooth]
+    sum_mimic_excess_sky_map_smooth += [mimic_excess_sky_map_smooth]
+    sum_mimic_significance_sky_map += [mimic_significance_sky_map]
+    sum_mimic_flux_sky_map += [mimic_flux_sky_map]
+    sum_mimic_flux_err_sky_map += [mimic_flux_err_sky_map]
+    sum_mimic_flux_sky_map_smooth += [mimic_flux_sky_map_smooth]
+    sum_mimic_flux_err_sky_map_smooth += [mimic_flux_err_sky_map_smooth]
+for mimic in range(1,n_mimic+1):
+    mimic_data_sky_map_allE = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
+    mimic_data_sky_map_LE = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
+    mimic_data_sky_map_HE = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
+    mimic_bkgd_sky_map_allE = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
+    mimic_bkgd_sky_map_LE = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
+    mimic_bkgd_sky_map_HE = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
+    mimic_significance_sky_map_allE = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
+    mimic_significance_sky_map_LE = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
+    mimic_significance_sky_map_HE = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
+    mimic_excess_sky_map_allE = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
+    mimic_excess_sky_map_LE = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
+    mimic_excess_sky_map_HE = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
+    mimic_flux_sky_map_allE = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
+    mimic_flux_err_sky_map_allE = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
+    mimic_flux_sky_map_allE_smooth = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
+    mimic_flux_err_sky_map_allE_smooth = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
+    mimic_flux_sky_map_LE = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
+    mimic_flux_err_sky_map_LE = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
+    mimic_flux_sky_map_HE = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
+    mimic_flux_err_sky_map_HE = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
+    mimic_flux_sky_map_LE_smooth = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
+    mimic_flux_err_sky_map_LE_smooth = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
+    mimic_flux_sky_map_HE_smooth = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
+    mimic_flux_err_sky_map_HE_smooth = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
+    sum_mimic_data_sky_map_allE += [mimic_data_sky_map_allE]
+    sum_mimic_data_sky_map_LE += [mimic_data_sky_map_LE]
+    sum_mimic_data_sky_map_HE += [mimic_data_sky_map_HE]
+    sum_mimic_bkgd_sky_map_allE += [mimic_bkgd_sky_map_allE]
+    sum_mimic_bkgd_sky_map_LE += [mimic_bkgd_sky_map_LE]
+    sum_mimic_bkgd_sky_map_HE += [mimic_bkgd_sky_map_HE]
+    sum_mimic_significance_sky_map_allE += [mimic_significance_sky_map_allE]
+    sum_mimic_significance_sky_map_LE += [mimic_significance_sky_map_LE]
+    sum_mimic_significance_sky_map_HE += [mimic_significance_sky_map_HE]
+    sum_mimic_excess_sky_map_allE += [mimic_excess_sky_map_allE]
+    sum_mimic_excess_sky_map_LE += [mimic_excess_sky_map_LE]
+    sum_mimic_excess_sky_map_HE += [mimic_excess_sky_map_HE]
+    sum_mimic_flux_sky_map_allE += [mimic_flux_sky_map_allE]
+    sum_mimic_flux_err_sky_map_allE += [mimic_flux_err_sky_map_allE]
+    sum_mimic_flux_sky_map_allE_smooth += [mimic_flux_sky_map_allE_smooth]
+    sum_mimic_flux_err_sky_map_allE_smooth += [mimic_flux_err_sky_map_allE_smooth]
+    sum_mimic_flux_sky_map_LE += [mimic_flux_sky_map_LE]
+    sum_mimic_flux_err_sky_map_LE += [mimic_flux_err_sky_map_LE]
+    sum_mimic_flux_sky_map_HE += [mimic_flux_sky_map_HE]
+    sum_mimic_flux_err_sky_map_HE += [mimic_flux_err_sky_map_HE]
+    sum_mimic_flux_sky_map_LE_smooth += [mimic_flux_sky_map_LE_smooth]
+    sum_mimic_flux_err_sky_map_LE_smooth += [mimic_flux_err_sky_map_LE_smooth]
+    sum_mimic_flux_sky_map_HE_smooth += [mimic_flux_sky_map_HE_smooth]
+    sum_mimic_flux_err_sky_map_HE_smooth += [mimic_flux_err_sky_map_HE_smooth]
+
+
 sum_data_xyoff_map = []
 sum_fit_xyoff_map = []
 sum_ratio_xyoff_map = []
@@ -165,75 +292,90 @@ for logE in range(0,logE_nbins):
 n_groups = 0.
 for epoch in input_epoch:
 
-    input_filename = f'{smi_output}/skymaps_{source_name}_{epoch}_{onoff}_{ana_tag}.pkl'
-    print (f'reading {input_filename}...')
-    if not os.path.exists(input_filename):
-        print (f'{input_filename} does not exist.')
-        continue
-    analysis_result = pickle.load(open(input_filename, "rb"))
-    
-    for run in range(0,len(analysis_result)):
+    onoff_list = []
+    onoff_list += [onoff]
+    if onoff=='ON':
+        for mimic in range(1,n_mimic+1):
+            onoff_list += [f'MIMIC{mimic}']
 
-        run_info = analysis_result[run][0] 
-        exposure = run_info[0]
-        run_elev = run_info[1]
-        run_azim = run_info[2]
-        truth_params = run_info[3]
-        fit_params = run_info[4]
-        sr_qual = run_info[5]
-        cr_qual = run_info[6]
+    for mode in onoff_list:
 
-        if run_azim>270.:
-            run_azim = run_azim-360.
-
-        if run_elev<elev_cut:
+        input_filename = f'{smi_output}/skymaps_{source_name}_{epoch}_{mode}_{ana_tag}.pkl'
+        print (f'reading {input_filename}...')
+        if not os.path.exists(input_filename):
+            print (f'{input_filename} does not exist.')
             continue
+        analysis_result = pickle.load(open(input_filename, "rb"))
+        
+        for run in range(0,len(analysis_result)):
 
-        total_exposure += exposure
+            run_info = analysis_result[run][0] 
+            exposure = run_info[0]
+            run_elev = run_info[1]
+            run_azim = run_info[2]
+            truth_params = run_info[3]
+            fit_params = run_info[4]
+            sr_qual = run_info[5]
+            cr_qual = run_info[6]
 
-        is_good_run = True
-        if cr_qual>cr_qual_cut:
-            is_good_run = False
-        if not is_good_run: 
-            print (f'bad fitting. reject the run.')
-            continue
+            if run_azim>270.:
+                run_azim = run_azim-360.
 
-        incl_sky_map = analysis_result[run][1] 
-        data_sky_map = analysis_result[run][2] 
-        bkgd_sky_map = analysis_result[run][3] 
-        data_xyoff_map = analysis_result[run][4]
-        fit_xyoff_map = analysis_result[run][5]
-        ratio_xyoff_map = analysis_result[run][6]
+            if run_elev<elev_cut:
+                continue
 
-        good_exposure += exposure
-        list_run_elev += [run_elev]
-        list_run_azim += [run_azim]
-        list_truth_params += [truth_params]
-        list_fit_params += [fit_params]
-        list_sr_qual += [sr_qual]
-        list_cr_qual += [cr_qual]
+            if not 'MIMIC' in mode:
+                total_exposure += exposure
 
-        n_groups += 1.
+            is_good_run = True
+            if cr_qual>cr_qual_cut:
+                is_good_run = False
+            if not is_good_run: 
+                print (f'bad fitting. reject the run.')
+                continue
 
-        logE_peak = 0
-        bkgd_peak = 0.
-        for logE in range(0,logE_nbins):
-            bkgd = np.sum(fit_xyoff_map[logE].waxis[:,:,0])
-            if bkgd>bkgd_peak:
-                bkgd_peak = bkgd
-                logE_peak = logE+1
+            incl_sky_map = analysis_result[run][1] 
+            data_sky_map = analysis_result[run][2] 
+            bkgd_sky_map = analysis_result[run][3] 
+            data_xyoff_map = analysis_result[run][4]
+            fit_xyoff_map = analysis_result[run][5]
+            ratio_xyoff_map = analysis_result[run][6]
 
-        for logE in range(0,logE_nbins):
-            if logE<logE_peak: continue
-            if logE<logE_min: continue
-            if logE>logE_max: continue
-            sum_incl_sky_map[logE].add(incl_sky_map[logE])
-            sum_data_sky_map[logE].add(data_sky_map[logE])
-            sum_bkgd_sky_map[logE].add(bkgd_sky_map[logE])
-            #sum_bkgd_sky_map[logE].add(bkgd_sky_map[logE],factor=(1.+bias_array[logE]))
-            sum_data_xyoff_map[logE].add(data_xyoff_map[logE])
-            sum_fit_xyoff_map[logE].add(fit_xyoff_map[logE])
-            sum_ratio_xyoff_map[logE].add(ratio_xyoff_map[logE])
+            if not 'MIMIC' in mode:
+                good_exposure += exposure
+                list_run_elev += [run_elev]
+                list_run_azim += [run_azim]
+                list_truth_params += [truth_params]
+                list_fit_params += [fit_params]
+                list_sr_qual += [sr_qual]
+                list_cr_qual += [cr_qual]
+                n_groups += 1.
+
+            logE_peak = 0
+            bkgd_peak = 0.
+            for logE in range(0,logE_nbins):
+                bkgd = np.sum(fit_xyoff_map[logE].waxis[:,:,0])
+                if bkgd>bkgd_peak:
+                    bkgd_peak = bkgd
+                    logE_peak = logE+1
+
+            for logE in range(0,logE_nbins):
+                if logE<logE_peak: continue
+                if logE<logE_min: continue
+                if logE>logE_max: continue
+
+                if 'MIMIC' in mode:
+                    mimic_index = int(mode.strip('MIMIC'))-1
+                    sum_mimic_incl_sky_map[mimic_index][logE].add(incl_sky_map[logE])
+                    sum_mimic_data_sky_map[mimic_index][logE].add(data_sky_map[logE])
+                    sum_mimic_bkgd_sky_map[mimic_index][logE].add(bkgd_sky_map[logE])
+                else:
+                    sum_incl_sky_map[logE].add(incl_sky_map[logE])
+                    sum_data_sky_map[logE].add(data_sky_map[logE])
+                    sum_bkgd_sky_map[logE].add(bkgd_sky_map[logE])
+                    sum_data_xyoff_map[logE].add(data_xyoff_map[logE])
+                    sum_fit_xyoff_map[logE].add(fit_xyoff_map[logE])
+                    sum_ratio_xyoff_map[logE].add(ratio_xyoff_map[logE])
     
 for logE in range(0,logE_nbins):
     data_integral = 0.
@@ -286,6 +428,30 @@ for logE in range(0,logE_nbins):
         sum_data_sky_map_HE.add(sum_data_sky_map_smooth[logE])
         sum_bkgd_sky_map_HE.add(sum_bkgd_sky_map_smooth[logE])
 
+for logE in range(0,logE_nbins):
+    for mimic in range(0,n_mimic):
+        sum_mimic_incl_sky_map_smooth[mimic][logE].reset()
+        sum_mimic_data_sky_map_smooth[mimic][logE].reset()
+        sum_mimic_bkgd_sky_map_smooth[mimic][logE].reset()
+        sum_mimic_excess_sky_map_smooth[mimic][logE].reset()
+        sum_mimic_incl_sky_map_smooth[mimic][logE].add(sum_mimic_incl_sky_map[mimic][logE])
+        sum_mimic_data_sky_map_smooth[mimic][logE].add(sum_mimic_data_sky_map[mimic][logE])
+        sum_mimic_bkgd_sky_map_smooth[mimic][logE].add(sum_mimic_bkgd_sky_map[mimic][logE])
+        smooth_size = 0.08
+        #smooth_size = 0.12
+        smooth_image(sum_mimic_incl_sky_map_smooth[mimic][logE].waxis[:,:,0],sum_incl_sky_map_smooth[logE].xaxis,sum_incl_sky_map_smooth[logE].yaxis,kernel_radius=smooth_size)
+        smooth_image(sum_mimic_bkgd_sky_map_smooth[mimic][logE].waxis[:,:,0],sum_bkgd_sky_map_smooth[logE].xaxis,sum_bkgd_sky_map_smooth[logE].yaxis,kernel_radius=smooth_size)
+        smooth_image(sum_mimic_data_sky_map_smooth[mimic][logE].waxis[:,:,0],sum_data_sky_map_smooth[logE].xaxis,sum_data_sky_map_smooth[logE].yaxis,kernel_radius=smooth_size)
+        sum_mimic_data_sky_map_allE[mimic].add(sum_mimic_data_sky_map_smooth[mimic][logE])
+        sum_mimic_bkgd_sky_map_allE[mimic].add(sum_mimic_bkgd_sky_map_smooth[mimic][logE])
+        if logE>=logE_min and logE<logE_mid:
+            sum_mimic_data_sky_map_LE[mimic].add(sum_mimic_data_sky_map_smooth[mimic][logE])
+            sum_mimic_bkgd_sky_map_LE[mimic].add(sum_mimic_bkgd_sky_map_smooth[mimic][logE])
+        if logE>=logE_mid and logE<=logE_max:
+            sum_mimic_data_sky_map_HE[mimic].add(sum_mimic_data_sky_map_smooth[mimic][logE])
+            sum_mimic_bkgd_sky_map_HE[mimic].add(sum_mimic_bkgd_sky_map_smooth[mimic][logE])
+
+
 print ('=================================================================================')
 for logE in range(0,logE_nbins):
 
@@ -305,11 +471,18 @@ make_significance_map(sum_data_sky_map_allE,sum_bkgd_sky_map_allE,sum_significan
 make_significance_map(sum_data_sky_map_LE,sum_bkgd_sky_map_LE,sum_significance_sky_map_LE,sum_excess_sky_map_LE)
 make_significance_map(sum_data_sky_map_HE,sum_bkgd_sky_map_HE,sum_significance_sky_map_HE,sum_excess_sky_map_HE)
 
+for mimic in range(0,n_mimic):
+    make_significance_map(sum_mimic_data_sky_map_allE[mimic],sum_mimic_bkgd_sky_map_allE[mimic],sum_mimic_significance_sky_map_allE[mimic],sum_mimic_excess_sky_map_allE[mimic])
+
 for logE in range(0,logE_nbins):
     avg_energy = 0.5*(pow(10.,logE_axis.xaxis[logE])+pow(10.,logE_axis.xaxis[logE+1]))
     delta_energy = 0.5*(pow(10.,logE_axis.xaxis[logE+1])-pow(10.,logE_axis.xaxis[logE]))
     make_flux_map(sum_incl_sky_map_smooth[logE],sum_data_sky_map_smooth[logE],sum_bkgd_sky_map_smooth[logE],sum_flux_sky_map_smooth[logE],sum_flux_err_sky_map_smooth[logE],avg_energy,delta_energy)
     make_flux_map(sum_incl_sky_map_smooth[logE],sum_data_sky_map[logE],sum_bkgd_sky_map[logE],sum_flux_sky_map[logE],sum_flux_err_sky_map[logE],avg_energy,delta_energy)
+
+for mimic in range(0,n_mimic):
+    for logE in range(0,logE_nbins):
+        make_flux_map(sum_mimic_incl_sky_map_smooth[mimic][logE],sum_mimic_data_sky_map[mimic][logE],sum_mimic_bkgd_sky_map[mimic][logE],sum_mimic_flux_sky_map[mimic][logE],sum_mimic_flux_err_sky_map[mimic][logE],avg_energy,delta_energy)
 
 for logE in range(0,logE_nbins):
     PlotSkyMap(fig,'$E^{2}$ dN/dE [$\mathrm{TeV}\cdot\mathrm{cm}^{-2}\mathrm{s}^{-1}$]',logE,logE+1,sum_flux_sky_map_smooth[logE],f'{source_name}_flux_sky_map_logE{logE}_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
@@ -319,6 +492,9 @@ for logE in range(0,logE_nbins):
     sum_flux_err_sky_map_allE.addSquare(sum_flux_err_sky_map[logE])
     sum_flux_sky_map_allE_smooth.add(sum_flux_sky_map_smooth[logE])
     sum_flux_err_sky_map_allE_smooth.addSquare(sum_flux_err_sky_map_smooth[logE])
+    for mimic in range(0,n_mimic):
+        sum_mimic_flux_sky_map_allE[mimic].add(sum_mimic_flux_sky_map[mimic][logE])
+        sum_mimic_flux_err_sky_map_allE[mimic].addSquare(sum_mimic_flux_err_sky_map[mimic][logE])
     if logE<logE_min: continue
     if logE>logE_max: continue
     if logE>=logE_min and logE<logE_mid:
@@ -326,11 +502,17 @@ for logE in range(0,logE_nbins):
         sum_flux_err_sky_map_LE.addSquare(sum_flux_err_sky_map[logE])
         sum_flux_sky_map_LE_smooth.add(sum_flux_sky_map_smooth[logE])
         sum_flux_err_sky_map_LE_smooth.addSquare(sum_flux_err_sky_map_smooth[logE])
+        for mimic in range(0,n_mimic):
+            sum_mimic_flux_sky_map_LE[mimic].add(sum_mimic_flux_sky_map[mimic][logE])
+            sum_mimic_flux_err_sky_map_LE[mimic].addSquare(sum_mimic_flux_err_sky_map[mimic][logE])
     if logE>=logE_mid and logE<=logE_max:
         sum_flux_sky_map_HE.add(sum_flux_sky_map[logE])
         sum_flux_err_sky_map_HE.addSquare(sum_flux_err_sky_map[logE])
         sum_flux_sky_map_HE_smooth.add(sum_flux_sky_map_smooth[logE])
         sum_flux_err_sky_map_HE_smooth.addSquare(sum_flux_err_sky_map_smooth[logE])
+        for mimic in range(0,n_mimic):
+            sum_mimic_flux_sky_map_HE[mimic].add(sum_mimic_flux_sky_map[mimic][logE])
+            sum_mimic_flux_err_sky_map_HE[mimic].addSquare(sum_mimic_flux_err_sky_map[mimic][logE])
 PlotSkyMap(fig,'$E^{2}$ dN/dE [$\mathrm{TeV}\cdot\mathrm{cm}^{-2}\mathrm{s}^{-1}$]',logE_min,logE_max,sum_flux_sky_map_allE_smooth,f'{source_name}_flux_sky_map_allE_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
 PlotSkyMap(fig,'$E^{2}$ dN/dE [$\mathrm{TeV}\cdot\mathrm{cm}^{-2}\mathrm{s}^{-1}$]',logE_min,logE_mid,sum_flux_sky_map_LE_smooth,f'{source_name}_flux_sky_map_LE_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
 PlotSkyMap(fig,'$E^{2}$ dN/dE [$\mathrm{TeV}\cdot\mathrm{cm}^{-2}\mathrm{s}^{-1}$]',logE_mid,logE_max,sum_flux_sky_map_HE_smooth,f'{source_name}_flux_sky_map_HE_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
@@ -351,7 +533,7 @@ for roi in range(0,len(all_roi_name)):
     excl_roi_y = [excl_all_roi_y[roi]]
     excl_roi_r = [excl_all_roi_r[roi]]
 
-    PrintInformationRoI(fig,source_name,sum_data_sky_map,sum_bkgd_sky_map,sum_flux_sky_map,sum_flux_err_sky_map,roi_name,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
+    PrintInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,sum_data_sky_map,sum_bkgd_sky_map,sum_flux_sky_map,sum_flux_err_sky_map,sum_mimic_data_sky_map,sum_mimic_bkgd_sky_map,roi_name,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
     
     for logE in range(0,logE_nbins):
         radial_axis, profile_axis, profile_err_axis = GetRadialProfile(sum_flux_sky_map[logE],sum_flux_err_sky_map[logE],roi_x,roi_y,2.0)
@@ -371,8 +553,6 @@ for roi in range(0,len(all_roi_name)):
         fig.savefig(f'output_plots/{source_name}_surface_brightness_logE{logE}_{roi_name}_{ana_tag}.png',bbox_inches='tight')
         axbig.remove()
 
-    radial_axis, profile_axis, profile_err_axis = GetRadialProfile(sum_flux_sky_map_allE,sum_flux_err_sky_map_allE,roi_x,roi_y,2.0)
-    baseline_yaxis = [0. for i in range(0,len(radial_axis))]
     fig.clf()
     figsize_x = 7
     figsize_y = 5
@@ -383,13 +563,70 @@ for roi in range(0,len(all_roi_name)):
     label_y = 'surface brightness'
     axbig.set_xlabel(label_x)
     axbig.set_ylabel(label_y)
+    mimic_profile_axis = []
+    for mimic in range(0,n_mimic):
+        radial_axis, profile_axis, profile_err_axis = GetRadialProfile(sum_mimic_flux_sky_map_allE[mimic],sum_mimic_flux_err_sky_map_allE[mimic],roi_x,roi_y,2.0)
+        axbig.errorbar(radial_axis,profile_axis,profile_err_axis,marker='s',ls='none',zorder=mimic+1)
+        mimic_profile_axis += [profile_axis]
+    profile_syst_err_axis = []
+    for binx in range(0,len(mimic_profile_axis[0])):
+        syst_err = 0.
+        for mimic in range(0,n_mimic):
+            syst_err += pow(mimic_profile_axis[mimic][binx],2)
+        syst_err = pow(syst_err/float(n_mimic),0.5)
+        profile_syst_err_axis += [syst_err]
+    baseline_yaxis = [0. for i in range(0,len(radial_axis))]
     axbig.plot(radial_axis, baseline_yaxis, color='b', ls='dashed')
-    axbig.errorbar(radial_axis,profile_axis,profile_err_axis,color='k',marker='s',ls='none')
+    axbig.fill_between(radial_axis,-np.array(profile_syst_err_axis),np.array(profile_syst_err_axis),alpha=0.2,color='b',zorder=0)
+    fig.savefig(f'output_plots/{source_name}_surface_brightness_allE_{roi_name}_mimic_{ana_tag}.png',bbox_inches='tight')
+    axbig.remove()
+
+    on_radial_axis, on_profile_axis, on_profile_err_axis = GetRadialProfile(sum_flux_sky_map_allE,sum_flux_err_sky_map_allE,roi_x,roi_y,2.0)
+    mimic_profile_axis = []
+    mimic_profile_err_axis = []
+    for mimic in range(0,n_mimic):
+        radial_axis, profile_axis, profile_err_axis = GetRadialProfile(sum_mimic_flux_sky_map_allE[mimic],sum_mimic_flux_err_sky_map_allE[mimic],roi_x,roi_y,2.0)
+        mimic_profile_axis += [profile_axis]
+        mimic_profile_err_axis += [profile_err_axis]
+    profile_syst_err_axis = []
+    for binx in range(0,len(mimic_profile_axis[0])):
+        syst_err = 0.
+        for mimic in range(0,n_mimic):
+            syst_err += max(0., pow(mimic_profile_axis[mimic][binx],2) - pow(mimic_profile_err_axis[mimic][binx],2))
+        syst_err = pow(syst_err/float(n_mimic),0.5)
+        profile_syst_err_axis += [pow(pow(syst_err,2)+pow(on_profile_err_axis[binx],2),0.5)]
+    baseline_yaxis = [0. for i in range(0,len(on_radial_axis))]
+    fig.clf()
+    figsize_x = 7
+    figsize_y = 5
+    fig.set_figheight(figsize_y)
+    fig.set_figwidth(figsize_x)
+    axbig = fig.add_subplot()
+    label_x = 'angular distance'
+    label_y = 'surface brightness'
+    axbig.set_xlabel(label_x)
+    axbig.set_ylabel(label_y)
+    axbig.plot(on_radial_axis, baseline_yaxis, color='b', ls='dashed')
+    axbig.errorbar(on_radial_axis,on_profile_axis,on_profile_err_axis,color='k',marker='s',ls='none',zorder=1)
+    axbig.fill_between(on_radial_axis,np.array(on_profile_axis)-np.array(profile_syst_err_axis),np.array(on_profile_axis)+np.array(profile_syst_err_axis),alpha=0.2,color='b',zorder=0)
     fig.savefig(f'output_plots/{source_name}_surface_brightness_allE_{roi_name}_{ana_tag}.png',bbox_inches='tight')
     axbig.remove()
     
-    radial_axis, profile_axis, profile_err_axis = GetRadialProfile(sum_flux_sky_map_LE,sum_flux_err_sky_map_LE,roi_x,roi_y,2.0)
-    baseline_yaxis = [0. for i in range(0,len(radial_axis))]
+    on_radial_axis, on_profile_axis, on_profile_err_axis = GetRadialProfile(sum_flux_sky_map_LE,sum_flux_err_sky_map_LE,roi_x,roi_y,2.0)
+    mimic_profile_axis = []
+    mimic_profile_err_axis = []
+    for mimic in range(0,n_mimic):
+        radial_axis, profile_axis, profile_err_axis = GetRadialProfile(sum_mimic_flux_sky_map_LE[mimic],sum_mimic_flux_err_sky_map_LE[mimic],roi_x,roi_y,2.0)
+        mimic_profile_axis += [profile_axis]
+        mimic_profile_err_axis += [profile_err_axis]
+    profile_syst_err_axis = []
+    for binx in range(0,len(mimic_profile_axis[0])):
+        syst_err = 0.
+        for mimic in range(0,n_mimic):
+            syst_err += max(0., pow(mimic_profile_axis[mimic][binx],2) - pow(mimic_profile_err_axis[mimic][binx],2))
+        syst_err = pow(syst_err/float(n_mimic),0.5)
+        profile_syst_err_axis += [pow(pow(syst_err,2)+pow(on_profile_err_axis[binx],2),0.5)]
+    baseline_yaxis = [0. for i in range(0,len(on_radial_axis))]
     fig.clf()
     figsize_x = 7
     figsize_y = 5
@@ -400,13 +637,27 @@ for roi in range(0,len(all_roi_name)):
     label_y = 'surface brightness'
     axbig.set_xlabel(label_x)
     axbig.set_ylabel(label_y)
-    axbig.plot(radial_axis, baseline_yaxis, color='b', ls='dashed')
-    axbig.errorbar(radial_axis,profile_axis,profile_err_axis,color='k',marker='s',ls='none')
+    axbig.plot(on_radial_axis, baseline_yaxis, color='b', ls='dashed')
+    axbig.errorbar(on_radial_axis,on_profile_axis,on_profile_err_axis,color='k',marker='s',ls='none',zorder=1)
+    axbig.fill_between(on_radial_axis,np.array(on_profile_axis)-np.array(profile_syst_err_axis),np.array(on_profile_axis)+np.array(profile_syst_err_axis),alpha=0.2,color='b',zorder=0)
     fig.savefig(f'output_plots/{source_name}_surface_brightness_LE_{roi_name}_{ana_tag}.png',bbox_inches='tight')
     axbig.remove()
     
-    radial_axis, profile_axis, profile_err_axis = GetRadialProfile(sum_flux_sky_map_HE,sum_flux_err_sky_map_HE,roi_x,roi_y,2.0)
-    baseline_yaxis = [0. for i in range(0,len(radial_axis))]
+    on_radial_axis, on_profile_axis, on_profile_err_axis = GetRadialProfile(sum_flux_sky_map_HE,sum_flux_err_sky_map_HE,roi_x,roi_y,2.0)
+    mimic_profile_axis = []
+    mimic_profile_err_axis = []
+    for mimic in range(0,n_mimic):
+        radial_axis, profile_axis, profile_err_axis = GetRadialProfile(sum_mimic_flux_sky_map_HE[mimic],sum_mimic_flux_err_sky_map_HE[mimic],roi_x,roi_y,2.0)
+        mimic_profile_axis += [profile_axis]
+        mimic_profile_err_axis += [profile_err_axis]
+    profile_syst_err_axis = []
+    for binx in range(0,len(mimic_profile_axis[0])):
+        syst_err = 0.
+        for mimic in range(0,n_mimic):
+            syst_err += max(0., pow(mimic_profile_axis[mimic][binx],2) - pow(mimic_profile_err_axis[mimic][binx],2))
+        syst_err = pow(syst_err/float(n_mimic),0.5)
+        profile_syst_err_axis += [pow(pow(syst_err,2)+pow(on_profile_err_axis[binx],2),0.5)]
+    baseline_yaxis = [0. for i in range(0,len(on_radial_axis))]
     fig.clf()
     figsize_x = 7
     figsize_y = 5
@@ -417,8 +668,9 @@ for roi in range(0,len(all_roi_name)):
     label_y = 'surface brightness'
     axbig.set_xlabel(label_x)
     axbig.set_ylabel(label_y)
-    axbig.plot(radial_axis, baseline_yaxis, color='b', ls='dashed')
-    axbig.errorbar(radial_axis,profile_axis,profile_err_axis,color='k',marker='s',ls='none')
+    axbig.plot(on_radial_axis, baseline_yaxis, color='b', ls='dashed')
+    axbig.errorbar(on_radial_axis,on_profile_axis,on_profile_err_axis,color='k',marker='s',ls='none',zorder=1)
+    axbig.fill_between(on_radial_axis,np.array(on_profile_axis)-np.array(profile_syst_err_axis),np.array(on_profile_axis)+np.array(profile_syst_err_axis),alpha=0.2,color='b',zorder=0)
     fig.savefig(f'output_plots/{source_name}_surface_brightness_HE_{roi_name}_{ana_tag}.png',bbox_inches='tight')
     axbig.remove()
 
@@ -529,6 +781,9 @@ PlotSkyMap(fig,'significance',logE_min,logE_mid,sum_significance_sky_map_LE,f'{s
 PlotSkyMap(fig,'excess count',logE_min,logE_mid,sum_excess_sky_map_LE,f'{source_name}_excess_sky_map_LE_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
 PlotSkyMap(fig,'significance',logE_mid,logE_max,sum_significance_sky_map_HE,f'{source_name}_significance_sky_map_HE_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,max_z=5.)
 PlotSkyMap(fig,'excess count',logE_mid,logE_max,sum_excess_sky_map_HE,f'{source_name}_excess_sky_map_HE_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
+
+for mimic in range(0,n_mimic):
+    PlotSkyMap(fig,'significance',logE_min,logE_max,sum_mimic_significance_sky_map_allE[mimic],f'{source_name}_significance_sky_map_allE_mimic{mimic}_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,max_z=5.)
 
 print (f'total_exposure = {total_exposure}')
 print (f'good_exposure = {good_exposure}')

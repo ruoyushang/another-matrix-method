@@ -96,15 +96,18 @@ def GetRunElevAzim(smi_input,run_number):
 def sortFirst(val):
     return val[0]
 
-def ReadRunListFromFile(smi_input,input_on_file,input_off_file):
+def ReadRunListFromFile(smi_input,input_on_file,input_off_file,input_mimic_file):
 
     on_runlist = []
     off_runlist = []
+    mimic_runlist = []
     all_runlist = []
 
     on_inputFile = open(input_on_file)
     for on_line in on_inputFile:
+
         onrun_elev, onrun_azim = GetRunElevAzim(smi_input,int(on_line))
+
         off_inputFile = open(input_off_file)
         paired_off_runs = []
         for off_line in off_inputFile:
@@ -113,7 +116,17 @@ def ReadRunListFromFile(smi_input,input_on_file,input_off_file):
             off_run = int(line_split[1])
             if on_run==int(on_line):
                 paired_off_runs += [off_run]
-        all_runlist += [(onrun_elev,int(on_line),paired_off_runs)]
+
+        mimic_inputFile = open(input_mimic_file)
+        paired_mimic_runs = []
+        for mimic_line in mimic_inputFile:
+            line_split = mimic_line.split()
+            on_run = int(line_split[0])
+            mimic_run = int(line_split[1])
+            if on_run==int(on_line):
+                paired_mimic_runs += [mimic_run]
+
+        all_runlist += [(onrun_elev,int(on_line),paired_off_runs,paired_mimic_runs)]
 
     all_runlist.sort(key=sortFirst,reverse=True)
     #all_runlist.sort(key=sortFirst)
@@ -121,8 +134,9 @@ def ReadRunListFromFile(smi_input,input_on_file,input_off_file):
     for run in range(0,len(all_runlist)):
         on_runlist += [all_runlist[run][1]]
         off_runlist += [all_runlist[run][2]]
+        mimic_runlist += [all_runlist[run][3]]
 
-    return on_runlist, off_runlist
+    return on_runlist, off_runlist, mimic_runlist
 
 def ReadOffRunListFromFile(input_file):
 
@@ -546,10 +560,10 @@ def build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_
 
     return big_matrix
 
-def build_skymap(smi_input,eigenvector_path,big_matrix_path,runlist,off_runlist,src_ra,src_dec,onoff,max_runs=1e10):
+def build_skymap(smi_input,eigenvector_path,big_matrix_path,runlist,mimic_runlist,src_ra,src_dec,onoff,max_runs=1e10):
 
     global skymap_bins
-    if onoff=='ON':
+    if onoff=='ON' or 'MIMIC' in onoff:
         skymap_bins = fine_skymap_bins
 
     # start memory profiling
@@ -600,10 +614,22 @@ def build_skymap(smi_input,eigenvector_path,big_matrix_path,runlist,off_runlist,
     print (f'big_eigenvectors.shape = {big_eigenvectors.shape}') 
 
     print ('build big matrix...')
+
+    big_on_matrix = []
+
     print (f'runlist = {runlist}')
-    print (f'off_runlist = {off_runlist}')
-    big_on_matrix = build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True)
-    #big_off_matrix = build_big_camera_matrix(smi_input,off_runlist[0],max_runs=1e10,is_on=True)
+    print (f'mimic_runlist = {mimic_runlist}')
+
+    if 'MIMIC' in onoff:
+        mimic_index = int(onoff.strip('MIMIC'))-1
+        new_mimic_runlist = []
+        for run in range(0,len(runlist)):
+            if run>=len(mimic_runlist): continue
+            if mimic_index>=len(mimic_runlist[run]): continue
+            new_mimic_runlist += [mimic_runlist[run][mimic_index]]
+        big_on_matrix = build_big_camera_matrix(smi_input,new_mimic_runlist,max_runs=1e10,is_on=True)
+    else:
+        big_on_matrix = build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True)
 
     #if big_on_matrix[0]==None or big_off_matrix[0]==None:
     #if big_on_matrix[0]==None:
@@ -626,21 +652,6 @@ def build_skymap(smi_input,eigenvector_path,big_matrix_path,runlist,off_runlist,
     data_xyoff_map_1d = np.zeros_like(big_on_matrix[0])
     for entry in range(0,len(big_on_matrix)):
         data_xyoff_map_1d += np.array(big_on_matrix[entry])
-
-    #min_chi2 = 1e10
-    #best_template_xyoff_map_1d = np.zeros_like(data_xyoff_map_1d)
-    #for entry in range(0,len(big_matrix)):
-    #    template_xyoff_map_1d = big_matrix[entry]
-    #    template_norm = cosmic_ray_like_count(template_xyoff_map_1d,region_type=0)
-    #    on_data_norm = cosmic_ray_like_count(data_xyoff_map_1d,region_type=0)
-    #    if template_norm==0.: continue
-    #    template_xyoff_map_1d = np.array(template_xyoff_map_1d)*on_data_norm/template_norm
-    #    diff_xyoff_map_1d = data_xyoff_map_1d - template_xyoff_map_1d
-    #    init_params = [0.] * effective_matrix_rank
-    #    chi2 = cosmic_ray_like_chi2(init_params,init_params,big_eigenvectors,diff_xyoff_map_1d,template_xyoff_map_1d,0)
-    #    if min_chi2>chi2:
-    #        min_chi2 = chi2
-    #        best_template_xyoff_map_1d = template_xyoff_map_1d
 
     template_norm = cosmic_ray_like_count(avg_xyoff_map_1d,region_type=0)
     on_data_norm = cosmic_ray_like_count(data_xyoff_map_1d,region_type=0)
@@ -800,8 +811,9 @@ def build_skymap(smi_input,eigenvector_path,big_matrix_path,runlist,off_runlist,
 
 
     run_count = 0
-    for run_number in runlist:
+    for run in range(0,len(runlist)):
 
+        run_number = runlist[run]
         print (f'analyzing {run_count}/{len(runlist)} runs...')
     
         print (f'analyzing run {run_number}')
@@ -813,7 +825,6 @@ def build_skymap(smi_input,eigenvector_path,big_matrix_path,runlist,off_runlist,
         run_count += 1
     
         InputFile = ROOT.TFile(rootfile_name)
-
         TreeName = f'run_{run_number}/stereo/pointingDataReduced'
         TelTree = InputFile.Get(TreeName)
         TelTree.GetEntry(int(float(TelTree.GetEntries())/2.))
@@ -826,7 +837,22 @@ def build_skymap(smi_input,eigenvector_path,big_matrix_path,runlist,off_runlist,
 
         if TelElevation<run_elev_cut: continue
 
+        if 'MIMIC' in onoff:
+            mimic_index = int(onoff.strip('MIMIC'))-1
+            run_number = mimic_runlist[run][mimic_index]
+            print (f'analyzing mimic run {run_number}')
+
+            InputFile.Close()
+            rootfile_name = f'{smi_input}/{run_number}.anasum.root'
+            print (rootfile_name)
+            if not os.path.exists(rootfile_name):
+                print (f'file does not exist.')
+                continue
+            InputFile = ROOT.TFile(rootfile_name)
+
         TreeName = f'run_{run_number}/stereo/DL3EventTree'
+        print (f'TreeName = {TreeName}')
+
         EvtTree = InputFile.Get(TreeName)
         total_entries = EvtTree.GetEntries()
         #print (f'total_entries = {total_entries}')
@@ -1625,22 +1651,52 @@ def GetHessSS433w():
     return energies, fluxes, flux_errs
 
 
-def PrintInformationRoI(fig,source_name,hist_data_skymap,hist_bkgd_skymap,hist_flux_skymap,hist_flux_err_skymap,roi_name,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r):
+def PrintInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,hist_data_skymap,hist_bkgd_skymap,hist_flux_skymap,hist_flux_err_skymap,hist_mimic_data_skymap,hist_mimic_bkgd_skymap,roi_name,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r):
 
     energy_axis, energy_error, flux, flux_stat_err = GetRegionSpectrum(hist_flux_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,hist_error_skymap=hist_flux_err_skymap)
     energy_axis, energy_error, data, data_stat_err = GetRegionSpectrum(hist_data_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
     energy_axis, energy_error, bkgd, bkgd_stat_err = GetRegionSpectrum(hist_bkgd_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
 
+    bkgd_syst_err = np.zeros_like(bkgd_stat_err)
+    bkgd_incl_err = np.zeros_like(bkgd_stat_err)
+    flux_syst_err = np.zeros_like(bkgd_stat_err)
+    flux_incl_err = np.zeros_like(bkgd_stat_err)
+    n_mimic = len(hist_mimic_data_skymap)
+    list_mimic_data = []
+    list_mimic_bkgd = []
+    for mimic in range(0,n_mimic):
+        mimic_energy_axis, mimic_energy_error, mimic_data, mimic_data_stat_err = GetRegionSpectrum(hist_mimic_data_skymap[mimic],roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
+        mimic_energy_axis, mimic_energy_error, mimic_bkgd, mimic_bkgd_stat_err = GetRegionSpectrum(hist_mimic_bkgd_skymap[mimic],roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
+        list_mimic_data += [mimic_data]
+        list_mimic_bkgd += [mimic_bkgd]
+    for binx in range(0,len(energy_axis)):
+        stat_err = data_stat_err[binx]
+        syst_err = 0.
+        for mimic in range(0,n_mimic):
+            syst_err += pow(list_mimic_data[mimic][binx]-list_mimic_bkgd[mimic][binx],2)
+        syst_err = pow(max(syst_err/float(n_mimic)-stat_err*stat_err,0.),0.5)
+        bkgd_syst_err[binx] = syst_err
+        bkgd_incl_err[binx] = pow(pow(stat_err,2)+pow(syst_err,2),0.5)
+        if stat_err>0.:
+            flux_syst_err[binx] = syst_err/stat_err*flux_stat_err[binx]
+        else:
+            flux_syst_err[binx] = 0.
+        flux_incl_err[binx] = pow(pow(flux_syst_err[binx],2)+pow(flux_stat_err[binx],2),0.5)
+
+
     vectorize_f_crab = np.vectorize(flux_crab_func)
     ydata_crab_ref = pow(np.array(energy_axis),2)*vectorize_f_crab(energy_axis)
 
+    flux_floor = []
     flux_cu = []
     flux_err_cu = []
     for binx in range(0,len(energy_axis)):
         if flux[binx]>0.:
+            flux_floor += [flux[binx]]
             flux_cu += [flux[binx]/ydata_crab_ref[binx]]
             flux_err_cu += [flux_stat_err[binx]/ydata_crab_ref[binx]]
         else:
+            flux_floor += [0.]
             flux_cu += [0.]
             flux_err_cu += [0.]
 
@@ -1652,8 +1708,44 @@ def PrintInformationRoI(fig,source_name,hist_data_skymap,hist_bkgd_skymap,hist_f
 
     print ('===============================================================================================================')
     print (f'RoI : {roi_name}')
+
+    min_energy = pow(10.,logE_bins[logE_min])
+    mid_energy = pow(10.,logE_bins[logE_mid])
+    max_energy = pow(10.,logE_bins[logE_max])
+
+    sum_data = 0.
+    sum_bkgd = 0.
+    sum_error = 0.
     for binx in range(0,len(energy_axis)):
-        print (f'E = {energy_axis[binx]:0.2f} TeV, data = {data[binx]:0.1f}, bkgd = {bkgd[binx]:0.1f}, flux = {flux[binx]:0.2e} TeV/cm2/s ({flux_cu[binx]:0.2f} CU)')
+        if energy_axis[binx]>min_energy and energy_axis[binx]<mid_energy:
+            sum_data += data[binx]
+            sum_bkgd += bkgd[binx]
+            sum_error += bkgd_incl_err[binx]*bkgd_incl_err[binx]
+    sum_error = pow(sum_error,0.5)
+    significance = 0.
+    if sum_error>0.:
+        significance = (sum_data-sum_bkgd)/sum_error
+    print (f'E = {min_energy:0.2f}-{mid_energy:0.2f} TeV, data = {sum_data:0.1f}, bkgd = {sum_bkgd:0.1f} +/- {sum_error:0.1f}, significance = {significance:0.1f} sigma')
+
+    sum_data = 0.
+    sum_bkgd = 0.
+    sum_error = 0.
+    for binx in range(0,len(energy_axis)):
+        if energy_axis[binx]>mid_energy and energy_axis[binx]<max_energy:
+            sum_data += data[binx]
+            sum_bkgd += bkgd[binx]
+            sum_error += bkgd_incl_err[binx]*bkgd_incl_err[binx]
+    sum_error = pow(sum_error,0.5)
+    significance = 0.
+    if sum_error>0.:
+        significance = (sum_data-sum_bkgd)/sum_error
+    print (f'E = {mid_energy:0.2f}-{max_energy:0.2f} TeV, data = {sum_data:0.1f}, bkgd = {sum_bkgd:0.1f} +/- {sum_error:0.1f}, significance = {significance:0.1f} sigma')
+
+    for binx in range(0,len(energy_axis)):
+        significance = 0.
+        if bkgd_incl_err[binx]>0.:
+            significance = (data[binx]-bkgd[binx])/bkgd_incl_err[binx]
+        print (f'E = {energy_axis[binx]:0.2f} TeV, data = {data[binx]:0.1f} +/- {data_stat_err[binx]:0.1f}, bkgd = {bkgd[binx]:0.1f} +/- {bkgd_syst_err[binx]:0.1f}, flux = {flux[binx]:0.2e} +/- {flux_incl_err[binx]:0.2e} TeV/cm2/s ({flux_cu[binx]:0.2f} CU), significance = {significance:0.1f} sigma')
     print ('===============================================================================================================')
 
     fig.clf()
@@ -1684,6 +1776,7 @@ def PrintInformationRoI(fig,source_name,hist_data_skymap,hist_bkgd_skymap,hist_f
     axbig.set_ylabel(label_y)
     axbig.set_xscale('log')
     axbig.set_yscale('log')
+    axbig.fill_between(energy_axis,np.array(flux_floor)-np.array(flux_incl_err),np.array(flux_floor)+np.array(flux_incl_err),alpha=0.2,color='b',zorder=0)
     axbig.errorbar(energy_axis,flux,flux_stat_err,xerr=energy_error,color='k',marker='_',ls='none',label=f'VERITAS ({roi_name})',zorder=1)
     if 'SS433' in source_name:
         HessSS433e_energies, HessSS433e_fluxes, HessSS433e_flux_errs = GetHessSS433e()
@@ -1788,7 +1881,7 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
         excl_region_r = [0.0]
         region_x = [src_ra]
         region_y = [src_dec]
-        region_r = [calibration_radius]
+        region_r = [1.0]
         region_name = ['center']
 
 

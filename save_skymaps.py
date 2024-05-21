@@ -48,12 +48,13 @@ print (f'path_to_eigenvector = {path_to_eigenvector}')
 path_to_big_matrix = f'{smi_output}/big_off_matrix_{source_name}_{input_epoch}.pkl'
 print (f'path_to_big_matrix = {path_to_big_matrix}')
 
-if onoff=='ON':
+if onoff=='ON' or 'MIMIC' in onoff:
     skymap_bins = fine_skymap_bins
 
 on_file = f'/nevis/tehanu/home/ryshang/veritas_analysis/another-matrix-method/output_vts_query/RunList_{source_name}_{input_epoch}.txt'
 off_file = f'/nevis/tehanu/home/ryshang/veritas_analysis/another-matrix-method/output_vts_query/PairList_{source_name}_{input_epoch}.txt'
-on_runlist, off_runlist = ReadRunListFromFile(smi_input,on_file,off_file)
+mimic_file = f'/nevis/tehanu/home/ryshang/veritas_analysis/another-matrix-method/output_vts_query/ImposterList_{source_name}_{input_epoch}.txt'
+on_runlist, off_runlist, mimic_runlist = ReadRunListFromFile(smi_input,on_file,off_file,mimic_file)
 
 xsky_start = src_ra+skymap_size
 xsky_end = src_ra-skymap_size
@@ -67,6 +68,8 @@ big_runlist = []
 small_runlist = []
 big_off_runlist = []
 small_off_runlist = []
+big_mimic_runlist = []
+small_mimic_runlist = []
 nruns_in_small_list = 1
 #nruns_in_small_list = 10
 run_count = 0
@@ -76,6 +79,7 @@ for run in range(0,total_runs):
     #    continue
     small_runlist += [on_runlist[run]]
     small_off_runlist += [off_runlist[run]]
+    small_mimic_runlist += [mimic_runlist[run]]
     run_count += 1
     #if (run % nruns_in_small_list)==0 and run_count>=nruns_in_small_list:
     if (run % nruns_in_small_list)==(nruns_in_small_list-1):
@@ -83,6 +87,8 @@ for run in range(0,total_runs):
         small_runlist = []
         big_off_runlist += [small_off_runlist]
         small_off_runlist = []
+        big_mimic_runlist += [small_mimic_runlist]
+        small_mimic_runlist = []
         run_count = 0
 
 total_data_xyoff_map = []
@@ -121,7 +127,7 @@ for small_runlist in range(0,len(big_runlist)):
     run_list_count += 1
     print (f'analyzing {run_list_count}/{len(big_runlist)} lists...')
 
-    run_info, run_incl_sky_map, run_data_sky_map, run_fit_sky_map, run_data_xyoff_map, run_fit_xyoff_map, run_ratio_xyoff_map = build_skymap(smi_input,path_to_eigenvector,path_to_big_matrix,big_runlist[small_runlist],big_off_runlist[small_runlist],src_ra,src_dec,onoff,sky_tag)
+    run_info, run_incl_sky_map, run_data_sky_map, run_fit_sky_map, run_data_xyoff_map, run_fit_xyoff_map, run_ratio_xyoff_map = build_skymap(smi_input,path_to_eigenvector,path_to_big_matrix,big_runlist[small_runlist],big_mimic_runlist[small_runlist],src_ra,src_dec,onoff,sky_tag)
 
     run_exposure_hours = run_info[0]
     run_elev = run_info[1]
