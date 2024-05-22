@@ -39,15 +39,15 @@ skymap_size = common_functions.skymap_size
 skymap_bins = common_functions.skymap_bins
 fine_skymap_bins = common_functions.fine_skymap_bins
 
-#logE_min = 0
-#logE_mid = 5
+
+#logE_min = 1
+#logE_mid = 4
 #logE_max = logE_nbins
 
-# SS 433
-logE_min = 0
+# MGRO J1908+06
+logE_min = 3
 logE_mid = 6
 logE_max = logE_nbins
-
 
 fig, ax = plt.subplots()
 figsize_x = 8.6
@@ -357,10 +357,11 @@ for epoch in input_epoch:
                 bkgd = np.sum(fit_xyoff_map[logE].waxis[:,:,0])
                 if bkgd>bkgd_peak:
                     bkgd_peak = bkgd
-                    logE_peak = logE+1
+                    logE_peak = logE
 
             for logE in range(0,logE_nbins):
                 if logE<logE_peak: continue
+                #if logE<logE_peak+1: continue
                 if logE<logE_min: continue
                 if logE>logE_max: continue
 
@@ -484,7 +485,7 @@ for mimic in range(0,n_mimic):
     for logE in range(0,logE_nbins):
         make_flux_map(sum_mimic_incl_sky_map_smooth[mimic][logE],sum_mimic_data_sky_map[mimic][logE],sum_mimic_bkgd_sky_map[mimic][logE],sum_mimic_flux_sky_map[mimic][logE],sum_mimic_flux_err_sky_map[mimic][logE],avg_energy,delta_energy)
 
-for logE in range(0,logE_nbins):
+for logE in range(logE_min,logE_max):
     PlotSkyMap(fig,'$E^{2}$ dN/dE [$\mathrm{TeV}\cdot\mathrm{cm}^{-2}\mathrm{s}^{-1}$]',logE,logE+1,sum_flux_sky_map_smooth[logE],f'{source_name}_flux_sky_map_logE{logE}_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
     PlotSkyMap(fig,'background count',logE,logE+1,sum_bkgd_sky_map_smooth[logE],f'{source_name}_bkgd_sky_map_logE{logE}_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma',layer=0)
     PlotSkyMap(fig,'excess count',logE,logE+1,sum_excess_sky_map_smooth[logE],f'{source_name}_excess_sky_map_logE{logE}_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma',layer=0)
@@ -517,7 +518,7 @@ PlotSkyMap(fig,'$E^{2}$ dN/dE [$\mathrm{TeV}\cdot\mathrm{cm}^{-2}\mathrm{s}^{-1}
 PlotSkyMap(fig,'$E^{2}$ dN/dE [$\mathrm{TeV}\cdot\mathrm{cm}^{-2}\mathrm{s}^{-1}$]',logE_min,logE_mid,sum_flux_sky_map_LE_smooth,f'{source_name}_flux_sky_map_LE_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
 PlotSkyMap(fig,'$E^{2}$ dN/dE [$\mathrm{TeV}\cdot\mathrm{cm}^{-2}\mathrm{s}^{-1}$]',logE_mid,logE_max,sum_flux_sky_map_HE_smooth,f'{source_name}_flux_sky_map_HE_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
 
-for logE in range(0,logE_nbins):
+for logE in range(logE_min,logE_max):
     low_energy = int(1000.*pow(10.,logE_bins[logE]))
     high_energy = int(1000.*pow(10.,logE_bins[logE+1]))
     SaveFITS(sum_flux_sky_map_smooth[logE],f'sum_flux_sky_map_{low_energy}GeV_{high_energy}GeV')
@@ -535,7 +536,7 @@ for roi in range(0,len(all_roi_name)):
 
     PrintInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,sum_data_sky_map,sum_bkgd_sky_map,sum_flux_sky_map,sum_flux_err_sky_map,sum_mimic_data_sky_map,sum_mimic_bkgd_sky_map,roi_name,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
     
-    for logE in range(0,logE_nbins):
+    for logE in range(logE_min,logE_max):
         radial_axis, profile_axis, profile_err_axis = GetRadialProfile(sum_flux_sky_map[logE],sum_flux_err_sky_map[logE],roi_x,roi_y,2.0)
         baseline_yaxis = [0. for i in range(0,len(radial_axis))]
         fig.clf()
@@ -544,8 +545,8 @@ for roi in range(0,len(all_roi_name)):
         fig.set_figheight(figsize_y)
         fig.set_figwidth(figsize_x)
         axbig = fig.add_subplot()
-        label_x = 'angular distance'
-        label_y = 'surface brightness'
+        label_x = 'angular distance [deg]'
+        label_y = 'surface brightness [$\mathrm{TeV}\ \mathrm{cm}^{-2}\mathrm{s}^{-1}\mathrm{sr}^{-1}$]'
         axbig.set_xlabel(label_x)
         axbig.set_ylabel(label_y)
         axbig.plot(radial_axis, baseline_yaxis, color='b', ls='dashed')
@@ -553,48 +554,40 @@ for roi in range(0,len(all_roi_name)):
         fig.savefig(f'output_plots/{source_name}_surface_brightness_logE{logE}_{roi_name}_{ana_tag}.png',bbox_inches='tight')
         axbig.remove()
 
+    on_radial_axis, on_profile_axis, on_profile_err_axis = GetRadialProfile(sum_flux_sky_map_allE,sum_flux_err_sky_map_allE,roi_x,roi_y,2.0)
     fig.clf()
     figsize_x = 7
     figsize_y = 5
     fig.set_figheight(figsize_y)
     fig.set_figwidth(figsize_x)
     axbig = fig.add_subplot()
-    label_x = 'angular distance'
-    label_y = 'surface brightness'
+    label_x = 'angular distance [deg]'
+    label_y = 'surface brightness [$\mathrm{TeV}\ \mathrm{cm}^{-2}\mathrm{s}^{-1}\mathrm{sr}^{-1}$]'
     axbig.set_xlabel(label_x)
     axbig.set_ylabel(label_y)
     mimic_profile_axis = []
+    mimic_profile_err_axis = []
     for mimic in range(0,n_mimic):
         radial_axis, profile_axis, profile_err_axis = GetRadialProfile(sum_mimic_flux_sky_map_allE[mimic],sum_mimic_flux_err_sky_map_allE[mimic],roi_x,roi_y,2.0)
         axbig.errorbar(radial_axis,profile_axis,profile_err_axis,marker='s',ls='none',zorder=mimic+1)
         mimic_profile_axis += [profile_axis]
+        mimic_profile_err_axis += [profile_err_axis]
     profile_syst_err_axis = []
     for binx in range(0,len(mimic_profile_axis[0])):
         syst_err = 0.
+        stat_err = 0.
         for mimic in range(0,n_mimic):
             syst_err += pow(mimic_profile_axis[mimic][binx],2)
+            stat_err += pow(mimic_profile_err_axis[mimic][binx],2)
+        syst_err = max(0.,syst_err-stat_err)
         syst_err = pow(syst_err/float(n_mimic),0.5)
-        profile_syst_err_axis += [syst_err]
+        profile_syst_err_axis += [pow(pow(syst_err,2)+pow(on_profile_err_axis[binx],2),0.5)]
     baseline_yaxis = [0. for i in range(0,len(radial_axis))]
     axbig.plot(radial_axis, baseline_yaxis, color='b', ls='dashed')
     axbig.fill_between(radial_axis,-np.array(profile_syst_err_axis),np.array(profile_syst_err_axis),alpha=0.2,color='b',zorder=0)
     fig.savefig(f'output_plots/{source_name}_surface_brightness_allE_{roi_name}_mimic_{ana_tag}.png',bbox_inches='tight')
     axbig.remove()
 
-    on_radial_axis, on_profile_axis, on_profile_err_axis = GetRadialProfile(sum_flux_sky_map_allE,sum_flux_err_sky_map_allE,roi_x,roi_y,2.0)
-    mimic_profile_axis = []
-    mimic_profile_err_axis = []
-    for mimic in range(0,n_mimic):
-        radial_axis, profile_axis, profile_err_axis = GetRadialProfile(sum_mimic_flux_sky_map_allE[mimic],sum_mimic_flux_err_sky_map_allE[mimic],roi_x,roi_y,2.0)
-        mimic_profile_axis += [profile_axis]
-        mimic_profile_err_axis += [profile_err_axis]
-    profile_syst_err_axis = []
-    for binx in range(0,len(mimic_profile_axis[0])):
-        syst_err = 0.
-        for mimic in range(0,n_mimic):
-            syst_err += max(0., pow(mimic_profile_axis[mimic][binx],2) - pow(mimic_profile_err_axis[mimic][binx],2))
-        syst_err = pow(syst_err/float(n_mimic),0.5)
-        profile_syst_err_axis += [pow(pow(syst_err,2)+pow(on_profile_err_axis[binx],2),0.5)]
     baseline_yaxis = [0. for i in range(0,len(on_radial_axis))]
     fig.clf()
     figsize_x = 7
@@ -602,8 +595,8 @@ for roi in range(0,len(all_roi_name)):
     fig.set_figheight(figsize_y)
     fig.set_figwidth(figsize_x)
     axbig = fig.add_subplot()
-    label_x = 'angular distance'
-    label_y = 'surface brightness'
+    label_x = 'angular distance [deg]'
+    label_y = 'surface brightness [$\mathrm{TeV}\ \mathrm{cm}^{-2}\mathrm{s}^{-1}\mathrm{sr}^{-1}$]'
     axbig.set_xlabel(label_x)
     axbig.set_ylabel(label_y)
     axbig.plot(on_radial_axis, baseline_yaxis, color='b', ls='dashed')
@@ -611,21 +604,41 @@ for roi in range(0,len(all_roi_name)):
     axbig.fill_between(on_radial_axis,np.array(on_profile_axis)-np.array(profile_syst_err_axis),np.array(on_profile_axis)+np.array(profile_syst_err_axis),alpha=0.2,color='b',zorder=0)
     fig.savefig(f'output_plots/{source_name}_surface_brightness_allE_{roi_name}_{ana_tag}.png',bbox_inches='tight')
     axbig.remove()
-    
+
     on_radial_axis, on_profile_axis, on_profile_err_axis = GetRadialProfile(sum_flux_sky_map_LE,sum_flux_err_sky_map_LE,roi_x,roi_y,2.0)
+    fig.clf()
+    figsize_x = 7
+    figsize_y = 5
+    fig.set_figheight(figsize_y)
+    fig.set_figwidth(figsize_x)
+    axbig = fig.add_subplot()
+    label_x = 'angular distance [deg]'
+    label_y = 'surface brightness [$\mathrm{TeV}\ \mathrm{cm}^{-2}\mathrm{s}^{-1}\mathrm{sr}^{-1}$]'
+    axbig.set_xlabel(label_x)
+    axbig.set_ylabel(label_y)
     mimic_profile_axis = []
     mimic_profile_err_axis = []
     for mimic in range(0,n_mimic):
         radial_axis, profile_axis, profile_err_axis = GetRadialProfile(sum_mimic_flux_sky_map_LE[mimic],sum_mimic_flux_err_sky_map_LE[mimic],roi_x,roi_y,2.0)
+        axbig.errorbar(radial_axis,profile_axis,profile_err_axis,marker='s',ls='none',zorder=mimic+1)
         mimic_profile_axis += [profile_axis]
         mimic_profile_err_axis += [profile_err_axis]
     profile_syst_err_axis = []
     for binx in range(0,len(mimic_profile_axis[0])):
         syst_err = 0.
+        stat_err = 0.
         for mimic in range(0,n_mimic):
-            syst_err += max(0., pow(mimic_profile_axis[mimic][binx],2) - pow(mimic_profile_err_axis[mimic][binx],2))
+            syst_err += pow(mimic_profile_axis[mimic][binx],2)
+            stat_err += pow(mimic_profile_err_axis[mimic][binx],2)
+        syst_err = max(0.,syst_err-stat_err)
         syst_err = pow(syst_err/float(n_mimic),0.5)
         profile_syst_err_axis += [pow(pow(syst_err,2)+pow(on_profile_err_axis[binx],2),0.5)]
+    baseline_yaxis = [0. for i in range(0,len(radial_axis))]
+    axbig.plot(radial_axis, baseline_yaxis, color='b', ls='dashed')
+    axbig.fill_between(radial_axis,-np.array(profile_syst_err_axis),np.array(profile_syst_err_axis),alpha=0.2,color='b',zorder=0)
+    fig.savefig(f'output_plots/{source_name}_surface_brightness_LE_{roi_name}_mimic_{ana_tag}.png',bbox_inches='tight')
+    axbig.remove()
+    
     baseline_yaxis = [0. for i in range(0,len(on_radial_axis))]
     fig.clf()
     figsize_x = 7
@@ -633,8 +646,8 @@ for roi in range(0,len(all_roi_name)):
     fig.set_figheight(figsize_y)
     fig.set_figwidth(figsize_x)
     axbig = fig.add_subplot()
-    label_x = 'angular distance'
-    label_y = 'surface brightness'
+    label_x = 'angular distance [deg]'
+    label_y = 'surface brightness [$\mathrm{TeV}\ \mathrm{cm}^{-2}\mathrm{s}^{-1}\mathrm{sr}^{-1}$]'
     axbig.set_xlabel(label_x)
     axbig.set_ylabel(label_y)
     axbig.plot(on_radial_axis, baseline_yaxis, color='b', ls='dashed')
@@ -644,19 +657,39 @@ for roi in range(0,len(all_roi_name)):
     axbig.remove()
     
     on_radial_axis, on_profile_axis, on_profile_err_axis = GetRadialProfile(sum_flux_sky_map_HE,sum_flux_err_sky_map_HE,roi_x,roi_y,2.0)
+    fig.clf()
+    figsize_x = 7
+    figsize_y = 5
+    fig.set_figheight(figsize_y)
+    fig.set_figwidth(figsize_x)
+    axbig = fig.add_subplot()
+    label_x = 'angular distance [deg]'
+    label_y = 'surface brightness [$\mathrm{TeV}\ \mathrm{cm}^{-2}\mathrm{s}^{-1}\mathrm{sr}^{-1}$]'
+    axbig.set_xlabel(label_x)
+    axbig.set_ylabel(label_y)
     mimic_profile_axis = []
     mimic_profile_err_axis = []
     for mimic in range(0,n_mimic):
         radial_axis, profile_axis, profile_err_axis = GetRadialProfile(sum_mimic_flux_sky_map_HE[mimic],sum_mimic_flux_err_sky_map_HE[mimic],roi_x,roi_y,2.0)
+        axbig.errorbar(radial_axis,profile_axis,profile_err_axis,marker='s',ls='none',zorder=mimic+1)
         mimic_profile_axis += [profile_axis]
         mimic_profile_err_axis += [profile_err_axis]
     profile_syst_err_axis = []
     for binx in range(0,len(mimic_profile_axis[0])):
         syst_err = 0.
+        stat_err = 0.
         for mimic in range(0,n_mimic):
-            syst_err += max(0., pow(mimic_profile_axis[mimic][binx],2) - pow(mimic_profile_err_axis[mimic][binx],2))
+            syst_err += pow(mimic_profile_axis[mimic][binx],2)
+            stat_err += pow(mimic_profile_err_axis[mimic][binx],2)
+        syst_err = max(0.,syst_err-stat_err)
         syst_err = pow(syst_err/float(n_mimic),0.5)
         profile_syst_err_axis += [pow(pow(syst_err,2)+pow(on_profile_err_axis[binx],2),0.5)]
+    baseline_yaxis = [0. for i in range(0,len(radial_axis))]
+    axbig.plot(radial_axis, baseline_yaxis, color='b', ls='dashed')
+    axbig.fill_between(radial_axis,-np.array(profile_syst_err_axis),np.array(profile_syst_err_axis),alpha=0.2,color='b',zorder=0)
+    fig.savefig(f'output_plots/{source_name}_surface_brightness_HE_{roi_name}_mimic_{ana_tag}.png',bbox_inches='tight')
+    axbig.remove()
+
     baseline_yaxis = [0. for i in range(0,len(on_radial_axis))]
     fig.clf()
     figsize_x = 7
@@ -664,8 +697,8 @@ for roi in range(0,len(all_roi_name)):
     fig.set_figheight(figsize_y)
     fig.set_figwidth(figsize_x)
     axbig = fig.add_subplot()
-    label_x = 'angular distance'
-    label_y = 'surface brightness'
+    label_x = 'angular distance [deg]'
+    label_y = 'surface brightness [$\mathrm{TeV}\ \mathrm{cm}^{-2}\mathrm{s}^{-1}\mathrm{sr}^{-1}$]'
     axbig.set_xlabel(label_x)
     axbig.set_ylabel(label_y)
     axbig.plot(on_radial_axis, baseline_yaxis, color='b', ls='dashed')
@@ -675,7 +708,7 @@ for roi in range(0,len(all_roi_name)):
     axbig.remove()
 
 
-for logE in range(0,logE_nbins):
+for logE in range(logE_min,logE_max):
 
     PlotSkyMap(fig,'significance',logE,logE+1,sum_significance_sky_map[logE],f'{source_name}_significance_sky_map_logE{logE}_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,max_z=5.)
 

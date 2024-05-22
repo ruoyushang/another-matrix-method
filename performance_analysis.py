@@ -54,16 +54,17 @@ ana_tag = []
 #ana_tag += [['rank10','b']]
 ana_tag += [['rank15','b']]
 ana_tag += [['rank20','b']]
-#ana_tag += [['rank25','b']]
+ana_tag += [['rank25','b']]
+ana_tag += [['rank30','b']]
 
 onoff = 'OFF'
 
 #exposure_per_group = 0.2
 #exposure_per_group = 1.
 #exposure_per_group = 5.
-exposure_per_group = 10.
+#exposure_per_group = 10.
 #exposure_per_group = 20.
-#exposure_per_group = 40.
+exposure_per_group = 40.
 #exposure_per_group = 80.
 cr_qual_cut = 1e10
 #cr_qual_cut = 230
@@ -199,11 +200,12 @@ for ana in range(0,len(ana_tag)):
                     bkgd = np.sum(bkgd_sky_map[logE].waxis[:,:,0])
                     if bkgd>bkgd_peak:
                         bkgd_peak = bkgd
-                        logE_peak = logE+1
+                        logE_peak = logE
     
                 for logE in range(0,logE_nbins):
 
                     if logE<logE_peak: continue
+                    #if logE<logE_peak+1: continue
                 
                     data_sum = np.sum(data_sky_map[logE].waxis[:,:,0])
                     bkgd_sum = np.sum(bkgd_sky_map[logE].waxis[:,:,0])

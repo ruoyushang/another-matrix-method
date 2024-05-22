@@ -1214,7 +1214,7 @@ def GetGammaSourceInfo():
     near_source_cut = 0.1
 
     drawBrightStar = False
-    drawPulsar = True
+    drawPulsar = False
     drawSNR = True
     drawLHAASO = False
     drawFermi = False
@@ -1493,12 +1493,13 @@ def make_flux_map(incl_sky_map,data_sky_map,bkgd_sky_map,flux_sky_map,flux_err_s
             bkgd = bkgd_sky_map.waxis[idx_x,idx_y,0]
             if norm>0.:
                 excess = data-bkgd
-                #error = max(pow(data,0.5),1.)
                 error = pow(data,0.5)
                 logE = logE_axis.get_bin(np.log10(avg_energy))
                 correction = GetFluxCalibration(logE)/norm*pow(avg_energy,2)/(100.*100.*3600.)/delta_energy
                 norm_ratio = norm/norm_content_max
-                norm_weight = 1./(1.+np.exp(-(norm_ratio-0.3)/0.05))
+                norm_weight = 1.
+                if norm_ratio<0.3: norm_weight = 0.
+                #norm_weight = 1./(1.+np.exp(-(norm_ratio-0.3)/0.05))
                 flux = excess*correction*norm_weight
                 flux_err = error*correction*norm_weight
                 flux_sky_map.waxis[idx_x,idx_y,0] = flux
@@ -1509,7 +1510,8 @@ def make_flux_map(incl_sky_map,data_sky_map,bkgd_sky_map,flux_sky_map,flux_err_s
 
 def GetRadialProfile(hist_flux_skymap,hist_error_skymap,roi_x,roi_y,roi_r):
 
-    pix_size = abs((hist_flux_skymap.yaxis[1]-hist_flux_skymap.yaxis[0])*(hist_flux_skymap.xaxis[1]-hist_flux_skymap.xaxis[0]))
+    deg2_to_sr =  3.046*1e-4
+    pix_size = abs((hist_flux_skymap.yaxis[1]-hist_flux_skymap.yaxis[0])*(hist_flux_skymap.xaxis[1]-hist_flux_skymap.xaxis[0]))*deg2_to_sr
     bin_size = min(0.2,4.*(hist_flux_skymap.yaxis[1]-hist_flux_skymap.yaxis[0]))
     radial_axis = MyArray1D(x_nbins=int(roi_r/bin_size),start_x=0.,end_x=roi_r)
 
@@ -1546,7 +1548,7 @@ def GetRadialProfile(hist_flux_skymap,hist_error_skymap,roi_x,roi_y,roi_r):
                     #    brightness_err_array[br] = max(pow(hist_error_skymap.waxis[bx,by,0],2),brightness_err_array[br])
         if pixel_array[br]==0.: continue
         brightness_array[br] = brightness_array[br]/pixel_array[br]
-        brightness_err_array[br] = pow(brightness_err_array[br]/pixel_array[br],0.5)
+        brightness_err_array[br] = pow(brightness_err_array[br],0.5)/pixel_array[br]
 
     return radius_array, brightness_array, brightness_err_array
 
@@ -1839,7 +1841,7 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
         excl_region_r += [0.0]
         region_x += [src_x]
         region_y += [src_y]
-        region_r += [0.5]
+        region_r += [1.2]
         region_name += ['SNR']
 
     elif 'SS433' in src_name:
