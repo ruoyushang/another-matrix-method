@@ -197,15 +197,14 @@ for ana in range(0,len(ana_tag)):
                 logE_peak = 0
                 bkgd_peak = 0.
                 for logE in range(0,logE_nbins):
-                    bkgd = np.sum(bkgd_sky_map[logE].waxis[:,:,0])
+                    bkgd = np.sum(bkgd_xyoff_map[logE].waxis[:,:,:])
                     if bkgd>bkgd_peak:
                         bkgd_peak = bkgd
                         logE_peak = logE
     
                 for logE in range(0,logE_nbins):
 
-                    if logE<logE_peak: continue
-                    #if logE<logE_peak+1: continue
+                    #if logE<logE_peak: continue
                 
                     data_sum = np.sum(data_sky_map[logE].waxis[:,:,0])
                     bkgd_sum = np.sum(bkgd_sky_map[logE].waxis[:,:,0])

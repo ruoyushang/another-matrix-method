@@ -5,6 +5,7 @@ import numpy as np
 import pickle
 import csv
 from scipy.optimize import least_squares, minimize
+from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
 import tracemalloc
 from mpl_toolkits.axes_grid1 import make_axes_locatable
@@ -16,7 +17,7 @@ sky_tag = os.environ.get("SKY_TAG")
 
 use_poisson_likelihood = True
 nuclear_norm_scale = 0.
-matrix_rank = 15
+matrix_rank = 10
 
 if sky_tag=='linear':
     use_poisson_likelihood = False
@@ -520,20 +521,21 @@ def build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_
 
             Xsky = TelRAJ2000 + Xderot
             Ysky = TelDecJ2000 + Yderot
-            #mirror_Xsky = TelRAJ2000 - Xderot
-            #mirror_Ysky = TelDecJ2000 + Yderot
-            #found_bright_star = CoincideWithBrightStars(Xsky, Ysky, bright_star_coord)
-            #found_gamma_source = CoincideWithBrightStars(Xsky, Ysky, gamma_source_coord)
-            #found_mirror_star = CoincideWithBrightStars(mirror_Xsky, mirror_Ysky, bright_star_coord)
-            #found_mirror_gamma_source = CoincideWithBrightStars(mirror_Xsky, mirror_Ysky, gamma_source_coord)
 
-            #if not is_on:
-            #    if found_bright_star: continue
-            #    if found_gamma_source: continue
-            #    if found_mirror_star or found_mirror_gamma_source:
-            #        xyoff_map[logE].fill(-Xderot,Yderot,GammaCut)
+            mirror_Xsky = TelRAJ2000 - Xderot
+            mirror_Ysky = TelDecJ2000 - Yderot
+            found_bright_star = CoincideWithBrightStars(Xsky, Ysky, bright_star_coord)
+            found_gamma_source = CoincideWithBrightStars(Xsky, Ysky, gamma_source_coord)
+            found_mirror_star = CoincideWithBrightStars(mirror_Xsky, mirror_Ysky, bright_star_coord)
+            found_mirror_gamma_source = CoincideWithBrightStars(mirror_Xsky, mirror_Ysky, gamma_source_coord)
+            if not is_on:
+                if found_bright_star: continue
+                if found_gamma_source: continue
+                if found_mirror_star or found_mirror_gamma_source:
+                    xyoff_map[logE].fill(-Xderot,-Yderot,GammaCut)
 
-            xyoff_map[logE].fill(Xoff,Yoff,GammaCut)
+            #xyoff_map[logE].fill(Xoff,Yoff,GammaCut)
+            xyoff_map[logE].fill(Xderot,Yderot,GammaCut)
     
         #for logE in range(0,logE_nbins):
         #    xyoff_map_1d = []
@@ -901,7 +903,8 @@ def build_skymap(smi_input,eigenvector_path,big_matrix_path,runlist,mimic_runlis
             incl_sky_map[logE].fill(Xsky,Ysky,0.5)
             if GammaCut>float(gcut_end): continue
 
-            cr_correction = ratio_xyoff_map[logE].get_bin_content(Xoff,Yoff,0.5)
+            #cr_correction = ratio_xyoff_map[logE].get_bin_content(Xoff,Yoff,0.5)
+            cr_correction = ratio_xyoff_map[logE].get_bin_content(Xderot,Yderot,0.5)
             if GammaCut<1.:
                 cr_correction = 0.
 
@@ -942,6 +945,8 @@ def cosmic_ray_like_chi2(try_params,ref_params,eigenvectors,diff_xyoff_map,init_
                     init = init_xyoff_map[idx_1d-1]
                     weight = 1.
 
+                    n_expect = max(0.0001,try_xyoff_map[idx_1d-1])
+                    n_data = diff + init
                     if region_type==0:
                         if gcut==0:
                             diff = 0.
@@ -949,20 +954,16 @@ def cosmic_ray_like_chi2(try_params,ref_params,eigenvectors,diff_xyoff_map,init_
                     elif region_type==1:
                         if gcut!=0: continue
 
-                    n_expect_total += try_xyoff_map[idx_1d-1]
-                    n_data_total += diff + init
+                    n_expect_total += n_expect
+                    n_data_total += n_data
  
                     if use_poisson_likelihood:
-                        n_expect = max(0.0001,try_xyoff_map[idx_1d-1])
-                        n_data = diff + init
                         if n_data==0.:
                             sum_log_likelihood += (n_expect)*weight
                         else:
                             sum_log_likelihood += (-1.*(n_data*np.log(n_expect) - n_expect - (n_data*np.log(n_data)-n_data)))*weight
                         nbins += 1.
                     else:
-                        n_expect = try_xyoff_map[idx_1d-1]
-                        n_data = diff + init
                         sum_log_likelihood += pow(n_expect-n_data,2)*weight
 
     if use_poisson_likelihood:
@@ -1215,11 +1216,11 @@ def GetGammaSourceInfo():
 
     drawBrightStar = False
     drawPulsar = False
-    drawSNR = True
+    drawSNR = False
     drawLHAASO = False
     drawFermi = False
     drawHAWC = False
-    drawTeV = False
+    drawTeV = True
 
     if drawBrightStar:
         star_name, star_ra, star_dec = ReadBrightStarListFromFile()
@@ -1508,11 +1509,11 @@ def make_flux_map(incl_sky_map,data_sky_map,bkgd_sky_map,flux_sky_map,flux_err_s
                 flux_sky_map.waxis[idx_x,idx_y,0] = 0.
                 flux_err_sky_map.waxis[idx_x,idx_y,0] = 0.
 
-def GetRadialProfile(hist_flux_skymap,hist_error_skymap,roi_x,roi_y,roi_r):
+def GetRadialProfile(hist_flux_skymap,hist_error_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,use_excl=True):
 
     deg2_to_sr =  3.046*1e-4
     pix_size = abs((hist_flux_skymap.yaxis[1]-hist_flux_skymap.yaxis[0])*(hist_flux_skymap.xaxis[1]-hist_flux_skymap.xaxis[0]))*deg2_to_sr
-    bin_size = min(0.2,4.*(hist_flux_skymap.yaxis[1]-hist_flux_skymap.yaxis[0]))
+    bin_size = min(0.1,2.*(hist_flux_skymap.yaxis[1]-hist_flux_skymap.yaxis[0]))
     radial_axis = MyArray1D(x_nbins=int(roi_r/bin_size),start_x=0.,end_x=roi_r)
 
     radius_array = []
@@ -1536,16 +1537,15 @@ def GetRadialProfile(hist_flux_skymap,hist_error_skymap,roi_x,roi_y,roi_r):
                 distance = pow(pow(bin_ra-roi_x,2) + pow(bin_dec-roi_y,2),0.5)
                 if distance<radial_axis.xaxis[br+1] and distance>=radial_axis.xaxis[br]: 
                     keep_event = True
+                if use_excl:
+                    for roi in range(0,len(excl_roi_x)):
+                        excl_distance = pow(pow(bin_ra-excl_roi_x[roi],2) + pow(bin_dec-excl_roi_y[roi],2),0.5)
+                        if excl_distance<excl_roi_r[roi]: 
+                            keep_event = False
                 if keep_event:
                     pixel_array[br] += 1.*pix_size
                     brightness_array[br] += hist_flux_skymap.waxis[bx,by,0]
                     brightness_err_array[br] += pow(hist_error_skymap.waxis[bx,by,0],2)
-                    #if not hist_flux_skymap.waxis[bx,by,0]==0.:
-                    #    brightness_array[br] += hist_flux_skymap.waxis[bx,by,0]
-                    #    brightness_err_array[br] += pow(hist_error_skymap.waxis[bx,by,0],2)
-                    #else:
-                    #    brightness_array[br] += 0.
-                    #    brightness_err_array[br] = max(pow(hist_error_skymap.waxis[bx,by,0],2),brightness_err_array[br])
         if pixel_array[br]==0.: continue
         brightness_array[br] = brightness_array[br]/pixel_array[br]
         brightness_err_array[br] = pow(brightness_err_array[br],0.5)/pixel_array[br]
@@ -1676,7 +1676,8 @@ def PrintInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,hist_data_sky
         syst_err = 0.
         for mimic in range(0,n_mimic):
             syst_err += pow(list_mimic_data[mimic][binx]-list_mimic_bkgd[mimic][binx],2)
-        syst_err = pow(max(syst_err/float(n_mimic)-stat_err*stat_err,0.),0.5)
+        if n_mimic>0:
+            syst_err = pow(max(syst_err/float(n_mimic)-stat_err*stat_err,0.),0.5)
         bkgd_syst_err[binx] = syst_err
         bkgd_incl_err[binx] = pow(pow(stat_err,2)+pow(syst_err,2),0.5)
         if stat_err>0.:
@@ -1792,9 +1793,6 @@ def PrintInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,hist_data_sky
 
 def DefineRegionOfInterest(src_name,src_ra,src_dec):
 
-    excl_region_x = []
-    excl_region_y = []
-    excl_region_r = []
     region_x = []
     region_y = []
     region_r = []
@@ -1802,9 +1800,6 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
 
     if 'Crab' in src_name:
 
-        excl_region_x = [src_ra]
-        excl_region_y = [src_dec]
-        excl_region_r = [0.0]
         region_x = [src_ra]
         region_y = [src_dec]
         region_r = [calibration_radius]
@@ -1812,9 +1807,6 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
 
     elif 'Geminga' in src_name:
 
-        excl_region_x = [src_ra]
-        excl_region_y = [src_dec]
-        excl_region_r = [0.0]
         region_x = [src_ra]
         region_y = [src_dec]
         region_r = [1.5]
@@ -1824,9 +1816,6 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
 
         src_x = 94.25
         src_y = 22.57
-        excl_region_x += [src_ra]
-        excl_region_y += [src_dec]
-        excl_region_r += [0.0]
         region_x += [src_x]
         region_y += [src_y]
         region_r += [1.0]
@@ -1836,29 +1825,44 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
 
         src_x = 305.21
         src_y = 40.43
-        excl_region_x += [src_ra]
-        excl_region_y += [src_dec]
-        excl_region_r += [0.0]
         region_x += [src_x]
         region_y += [src_y]
         region_r += [1.2]
         region_name += ['SNR']
 
+    elif 'PSR_J1907_p0602' in src_name:
+
+        region_x = [287.05]
+        region_y = [6.39]
+        region_r = [1.2]
+        region_name = ['3HWC']
+
+        region_x += [288.0833333]
+        region_y += [4.9166667]
+        region_r += [0.2]
+        region_name += ['SS443']
+
+    elif 'PSR_J1856_p0245' in src_name:
+
+        region_x = [284.3]
+        region_y = [2.7]
+        region_r = [1.0]
+        region_name = ['J1857+026']
+
+        region_x += [284.6]
+        region_y += [2.1]
+        region_r += [0.2]
+        region_name += ['J1858+020']
+
     elif 'SS433' in src_name:
     
         #SS 433 SNR
-        #excl_region_x += [src_ra]
-        #excl_region_y += [src_dec]
-        #excl_region_r += [0.0]
         #region_x += [288.0833333]
         #region_y += [4.9166667]
         #region_r += [0.2]
         #region_name += ['SNR']
     
         #SS 433 e1
-        excl_region_x += [src_ra]
-        excl_region_y += [src_dec]
-        excl_region_r += [0.0]
         region_x += [288.404]
         region_y += [4.930]
         region_r += [0.2]
@@ -1868,9 +1872,6 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
         #region_r = [0.1,0.1,0.1,0.1]
     
         #SS 433 w1
-        excl_region_x += [src_ra]
-        excl_region_y += [src_dec]
-        excl_region_r += [0.0]
         region_x += [287.654]
         region_y += [5.037]
         region_r += [0.2]
@@ -1878,16 +1879,13 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
 
     else:
 
-        excl_region_x = [src_ra]
-        excl_region_y = [src_dec]
-        excl_region_r = [0.0]
         region_x = [src_ra]
         region_y = [src_dec]
         region_r = [1.0]
         region_name = ['center']
 
 
-    return region_name, region_x, region_y, region_r, excl_region_x, excl_region_y, excl_region_r
+    return region_name, region_x, region_y, region_r
 
 def SaveFITS(skymap_input,filename):
 
@@ -1911,4 +1909,138 @@ def SaveFITS(skymap_input,filename):
             new_image_data[pix_x,pix_y] += skymap_input.waxis[pix_x,pix_y,0]
 
     fits.writeto('output_plots/%s.fits'%(filename), new_image_data, reduced_wcs.to_header(), overwrite=True)
+
+# Our function to fit is going to be a sum of two-dimensional Gaussians
+def gaussian(x, y, x0, y0, sigma, A):
+    #return A * np.exp( -((x-x0)/(2.*sigma))**2 -((y-y0)/(2.*sigma))**2)
+    #return A * np.exp(-((x-x0)**2+(y-y0)**2)/(2*sigma*sigma))/(2*np.pi*sigma*sigma)
+    return A * np.exp(-((x-x0)**2+(y-y0)**2)/(2*sigma*sigma))
+# https://scipython.com/blog/non-linear-least-squares-fitting-of-a-two-dimensional-data/
+# This is the callable that is passed to curve_fit. M is a (2,N) array
+# where N is the total number of data points in Z, which will be ravelled
+# to one dimension.
+def _gaussian(M, *args):
+    x, y = M
+    arr = np.zeros(x.shape)
+    for i in range(len(args)//4):
+       arr += gaussian(x, y, *args[i*4:i*4+4])
+    return arr
+
+def fit_2d_model(data_sky_map,bkgd_sky_map, src_x, src_y):
+
+    nbins_x = len(data_sky_map.xaxis)-1
+    nbins_y = len(data_sky_map.yaxis)-1
+    lon_min = data_sky_map.xaxis[0]
+    lon_max = data_sky_map.xaxis[len(data_sky_map.xaxis)-1]
+    lat_min = data_sky_map.yaxis[0]
+    lat_max = data_sky_map.yaxis[len(data_sky_map.yaxis)-1]
+    x_axis = np.linspace(lon_min,lon_max,nbins_x)
+    y_axis = np.linspace(lat_min,lat_max,nbins_y)
+    X_grid, Y_grid = np.meshgrid(x_axis, y_axis)
+    # We need to ravel the meshgrids of X, Y points to a pair of 1-D arrays.
+    XY_stack = np.vstack((X_grid.ravel(), Y_grid.ravel()))
+
+    image_excess = np.zeros((nbins_x,nbins_y))
+    image_error = np.zeros((nbins_x,nbins_y))
+    for binx in range (0,nbins_x):
+        for biny in range (0,nbins_y):
+            image_excess[biny,binx] = data_sky_map.waxis[binx,biny] - bkgd_sky_map.waxis[binx,biny]
+            image_error[biny,binx] = max(pow(data_sky_map.waxis[binx,biny],0.5),1.)
+
+    #print ('set initial avlues and bounds')
+    initial_prms = []
+    bound_upper_prms = []
+    bound_lower_prms = []
+    lon = src_x
+    lat = src_y
+    sigma = 0.03807
+    initial_prms += [(lon,lat,sigma,10.)]
+    centroid_range = 0.5
+    bound_lower_prms += [(lon-centroid_range,lat-centroid_range,sigma+0.0,0.)]
+    bound_upper_prms += [(lon+centroid_range,lat+centroid_range,sigma+2.0,1e10)]
+    # Flatten the initial guess parameter list.
+    p0 = [p for prms in initial_prms for p in prms]
+    p0_lower = [p for prms in bound_lower_prms for p in prms]
+    p0_upper = [p for prms in bound_upper_prms for p in prms]
+    print ('p0 = %s'%(p0))
+
+    popt, pcov = curve_fit(_gaussian, XY_stack, image_excess.ravel(), p0, sigma=image_error.ravel(), absolute_sigma=True, bounds=(p0_lower,p0_upper))
+    fit_src_x = popt[0*4+0]
+    fit_src_x_err = pow(pcov[0*4+0][0*4+0],0.5)
+    print ('fit_src_x = %0.3f +/- %0.3f'%(fit_src_x,fit_src_x_err))
+    fit_src_y = popt[0*4+1]
+    fit_src_y_err = pow(pcov[0*4+1][0*4+1],0.5)
+    print ('fit_src_y = %0.3f +/- %0.3f'%(fit_src_y,fit_src_y_err))
+    fit_src_sigma = popt[0*4+2]
+    fit_src_sigma_err = pow(pcov[0*4+2][0*4+2],0.5)
+    print ('fit_src_sigma = %0.3f +/- %0.3f'%(fit_src_sigma,fit_src_sigma_err))
+    fit_src_A = popt[0*4+3]
+    print ('fit_src_A = %0.1e'%(fit_src_A))
+
+    distance_to_psr = pow(pow(fit_src_x-src_x,2)+pow(fit_src_y-src_y,2),0.5)
+    distance_to_psr_err = pow(pow(fit_src_x_err,2)+pow(fit_src_y_err,2),0.5)
+    print ('distance_to_psr = %0.3f +/- %0.3f'%(distance_to_psr,fit_src_x_err))
+
+    profile_fit = _gaussian(XY_stack, *popt)
+    residual = image_excess.ravel() - profile_fit
+    chisq = np.sum((residual/image_error.ravel())**2)
+    dof = len(image_excess.ravel())-4
+    print ('chisq/dof = %0.3f'%(chisq/dof))
+
+def plot_radial_profile_with_systematics(fig,plotname,flux_sky_map,flux_err_sky_map,mimic_flux_sky_map,mimic_flux_err_sky_map,roi_x,roi_y,excl_roi_x,excl_roi_y,excl_roi_r):
+
+    on_radial_axis, on_profile_axis, on_profile_err_axis = GetRadialProfile(flux_sky_map,flux_err_sky_map,roi_x,roi_y,2.0,excl_roi_x,excl_roi_y,excl_roi_r)
+    all_radial_axis, all_profile_axis, all_profile_err_axis = GetRadialProfile(flux_sky_map,flux_err_sky_map,roi_x,roi_y,2.0,excl_roi_x,excl_roi_y,excl_roi_r,use_excl=False)
+    n_mimic = len(mimic_flux_sky_map)
+    fig.clf()
+    figsize_x = 7
+    figsize_y = 5
+    fig.set_figheight(figsize_y)
+    fig.set_figwidth(figsize_x)
+    axbig = fig.add_subplot()
+    label_x = 'angular distance [deg]'
+    label_y = 'surface brightness [$\mathrm{TeV}\ \mathrm{cm}^{-2}\mathrm{s}^{-1}\mathrm{sr}^{-1}$]'
+    axbig.set_xlabel(label_x)
+    axbig.set_ylabel(label_y)
+    mimic_profile_axis = []
+    mimic_profile_err_axis = []
+    for mimic in range(0,n_mimic):
+        radial_axis, profile_axis, profile_err_axis = GetRadialProfile(mimic_flux_sky_map[mimic],mimic_flux_err_sky_map[mimic],roi_x,roi_y,2.0,excl_roi_x,excl_roi_y,excl_roi_r,use_excl=False)
+        axbig.errorbar(radial_axis,profile_axis,profile_err_axis,marker='+',ls='none',zorder=mimic+1)
+        mimic_profile_axis += [profile_axis]
+        mimic_profile_err_axis += [profile_err_axis]
+    profile_syst_err_axis = []
+    for binx in range(0,len(on_profile_axis)):
+        syst_err = 0.
+        stat_err = 0.
+        for mimic in range(0,n_mimic):
+            syst_err += pow(mimic_profile_axis[mimic][binx],2)
+            stat_err += pow(mimic_profile_err_axis[mimic][binx],2)
+        syst_err = max(0.,syst_err-stat_err)
+        if n_mimic>0:
+            syst_err = pow(syst_err/float(n_mimic),0.5)
+        profile_syst_err_axis += [pow(pow(syst_err,2)+pow(on_profile_err_axis[binx],2),0.5)]
+    baseline_yaxis = [0. for i in range(0,len(on_radial_axis))]
+    axbig.plot(on_radial_axis, baseline_yaxis, color='b', ls='dashed')
+    axbig.fill_between(on_radial_axis,-np.array(profile_syst_err_axis),np.array(profile_syst_err_axis),alpha=0.2,color='b',zorder=0)
+    fig.savefig(f'output_plots/{plotname}_mimic.png',bbox_inches='tight')
+    axbig.remove()
+
+    baseline_yaxis = [0. for i in range(0,len(on_radial_axis))]
+    fig.clf()
+    figsize_x = 7
+    figsize_y = 5
+    fig.set_figheight(figsize_y)
+    fig.set_figwidth(figsize_x)
+    axbig = fig.add_subplot()
+    label_x = 'angular distance [deg]'
+    label_y = 'surface brightness [$\mathrm{TeV}\ \mathrm{cm}^{-2}\mathrm{s}^{-1}\mathrm{sr}^{-1}$]'
+    axbig.set_xlabel(label_x)
+    axbig.set_ylabel(label_y)
+    axbig.plot(on_radial_axis, baseline_yaxis, color='b', ls='dashed')
+    axbig.errorbar(all_radial_axis,all_profile_axis,all_profile_err_axis,color='r',marker='+',ls='none',zorder=1)
+    axbig.errorbar(on_radial_axis,on_profile_axis,on_profile_err_axis,color='k',marker='+',ls='none',zorder=2)
+    axbig.fill_between(on_radial_axis,np.array(on_profile_axis)-np.array(profile_syst_err_axis),np.array(on_profile_axis)+np.array(profile_syst_err_axis),alpha=0.2,color='b',zorder=0)
+    fig.savefig(f'output_plots/{plotname}.png',bbox_inches='tight')
+    axbig.remove()
 
