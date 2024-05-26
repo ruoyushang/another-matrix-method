@@ -41,10 +41,11 @@ skymap_size = common_functions.skymap_size
 skymap_bins = common_functions.skymap_bins
 fine_skymap_bins = common_functions.fine_skymap_bins
 GetGammaSourceInfo = common_functions.GetGammaSourceInfo
+build_radial_symmetric_model = common_functions.build_radial_symmetric_model
 
 
-logE_min = 1
-logE_mid = 5
+logE_min = 0
+logE_mid = 2
 logE_max = logE_nbins
 
 # MGRO J1908+06
@@ -63,7 +64,8 @@ smi_output = os.environ.get("SMI_OUTPUT")
 smi_dir = os.environ.get("SMI_DIR")
 
 #ana_tag = 'linear'
-ana_tag = 'poisson'
+#ana_tag = 'poisson'
+ana_tag = 'rank20'
 
 qual_cut = 0.
 #qual_cut = 20.
@@ -557,58 +559,69 @@ excl_roi_x = []
 excl_roi_y = []
 excl_roi_r = []
 
-if 'PSR_J1907_p0602' in source_name:
+if 'PSR_J1907_p0602' in source_name or 'PSR_J1856_p0245' in source_name:
 
     excl_roi_x += [all_roi_x[1]]
     excl_roi_y += [all_roi_y[1]]
     excl_roi_r += [all_roi_r[1]]
 
-elif 'PSR_J1856_p0245' in source_name:
+    radial_symmetry_sky_map = []
+    for logE in range(0,logE_nbins):
+        radial_map = MyArray3D()
+        radial_map.just_like(sum_flux_sky_map[logE])
+        radial_symmetry_sky_map += [radial_map]
+    
+    for logE in range(logE_min,logE_max):
+        on_radial_axis, on_profile_axis, on_profile_err_axis = GetRadialProfile(sum_flux_sky_map[logE],sum_flux_err_sky_map[logE],roi_x,roi_y,2.0,excl_roi_x,excl_roi_y,excl_roi_r)
+        all_radial_axis, all_profile_axis, all_profile_err_axis = GetRadialProfile(sum_flux_sky_map[logE],sum_flux_err_sky_map[logE],roi_x,roi_y,2.0,excl_roi_x,excl_roi_y,excl_roi_r,use_excl=False)
+        baseline_yaxis = [0. for i in range(0,len(on_radial_axis))]
+        fig.clf()
+        figsize_x = 7
+        figsize_y = 5
+        fig.set_figheight(figsize_y)
+        fig.set_figwidth(figsize_x)
+        axbig = fig.add_subplot()
+        label_x = 'angular distance [deg]'
+        label_y = 'surface brightness [$\mathrm{TeV}\ \mathrm{cm}^{-2}\mathrm{s}^{-1}\mathrm{sr}^{-1}$]'
+        axbig.set_xlabel(label_x)
+        axbig.set_ylabel(label_y)
+        axbig.plot(on_radial_axis, baseline_yaxis, color='b', ls='dashed')
+        axbig.errorbar(all_radial_axis,all_profile_axis,all_profile_err_axis,color='r',marker='+',ls='none')
+        axbig.errorbar(on_radial_axis,on_profile_axis,on_profile_err_axis,color='k',marker='+',ls='none')
+        fig.savefig(f'output_plots/{source_name}_surface_brightness_logE{logE}_{roi_name}_{ana_tag}.png',bbox_inches='tight')
+        axbig.remove()
+    
+        build_radial_symmetric_model(radial_symmetry_sky_map[logE],on_radial_axis,on_profile_axis,roi_x,roi_y)
+    
+    PrintInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,sum_data_sky_map,sum_bkgd_sky_map,radial_symmetry_sky_map,sum_flux_err_sky_map,sum_mimic_data_sky_map,sum_mimic_bkgd_sky_map,f'{roi_name}_symmetric',[roi_x],[roi_y],[roi_r],excl_roi_x,excl_roi_y,excl_roi_r)
 
-    excl_roi_x += [all_roi_x[1]]
-    excl_roi_y += [all_roi_y[1]]
-    excl_roi_r += [all_roi_r[1]]
+    radial_symmetry_sky_map_allE = MyArray3D()
+    radial_symmetry_sky_map_allE.just_like(radial_symmetry_sky_map[0])
+    for logE in range(logE_min,logE_max):
+        radial_symmetry_sky_map_allE.add(radial_symmetry_sky_map[logE])
 
-for logE in range(logE_min,logE_max):
-    on_radial_axis, on_profile_axis, on_profile_err_axis = GetRadialProfile(sum_flux_sky_map[logE],sum_flux_err_sky_map[logE],roi_x,roi_y,2.0,excl_roi_x,excl_roi_y,excl_roi_r)
-    all_radial_axis, all_profile_axis, all_profile_err_axis = GetRadialProfile(sum_flux_sky_map[logE],sum_flux_err_sky_map[logE],roi_x,roi_y,2.0,excl_roi_x,excl_roi_y,excl_roi_r,use_excl=False)
-    baseline_yaxis = [0. for i in range(0,len(on_radial_axis))]
-    fig.clf()
-    figsize_x = 7
-    figsize_y = 5
-    fig.set_figheight(figsize_y)
-    fig.set_figwidth(figsize_x)
-    axbig = fig.add_subplot()
-    label_x = 'angular distance [deg]'
-    label_y = 'surface brightness [$\mathrm{TeV}\ \mathrm{cm}^{-2}\mathrm{s}^{-1}\mathrm{sr}^{-1}$]'
-    axbig.set_xlabel(label_x)
-    axbig.set_ylabel(label_y)
-    axbig.plot(on_radial_axis, baseline_yaxis, color='b', ls='dashed')
-    axbig.errorbar(all_radial_axis,all_profile_axis,all_profile_err_axis,color='r',marker='+',ls='none')
-    axbig.errorbar(on_radial_axis,on_profile_axis,on_profile_err_axis,color='k',marker='+',ls='none')
-    fig.savefig(f'output_plots/{source_name}_surface_brightness_logE{logE}_{roi_name}_{ana_tag}.png',bbox_inches='tight')
-    axbig.remove()
+    PlotSkyMap(fig,'$E^{2}$ dN/dE [$\mathrm{TeV}\cdot\mathrm{cm}^{-2}\mathrm{s}^{-1}$]',logE_min,logE_max,radial_symmetry_sky_map_allE,f'{source_name}_flux_sky_map_allE_symmetric_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
 
 flux_sky_map = sum_flux_sky_map_allE
 flux_err_sky_map = sum_flux_err_sky_map_allE
 mimic_flux_sky_map = sum_mimic_flux_sky_map_allE
 mimic_flux_err_sky_map = sum_mimic_flux_err_sky_map_allE
 plotname = f'{source_name}_surface_brightness_allE_{roi_name}_{ana_tag}'
-plot_radial_profile_with_systematics(fig,plotname,flux_sky_map,flux_err_sky_map,mimic_flux_sky_map,mimic_flux_err_sky_map,roi_x,roi_y,excl_roi_x,excl_roi_y,excl_roi_r)
+plot_radial_profile_with_systematics(fig,plotname,flux_sky_map,flux_err_sky_map,mimic_flux_sky_map,mimic_flux_err_sky_map,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
 
 flux_sky_map = sum_flux_sky_map_LE
 flux_err_sky_map = sum_flux_err_sky_map_LE
 mimic_flux_sky_map = sum_mimic_flux_sky_map_LE
 mimic_flux_err_sky_map = sum_mimic_flux_err_sky_map_LE
 plotname = f'{source_name}_surface_brightness_LE_{roi_name}_{ana_tag}'
-plot_radial_profile_with_systematics(fig,plotname,flux_sky_map,flux_err_sky_map,mimic_flux_sky_map,mimic_flux_err_sky_map,roi_x,roi_y,excl_roi_x,excl_roi_y,excl_roi_r)
+plot_radial_profile_with_systematics(fig,plotname,flux_sky_map,flux_err_sky_map,mimic_flux_sky_map,mimic_flux_err_sky_map,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
 
 flux_sky_map = sum_flux_sky_map_HE
 flux_err_sky_map = sum_flux_err_sky_map_HE
 mimic_flux_sky_map = sum_mimic_flux_sky_map_HE
 mimic_flux_err_sky_map = sum_mimic_flux_err_sky_map_HE
 plotname = f'{source_name}_surface_brightness_HE_{roi_name}_{ana_tag}'
-plot_radial_profile_with_systematics(fig,plotname,flux_sky_map,flux_err_sky_map,mimic_flux_sky_map,mimic_flux_err_sky_map,roi_x,roi_y,excl_roi_x,excl_roi_y,excl_roi_r)
+plot_radial_profile_with_systematics(fig,plotname,flux_sky_map,flux_err_sky_map,mimic_flux_sky_map,mimic_flux_err_sky_map,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
 
 
 for logE in range(logE_min,logE_max):
@@ -654,44 +667,44 @@ for logE in range(logE_min,logE_max):
     fig.savefig(f'output_plots/{source_name}_xyoff_map_logE{logE}_ratio_{ana_tag}.png',bbox_inches='tight')
     axbig.remove()
 
-    for gcut in range(0,gcut_bins):
-        fig.clf()
-        figsize_x = 7
-        figsize_y = 7
-        fig.set_figheight(figsize_y)
-        fig.set_figwidth(figsize_x)
-        axbig = fig.add_subplot()
-        label_x = 'Xoff'
-        label_y = 'Yoff'
-        axbig.set_xlabel(label_x)
-        axbig.set_ylabel(label_y)
-        xmin = sum_data_xyoff_map[logE].xaxis.min()
-        xmax = sum_data_xyoff_map[logE].xaxis.max()
-        ymin = sum_data_xyoff_map[logE].yaxis.min()
-        ymax = sum_data_xyoff_map[logE].yaxis.max()
-        im = axbig.imshow(sum_data_xyoff_map[logE].waxis[:,:,gcut].T,origin='lower',extent=(xmin,xmax,ymin,ymax),aspect='auto')
-        cbar = fig.colorbar(im)
-        fig.savefig(f'output_plots/{source_name}_xyoff_map_logE{logE}_gcut{gcut}_data_{ana_tag}.png',bbox_inches='tight')
-        axbig.remove()
+    #for gcut in range(0,gcut_bins):
+    #    fig.clf()
+    #    figsize_x = 7
+    #    figsize_y = 7
+    #    fig.set_figheight(figsize_y)
+    #    fig.set_figwidth(figsize_x)
+    #    axbig = fig.add_subplot()
+    #    label_x = 'Xoff'
+    #    label_y = 'Yoff'
+    #    axbig.set_xlabel(label_x)
+    #    axbig.set_ylabel(label_y)
+    #    xmin = sum_data_xyoff_map[logE].xaxis.min()
+    #    xmax = sum_data_xyoff_map[logE].xaxis.max()
+    #    ymin = sum_data_xyoff_map[logE].yaxis.min()
+    #    ymax = sum_data_xyoff_map[logE].yaxis.max()
+    #    im = axbig.imshow(sum_data_xyoff_map[logE].waxis[:,:,gcut].T,origin='lower',extent=(xmin,xmax,ymin,ymax),aspect='auto')
+    #    cbar = fig.colorbar(im)
+    #    fig.savefig(f'output_plots/{source_name}_xyoff_map_logE{logE}_gcut{gcut}_data_{ana_tag}.png',bbox_inches='tight')
+    #    axbig.remove()
 
-        fig.clf()
-        figsize_x = 7
-        figsize_y = 7
-        fig.set_figheight(figsize_y)
-        fig.set_figwidth(figsize_x)
-        axbig = fig.add_subplot()
-        label_x = 'Xoff'
-        label_y = 'Yoff'
-        axbig.set_xlabel(label_x)
-        axbig.set_ylabel(label_y)
-        xmin = sum_err_xyoff_map[logE].xaxis.min()
-        xmax = sum_err_xyoff_map[logE].xaxis.max()
-        ymin = sum_err_xyoff_map[logE].yaxis.min()
-        ymax = sum_err_xyoff_map[logE].yaxis.max()
-        im = axbig.imshow(sum_err_xyoff_map[logE].waxis[:,:,gcut].T,origin='lower',extent=(xmin,xmax,ymin,ymax),vmin=-max_z,vmax=max_z,aspect='auto',cmap='coolwarm')
-        cbar = fig.colorbar(im)
-        fig.savefig(f'output_plots/{source_name}_xyoff_err_map_logE{logE}_gcut{gcut}_{ana_tag}.png',bbox_inches='tight')
-        axbig.remove()
+    #    fig.clf()
+    #    figsize_x = 7
+    #    figsize_y = 7
+    #    fig.set_figheight(figsize_y)
+    #    fig.set_figwidth(figsize_x)
+    #    axbig = fig.add_subplot()
+    #    label_x = 'Xoff'
+    #    label_y = 'Yoff'
+    #    axbig.set_xlabel(label_x)
+    #    axbig.set_ylabel(label_y)
+    #    xmin = sum_err_xyoff_map[logE].xaxis.min()
+    #    xmax = sum_err_xyoff_map[logE].xaxis.max()
+    #    ymin = sum_err_xyoff_map[logE].yaxis.min()
+    #    ymax = sum_err_xyoff_map[logE].yaxis.max()
+    #    im = axbig.imshow(sum_err_xyoff_map[logE].waxis[:,:,gcut].T,origin='lower',extent=(xmin,xmax,ymin,ymax),vmin=-max_z,vmax=max_z,aspect='auto',cmap='coolwarm')
+    #    cbar = fig.colorbar(im)
+    #    fig.savefig(f'output_plots/{source_name}_xyoff_err_map_logE{logE}_gcut{gcut}_{ana_tag}.png',bbox_inches='tight')
+    #    axbig.remove()
 
 fig.clf()
 figsize_x = 2.*gcut_bins
@@ -711,6 +724,24 @@ for logE in range(logE_min,logE_max):
 fig.savefig(f'output_plots/{source_name}_xyoff_map_inclusive_data_{ana_tag}.png',bbox_inches='tight')
 axbig.remove()
 
+fig.clf()
+figsize_x = 2.*gcut_bins
+figsize_y = 2.*(logE_max-logE_min)
+fig.set_figheight(figsize_y)
+fig.set_figwidth(figsize_x)
+ax_idx = 0
+for logE in range(logE_min,logE_max):
+    for gcut in range(0,gcut_bins):
+        ax_idx = gcut + (logE-logE_min)*gcut_bins + 1
+        axbig = fig.add_subplot((logE_max-logE_min),gcut_bins,ax_idx)
+        xmin = sum_data_xyoff_map[logE].xaxis.min()
+        xmax = sum_data_xyoff_map[logE].xaxis.max()
+        ymin = sum_data_xyoff_map[logE].yaxis.min()
+        ymax = sum_data_xyoff_map[logE].yaxis.max()
+        im = axbig.imshow(sum_err_xyoff_map[logE].waxis[:,:,gcut].T,origin='lower',extent=(xmin,xmax,ymin,ymax),aspect='auto',vmin=-max_z,vmax=max_z,cmap='coolwarm')
+fig.savefig(f'output_plots/{source_name}_xyoff_map_inclusive_err_{ana_tag}.png',bbox_inches='tight')
+axbig.remove()
+
 PlotSkyMap(fig,'significance',logE_min,logE_max,sum_significance_sky_map_allE,f'{source_name}_significance_sky_map_allE_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,max_z=5.)
 PlotSkyMap(fig,'excess count',logE_min,logE_max,sum_excess_sky_map_allE,f'{source_name}_excess_sky_map_allE_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
 PlotSkyMap(fig,'significance',logE_min,logE_mid,sum_significance_sky_map_LE,f'{source_name}_significance_sky_map_LE_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,max_z=5.)
@@ -723,22 +754,6 @@ for mimic in range(0,n_mimic):
 
 print (f'total_exposure = {total_exposure}')
 print (f'good_exposure = {good_exposure}')
-
-#new_list_cr_qual = []
-#new_list_sr_qual = []
-#for logE in range(0,logE_nbins):
-#    tmp_list_cr_qual = []
-#    tmp_list_sr_qual = []
-#    for entry in range(0,len(list_sr_qual)):
-#        #if np.isnan(list_cr_qual[entry][logE]): continue
-#        #if np.isnan(list_sr_qual[entry][logE]): continue
-#        #if np.isinf(list_cr_qual[entry][logE]): continue
-#        #if np.isinf(list_sr_qual[entry][logE]): continue
-#        #if list_cr_qual[entry][logE]==0.: continue
-#        tmp_list_cr_qual += [list_cr_qual[entry][logE]]
-#        tmp_list_sr_qual += [list_sr_qual[entry][logE]]
-#    new_list_cr_qual += [tmp_list_cr_qual]
-#    new_list_sr_qual += [tmp_list_sr_qual]
 
 
 
@@ -814,36 +829,6 @@ axbig.hist(list_run_elev, bins=20)
 fig.savefig(f'output_plots/{source_name}_elev_{ana_tag}.png',bbox_inches='tight')
 axbig.remove()
 
-#for par1 in range(0,matrix_rank):
-#    for par2 in range(par1+1,matrix_rank):
-#        fig.clf()
-#        axbig = fig.add_subplot()
-#        label_x = 'c%s'%(par1)
-#        label_y = 'c%s'%(par2)
-#        axbig.set_xlabel(label_x)
-#        axbig.set_ylabel(label_y)
-#        for entry in range(0,len(list_truth_params)):
-#            axbig.scatter(list_truth_params[entry][par1],list_truth_params[entry][par2],color='b',alpha=0.5)
-#            axbig.scatter(list_fit_params[entry][par1],list_fit_params[entry][par2],color='r',alpha=0.5)
-#        fig.savefig(f'output_plots/{source_name}_truth_params_c{par1}_c{par2}_{ana_tag}.png',bbox_inches='tight')
-#        axbig.remove()
-
-#for par1 in range(0,len(list_truth_params[0])):
-#
-#    fig.clf()
-#    axbig = fig.add_subplot()
-#    label_x = 'fit'
-#    label_y = 'error'
-#    axbig.set_xlabel(label_x)
-#    axbig.set_ylabel(label_y)
-#    for entry in range(0,len(list_truth_params)):
-#        truth = list_truth_params[entry][par1]
-#        fit = list_fit_params[entry][par1]
-#        error = list_sr_qual[entry]
-#        if truth==0.: continue
-#        axbig.scatter(abs(fit),error,color='b',alpha=0.5)
-#    fig.savefig(f'output_plots/{source_name}_truth_fit_params_c{par1}_{ana_tag}.png',bbox_inches='tight')
-#    axbig.remove()
 
 other_stars, other_star_type, other_star_coord = GetGammaSourceInfo() 
 for star in range(0,len(other_stars)):

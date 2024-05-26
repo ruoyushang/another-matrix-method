@@ -48,23 +48,23 @@ smi_dir = os.environ.get("SMI_DIR")
 #ana_tag = 'poisson'
 
 ana_tag = []
-#ana_tag += [['nominal','r']]
+#ana_tag += [['linear','r']]
 #ana_tag += [['poisson','r']]
 #ana_tag += [['rank5','b']]
 #ana_tag += [['rank10','b']]
-ana_tag += [['rank15','b']]
+#ana_tag += [['rank15','b']]
 ana_tag += [['rank20','b']]
-ana_tag += [['rank25','b']]
-ana_tag += [['rank30','b']]
+#ana_tag += [['rank25','b']]
+#ana_tag += [['rank30','b']]
 
 onoff = 'OFF'
 
 #exposure_per_group = 0.2
 #exposure_per_group = 1.
 #exposure_per_group = 5.
-#exposure_per_group = 10.
+exposure_per_group = 10.
 #exposure_per_group = 20.
-exposure_per_group = 40.
+#exposure_per_group = 40.
 #exposure_per_group = 80.
 cr_qual_cut = 1e10
 #cr_qual_cut = 230

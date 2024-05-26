@@ -81,7 +81,6 @@ for run in range(0,total_runs):
     small_off_runlist += [off_runlist[run]]
     small_mimic_runlist += [mimic_runlist[run]]
     run_count += 1
-    #if (run % nruns_in_small_list)==0 and run_count>=nruns_in_small_list:
     if (run % nruns_in_small_list)==(nruns_in_small_list-1):
         big_runlist += [small_runlist]
         small_runlist = []
@@ -206,6 +205,10 @@ for small_runlist in range(0,len(big_runlist)):
     with open(output_filename,"wb") as file:
         pickle.dump(all_skymaps, file)
 
-    #exit()
+#output_filename = f'{smi_output}/skymaps_{source_name}_{input_epoch}_{onoff}_{sky_tag}.pkl'
+#with open(output_filename,"wb") as file:
+#    pickle.dump(all_skymaps, file)
+
+#exit()
 
 

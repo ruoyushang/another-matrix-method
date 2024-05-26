@@ -54,7 +54,8 @@ for entry in range(0,len(big_matrix)):
 U_full, S_full, VT_full = np.linalg.svd(big_matrix,full_matrices=False) # perform better for perturbation method
 #U_full, S_full, VT_full = np.linalg.svd(big_diff_matrix,full_matrices=False)
 print (f'S_full length = {len(S_full)}')
-effective_matrix_rank = min(matrix_rank,int(0.5*(len(S_full)-1)))
+effective_matrix_rank = min(matrix_rank,int(0.2*3./4.*(len(S_full)-1)))
+#effective_matrix_rank = max(1,int(0.1*3./4.*(len(S_full)-1)))
 print (f'effective_matrix_rank = {effective_matrix_rank}')
 U_eco = U_full[:, :effective_matrix_rank]
 VT_eco = VT_full[:effective_matrix_rank, :]
