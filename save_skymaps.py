@@ -126,7 +126,7 @@ for small_runlist in range(0,len(big_runlist)):
     run_list_count += 1
     print (f'analyzing {run_list_count}/{len(big_runlist)} lists...')
 
-    run_info, run_incl_sky_map, run_data_sky_map, run_fit_sky_map, run_data_xyoff_map, run_fit_xyoff_map, run_ratio_xyoff_map = build_skymap(smi_input,path_to_eigenvector,path_to_big_matrix,big_runlist[small_runlist],big_mimic_runlist[small_runlist],src_ra,src_dec,onoff,sky_tag)
+    run_info, run_incl_sky_map, run_data_sky_map, run_fit_sky_map, run_data_xyoff_map, run_fit_xyoff_map, run_ratio_xyoff_map = build_skymap(source_name,src_ra,src_dec,smi_input,path_to_eigenvector,path_to_big_matrix,big_runlist[small_runlist],big_mimic_runlist[small_runlist],onoff,sky_tag)
 
     run_exposure_hours = run_info[0]
     run_elev = run_info[1]

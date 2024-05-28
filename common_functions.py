@@ -15,7 +15,7 @@ from astropy.io import fits
 sky_tag = os.environ.get("SKY_TAG")
 
 
-use_poisson_likelihood = False
+use_poisson_likelihood = True
 fix_init_scale = 0.
 matrix_rank = 15
 
@@ -40,35 +40,38 @@ max_Rcore = 400.
 min_Rcore = 0.
 min_Energy_cut = 0.2
 max_Energy_cut = 10.0
-MSCW_cut = 0.7
-MSCL_cut = 0.8
 MVA_cut = 0.5
 
 xoff_start = -2.
 xoff_end = 2.
 yoff_start = -2.
 yoff_end = 2.
-#gcut_bins = 5
 gcut_bins = 4
 gcut_start = 0
 gcut_end = gcut_bins
 
-logE_bins = [-0.625,-0.563,-0.50,-0.375,-0.25,0.00,0.25,0.50,0.75,1.0] # logE TeV
+logE_bins = [-0.625,-0.600,-0.50,-0.375,-0.25,0.00,0.25,0.50,0.75,1.0] # logE TeV
 #logE_bins = [-0.75,-0.625,-0.50,-0.375,-0.25,0.00,0.25,0.50,0.75,1.0] # logE TeV
 logE_nbins = len(logE_bins)-1
+
+#MSCW_cut = 0.7
+#MSCL_cut = 0.8
+MSCW_cut = [0.55,0.60,0.65,0.70,0.75,0.80,0.85,0.90,0.95,1.00]
+MSCL_cut = [0.65,0.70,0.75,0.80,0.85,0.90,0.95,1.00,1.05,1.10]
 
 skymap_size = 3.
 skymap_bins = 30
 fine_skymap_bins = 120
 
-doFluxCalibration = True
-#doFluxCalibration = False
+#doFluxCalibration = True
+doFluxCalibration = False
 calibration_radius = 0.15 # need to be larger than the PSF and smaller than the integration radius
 
 #logE_min = 3
 #logE_mid = 7
 #logE_max = logE_nbins
-xoff_bins = [11,11,11,11,11,11,11,11,11]
+#xoff_bins = [11,11,11,11,11,11,11,11,11]
+xoff_bins = [11,11,9,7,5,3,3,1,1]
 #xoff_bins = [11,9,5,5,3,3,1,1]
 #xoff_bins = [13,11,9,5,5,3,3,1,1]
 yoff_bins = xoff_bins
@@ -438,6 +441,14 @@ def CoincideWithBrightStars(ra, dec, bright_stars_coord):
         isCoincident = True
     return isCoincident
 
+def CoincideWithRegionOfInterest(ra, dec, roi_ra, roi_dec, roi_r):
+    isCoincident = False
+    for roi in range(0,len(roi_r)):
+        distance = pow(pow(roi_ra[roi]-ra,2)+pow(roi_dec[roi]-dec,2),0.5)
+        if distance>roi_r[roi]: continue
+        isCoincident = True
+    return isCoincident
+
 def EventGammaCut(MSCL,MSCW):
 
     GammaCut = 1e10
@@ -462,13 +473,19 @@ def EventGammaCut(MSCL,MSCW):
 
     return GammaCut
 
-def build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_run=0):
+def build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,runlist,max_runs=1e10,is_bkgd=True,is_on=False,specific_run=0):
 
     #big_matrix = []
     #for logE in range(0,logE_nbins):
     #    big_matrix += [None]
 
     big_matrix = []
+    big_mask_matrix = []
+
+    region_name = source_name
+    if not is_on:
+        region_name = 'Validation'
+    roi_name,roi_ra,roi_dec,roi_r = DefineRegionOfInterest(region_name,src_ra,src_dec)
 
     run_count = 0
     for run_number in runlist:
@@ -486,8 +503,10 @@ def build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_
         run_count += 1
     
         xyoff_map = []
+        xyoff_mask_map = []
         for logE in range(0,logE_nbins):
             xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+            xyoff_mask_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
     
         InputFile = ROOT.TFile(rootfile_name)
 
@@ -501,7 +520,7 @@ def build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_
         bright_star_coord = GetBrightStars(TelRAJ2000,TelDecJ2000)
         gamma_source_coord = GetGammaSources(TelRAJ2000,TelDecJ2000)
         
-        if is_on:
+        if not is_bkgd:
             if TelElevation<run_elev_cut: continue
 
         TreeName = f'run_{run_number}/stereo/DL3EventTree'
@@ -514,9 +533,6 @@ def build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_
             Yoff = EvtTree.Yoff
             Xderot = EvtTree.Xderot
             Yderot = EvtTree.Yderot
-            MSCW = EvtTree.MSCW/MSCW_cut
-            MSCL = EvtTree.MSCL/MSCL_cut
-            GammaCut = EventGammaCut(MSCL,MSCW)
             Energy = EvtTree.Energy
             NImages = EvtTree.NImages
             EmissionHeight = EvtTree.EmissionHeight
@@ -535,6 +551,9 @@ def build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_
             if Rcore<min_Rcore: continue
             if Energy<min_Energy_cut: continue
             if Energy>max_Energy_cut: continue
+            MSCW = EvtTree.MSCW/MSCW_cut[logE]
+            MSCL = EvtTree.MSCL/MSCL_cut[logE]
+            GammaCut = EventGammaCut(MSCL,MSCW)
             if GammaCut>float(gcut_end): continue
 
             Xsky = TelRAJ2000 + Xderot
@@ -546,11 +565,18 @@ def build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_
             #found_gamma_source = CoincideWithBrightStars(Xsky, Ysky, gamma_source_coord)
             #found_mirror_star = CoincideWithBrightStars(mirror_Xsky, mirror_Ysky, bright_star_coord)
             #found_mirror_gamma_source = CoincideWithBrightStars(mirror_Xsky, mirror_Ysky, gamma_source_coord)
-            #if not is_on:
+            #if is_bkgd:
             #    if found_bright_star: continue
             #    if found_gamma_source: continue
             #    if found_mirror_star or found_mirror_gamma_source:
             #        xyoff_map[logE].fill(-Xderot,-Yderot,GammaCut)
+
+            if is_on:
+                found_roi = CoincideWithRegionOfInterest(Xsky, Ysky, roi_ra, roi_dec, roi_r)
+                if found_roi:
+                    xyoff_mask_map[logE].fill(Xoff,Yoff,0.5)
+            else:
+                xyoff_mask_map[logE].fill(Xoff,Yoff,0.5)
 
             xyoff_map[logE].fill(Xoff,Yoff,GammaCut)
             #xyoff_map[logE].fill(Xderot,Yderot,GammaCut)
@@ -574,13 +600,21 @@ def build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True,specific_
                         xyoff_map_1d += [xyoff_map[logE].waxis[idx_x,idx_y,gcut]]
         big_matrix += [xyoff_map_1d]
 
+        xyoff_mask_map_1d = []
+        for gcut in range(0,gcut_bins):
+            for logE in range(0,logE_nbins):
+                for idx_x in range(0,xoff_bins[logE]):
+                    for idx_y in range(0,yoff_bins[logE]):
+                        xyoff_mask_map_1d += [xyoff_mask_map[logE].waxis[idx_x,idx_y,gcut]]
+        big_mask_matrix += [xyoff_mask_map_1d]
+
 
         InputFile.Close()
         if run_count==max_runs: break
 
-    return big_matrix
+    return big_matrix, big_mask_matrix
 
-def build_skymap(smi_input,eigenvector_path,big_matrix_path,runlist,mimic_runlist,src_ra,src_dec,onoff,max_runs=1e10):
+def build_skymap(source_name,src_ra,src_dec,smi_input,eigenvector_path,big_matrix_path,runlist,mimic_runlist,onoff,max_runs=1e10):
 
     global skymap_bins
     if onoff=='ON' or 'MIMIC' in onoff:
@@ -647,9 +681,11 @@ def build_skymap(smi_input,eigenvector_path,big_matrix_path,runlist,mimic_runlis
             if run>=len(mimic_runlist): continue
             if mimic_index>=len(mimic_runlist[run]): continue
             new_mimic_runlist += [mimic_runlist[run][mimic_index]]
-        big_on_matrix = build_big_camera_matrix(smi_input,new_mimic_runlist,max_runs=1e10,is_on=True)
+        big_on_matrix, big_mask_matrix = build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,new_mimic_runlist,max_runs=1e10,is_bkgd=False,is_on=True)
+    elif 'ON' in onoff:
+        big_on_matrix, big_mask_matrix = build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,runlist,max_runs=1e10,is_bkgd=False,is_on=True)
     else:
-        big_on_matrix = build_big_camera_matrix(smi_input,runlist,max_runs=1e10,is_on=True)
+        big_on_matrix, big_mask_matrix = build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,runlist,max_runs=1e10,is_bkgd=False,is_on=False)
 
     #if big_on_matrix[0]==None or big_off_matrix[0]==None:
     #if big_on_matrix[0]==None:
@@ -670,8 +706,10 @@ def build_skymap(smi_input,eigenvector_path,big_matrix_path,runlist,mimic_runlis
     effective_matrix_rank = max(1,big_eigenvectors.shape[0])
 
     data_xyoff_map_1d = np.zeros_like(big_on_matrix[0])
+    mask_xyoff_map_1d = np.zeros_like(big_mask_matrix[0])
     for entry in range(0,len(big_on_matrix)):
         data_xyoff_map_1d += np.array(big_on_matrix[entry])
+        mask_xyoff_map_1d += np.array(big_mask_matrix[entry])
 
     template_norm = cosmic_ray_like_count(avg_xyoff_map_1d,region_type=0)
     on_data_norm = cosmic_ray_like_count(data_xyoff_map_1d,region_type=0)
@@ -686,7 +724,7 @@ def build_skymap(smi_input,eigenvector_path,big_matrix_path,runlist,mimic_runlis
     solution = minimize(
         cosmic_ray_like_chi2,
         x0=init_params,
-        args=(fit_params,big_eigenvectors,diff_xyoff_map_1d,best_template_xyoff_map_1d,0),
+        args=(fit_params,big_eigenvectors,diff_xyoff_map_1d,best_template_xyoff_map_1d,mask_xyoff_map_1d,0),
         #args=(init_params,big_eigenvectors,diff_xyoff_map_1d,best_template_xyoff_map_1d,-1),  # unblind
         method='L-BFGS-B',
         jac=None,
@@ -697,8 +735,8 @@ def build_skymap(smi_input,eigenvector_path,big_matrix_path,runlist,mimic_runlis
 
     fit_xyoff_map_1d = big_eigenvectors.T @ fit_params + best_template_xyoff_map_1d
 
-    run_sr_chi2 = cosmic_ray_like_chi2(fit_params,big_eigenvalues,big_eigenvectors,diff_xyoff_map_1d,best_template_xyoff_map_1d,1)
-    run_cr_chi2 = cosmic_ray_like_chi2(fit_params,big_eigenvalues,big_eigenvectors,diff_xyoff_map_1d,best_template_xyoff_map_1d,0)
+    run_sr_chi2 = cosmic_ray_like_chi2(fit_params,big_eigenvalues,big_eigenvectors,diff_xyoff_map_1d,best_template_xyoff_map_1d,mask_xyoff_map_1d,1)
+    run_cr_chi2 = cosmic_ray_like_chi2(fit_params,big_eigenvalues,big_eigenvectors,diff_xyoff_map_1d,best_template_xyoff_map_1d,mask_xyoff_map_1d,0)
 
     print ('===================================================================================')
     print (f'effective_matrix_rank = {effective_matrix_rank}')
@@ -891,9 +929,6 @@ def build_skymap(smi_input,eigenvector_path,big_matrix_path,runlist,mimic_runlis
             Yoff = EvtTree.Yoff
             Xderot = EvtTree.Xderot
             Yderot = EvtTree.Yderot
-            MSCW = EvtTree.MSCW/MSCW_cut
-            MSCL = EvtTree.MSCL/MSCL_cut
-            GammaCut = EventGammaCut(MSCL,MSCW)
             Energy = EvtTree.Energy
             NImages = EvtTree.NImages
             EmissionHeight = EvtTree.EmissionHeight
@@ -912,6 +947,9 @@ def build_skymap(smi_input,eigenvector_path,big_matrix_path,runlist,mimic_runlis
             if Rcore<min_Rcore: continue
             if Energy<min_Energy_cut: continue
             if Energy>max_Energy_cut: continue
+            MSCW = EvtTree.MSCW/MSCW_cut[logE]
+            MSCL = EvtTree.MSCL/MSCL_cut[logE]
+            GammaCut = EventGammaCut(MSCL,MSCW)
 
             Xsky = TelRAJ2000 + Xderot
             Ysky = TelDecJ2000 + Yderot
@@ -945,7 +983,7 @@ def build_skymap(smi_input,eigenvector_path,big_matrix_path,runlist,mimic_runlis
     return [exposure_hours,avg_tel_elev,avg_tel_azim,truth_params,fit_params,sr_qual,cr_qual], incl_sky_map, data_sky_map, fit_sky_map, data_xyoff_map, fit_xyoff_map, ratio_xyoff_map
 
 
-def cosmic_ray_like_chi2(try_params,ref_params,eigenvectors,diff_xyoff_map,init_xyoff_map,region_type):
+def cosmic_ray_like_chi2(try_params,ref_params,eigenvectors,diff_xyoff_map,init_xyoff_map,mask_xyoff_map,region_type):
 
     try_params = np.array(try_params)
     try_xyoff_map = eigenvectors.T @ try_params + init_xyoff_map
@@ -963,12 +1001,14 @@ def cosmic_ray_like_chi2(try_params,ref_params,eigenvectors,diff_xyoff_map,init_
                     idx_1d += 1
                     diff = diff_xyoff_map[idx_1d-1]
                     init = init_xyoff_map[idx_1d-1]
+                    mask = mask_xyoff_map[idx_1d-1]
                     weight = 1.
 
                     if region_type==0:
                         if gcut==0:
-                            diff = 0.
-                            weight = fix_init_scale
+                            if mask>0.: # blind
+                                diff = 0.
+                                weight = fix_init_scale
                     elif region_type==1:
                         if gcut!=0: continue
 
@@ -1484,7 +1524,8 @@ def GetFluxCalibration(energy):
     if doFluxCalibration:
         return 1.
 
-    str_flux_calibration = ['3.95e+02', '5.93e+02', '8.96e+02', '1.32e+03', '1.25e+03', '2.63e+03', '6.10e+03', '1.37e+04', '2.92e+04']
+    str_flux_calibration = ['2.45e+03', '6.99e+02', '7.64e+02', '1.18e+03', '1.17e+03', '2.64e+03', '6.20e+03', '1.52e+04', '3.71e+04']
+    #str_flux_calibration = ['3.95e+02', '5.93e+02', '8.96e+02', '1.32e+03', '1.25e+03', '2.63e+03', '6.10e+03', '1.37e+04', '2.92e+04']
 
     flux_calibration = []
     for string in str_flux_calibration:
@@ -1830,6 +1871,11 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
         region_r = [calibration_radius]
         region_name = ['center']
 
+        region_x += [84.4]
+        region_y += [21.1]
+        region_r += [calibration_radius]
+        region_name += ['star']
+
     elif 'Geminga' in src_name:
 
         region_x = [src_ra]
@@ -1906,7 +1952,7 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
 
         region_x = [src_ra]
         region_y = [src_dec]
-        region_r = [2.0]
+        region_r = [3.0]
         region_name = ['center']
 
 

@@ -52,8 +52,8 @@ ana_tag = []
 #ana_tag += [['poisson','r']]
 #ana_tag += [['rank5','b']]
 #ana_tag += [['rank10','b']]
-#ana_tag += [['rank15','b']]
-ana_tag += [['rank20','b']]
+ana_tag += [['rank15','b']]
+#ana_tag += [['rank20','b']]
 #ana_tag += [['rank25','b']]
 #ana_tag += [['rank30','b']]
 
@@ -204,7 +204,7 @@ for ana in range(0,len(ana_tag)):
     
                 for logE in range(0,logE_nbins):
 
-                    #if logE<logE_peak: continue
+                    if logE<logE_peak: continue
                 
                     data_sum = np.sum(data_sky_map[logE].waxis[:,:,0])
                     bkgd_sum = np.sum(bkgd_sky_map[logE].waxis[:,:,0])

@@ -64,8 +64,8 @@ smi_output = os.environ.get("SMI_OUTPUT")
 smi_dir = os.environ.get("SMI_DIR")
 
 #ana_tag = 'linear'
-#ana_tag = 'poisson'
-ana_tag = 'rank20'
+ana_tag = 'poisson'
+#ana_tag = 'rank15'
 
 qual_cut = 0.
 #qual_cut = 20.
@@ -551,15 +551,15 @@ for roi in range(0,len(all_roi_name)):
 
     PrintInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,sum_data_sky_map,sum_bkgd_sky_map,sum_flux_sky_map,sum_flux_err_sky_map,sum_mimic_data_sky_map,sum_mimic_bkgd_sky_map,roi_name,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
 
-roi_name = all_roi_name[0]
-roi_x = all_roi_x[0]
-roi_y = all_roi_y[0]
-roi_r = all_roi_r[0]
-excl_roi_x = []
-excl_roi_y = []
-excl_roi_r = []
-
 if 'PSR_J1907_p0602' in source_name or 'PSR_J1856_p0245' in source_name:
+
+    roi_name = all_roi_name[0]
+    roi_x = all_roi_x[0]
+    roi_y = all_roi_y[0]
+    roi_r = all_roi_r[0]
+    excl_roi_x = []
+    excl_roi_y = []
+    excl_roi_r = []
 
     excl_roi_x += [all_roi_x[1]]
     excl_roi_y += [all_roi_y[1]]
@@ -602,26 +602,36 @@ if 'PSR_J1907_p0602' in source_name or 'PSR_J1856_p0245' in source_name:
 
     PlotSkyMap(fig,'$E^{2}$ dN/dE [$\mathrm{TeV}\cdot\mathrm{cm}^{-2}\mathrm{s}^{-1}$]',logE_min,logE_max,radial_symmetry_sky_map_allE,f'{source_name}_flux_sky_map_allE_symmetric_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
 
-flux_sky_map = sum_flux_sky_map_allE
-flux_err_sky_map = sum_flux_err_sky_map_allE
-mimic_flux_sky_map = sum_mimic_flux_sky_map_allE
-mimic_flux_err_sky_map = sum_mimic_flux_err_sky_map_allE
-plotname = f'{source_name}_surface_brightness_allE_{roi_name}_{ana_tag}'
-plot_radial_profile_with_systematics(fig,plotname,flux_sky_map,flux_err_sky_map,mimic_flux_sky_map,mimic_flux_err_sky_map,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
+for roi in range(0,len(all_roi_name)):
 
-flux_sky_map = sum_flux_sky_map_LE
-flux_err_sky_map = sum_flux_err_sky_map_LE
-mimic_flux_sky_map = sum_mimic_flux_sky_map_LE
-mimic_flux_err_sky_map = sum_mimic_flux_err_sky_map_LE
-plotname = f'{source_name}_surface_brightness_LE_{roi_name}_{ana_tag}'
-plot_radial_profile_with_systematics(fig,plotname,flux_sky_map,flux_err_sky_map,mimic_flux_sky_map,mimic_flux_err_sky_map,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
-
-flux_sky_map = sum_flux_sky_map_HE
-flux_err_sky_map = sum_flux_err_sky_map_HE
-mimic_flux_sky_map = sum_mimic_flux_sky_map_HE
-mimic_flux_err_sky_map = sum_mimic_flux_err_sky_map_HE
-plotname = f'{source_name}_surface_brightness_HE_{roi_name}_{ana_tag}'
-plot_radial_profile_with_systematics(fig,plotname,flux_sky_map,flux_err_sky_map,mimic_flux_sky_map,mimic_flux_err_sky_map,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
+    roi_name = all_roi_name[roi]
+    roi_x = all_roi_x[roi]
+    roi_y = all_roi_y[roi]
+    roi_r = all_roi_r[roi]
+    excl_roi_x = []
+    excl_roi_y = []
+    excl_roi_r = []
+    
+    flux_sky_map = sum_flux_sky_map_allE
+    flux_err_sky_map = sum_flux_err_sky_map_allE
+    mimic_flux_sky_map = sum_mimic_flux_sky_map_allE
+    mimic_flux_err_sky_map = sum_mimic_flux_err_sky_map_allE
+    plotname = f'{source_name}_surface_brightness_allE_{roi_name}_{ana_tag}'
+    plot_radial_profile_with_systematics(fig,plotname,flux_sky_map,flux_err_sky_map,mimic_flux_sky_map,mimic_flux_err_sky_map,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
+    
+    flux_sky_map = sum_flux_sky_map_LE
+    flux_err_sky_map = sum_flux_err_sky_map_LE
+    mimic_flux_sky_map = sum_mimic_flux_sky_map_LE
+    mimic_flux_err_sky_map = sum_mimic_flux_err_sky_map_LE
+    plotname = f'{source_name}_surface_brightness_LE_{roi_name}_{ana_tag}'
+    plot_radial_profile_with_systematics(fig,plotname,flux_sky_map,flux_err_sky_map,mimic_flux_sky_map,mimic_flux_err_sky_map,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
+    
+    flux_sky_map = sum_flux_sky_map_HE
+    flux_err_sky_map = sum_flux_err_sky_map_HE
+    mimic_flux_sky_map = sum_mimic_flux_sky_map_HE
+    mimic_flux_err_sky_map = sum_mimic_flux_err_sky_map_HE
+    plotname = f'{source_name}_surface_brightness_HE_{roi_name}_{ana_tag}'
+    plot_radial_profile_with_systematics(fig,plotname,flux_sky_map,flux_err_sky_map,mimic_flux_sky_map,mimic_flux_err_sky_map,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
 
 
 for logE in range(logE_min,logE_max):
