@@ -64,8 +64,8 @@ smi_output = os.environ.get("SMI_OUTPUT")
 smi_dir = os.environ.get("SMI_DIR")
 
 #ana_tag = 'linear'
-ana_tag = 'poisson'
-#ana_tag = 'rank15'
+#ana_tag = 'poisson'
+ana_tag = 'rank30'
 
 qual_cut = 0.
 #qual_cut = 20.
@@ -97,7 +97,10 @@ ysky_end = src_dec+skymap_size
 if onoff=='ON':
     skymap_bins = fine_skymap_bins
 
-all_roi_name,all_roi_x,all_roi_y,all_roi_r = DefineRegionOfInterest(source_name,src_ra,src_dec)
+region_name = source_name
+if onoff=='OFF':
+    region_name = 'Validation'
+all_roi_name,all_roi_x,all_roi_y,all_roi_r = DefineRegionOfInterest(region_name,src_ra,src_dec)
 
 total_exposure = 0.
 good_exposure = 0.
@@ -365,7 +368,7 @@ for epoch in input_epoch:
                     logE_peak = logE
 
             for logE in range(0,logE_nbins):
-                #if logE<logE_peak: continue
+                if logE<logE_peak: continue
                 if logE<logE_min: continue
                 if logE>logE_max: continue
 
@@ -726,6 +729,13 @@ for logE in range(logE_min,logE_max):
     for gcut in range(0,gcut_bins):
         ax_idx = gcut + (logE-logE_min)*gcut_bins + 1
         axbig = fig.add_subplot((logE_max-logE_min),gcut_bins,ax_idx)
+        if logE==logE_min:
+            if gcut==0:
+                axbig.set_title('SR')
+            else:
+                axbig.set_title(f'CR{gcut}')
+        if gcut==0:
+            axbig.set_ylabel(f'E = {pow(10.,logE_bins[logE]):0.2f}-{pow(10.,logE_bins[logE+1]):0.2f} TeV')
         xmin = sum_data_xyoff_map[logE].xaxis.min()
         xmax = sum_data_xyoff_map[logE].xaxis.max()
         ymin = sum_data_xyoff_map[logE].yaxis.min()
@@ -744,6 +754,13 @@ for logE in range(logE_min,logE_max):
     for gcut in range(0,gcut_bins):
         ax_idx = gcut + (logE-logE_min)*gcut_bins + 1
         axbig = fig.add_subplot((logE_max-logE_min),gcut_bins,ax_idx)
+        if logE==logE_min:
+            if gcut==0:
+                axbig.set_title('SR')
+            else:
+                axbig.set_title(f'CR{gcut}')
+        if gcut==0:
+            axbig.set_ylabel(f'E = {pow(10.,logE_bins[logE]):0.2f}-{pow(10.,logE_bins[logE+1]):0.2f} TeV')
         xmin = sum_data_xyoff_map[logE].xaxis.min()
         xmax = sum_data_xyoff_map[logE].xaxis.max()
         ymin = sum_data_xyoff_map[logE].yaxis.min()

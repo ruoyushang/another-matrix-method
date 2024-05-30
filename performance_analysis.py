@@ -52,18 +52,20 @@ ana_tag = []
 #ana_tag += [['poisson','r']]
 #ana_tag += [['rank5','b']]
 #ana_tag += [['rank10','b']]
-ana_tag += [['rank15','b']]
+#ana_tag += [['rank15','b']]
 #ana_tag += [['rank20','b']]
 #ana_tag += [['rank25','b']]
-#ana_tag += [['rank30','b']]
+ana_tag += [['rank30','b']]
+ana_tag += [['rank40','b']]
+#ana_tag += [['rank60','b']]
 
 onoff = 'OFF'
 
 #exposure_per_group = 0.2
 #exposure_per_group = 1.
 #exposure_per_group = 5.
-exposure_per_group = 10.
-#exposure_per_group = 20.
+#exposure_per_group = 10.
+exposure_per_group = 20.
 #exposure_per_group = 40.
 #exposure_per_group = 80.
 cr_qual_cut = 1e10
@@ -274,26 +276,29 @@ for ana in range(0,len(ana_tag)):
         avg_bias = 100.*(avg_data-avg_bkgd)/avg_data
         bias_array += [avg_bias/100.]
         avg_error = 0.
+        avg_error_correct = 0.
         avg_stat_error = 0.
         sum_weight = 0.
         for grp in range(0,len(grp_data_count)):
             data = grp_data_count[grp][logE]
             bkgd = grp_bkgd_count[grp][logE]
-            #bkgd = grp_bkgd_count[grp][logE] * (1.+avg_bias/100.)
+            bkgd_correct = grp_bkgd_count[grp][logE] * (1.+avg_bias/100.)
             weight = data
             if data>0.:
                 #avg_error += pow((data-bkgd)/data,2)*weight
                 #avg_stat_error += 2.*1./data*weight
                 avg_error += abs(data-bkgd)/data*weight
+                avg_error_correct += abs(data-bkgd_correct)/data*weight
                 avg_stat_error += pow(data,0.5)/data*weight
                 sum_weight += weight
         #avg_error = 100.*pow(avg_error/sum_weight,0.5)
         #avg_stat_error = 100.*pow(avg_stat_error/sum_weight,0.5)
         avg_error = 100.*avg_error/sum_weight
+        avg_error_correct = 100.*avg_error_correct/sum_weight
         avg_stat_error = 100.*avg_stat_error/sum_weight
-        print (f'E = {pow(10.,logE_bins[logE]):0.3f} TeV, avg_data = {avg_data:0.1f}, avg_bkgd = {avg_bkgd:0.1f}, bias = {avg_bias:0.2f} %, error = {avg_error:0.2f} +/- {avg_stat_error:0.2f} %')
+        print (f'E = {pow(10.,logE_bins[logE]):0.3f} TeV, avg_data = {avg_data:0.1f}, avg_bkgd = {avg_bkgd:0.1f}, bias = {avg_bias:0.2f} %, error = {avg_error:0.2f} +/- {avg_stat_error:0.2f} %, error (correct) = {avg_error_correct:0.2f} +/- {avg_stat_error:0.2f} %')
     
-    print (f'bias_array = {np.around(bias_array,3)}')
+    print (f'bias_array = {np.around(bias_array,4)}')
 
     ana_avg_elev += [grp_avg_elev]
     ana_data_count += [grp_data_count]

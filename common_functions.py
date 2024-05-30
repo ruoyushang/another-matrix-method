@@ -17,7 +17,7 @@ sky_tag = os.environ.get("SKY_TAG")
 
 use_poisson_likelihood = True
 fix_init_scale = 0.
-matrix_rank = 15
+matrix_rank = 30
 
 if sky_tag=='linear':
     use_poisson_likelihood = False
@@ -1027,13 +1027,15 @@ def cosmic_ray_like_chi2(try_params,ref_params,eigenvectors,diff_xyoff_map,init_
                     else:
                         sum_log_likelihood += pow(n_expect-n_data,2)*weight
 
-    #if use_poisson_likelihood:
-    #    sum_log_likelihood = sum_log_likelihood/nbins
+    if use_poisson_likelihood:
+        sum_log_likelihood = sum_log_likelihood/nbins
 
     #sum_try_params = np.sum(try_params)
     #nuclear_norm_scale = 1.
-    #sum_log_likelihood += nuclear_norm_scale*sum_try_params*sum_try_params
-    #sum_log_likelihood += nuclear_norm_scale*sum_try_params*sum_try_params/n_data_total
+    #if use_poisson_likelihood:
+    #    sum_log_likelihood += nuclear_norm_scale*sum_try_params*sum_try_params/n_data_total
+    #else:
+    #    sum_log_likelihood += nuclear_norm_scale*sum_try_params*sum_try_params
 
     return sum_log_likelihood
 
@@ -1278,13 +1280,13 @@ def GetGammaSourceInfo():
 
     near_source_cut = 0.1
 
-    drawBrightStar = False
+    drawBrightStar = True
     drawPulsar = False
     drawSNR = False
     drawLHAASO = False
     drawFermi = False
     drawHAWC = False
-    drawTeV = True
+    drawTeV = False
 
     if drawBrightStar:
         star_name, star_ra, star_dec = ReadBrightStarListFromFile()
