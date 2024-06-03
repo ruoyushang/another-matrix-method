@@ -50,22 +50,24 @@ smi_dir = os.environ.get("SMI_DIR")
 ana_tag = []
 #ana_tag += [['linear','r']]
 #ana_tag += [['poisson','r']]
-#ana_tag += [['rank5','b']]
-#ana_tag += [['rank10','b']]
-#ana_tag += [['rank15','b']]
+#ana_tag += [['rank4','b']]
+#ana_tag += [['rank7','b']]
+ana_tag += [['rank10','b']]
+ana_tag += [['rank15','b']]
 #ana_tag += [['rank20','b']]
 #ana_tag += [['rank25','b']]
-ana_tag += [['rank30','b']]
-ana_tag += [['rank40','b']]
+#ana_tag += [['rank30','b']]
+#ana_tag += [['rank40','b']]
 #ana_tag += [['rank60','b']]
 
 onoff = 'OFF'
 
 #exposure_per_group = 0.2
 #exposure_per_group = 1.
+#exposure_per_group = 2.
 #exposure_per_group = 5.
-#exposure_per_group = 10.
-exposure_per_group = 20.
+exposure_per_group = 10.
+#exposure_per_group = 20.
 #exposure_per_group = 40.
 #exposure_per_group = 80.
 cr_qual_cut = 1e10
@@ -211,10 +213,10 @@ for ana in range(0,len(ana_tag)):
                     data_sum = np.sum(data_sky_map[logE].waxis[:,:,0])
                     bkgd_sum = np.sum(bkgd_sky_map[logE].waxis[:,:,0])
                     norm_sum = pow(data_sum*data_sum+bkgd_sum*bkgd_sum,0.5)
-                    if norm_sum>0.:
-                        significance = (data_sum-bkgd_sum)/pow(norm_sum,0.5)
-                        if significance>10.:
-                            print (f'large error in input_filename = {input_filename}')
+                    #if norm_sum>0.:
+                    #    significance = (data_sum-bkgd_sum)/pow(norm_sum,0.5)
+                    #    if abs(significance)>10.:
+                    #        print (f'large error in input_filename = {input_filename}')
                     data_count[logE] += data_sum
                     bkgd_count[logE] += bkgd_sum
 
@@ -247,6 +249,17 @@ for ana in range(0,len(ana_tag)):
                         grp_avg_elev += [avg_elev]
                         grp_data_count += [tmp_data_count]
                         grp_bkgd_count += [tmp_bkgd_count]
+
+                    data_sum = 0.
+                    bkgd_sum = 0.
+                    for logE in range(0,logE_nbins):
+                        data_sum += data_count[logE]
+                        bkgd_sum += bkgd_count[logE]
+                    norm_sum += pow(data_sum*data_sum+bkgd_sum*bkgd_sum,0.5)
+                    if norm_sum>0.:
+                        significance = (data_sum-bkgd_sum)/pow(norm_sum,0.5)
+                        if abs(significance)>10.:
+                            print (f'large error in input_filename = {input_filename}, significance = {significance:0.2f}')
     
                     group_exposure = 0.
                     avg_elev = 0.
@@ -429,6 +442,29 @@ for ana in range(0,len(ana_tag)):
 #            plot_truth_params[par] += [truth]
 #            plot_fit_params[par] += [fit]
 
+#plot_n_params = 2
+#fig.clf()
+#figsize_x = 2.*plot_n_params
+#figsize_y = 2.*plot_n_params
+#fig.set_figheight(figsize_y)
+#fig.set_figwidth(figsize_x)
+#for par1 in range(0,plot_n_params):
+#    for par2 in range(par1,plot_n_params):
+#        truth_param1 = []
+#        truth_param2 = []
+#        for run in range(0,len(list_truth_params)):
+#            if par1>=len(list_truth_params[run]): continue
+#            ax_idx = par2 + par1*plot_n_params + 1
+#            axbig = fig.add_subplot(plot_n_params,plot_n_params,ax_idx)
+#            if par1==0:
+#                axbig.set_title(f'Par {par2}')
+#            if par2==0:
+#                axbig.set_ylabel(f'Par {par1}')
+#            truth_param1 += [list_truth_params[run][par1]]
+#            truth_param2 += [list_truth_params[run][par2]]
+#        axbig.scatter(truth_param1,truth_param2,color='b',alpha=0.5)
+#fig.savefig(f'output_plots/param_cov_matrix.png',bbox_inches='tight')
+#axbig.remove()
 
 #for par in range(0,plot_n_params):
 #    fig.clf()

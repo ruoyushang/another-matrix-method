@@ -65,7 +65,7 @@ smi_dir = os.environ.get("SMI_DIR")
 
 #ana_tag = 'linear'
 #ana_tag = 'poisson'
-ana_tag = 'rank30'
+ana_tag = 'rank10'
 
 qual_cut = 0.
 #qual_cut = 20.

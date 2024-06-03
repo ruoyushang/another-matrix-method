@@ -16,8 +16,10 @@ sky_tag = os.environ.get("SKY_TAG")
 
 
 use_poisson_likelihood = True
-fix_init_scale = 0.
-matrix_rank = 30
+regularization_scale = 1.
+#use_poisson_likelihood = False
+#regularization_scale = 10.
+matrix_rank = 15
 
 if sky_tag=='linear':
     use_poisson_likelihood = False
@@ -25,7 +27,7 @@ if sky_tag=='poisson':
     use_poisson_likelihood = True
 
 if sky_tag=='init':
-    fix_init_scale = 1e5
+    regularization_scale = 1e5
 
 if 'rank' in sky_tag:
     matrix_rank = int(sky_tag.strip('rank'))
@@ -47,17 +49,19 @@ xoff_end = 2.
 yoff_start = -2.
 yoff_end = 2.
 gcut_bins = 4
+#gcut_bins = 6
 gcut_start = 0
 gcut_end = gcut_bins
 
-logE_bins = [-0.625,-0.600,-0.50,-0.375,-0.25,0.00,0.25,0.50,0.75,1.0] # logE TeV
+logE_bins = [-0.600,-0.50,-0.375,-0.25,0.00,0.25,0.50,0.75,1.0] # logE TeV
+#logE_bins = [-0.625,-0.600,-0.50,-0.375,-0.25,0.00,0.25,0.50,0.75,1.0] # logE TeV
 #logE_bins = [-0.75,-0.625,-0.50,-0.375,-0.25,0.00,0.25,0.50,0.75,1.0] # logE TeV
 logE_nbins = len(logE_bins)-1
 
 #MSCW_cut = 0.7
 #MSCL_cut = 0.8
-MSCW_cut = [0.55,0.60,0.65,0.70,0.75,0.80,0.85,0.90,0.95,1.00]
-MSCL_cut = [0.65,0.70,0.75,0.80,0.85,0.90,0.95,1.00,1.05,1.10]
+MSCW_cut = [0.60,0.65,0.70,0.75,0.80,0.85,0.90,0.95,1.00]
+MSCL_cut = [0.70,0.75,0.80,0.85,0.90,0.95,1.00,1.05,1.10]
 
 skymap_size = 3.
 skymap_bins = 30
@@ -67,13 +71,7 @@ fine_skymap_bins = 120
 doFluxCalibration = False
 calibration_radius = 0.15 # need to be larger than the PSF and smaller than the integration radius
 
-#logE_min = 3
-#logE_mid = 7
-#logE_max = logE_nbins
-#xoff_bins = [11,11,11,11,11,11,11,11,11]
-xoff_bins = [11,11,9,7,5,3,3,1,1]
-#xoff_bins = [11,9,5,5,3,3,1,1]
-#xoff_bins = [13,11,9,5,5,3,3,1,1]
+xoff_bins = [11,9,7,5,3,1,1,1]
 yoff_bins = xoff_bins
 
 chi2_cut = 0.5
@@ -470,6 +468,10 @@ def EventGammaCut(MSCL,MSCW):
     #    GammaCut = 2.5
     #elif abs(MSCL)<1. and abs(MSCW)<4.:
     #    GammaCut = 3.5
+    #elif abs(MSCL)<1. and abs(MSCW)<5.:
+    #    GammaCut = 4.5
+    #elif abs(MSCL)<1. and abs(MSCW)<6.:
+    #    GammaCut = 5.5
 
     return GammaCut
 
@@ -694,6 +696,16 @@ def build_skymap(source_name,src_ra,src_dec,smi_input,eigenvector_path,big_matri
         print (f'No data. Break.')
         return [exposure_hours,avg_tel_elev,avg_tel_azim,truth_params,fit_params,sr_qual,cr_qual], incl_sky_map, data_sky_map, fit_sky_map, data_xyoff_map, fit_xyoff_map, ratio_xyoff_map
 
+    #new_mimic_runlist = []
+    #for run in range(0,len(mimic_runlist)):
+    #    for mimic in range(0,len(mimic_runlist[run])):
+    #        new_mimic_runlist += [mimic_runlist[run][mimic]]
+    #big_off_matrix, big_off_mask_matrix = build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,new_mimic_runlist,max_runs=1e10,is_bkgd=True,is_on=True)
+
+    #if len(big_off_matrix)==0:
+    #    print (f'No off data. Break.')
+    #    return [exposure_hours,avg_tel_elev,avg_tel_azim,truth_params,fit_params,sr_qual,cr_qual], incl_sky_map, data_sky_map, fit_sky_map, data_xyoff_map, fit_xyoff_map, ratio_xyoff_map
+
     for logE in range(0,logE_nbins):
         data_xyoff_map[logE].reset()
         fit_xyoff_map[logE].reset()
@@ -711,21 +723,28 @@ def build_skymap(source_name,src_ra,src_dec,smi_input,eigenvector_path,big_matri
         data_xyoff_map_1d += np.array(big_on_matrix[entry])
         mask_xyoff_map_1d += np.array(big_mask_matrix[entry])
 
-    template_norm = cosmic_ray_like_count(avg_xyoff_map_1d,region_type=0)
-    on_data_norm = cosmic_ray_like_count(data_xyoff_map_1d,region_type=0)
+    #bkgd_xyoff_map_1d = np.zeros_like(big_on_matrix[0])
+    #for entry in range(0,len(big_off_matrix)):
+    #    bkgd_xyoff_map_1d += np.array(big_off_matrix[entry])
+
+    template_norm = cosmic_ray_like_count(avg_xyoff_map_1d,region_type=-1)
+    on_data_norm = cosmic_ray_like_count(data_xyoff_map_1d,region_type=-1)
     best_template_xyoff_map_1d = np.array(avg_xyoff_map_1d)*on_data_norm/template_norm
 
     diff_xyoff_map_1d = data_xyoff_map_1d - best_template_xyoff_map_1d
     fit_params = [0.] * effective_matrix_rank
+    avg_params = big_eigenvectors @ best_template_xyoff_map_1d
     truth_params = big_eigenvectors @ diff_xyoff_map_1d
+    #truth_params = big_eigenvectors @ data_xyoff_map_1d
 
-    init_params = [1e-4] * effective_matrix_rank
+    #init_params = [1e-4] * effective_matrix_rank
+    init_params = truth_params
     stepsize = [1e-4] * effective_matrix_rank
     solution = minimize(
         cosmic_ray_like_chi2,
         x0=init_params,
-        args=(fit_params,big_eigenvectors,diff_xyoff_map_1d,best_template_xyoff_map_1d,mask_xyoff_map_1d,0),
-        #args=(init_params,big_eigenvectors,diff_xyoff_map_1d,best_template_xyoff_map_1d,-1),  # unblind
+        args=(big_eigenvalues,big_eigenvectors,diff_xyoff_map_1d,best_template_xyoff_map_1d,mask_xyoff_map_1d,0),
+        #args=(big_eigenvalues,big_eigenvectors,diff_xyoff_map_1d,best_template_xyoff_map_1d,-1),  # unblind
         method='L-BFGS-B',
         jac=None,
         options={'eps':stepsize,'ftol':0.0001},
@@ -734,24 +753,24 @@ def build_skymap(source_name,src_ra,src_dec,smi_input,eigenvector_path,big_matri
     #fit_params = truth_params
 
     fit_xyoff_map_1d = big_eigenvectors.T @ fit_params + best_template_xyoff_map_1d
+    #fit_xyoff_map_1d = big_eigenvectors.T @ fit_params
 
     run_sr_chi2 = cosmic_ray_like_chi2(fit_params,big_eigenvalues,big_eigenvectors,diff_xyoff_map_1d,best_template_xyoff_map_1d,mask_xyoff_map_1d,1)
     run_cr_chi2 = cosmic_ray_like_chi2(fit_params,big_eigenvalues,big_eigenvectors,diff_xyoff_map_1d,best_template_xyoff_map_1d,mask_xyoff_map_1d,0)
 
     print ('===================================================================================')
     print (f'effective_matrix_rank = {effective_matrix_rank}')
+    print (f'big_eigenvalues = {big_eigenvalues}')
     for entry in range(0,len(truth_params)):
-        print (f'truth_params = {truth_params[entry]:0.1f}, fit_params = {fit_params[entry]:0.1f}')
+        print (f'rank: {entry}, avg_params = {avg_params[entry]:0.1f}, truth_params = {truth_params[entry]:0.1f}, fit_params = {fit_params[entry]:0.1f}')
     sum_truth_params = np.sum(truth_params)
     sum_fit_params = np.sum(fit_params)
     print (f'sum_truth_params = {sum_truth_params:0.1f}, sum_fit_params = {sum_fit_params:0.1f}')
     print (f'run_sr_chi2 = {run_sr_chi2:0.3f}, run_cr_chi2 = {run_cr_chi2:0.3f}')
 
-    sr_data_count = cosmic_ray_like_count(data_xyoff_map_1d,region_type=1)
-    fit_data_count = cosmic_ray_like_count(fit_xyoff_map_1d,region_type=1)
-    init_data_count = cosmic_ray_like_count(best_template_xyoff_map_1d,region_type=1)
-    cr_data_count = cosmic_ray_like_count(data_xyoff_map_1d,region_type=0)
-    fit_cr_data_count = cosmic_ray_like_count(fit_xyoff_map_1d,region_type=0)
+    sr_data_count = cosmic_ray_like_count(data_xyoff_map_1d,region_type=0)
+    fit_data_count = cosmic_ray_like_count(fit_xyoff_map_1d,region_type=0)
+    init_data_count = cosmic_ray_like_count(best_template_xyoff_map_1d,region_type=0)
 
     print (f'sr_data_count = {sr_data_count:0.1f}, init_data_count = {init_data_count:0.1f}, fit_data_count = {fit_data_count:0.1f}')
 
@@ -766,6 +785,21 @@ def build_skymap(source_name,src_ra,src_dec,smi_input,eigenvector_path,big_matri
                     idx_1d += 1
                     data_xyoff_map[logE].waxis[idx_x,idx_y,gcut] += data_xyoff_map_1d[idx_1d-1]
                     fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] += fit_xyoff_map_1d[idx_1d-1]
+
+    #for gcut in range(0,gcut_bins):
+    #    for logE in range(0,logE_nbins):
+    #        cr1_data_count = np.sum(data_xyoff_map[logE].waxis[:,:,1])
+    #        fit_cr1_data_count = np.sum(fit_xyoff_map[logE].waxis[:,:,1])
+    #        cr2_data_count = np.sum(data_xyoff_map[logE].waxis[:,:,2])
+    #        fit_cr2_data_count = np.sum(fit_xyoff_map[logE].waxis[:,:,2])
+    #        cr3_data_count = np.sum(data_xyoff_map[logE].waxis[:,:,3])
+    #        fit_cr3_data_count = np.sum(fit_xyoff_map[logE].waxis[:,:,3])
+    #        ratio_correction = 1.
+    #        if gcut==0:
+    #            ratio_correction = (cr1_data_count/fit_cr1_data_count)*(cr2_data_count/fit_cr2_data_count)/(cr3_data_count/fit_cr3_data_count)
+    #        for idx_x in range(0,xoff_bins[logE]):
+    #            for idx_y in range(0,yoff_bins[logE]):
+    #                fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut]*ratio_correction
 
     print ('===================================================================================')
     for logE in range(0,logE_nbins):
@@ -987,14 +1021,21 @@ def cosmic_ray_like_chi2(try_params,ref_params,eigenvectors,diff_xyoff_map,init_
 
     try_params = np.array(try_params)
     try_xyoff_map = eigenvectors.T @ try_params + init_xyoff_map
+    #try_xyoff_map = eigenvectors.T @ try_params
+
+    init_params = eigenvectors @ init_xyoff_map
 
     sum_log_likelihood = 0.
     idx_1d = 0
     nbins = 0.
     n_expect_total = 0.
     n_data_total = 0.
+    n_expect_sr = 0.
+    n_data_sr = 0.
     for gcut in range(0,gcut_bins):
         for logE in range(0,logE_nbins):
+            n_expect_gcut = 0.
+            n_data_gcut = 0.
             for idx_x in range(0,xoff_bins[logE]):
                 for idx_y in range(0,yoff_bins[logE]):
 
@@ -1004,38 +1045,67 @@ def cosmic_ray_like_chi2(try_params,ref_params,eigenvectors,diff_xyoff_map,init_
                     mask = mask_xyoff_map[idx_1d-1]
                     weight = 1.
 
+                    n_expect = max(0.0001,try_xyoff_map[idx_1d-1])
+                    n_data = diff + init
+                    if gcut==0:
+                        n_expect_sr += n_expect
+                        n_data_sr += n_data
+
                     if region_type==0:
                         if gcut==0:
                             if mask>0.: # blind
-                                diff = 0.
-                                weight = fix_init_scale
+                                n_data = init
+                                weight = 0.
                     elif region_type==1:
                         if gcut!=0: continue
 
-                    n_expect = max(0.0001,try_xyoff_map[idx_1d-1])
-                    n_data = diff + init
-
+                    nbins += 1.
                     n_expect_total += n_expect
                     n_data_total += n_data
+
+                    n_expect_gcut += n_expect*weight
+                    n_data_gcut += n_data*weight
  
                     if use_poisson_likelihood:
                         if n_data==0.:
                             sum_log_likelihood += (n_expect)*weight
                         else:
                             sum_log_likelihood += (-1.*(n_data*np.log(n_expect) - n_expect - (n_data*np.log(n_data)-n_data)))*weight
-                        nbins += 1.
                     else:
                         sum_log_likelihood += pow(n_expect-n_data,2)*weight
 
-    if use_poisson_likelihood:
-        sum_log_likelihood = sum_log_likelihood/nbins
+            if xoff_bins[logE]>=5:
+                if use_poisson_likelihood:
+                    if n_data_gcut==0.:
+                        sum_log_likelihood += (n_expect_gcut)
+                    else:
+                        sum_log_likelihood += (-1.*(n_data_gcut*np.log(n_expect_gcut) - n_expect_gcut - (n_data_gcut*np.log(n_data_gcut)-n_data_gcut)))
+                else:
+                    sum_log_likelihood += pow(n_expect_gcut-n_data_gcut,2)
 
-    #sum_try_params = np.sum(try_params)
-    #nuclear_norm_scale = 1.
+
     #if use_poisson_likelihood:
-    #    sum_log_likelihood += nuclear_norm_scale*sum_try_params*sum_try_params/n_data_total
-    #else:
-    #    sum_log_likelihood += nuclear_norm_scale*sum_try_params*sum_try_params
+    #    sum_log_likelihood = sum_log_likelihood/nbins
+
+    #for r in range(0,len(try_params)):
+    #    sum_log_likelihood += pow(init_params[r]-try_params[r],2)*regularization_scale
+
+    #sum_log_likelihood += max(0,try_params[0]*try_params[1])*regularization_scale
+
+    #nuclear_norm = 0.
+    #nuclear_norm_weight = 0.
+    #for r in range(0,len(try_params)):
+    #    nuclear_norm += pow(try_params[r],2)/pow(init_params[r],2)
+    #    nuclear_norm_weight += 1./pow(init_params[r],2)
+    #nuclear_norm = nuclear_norm/nuclear_norm_weight
+    #sum_log_likelihood += regularization_scale*nuclear_norm
+
+    #nuclear_norm = 0.
+    #for r in range(0,len(try_params)):
+    #    nuclear_norm += try_params[r]
+    #nuclear_norm = pow(nuclear_norm,2)/np.sum(init_params)
+    #sum_log_likelihood += regularization_scale*nuclear_norm
+
 
     return sum_log_likelihood
 
@@ -1048,10 +1118,10 @@ def cosmic_ray_like_count(xyoff_map,region_type=0):
             for idx_x in range(0,xoff_bins[logE]):
                 for idx_y in range(0,yoff_bins[logE]):
                     idx_1d += 1
-                    if region_type==0:
+                    if region_type==-1:
                         if gcut==0: continue
-                    elif region_type==1:
-                        if gcut!=0: continue
+                    else:
+                        if gcut!=region_type: continue
 
                     weight = 1.
                     #weight = 1./float(gcut+1)
@@ -1527,7 +1597,6 @@ def GetFluxCalibration(energy):
         return 1.
 
     str_flux_calibration = ['2.45e+03', '6.99e+02', '7.64e+02', '1.18e+03', '1.17e+03', '2.64e+03', '6.20e+03', '1.52e+04', '3.71e+04']
-    #str_flux_calibration = ['3.95e+02', '5.93e+02', '8.96e+02', '1.32e+03', '1.25e+03', '2.63e+03', '6.10e+03', '1.37e+04', '2.92e+04']
 
     flux_calibration = []
     for string in str_flux_calibration:

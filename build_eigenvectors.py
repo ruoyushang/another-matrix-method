@@ -34,6 +34,9 @@ input_filename = f'{smi_output}/big_off_matrix_{source_name}_{input_epoch}.pkl'
 print (f'input_filename = {input_filename}')
 big_matrix = pickle.load(open(input_filename, "rb"))
 
+n_runs = float(len(big_matrix))
+big_matrix = np.array(big_matrix)*1./n_runs
+
 #input_filename = f'{smi_output}/big_off_matrix_ctl_{source_name}_{input_epoch}.pkl'
 #big_matrix_ctl = pickle.load(open(input_filename, "rb"))
 
@@ -54,7 +57,7 @@ for entry in range(0,len(big_matrix)):
 U_full, S_full, VT_full = np.linalg.svd(big_matrix,full_matrices=False) # perform better for perturbation method
 #U_full, S_full, VT_full = np.linalg.svd(big_diff_matrix,full_matrices=False)
 print (f'S_full length = {len(S_full)}')
-effective_matrix_rank = min(matrix_rank,int(0.2*3./4.*(len(S_full)-1)))
+effective_matrix_rank = min(matrix_rank,int(0.5*3./4.*(len(S_full)-1)))
 #effective_matrix_rank = max(1,int(0.1*3./4.*(len(S_full)-1)))
 print (f'effective_matrix_rank = {effective_matrix_rank}')
 U_eco = U_full[:, :effective_matrix_rank]
@@ -83,6 +86,41 @@ axbig.plot(rank_index,S_full)
 fig.savefig(f'{smi_dir}/output_plots/signularvalue_{source_name}_{input_epoch}.png',bbox_inches='tight')
 axbig.remove()
 
+allrun_full_params = []
+allrun_diff_params = []
+for run in range(0,len(big_diff_matrix)):
+    full_params = big_eigenvectors @ big_matrix[run]
+    diff_params = big_eigenvectors @ big_diff_matrix[run]
+    allrun_full_params += [full_params]
+    allrun_diff_params += [diff_params]
+
+plot_n_params = 5
+fig.clf()
+figsize_x = 2.*plot_n_params
+figsize_y = 2.*plot_n_params
+fig.set_figheight(figsize_y)
+fig.set_figwidth(figsize_x)
+for par1 in range(0,plot_n_params):
+    for par2 in range(par1,plot_n_params):
+        ax_idx = par1 + par2*plot_n_params + 1
+        axbig = fig.add_subplot(plot_n_params,plot_n_params,ax_idx)
+        axbig.scatter(allrun_full_params[:][par1],allrun_full_params[:][par2],color='b',alpha=0.5)
+fig.savefig(f'{smi_dir}/output_plots/full_param_cov_matrix_{source_name}_{input_epoch}.png',bbox_inches='tight')
+axbig.remove()
+
+plot_n_params = 5
+fig.clf()
+figsize_x = 2.*plot_n_params
+figsize_y = 2.*plot_n_params
+fig.set_figheight(figsize_y)
+fig.set_figwidth(figsize_x)
+for par1 in range(0,plot_n_params):
+    for par2 in range(par1,plot_n_params):
+        ax_idx = par1 + par2*plot_n_params + 1
+        axbig = fig.add_subplot(plot_n_params,plot_n_params,ax_idx)
+        axbig.scatter(allrun_diff_params[:][par1],allrun_diff_params[:][par2],color='b',alpha=0.5)
+fig.savefig(f'{smi_dir}/output_plots/diff_param_cov_matrix_{source_name}_{input_epoch}.png',bbox_inches='tight')
+axbig.remove()
 
 #min_rank = 2
 #big_xyoff_map_1d = []
