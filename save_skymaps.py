@@ -70,25 +70,54 @@ big_off_runlist = []
 small_off_runlist = []
 big_mimic_runlist = []
 small_mimic_runlist = []
-nruns_in_small_list = 1
-#nruns_in_small_list = 10
-run_count = 0
+
+#nruns_in_small_list = 1
+##nruns_in_small_list = 10
+#run_count = 0
+#for run in range(0,total_runs):
+#    small_runlist += [on_runlist[run]]
+#    small_off_runlist += [off_runlist[run]]
+#    small_mimic_runlist += [mimic_runlist[run]]
+#    run_count += 1
+#    if (run % nruns_in_small_list)==(nruns_in_small_list-1):
+#        big_runlist += [small_runlist]
+#        small_runlist = []
+#        big_off_runlist += [small_off_runlist]
+#        small_off_runlist = []
+#        big_mimic_runlist += [small_mimic_runlist]
+#        small_mimic_runlist = []
+#        run_count = 0
+
+min_exposure = 45./60.
+run_exposure = 0.
 for run in range(0,total_runs):
-    #if len(off_runlist[run])<2: 
-    #    print (f'ON run {on_runlist[run]} rejected: zero matched OFF run')
-    #    continue
+
+    rootfile_name = f'{smi_input}/{on_runlist[run]}.anasum.root'
+    print (rootfile_name)
+    if not os.path.exists(rootfile_name):
+        print (f'file does not exist.')
+        continue
+    InputFile = ROOT.TFile(rootfile_name)
+    TreeName = f'run_{on_runlist[run]}/stereo/DL3EventTree'
+    EvtTree = InputFile.Get(TreeName)
+    total_entries = EvtTree.GetEntries()
+    EvtTree.GetEntry(0)
+    time_start = EvtTree.timeOfDay
+    EvtTree.GetEntry(total_entries-1)
+    time_end = EvtTree.timeOfDay
+
     small_runlist += [on_runlist[run]]
     small_off_runlist += [off_runlist[run]]
     small_mimic_runlist += [mimic_runlist[run]]
-    run_count += 1
-    if (run % nruns_in_small_list)==(nruns_in_small_list-1):
+    run_exposure += (time_end-time_start)/3600.
+    if run==total_runs-1 or run_exposure>min_exposure:
         big_runlist += [small_runlist]
         small_runlist = []
         big_off_runlist += [small_off_runlist]
         small_off_runlist = []
         big_mimic_runlist += [small_mimic_runlist]
         small_mimic_runlist = []
-        run_count = 0
+        run_exposure = 0.
 
 total_data_xyoff_map = []
 total_fit_xyoff_map = []

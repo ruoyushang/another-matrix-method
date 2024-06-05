@@ -60,8 +60,8 @@ logE_nbins = len(logE_bins)-1
 
 #MSCW_cut = 0.7
 #MSCL_cut = 0.8
-MSCW_cut = [0.60,0.65,0.70,0.75,0.80,0.85,0.90,0.95,1.00]
-MSCL_cut = [0.70,0.75,0.80,0.85,0.90,0.95,1.00,1.05,1.10]
+MSCW_cut = [0.60,0.65,0.70,0.75,0.75,0.75,0.75,0.75]
+MSCL_cut = [0.70,0.75,0.80,0.85,0.85,0.85,0.85,0.85]
 
 skymap_size = 3.
 skymap_bins = 30
@@ -1053,9 +1053,11 @@ def cosmic_ray_like_chi2(try_params,ref_params,eigenvectors,diff_xyoff_map,init_
 
                     if region_type==0:
                         if gcut==0:
-                            if mask>0.: # blind
-                                n_data = init
-                                weight = 0.
+                            n_data = init
+                            weight = 0.
+                            #if mask>0.: # blind
+                            #    n_data = init
+                            #    weight = 0.
                     elif region_type==1:
                         if gcut!=0: continue
 
@@ -1596,7 +1598,7 @@ def GetFluxCalibration(energy):
     if doFluxCalibration:
         return 1.
 
-    str_flux_calibration = ['2.45e+03', '6.99e+02', '7.64e+02', '1.18e+03', '1.17e+03', '2.64e+03', '6.20e+03', '1.52e+04', '3.71e+04']
+    str_flux_calibration = ['6.68e+02', '8.53e+02', '1.33e+03', '1.28e+03', '2.74e+03', '6.34e+03', '1.46e+04', '3.43e+04']
 
     flux_calibration = []
     for string in str_flux_calibration:
@@ -1645,11 +1647,11 @@ def make_flux_map(incl_sky_map,data_sky_map,bkgd_sky_map,flux_sky_map,flux_err_s
                 flux_sky_map.waxis[idx_x,idx_y,0] = 0.
                 flux_err_sky_map.waxis[idx_x,idx_y,0] = 0.
 
-def GetRadialProfile(hist_flux_skymap,hist_error_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,use_excl=True):
+def GetRadialProfile(hist_flux_skymap,hist_error_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,use_excl=True,radial_bin_scale=2.):
 
     deg2_to_sr =  3.046*1e-4
     pix_size = abs((hist_flux_skymap.yaxis[1]-hist_flux_skymap.yaxis[0])*(hist_flux_skymap.xaxis[1]-hist_flux_skymap.xaxis[0]))*deg2_to_sr
-    bin_size = min(0.1,2.*(hist_flux_skymap.yaxis[1]-hist_flux_skymap.yaxis[0]))
+    bin_size = max(radial_bin_scale,2.*(hist_flux_skymap.yaxis[1]-hist_flux_skymap.yaxis[0]))
     radial_axis = MyArray1D(x_nbins=int(roi_r/bin_size),start_x=0.,end_x=roi_r)
 
     radius_array = []
@@ -2129,10 +2131,13 @@ def fit_2d_model(data_sky_map,bkgd_sky_map, src_x, src_y):
     dof = len(image_excess.ravel())-4
     print ('chisq/dof = %0.3f'%(chisq/dof))
 
-def plot_radial_profile_with_systematics(fig,plotname,flux_sky_map,flux_err_sky_map,mimic_flux_sky_map,mimic_flux_err_sky_map,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r):
+def diffusion_func(x,A,d):
+    return A*1.22/(pow(3.14,1.5)*d*(x+0.06*d))*np.exp(-x*x/(d*d))
 
-    on_radial_axis, on_profile_axis, on_profile_err_axis = GetRadialProfile(flux_sky_map,flux_err_sky_map,roi_x,roi_y,2.0,excl_roi_x,excl_roi_y,excl_roi_r)
-    all_radial_axis, all_profile_axis, all_profile_err_axis = GetRadialProfile(flux_sky_map,flux_err_sky_map,roi_x,roi_y,2.0,excl_roi_x,excl_roi_y,excl_roi_r,use_excl=False)
+def plot_radial_profile_with_systematics(fig,plotname,flux_sky_map,flux_err_sky_map,mimic_flux_sky_map,mimic_flux_err_sky_map,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,fit_radial_profile,radial_bin_scale=2.):
+
+    on_radial_axis, on_profile_axis, on_profile_err_axis = GetRadialProfile(flux_sky_map,flux_err_sky_map,roi_x,roi_y,2.0,excl_roi_x,excl_roi_y,excl_roi_r,radial_bin_scale=radial_bin_scale)
+    all_radial_axis, all_profile_axis, all_profile_err_axis = GetRadialProfile(flux_sky_map,flux_err_sky_map,roi_x,roi_y,2.0,excl_roi_x,excl_roi_y,excl_roi_r,use_excl=False,radial_bin_scale=radial_bin_scale)
     n_mimic = len(mimic_flux_sky_map)
     fig.clf()
     figsize_x = 7
@@ -2147,7 +2152,7 @@ def plot_radial_profile_with_systematics(fig,plotname,flux_sky_map,flux_err_sky_
     mimic_profile_axis = []
     mimic_profile_err_axis = []
     for mimic in range(0,n_mimic):
-        radial_axis, profile_axis, profile_err_axis = GetRadialProfile(mimic_flux_sky_map[mimic],mimic_flux_err_sky_map[mimic],roi_x,roi_y,2.0,excl_roi_x,excl_roi_y,excl_roi_r,use_excl=False)
+        radial_axis, profile_axis, profile_err_axis = GetRadialProfile(mimic_flux_sky_map[mimic],mimic_flux_err_sky_map[mimic],roi_x,roi_y,2.0,excl_roi_x,excl_roi_y,excl_roi_r,use_excl=False,radial_bin_scale=radial_bin_scale)
         axbig.errorbar(radial_axis,profile_axis,profile_err_axis,marker='+',ls='none',zorder=mimic+1)
         mimic_profile_axis += [profile_axis]
         mimic_profile_err_axis += [profile_err_axis]
@@ -2168,6 +2173,22 @@ def plot_radial_profile_with_systematics(fig,plotname,flux_sky_map,flux_err_sky_
     fig.savefig(f'output_plots/{plotname}_mimic.png',bbox_inches='tight')
     axbig.remove()
 
+    if fit_radial_profile:
+
+        profile_sum = np.sum(on_profile_axis)
+        start = (profile_sum, 0.5)
+        popt, pcov = curve_fit(diffusion_func,on_radial_axis,on_profile_axis,p0=start,sigma=on_profile_err_axis,absolute_sigma=True,bounds=((0, 0.01), (np.inf, np.inf)))
+        profile_fit = diffusion_func(np.array(on_radial_axis), *popt)
+        residual = np.array(on_profile_axis) - profile_fit
+        chisq = np.sum((residual/np.array(on_profile_err_axis))**2)
+        dof = len(on_radial_axis)-2
+        print ('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+        print (f'plotname = {plotname}')
+        print ('diffusion flux = %0.2E +/- %0.2E'%(popt[0],pow(pcov[0][0],0.5)))
+        print ('diffusion radius = %0.2f +/- %0.2f deg (chi2/dof = %0.2f)'%(popt[1],pow(pcov[1][1],0.5),chisq/dof))
+        for entry in range(0,len(on_radial_axis)):
+            print (f'x = {on_radial_axis[entry]:0.2f}, y = {on_profile_axis[entry]:0.2e}, err = {on_profile_err_axis[entry]:0.2e}')
+
     baseline_yaxis = [0. for i in range(0,len(on_radial_axis))]
     fig.clf()
     figsize_x = 7
@@ -2183,9 +2204,10 @@ def plot_radial_profile_with_systematics(fig,plotname,flux_sky_map,flux_err_sky_
     axbig.errorbar(all_radial_axis,all_profile_axis,all_profile_err_axis,color='r',marker='+',ls='none',zorder=1)
     axbig.errorbar(on_radial_axis,on_profile_axis,on_profile_err_axis,color='k',marker='+',ls='none',zorder=2)
     axbig.fill_between(on_radial_axis,np.array(on_profile_axis)-np.array(profile_syst_err_axis),np.array(on_profile_axis)+np.array(profile_syst_err_axis),alpha=0.2,color='b',zorder=0)
+    if fit_radial_profile:
+        axbig.plot(on_radial_axis,diffusion_func(np.array(on_radial_axis),*popt),color='r')
     fig.savefig(f'output_plots/{plotname}.png',bbox_inches='tight')
     axbig.remove()
-
 
 def build_radial_symmetric_model(radial_symmetry_sky_map,on_radial_axis,on_profile_axis,roi_x,roi_y):
 

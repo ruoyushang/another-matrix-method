@@ -44,15 +44,6 @@ GetGammaSourceInfo = common_functions.GetGammaSourceInfo
 build_radial_symmetric_model = common_functions.build_radial_symmetric_model
 
 
-logE_min = 0
-logE_mid = 2
-logE_max = logE_nbins
-
-# MGRO J1908+06
-#logE_min = 3
-#logE_mid = 6
-#logE_max = logE_nbins
-
 fig, ax = plt.subplots()
 figsize_x = 8.6
 figsize_y = 6.4
@@ -65,7 +56,7 @@ smi_dir = os.environ.get("SMI_DIR")
 
 #ana_tag = 'linear'
 #ana_tag = 'poisson'
-ana_tag = 'rank10'
+ana_tag = 'rank15'
 
 qual_cut = 0.
 #qual_cut = 20.
@@ -81,13 +72,42 @@ src_ra = float(sys.argv[2])
 src_dec = float(sys.argv[3])
 onoff = sys.argv[4]
 
+logE_min = 1
+logE_mid = 4
+logE_max = logE_nbins
+fit_radial_profile = False
+radial_bin_scale = 0.1
+
+if 'PSR_J1856_p0245' in source_name:
+    logE_min = 2
+    logE_mid = 4
+    logE_max = logE_nbins
+    fit_radial_profile = True
+if 'PSR_J1907_p0602' in source_name:
+    logE_min = 3
+    logE_mid = 6
+    logE_max = logE_nbins
+    fit_radial_profile = True
+if 'SS433' in source_name:
+    logE_min = 3
+    logE_mid = 5
+    logE_max = logE_nbins
+    fit_radial_profile = False
+    elev_cut = 55.
+if 'Geminga' in source_name:
+    logE_min = 1
+    logE_mid = 5
+    logE_max = logE_nbins
+    fit_radial_profile = False
+    radial_bin_scale = 0.3
+
 #input_epoch = ['V4']
 #input_epoch = ['V5']
 #input_epoch = ['V6']
 input_epoch = ['V4','V5','V6']
 
-n_mimic = 0
-#n_mimic = 5
+#n_mimic = 0
+n_mimic = 5
 
 xsky_start = src_ra+skymap_size
 xsky_end = src_ra-skymap_size
@@ -620,21 +640,21 @@ for roi in range(0,len(all_roi_name)):
     mimic_flux_sky_map = sum_mimic_flux_sky_map_allE
     mimic_flux_err_sky_map = sum_mimic_flux_err_sky_map_allE
     plotname = f'{source_name}_surface_brightness_allE_{roi_name}_{ana_tag}'
-    plot_radial_profile_with_systematics(fig,plotname,flux_sky_map,flux_err_sky_map,mimic_flux_sky_map,mimic_flux_err_sky_map,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
+    plot_radial_profile_with_systematics(fig,plotname,flux_sky_map,flux_err_sky_map,mimic_flux_sky_map,mimic_flux_err_sky_map,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,fit_radial_profile,radial_bin_scale=radial_bin_scale)
     
     flux_sky_map = sum_flux_sky_map_LE
     flux_err_sky_map = sum_flux_err_sky_map_LE
     mimic_flux_sky_map = sum_mimic_flux_sky_map_LE
     mimic_flux_err_sky_map = sum_mimic_flux_err_sky_map_LE
     plotname = f'{source_name}_surface_brightness_LE_{roi_name}_{ana_tag}'
-    plot_radial_profile_with_systematics(fig,plotname,flux_sky_map,flux_err_sky_map,mimic_flux_sky_map,mimic_flux_err_sky_map,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
+    plot_radial_profile_with_systematics(fig,plotname,flux_sky_map,flux_err_sky_map,mimic_flux_sky_map,mimic_flux_err_sky_map,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,fit_radial_profile,radial_bin_scale=radial_bin_scale)
     
     flux_sky_map = sum_flux_sky_map_HE
     flux_err_sky_map = sum_flux_err_sky_map_HE
     mimic_flux_sky_map = sum_mimic_flux_sky_map_HE
     mimic_flux_err_sky_map = sum_mimic_flux_err_sky_map_HE
     plotname = f'{source_name}_surface_brightness_HE_{roi_name}_{ana_tag}'
-    plot_radial_profile_with_systematics(fig,plotname,flux_sky_map,flux_err_sky_map,mimic_flux_sky_map,mimic_flux_err_sky_map,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
+    plot_radial_profile_with_systematics(fig,plotname,flux_sky_map,flux_err_sky_map,mimic_flux_sky_map,mimic_flux_err_sky_map,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,fit_radial_profile,radial_bin_scale=radial_bin_scale)
 
 
 for logE in range(logE_min,logE_max):
