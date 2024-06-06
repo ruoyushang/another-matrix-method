@@ -34,149 +34,62 @@ input_filename = f'{smi_output}/big_off_matrix_{source_name}_{input_epoch}.pkl'
 print (f'input_filename = {input_filename}')
 big_matrix = pickle.load(open(input_filename, "rb"))
 
-n_runs = float(len(big_matrix))
-big_matrix = np.array(big_matrix)*1./n_runs
-
-#input_filename = f'{smi_output}/big_off_matrix_ctl_{source_name}_{input_epoch}.pkl'
-#big_matrix_ctl = pickle.load(open(input_filename, "rb"))
+for logE in range(0,logE_nbins):
+    n_runs = float(len(big_matrix[logE]))
+    big_matrix[logE] = np.array(big_matrix[logE])*1./n_runs
 
 print ('Computing SVD eigenvectors...')
-big_xyoff_map_1d = np.zeros_like(big_matrix[0])
-for entry in range(0,len(big_matrix)):
-    for pix in range(0,len(big_matrix[entry])):
-        big_xyoff_map_1d[pix] += big_matrix[entry][pix]
+big_xyoff_map_1d = []
+for logE in range(0,logE_nbins):
+    big_xyoff_map_1d += [np.zeros_like(big_matrix[logE][0])]
 
-big_diff_matrix = np.zeros_like(big_matrix)
-for entry in range(0,len(big_matrix)):
-    big_norm = np.sum(big_xyoff_map_1d)
-    small_norm = np.sum(big_matrix[entry])
-    rescale = small_norm/big_norm
-    for pix in range(0,len(big_matrix[entry])):
-        big_diff_matrix[entry][pix] = big_matrix[entry][pix]-big_xyoff_map_1d[pix]*rescale
+for logE in range(0,logE_nbins):
+    for entry in range(0,len(big_matrix[logE])):
+        for pix in range(0,len(big_matrix[logE][entry])):
+            big_xyoff_map_1d[logE][pix] += big_matrix[logE][entry][pix]
 
-U_full, S_full, VT_full = np.linalg.svd(big_matrix,full_matrices=False) # perform better for perturbation method
-#U_full, S_full, VT_full = np.linalg.svd(big_diff_matrix,full_matrices=False)
-print (f'S_full length = {len(S_full)}')
-effective_matrix_rank = min(matrix_rank,int(0.5*3./4.*(len(S_full)-1)))
-#effective_matrix_rank = max(1,int(0.1*3./4.*(len(S_full)-1)))
-print (f'effective_matrix_rank = {effective_matrix_rank}')
-U_eco = U_full[:, :effective_matrix_rank]
-VT_eco = VT_full[:effective_matrix_rank, :]
-S_eco = S_full[:effective_matrix_rank]
-big_eigenvalues = S_eco
-big_eigenvectors = VT_eco
+big_eigenvalues = []
+big_eigenvectors = []
+for logE in range(0,logE_nbins):
 
-rank_index = []
-for entry in range(0,len(S_full)):
-    rank_index += [entry+1]
+    U_full, S_full, VT_full = np.linalg.svd(big_matrix[logE],full_matrices=False) # perform better for perturbation method
+    print (f'S_full length = {len(S_full)}')
 
-plot_max_rank = min(int(0.5*len(S_full)),300)
+    avg_n_events = np.sum(big_matrix[logE])
+    density_events = avg_n_events/float(len(S_full))
+    print (f'density_events = {density_events}')
 
-fig.clf()
-axbig = fig.add_subplot()
-label_x = 'Rank'
-label_y = 'Signular value'
-axbig.set_xlabel(label_x)
-axbig.set_ylabel(label_y)
-axbig.set_xlim(1,plot_max_rank)
-axbig.set_ylim(S_full[plot_max_rank-1],2.*S_full[0])
-axbig.set_xscale('log')
-axbig.set_yscale('log')
-axbig.plot(rank_index,S_full)
-fig.savefig(f'{smi_dir}/output_plots/signularvalue_{source_name}_{input_epoch}.png',bbox_inches='tight')
-axbig.remove()
+    effective_matrix_rank = min(matrix_rank,int(0.5*3./4.*(len(S_full)-1)))
+    if density_events<3.:
+        effective_matrix_rank = 1
+    print (f'effective_matrix_rank = {effective_matrix_rank}')
 
-allrun_full_params = []
-allrun_diff_params = []
-for run in range(0,len(big_diff_matrix)):
-    full_params = big_eigenvectors @ big_matrix[run]
-    diff_params = big_eigenvectors @ big_diff_matrix[run]
-    allrun_full_params += [full_params]
-    allrun_diff_params += [diff_params]
-
-plot_n_params = 5
-fig.clf()
-figsize_x = 2.*plot_n_params
-figsize_y = 2.*plot_n_params
-fig.set_figheight(figsize_y)
-fig.set_figwidth(figsize_x)
-for par1 in range(0,plot_n_params):
-    for par2 in range(par1,plot_n_params):
-        ax_idx = par1 + par2*plot_n_params + 1
-        axbig = fig.add_subplot(plot_n_params,plot_n_params,ax_idx)
-        axbig.scatter(allrun_full_params[:][par1],allrun_full_params[:][par2],color='b',alpha=0.5)
-fig.savefig(f'{smi_dir}/output_plots/full_param_cov_matrix_{source_name}_{input_epoch}.png',bbox_inches='tight')
-axbig.remove()
-
-plot_n_params = 5
-fig.clf()
-figsize_x = 2.*plot_n_params
-figsize_y = 2.*plot_n_params
-fig.set_figheight(figsize_y)
-fig.set_figwidth(figsize_x)
-for par1 in range(0,plot_n_params):
-    for par2 in range(par1,plot_n_params):
-        ax_idx = par1 + par2*plot_n_params + 1
-        axbig = fig.add_subplot(plot_n_params,plot_n_params,ax_idx)
-        axbig.scatter(allrun_diff_params[:][par1],allrun_diff_params[:][par2],color='b',alpha=0.5)
-fig.savefig(f'{smi_dir}/output_plots/diff_param_cov_matrix_{source_name}_{input_epoch}.png',bbox_inches='tight')
-axbig.remove()
-
-#min_rank = 2
-#big_xyoff_map_1d = []
-#big_eigenvalues = []
-#big_eigenvectors = []
-#
-#for logE in range(0,logE_nbins):
-#    big_xyoff_map_1d += [np.zeros_like(big_matrix[logE][0])]
-#for logE in range(0,logE_nbins):
-#    for entry in range(0,len(big_matrix[logE])):
-#        for pix in range(0,len(big_matrix[logE][entry])):
-#            big_xyoff_map_1d[logE][pix] += big_matrix[logE][entry][pix]
-#
-#big_diff_matrix = []
-#for logE in range(0,logE_nbins):
-#    big_diff_matrix += [np.zeros_like(big_matrix[logE])]
-#for logE in range(0,logE_nbins):
-#    for entry in range(0,len(big_matrix[logE])):
-#        big_norm = np.sum(big_xyoff_map_1d[logE])
-#        small_norm = np.sum(big_matrix[logE][entry])
-#        rescale = small_norm/big_norm
-#        for pix in range(0,len(big_matrix[logE][entry])):
-#            big_diff_matrix[logE][entry][pix] = big_matrix[logE][entry][pix]-big_xyoff_map_1d[logE][pix]*rescale
-#
-#for logE in range(0,logE_nbins):
-#    U_full, S_full, VT_full = np.linalg.svd(big_diff_matrix[logE],full_matrices=False)
-#    print (f'S_full length = {len(S_full)}')
-#    effective_matrix_rank = min(min_rank,int(0.5*(len(S_full)-1)))
-#    print (f'effective_matrix_rank = {effective_matrix_rank}')
-#    U_eco = U_full[:, :effective_matrix_rank]
-#    VT_eco = VT_full[:effective_matrix_rank, :]
-#    S_eco = S_full[:effective_matrix_rank]
-#    big_eigenvalues += [S_eco]
-#    big_eigenvectors += [VT_eco]
-#
-#    rank_index = []
-#    for entry in range(0,len(S_full)):
-#        rank_index += [entry+1]
-#    
-#    plot_max_rank = min(int(0.5*len(S_full)),300)
-#    
-#    fig.clf()
-#    axbig = fig.add_subplot()
-#    label_x = 'Rank'
-#    label_y = 'Signular value'
-#    axbig.set_xlabel(label_x)
-#    axbig.set_ylabel(label_y)
-#    axbig.set_xlim(1,plot_max_rank)
-#    axbig.set_ylim(S_full[plot_max_rank-1],2.*S_full[0])
-#    axbig.set_xscale('log')
-#    axbig.set_yscale('log')
-#    axbig.plot(rank_index,S_full)
-#    fig.savefig(f'{smi_dir}/output_plots/signularvalue_{source_name}_{input_epoch}_logE{logE}.png',bbox_inches='tight')
-#    axbig.remove()
-
-
+    U_eco = U_full[:, :effective_matrix_rank]
+    VT_eco = VT_full[:effective_matrix_rank, :]
+    S_eco = S_full[:effective_matrix_rank]
+    big_eigenvalues += [S_eco]
+    big_eigenvectors += [VT_eco]
+    
+    rank_index = []
+    for entry in range(0,len(S_full)):
+        rank_index += [entry+1]
+    
+    plot_max_rank = min(int(0.5*len(S_full)),300)
+    
+    fig.clf()
+    axbig = fig.add_subplot()
+    label_x = 'Rank'
+    label_y = 'Signular value'
+    axbig.set_xlabel(label_x)
+    axbig.set_ylabel(label_y)
+    axbig.set_xlim(1,plot_max_rank)
+    axbig.set_ylim(S_full[plot_max_rank-1],2.*S_full[0])
+    axbig.set_xscale('log')
+    axbig.set_yscale('log')
+    axbig.plot(rank_index,S_full)
+    fig.savefig(f'{smi_dir}/output_plots/signularvalue_{source_name}_{input_epoch}_logE{logE}.png',bbox_inches='tight')
+    axbig.remove()
+    
 
 
 output_filename = f'{smi_output}/eigenvectors_{source_name}_{input_epoch}_{sky_tag}.pkl'
