@@ -4,6 +4,7 @@ import ROOT
 import numpy as np
 import pickle
 from matplotlib import pyplot as plt
+from scipy.optimize import curve_fit
 from common_functions import MyArray1D
 from common_functions import MyArray3D
 
@@ -42,6 +43,8 @@ skymap_bins = common_functions.skymap_bins
 fine_skymap_bins = common_functions.fine_skymap_bins
 GetGammaSourceInfo = common_functions.GetGammaSourceInfo
 build_radial_symmetric_model = common_functions.build_radial_symmetric_model
+doFluxCalibration = common_functions.doFluxCalibration
+diffusion_func = common_functions.diffusion_func
 
 
 fig, ax = plt.subplots()
@@ -79,31 +82,42 @@ fit_radial_profile = False
 make_symmetric_model = False
 radial_bin_scale = 0.1
 
-if 'PSR_J1856_p0245' in source_name:
-    logE_min = 1
+if 'Crab' in source_name:
+    logE_min = 2
     logE_mid = 5
+    logE_max = logE_nbins
+    fit_radial_profile = False
+    make_symmetric_model = False
+if 'PSR_J1856_p0245' in source_name:
+    logE_min = 3
+    logE_mid = 6
     logE_max = logE_nbins
     fit_radial_profile = True
     make_symmetric_model = True
 if 'PSR_J1907_p0602' in source_name:
-    logE_min = 1
-    logE_mid = 5
+    logE_min = 3
+    logE_mid = 6
     logE_max = logE_nbins
     fit_radial_profile = True
-    make_symmetric_model = True
+    make_symmetric_model = False
 if 'SS433' in source_name:
     logE_min = 1
     logE_mid = 5
     logE_max = logE_nbins
     fit_radial_profile = False
-    make_symmetric_model = True
+    make_symmetric_model = False
 if 'Geminga' in source_name:
     logE_min = 1
     logE_mid = 5
     logE_max = logE_nbins
-    fit_radial_profile = False
-    make_symmetric_model = True
+    fit_radial_profile = True
+    make_symmetric_model = False
     radial_bin_scale = 0.3
+
+if doFluxCalibration:
+    logE_min = 0
+    logE_mid = 5
+    logE_max = logE_nbins
 
 #input_epoch = ['V4']
 #input_epoch = ['V5']
@@ -470,8 +484,8 @@ for logE in range(0,logE_nbins):
         sum_mimic_incl_sky_map_smooth[mimic][logE].add(sum_mimic_incl_sky_map[mimic][logE])
         sum_mimic_data_sky_map_smooth[mimic][logE].add(sum_mimic_data_sky_map[mimic][logE])
         sum_mimic_bkgd_sky_map_smooth[mimic][logE].add(sum_mimic_bkgd_sky_map[mimic][logE])
-        smooth_size = 0.08
-        #smooth_size = 0.12
+        smooth_size = 0.06
+        #smooth_size = 0.08
         smooth_image(sum_mimic_incl_sky_map_smooth[mimic][logE].waxis[:,:,0],sum_incl_sky_map_smooth[logE].xaxis,sum_incl_sky_map_smooth[logE].yaxis,kernel_radius=smooth_size)
         smooth_image(sum_mimic_bkgd_sky_map_smooth[mimic][logE].waxis[:,:,0],sum_bkgd_sky_map_smooth[logE].xaxis,sum_bkgd_sky_map_smooth[logE].yaxis,kernel_radius=smooth_size)
         smooth_image(sum_mimic_data_sky_map_smooth[mimic][logE].waxis[:,:,0],sum_data_sky_map_smooth[logE].xaxis,sum_data_sky_map_smooth[logE].yaxis,kernel_radius=smooth_size)
@@ -579,16 +593,16 @@ for roi in range(0,len(all_roi_name)):
 
     PrintInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,sum_data_sky_map,sum_bkgd_sky_map,sum_flux_sky_map,sum_flux_err_sky_map,sum_mimic_data_sky_map,sum_mimic_bkgd_sky_map,roi_name,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
 
+
+roi_name = all_roi_name[0]
+roi_x = all_roi_x[0]
+roi_y = all_roi_y[0]
+roi_r = all_roi_r[0]
+excl_roi_x = []
+excl_roi_y = []
+excl_roi_r = []
+
 if make_symmetric_model:
-
-    roi_name = all_roi_name[0]
-    roi_x = all_roi_x[0]
-    roi_y = all_roi_y[0]
-    roi_r = all_roi_r[0]
-    excl_roi_x = []
-    excl_roi_y = []
-    excl_roi_r = []
-
     for roi2 in range(1,len(all_roi_name)):
         excl_roi_x += [all_roi_x[roi2]]
         excl_roi_y += [all_roi_y[roi2]]
@@ -600,46 +614,47 @@ if make_symmetric_model:
         radial_map.just_like(sum_flux_sky_map[logE])
         radial_symmetry_sky_map += [radial_map]
     
-    for logE in range(logE_min,logE_max):
-        on_radial_axis, on_profile_axis, on_profile_err_axis = GetRadialProfile(sum_flux_sky_map[logE],sum_flux_err_sky_map[logE],roi_x,roi_y,2.0,excl_roi_x,excl_roi_y,excl_roi_r)
-        all_radial_axis, all_profile_axis, all_profile_err_axis = GetRadialProfile(sum_flux_sky_map[logE],sum_flux_err_sky_map[logE],roi_x,roi_y,2.0,excl_roi_x,excl_roi_y,excl_roi_r,use_excl=False)
-        baseline_yaxis = [0. for i in range(0,len(on_radial_axis))]
-        fig.clf()
-        figsize_x = 7
-        figsize_y = 5
-        fig.set_figheight(figsize_y)
-        fig.set_figwidth(figsize_x)
-        axbig = fig.add_subplot()
-        label_x = 'angular distance [deg]'
-        label_y = 'surface brightness [$\mathrm{TeV}\ \mathrm{cm}^{-2}\mathrm{s}^{-1}\mathrm{sr}^{-1}$]'
-        axbig.set_xlabel(label_x)
-        axbig.set_ylabel(label_y)
-        axbig.plot(on_radial_axis, baseline_yaxis, color='b', ls='dashed')
-        axbig.errorbar(all_radial_axis,all_profile_axis,all_profile_err_axis,color='r',marker='+',ls='none')
-        axbig.errorbar(on_radial_axis,on_profile_axis,on_profile_err_axis,color='k',marker='+',ls='none')
-        fig.savefig(f'output_plots/{source_name}_surface_brightness_logE{logE}_{roi_name}_{ana_tag}.png',bbox_inches='tight')
-        axbig.remove()
-    
+for logE in range(logE_min,logE_max):
+    on_radial_axis, on_profile_axis, on_profile_err_axis = GetRadialProfile(sum_flux_sky_map[logE],sum_flux_err_sky_map[logE],roi_x,roi_y,2.0,excl_roi_x,excl_roi_y,excl_roi_r)
+    all_radial_axis, all_profile_axis, all_profile_err_axis = GetRadialProfile(sum_flux_sky_map[logE],sum_flux_err_sky_map[logE],roi_x,roi_y,2.0,excl_roi_x,excl_roi_y,excl_roi_r,use_excl=False)
+    baseline_yaxis = [0. for i in range(0,len(on_radial_axis))]
+    fig.clf()
+    figsize_x = 7
+    figsize_y = 5
+    fig.set_figheight(figsize_y)
+    fig.set_figwidth(figsize_x)
+    axbig = fig.add_subplot()
+    label_x = 'angular distance [deg]'
+    label_y = 'surface brightness [$\mathrm{TeV}\ \mathrm{cm}^{-2}\mathrm{s}^{-1}\mathrm{sr}^{-1}$]'
+    axbig.set_xlabel(label_x)
+    axbig.set_ylabel(label_y)
+    axbig.plot(on_radial_axis, baseline_yaxis, color='b', ls='dashed')
+    axbig.errorbar(all_radial_axis,all_profile_axis,all_profile_err_axis,color='r',marker='+',ls='none')
+    axbig.errorbar(on_radial_axis,on_profile_axis,on_profile_err_axis,color='k',marker='+',ls='none')
+    fig.savefig(f'output_plots/{source_name}_surface_brightness_logE{logE}_{roi_name}_{ana_tag}.png',bbox_inches='tight')
+    axbig.remove()
+
+    if make_symmetric_model:
         build_radial_symmetric_model(radial_symmetry_sky_map[logE],on_radial_axis,on_profile_axis,roi_x,roi_y)
-    
-    PrintInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,sum_data_sky_map,sum_bkgd_sky_map,radial_symmetry_sky_map,sum_flux_err_sky_map,sum_mimic_data_sky_map,sum_mimic_bkgd_sky_map,f'{roi_name}_symmetric',[roi_x],[roi_y],[roi_r],excl_roi_x,excl_roi_y,excl_roi_r)
+        
+        PrintInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,sum_data_sky_map,sum_bkgd_sky_map,radial_symmetry_sky_map,sum_flux_err_sky_map,sum_mimic_data_sky_map,sum_mimic_bkgd_sky_map,f'{roi_name}_symmetric',[roi_x],[roi_y],[roi_r],excl_roi_x,excl_roi_y,excl_roi_r)
 
-    radial_symmetry_sky_map_allE = MyArray3D()
-    radial_symmetry_sky_map_allE.just_like(radial_symmetry_sky_map[0])
-    for logE in range(logE_min,logE_max):
-        radial_symmetry_sky_map_allE.add(radial_symmetry_sky_map[logE])
+        radial_symmetry_sky_map_allE = MyArray3D()
+        radial_symmetry_sky_map_allE.just_like(radial_symmetry_sky_map[0])
+        for logE in range(logE_min,logE_max):
+            radial_symmetry_sky_map_allE.add(radial_symmetry_sky_map[logE])
 
-    radial_symmetry_sky_map_LE = MyArray3D()
-    radial_symmetry_sky_map_LE.just_like(radial_symmetry_sky_map[0])
-    if logE>=logE_min and logE<logE_mid:
-        radial_symmetry_sky_map_LE.add(radial_symmetry_sky_map[logE])
+        radial_symmetry_sky_map_LE = MyArray3D()
+        radial_symmetry_sky_map_LE.just_like(radial_symmetry_sky_map[0])
+        if logE>=logE_min and logE<logE_mid:
+            radial_symmetry_sky_map_LE.add(radial_symmetry_sky_map[logE])
 
-    radial_symmetry_sky_map_HE = MyArray3D()
-    radial_symmetry_sky_map_HE.just_like(radial_symmetry_sky_map[0])
-    if logE>=logE_mid and logE<=logE_max:
-        radial_symmetry_sky_map_HE.add(radial_symmetry_sky_map[logE])
+        radial_symmetry_sky_map_HE = MyArray3D()
+        radial_symmetry_sky_map_HE.just_like(radial_symmetry_sky_map[0])
+        if logE>=logE_mid and logE<=logE_max:
+            radial_symmetry_sky_map_HE.add(radial_symmetry_sky_map[logE])
 
-    PlotSkyMap(fig,'$E^{2}$ dN/dE [$\mathrm{TeV}\cdot\mathrm{cm}^{-2}\mathrm{s}^{-1}$]',logE_min,logE_max,radial_symmetry_sky_map_allE,f'{source_name}_flux_sky_map_allE_symmetric_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
+        PlotSkyMap(fig,'$E^{2}$ dN/dE [$\mathrm{TeV}\cdot\mathrm{cm}^{-2}\mathrm{s}^{-1}$]',logE_min,logE_max,radial_symmetry_sky_map_allE,f'{source_name}_flux_sky_map_allE_symmetric_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
 
 for roi in range(0,len(all_roi_name)):
 
@@ -688,6 +703,40 @@ for roi in range(0,len(all_roi_name)):
     plotname = f'{source_name}_surface_brightness_HE_{roi_name}_{ana_tag}'
     plot_radial_profile_with_systematics(fig,plotname,flux_sky_map,flux_err_sky_map,mimic_flux_sky_map,mimic_flux_err_sky_map,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,fit_radial_profile_roi,radial_bin_scale=radial_bin_scale)
 
+if 'PSR_J1856_p0245' in source_name:
+
+    on_radial_axis = [0.1, 0.3, 0.5, 0.7, 0.9, 1.1, 1.3, 1.5, 1.7, 1.9, 2.1]
+    on_profile_axis = [1.42630770e-09, 8.45610102e-10, 3.97927911e-10, 1.77387588e-10, 2.17602561e-10, 1.69687255e-10, 2.00294064e-11, -7.74294257e-11, 2.45221243e-11, -1.22693293e-11, -1.28535773e-11] #TeV/cm2/s/deg2
+    on_profile_err_axis =[3.49403638e-10, 1.84587749e-10, 1.16395624e-10, 1.74538576e-10, 1.34151761e-10, 7.07628523e-11, 9.00952643e-11, 5.02971675e-11, 2.47404062e-11, 1.01558004e-11, 1.85267251e-13] #TeV/cm2/s/deg2
+    profile_sum = np.sum(on_profile_axis)
+    start = (profile_sum, 0.5)
+    popt, pcov = curve_fit(diffusion_func,on_radial_axis,on_profile_axis,p0=start,sigma=on_profile_err_axis,absolute_sigma=True,bounds=((0, 0.01), (np.inf, np.inf)))
+    profile_fit = diffusion_func(np.array(on_radial_axis), *popt)
+    residual = np.array(on_profile_axis) - profile_fit
+    chisq = np.sum((residual/np.array(on_profile_err_axis))**2)
+    dof = len(on_radial_axis)-2
+    print ('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+    print (f'Fermi data')
+    print ('diffusion flux = %0.2E +/- %0.2E'%(popt[0],pow(pcov[0][0],0.5)))
+    print ('diffusion radius = %0.2f +/- %0.2f deg (chi2/dof = %0.2f)'%(popt[1],pow(pcov[1][1],0.5),chisq/dof))
+
+    baseline_yaxis = [0. for i in range(0,len(on_radial_axis))]
+    fig.clf()
+    figsize_x = 7
+    figsize_y = 5
+    fig.set_figheight(figsize_y)
+    fig.set_figwidth(figsize_x)
+    axbig = fig.add_subplot()
+    label_x = 'angular distance [deg]'
+    label_y = 'surface brightness [$\mathrm{TeV}\ \mathrm{cm}^{-2}\mathrm{s}^{-1}\mathrm{sr}^{-1}$]'
+    axbig.set_xlabel(label_x)
+    axbig.set_ylabel(label_y)
+    axbig.plot(on_radial_axis, baseline_yaxis, color='b', ls='dashed')
+    axbig.errorbar(on_radial_axis,on_profile_axis,on_profile_err_axis,color='k',marker='+',ls='none',zorder=2)
+    if fit_radial_profile:
+        axbig.plot(on_radial_axis,diffusion_func(np.array(on_radial_axis),*popt),color='r')
+    fig.savefig(f'output_plots/{source_name}_surface_brightness_Fermi_{roi_name}_{ana_tag}.png',bbox_inches='tight')
+    axbig.remove()
 
 for logE in range(logE_min,logE_max):
 

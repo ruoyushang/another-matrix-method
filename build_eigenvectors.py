@@ -14,6 +14,7 @@ logE_nbins = common_functions.logE_nbins
 matrix_rank = common_functions.matrix_rank
 ReadOffRunListFromFile = common_functions.ReadOffRunListFromFile
 build_big_camera_matrix = common_functions.build_big_camera_matrix
+xoff_bins = common_functions.xoff_bins
 
 fig, ax = plt.subplots()
 figsize_x = 8.6
@@ -60,6 +61,7 @@ for logE in range(0,logE_nbins):
     print (f'density_events = {density_events}')
 
     effective_matrix_rank = min(matrix_rank,int(0.5*3./4.*(len(S_full)-1)))
+    #effective_matrix_rank = xoff_bins[logE]
     if density_events<3.:
         effective_matrix_rank = 1
     print (f'effective_matrix_rank = {effective_matrix_rank}')

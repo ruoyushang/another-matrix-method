@@ -48,12 +48,11 @@ smi_dir = os.environ.get("SMI_DIR")
 #ana_tag = 'poisson'
 
 ana_tag = []
-#ana_tag += [['linear','r']]
-#ana_tag += [['poisson','r']]
-#ana_tag += [['rank10','b']]
+#ana_tag += [['init','r']]
 #ana_tag += [['rank3','b']]
 #ana_tag += [['rank4','b']]
 ana_tag += [['rank5','b']]
+#ana_tag += [['rank6','b']]
 #ana_tag += [['rank7','b']]
 #ana_tag += [['rank15','b']]
 #ana_tag += [['rank20','b']]
@@ -331,7 +330,7 @@ for logE in range(0,logE_nbins):
     for ana in range(0,len(ana_tag)):
         list_error_significance = []
         list_elev = []
-        for grp in range(0,len(grp_data_count)):
+        for grp in range(0,len(ana_avg_elev[ana])):
             elev = ana_avg_elev[ana][grp]
             data = ana_data_count[ana][grp][logE]
             bkgd = ana_bkgd_count[ana][grp][logE]
@@ -356,7 +355,7 @@ for logE in range(0,logE_nbins):
     for ana in range(0,len(ana_tag)):
         list_error_significance = []
         list_elev = []
-        for grp in range(0,len(grp_data_count)):
+        for grp in range(0,len(ana_avg_elev[ana])):
             elev = ana_avg_elev[ana][grp]
             data = ana_data_count[ana][grp][logE]
             bkgd = ana_bkgd_count[ana][grp][logE]

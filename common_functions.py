@@ -16,9 +16,7 @@ sky_tag = os.environ.get("SKY_TAG")
 
 
 use_poisson_likelihood = True
-regularization_scale = 1.
-#use_poisson_likelihood = False
-#regularization_scale = 10.
+regularization_scale = 0.
 matrix_rank = 5
 
 if sky_tag=='linear':
@@ -488,7 +486,7 @@ def build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,runlist,max_run
     region_name = source_name
     if not is_on:
         region_name = 'Validation'
-    roi_name,roi_ra,roi_dec,roi_r = DefineRegionOfInterest(region_name,src_ra,src_dec)
+    roi_name,roi_ra,roi_dec,roi_r = DefineRegionOfMask(region_name,src_ra,src_dec)
 
     run_count = 0
     for run_number in runlist:
@@ -532,6 +530,8 @@ def build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,runlist,max_run
         #print (f'total_entries = {total_entries}')
         for entry in range(0,total_entries):
             EvtTree.GetEntry(entry)
+            RA = EvtTree.RA
+            DEC = EvtTree.DEC
             Xoff = EvtTree.Xoff
             Yoff = EvtTree.Yoff
             Xderot = EvtTree.Xderot
@@ -594,10 +594,10 @@ def build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,runlist,max_run
                         xyoff_mask_map_1d += [xyoff_mask_map[logE].waxis[idx_x,idx_y,gcut]]
             if big_matrix[logE]==None:
                 big_matrix[logE] = [xyoff_map_1d]
-                big_mask_matrix[logE] = [xyoff_map_1d]
+                big_mask_matrix[logE] = [xyoff_mask_map_1d]
             else:
                 big_matrix[logE] += [xyoff_map_1d]
-                big_mask_matrix[logE] += [xyoff_map_1d]
+                big_mask_matrix[logE] += [xyoff_mask_map_1d]
 
         #xyoff_map_1d = []
         #for gcut in range(0,gcut_bins):
@@ -729,7 +729,7 @@ def build_skymap(source_name,src_ra,src_dec,smi_input,eigenvector_path,big_matri
         solution = minimize(
             cosmic_ray_like_chi2,
             x0=init_params,
-            args=(logE,big_eigenvalues[logE],big_eigenvectors[logE],diff_xyoff_map_1d,best_template_xyoff_map_1d,mask_xyoff_map_1d,0),
+            args=(logE,truth_params,big_eigenvectors[logE],diff_xyoff_map_1d,best_template_xyoff_map_1d,mask_xyoff_map_1d,0),
             method='L-BFGS-B',
             jac=None,
             options={'eps':stepsize,'ftol':0.0001},
@@ -740,8 +740,9 @@ def build_skymap(source_name,src_ra,src_dec,smi_input,eigenvector_path,big_matri
         fit_xyoff_map_1d = big_eigenvectors[logE].T @ fit_params + best_template_xyoff_map_1d
         #fit_xyoff_map_1d = big_eigenvectors[logE].T @ fit_params
 
-        run_sr_chi2 = cosmic_ray_like_chi2(fit_params,logE,big_eigenvalues[logE],big_eigenvectors[logE],diff_xyoff_map_1d,best_template_xyoff_map_1d,mask_xyoff_map_1d,1)
-        run_cr_chi2 = cosmic_ray_like_chi2(fit_params,logE,big_eigenvalues[logE],big_eigenvectors[logE],diff_xyoff_map_1d,best_template_xyoff_map_1d,mask_xyoff_map_1d,0)
+        run_sr_chi2 = cosmic_ray_like_chi2(fit_params,logE,truth_params,big_eigenvectors[logE],diff_xyoff_map_1d,best_template_xyoff_map_1d,mask_xyoff_map_1d,1)
+        run_cr_chi2 = cosmic_ray_like_chi2(fit_params,logE,truth_params,big_eigenvectors[logE],diff_xyoff_map_1d,best_template_xyoff_map_1d,mask_xyoff_map_1d,0)
+        run_add_chi2 = cosmic_ray_like_chi2(fit_params,logE,truth_params,big_eigenvectors[logE],diff_xyoff_map_1d,best_template_xyoff_map_1d,mask_xyoff_map_1d,-1)
 
         print ('===================================================================================')
         print (f'effective_matrix_rank = {effective_matrix_rank}')
@@ -751,7 +752,7 @@ def build_skymap(source_name,src_ra,src_dec,smi_input,eigenvector_path,big_matri
         sum_truth_params = np.sum(truth_params)
         sum_fit_params = np.sum(fit_params)
         print (f'sum_truth_params = {sum_truth_params:0.1f}, sum_fit_params = {sum_fit_params:0.1f}')
-        print (f'run_sr_chi2 = {run_sr_chi2:0.3f}, run_cr_chi2 = {run_cr_chi2:0.3f}')
+        print (f'run_sr_chi2 = {run_sr_chi2:0.3f}, run_cr_chi2 = {run_cr_chi2:0.3f}, run_add_chi2 = {run_add_chi2:0.3f}')
 
         sr_data_count = cosmic_ray_like_count(logE,data_xyoff_map_1d,region_type=0)
         fit_data_count = cosmic_ray_like_count(logE,fit_xyoff_map_1d,region_type=0)
@@ -929,6 +930,8 @@ def build_skymap(source_name,src_ra,src_dec,smi_input,eigenvector_path,big_matri
         avg_tel_azim += TelAzimuth*(time_end-time_start)/3600.
         for entry in range(0,total_entries):
             EvtTree.GetEntry(entry)
+            RA = EvtTree.RA
+            DEC = EvtTree.DEC
             Xoff = EvtTree.Xoff
             Yoff = EvtTree.Yoff
             Xderot = EvtTree.Xderot
@@ -955,8 +958,13 @@ def build_skymap(source_name,src_ra,src_dec,smi_input,eigenvector_path,big_matri
             MSCL = EvtTree.MSCL/MSCL_cut[logE]
             GammaCut = EventGammaCut(MSCL,MSCW)
 
-            Xsky = TelRAJ2000 + Xderot
-            Ysky = TelDecJ2000 + Yderot
+            Xsky = RA
+            Ysky = DEC
+            #print (f'RA = {RA:0.2f}, TelRAJ2000 + Xderot = {TelRAJ2000 + Xderot:0.2f}')
+            #print (f'DEC = {DEC:0.2f}, TelDecJ2000 + Yderot = {TelDecJ2000 + Yderot:0.2f}')
+            if 'MIMIC' in onoff:
+                Xsky = TelRAJ2000 + Xderot
+                Ysky = TelDecJ2000 + Yderot
 
             if onoff=='OFF':
                 found_gamma_source = CoincideWithBrightStars(Xsky, Ysky, gamma_source_coord)
@@ -1000,8 +1008,6 @@ def cosmic_ray_like_chi2(try_params,logE,ref_params,eigenvectors,diff_xyoff_map,
     nbins = 0.
     n_expect_total = 0.
     n_data_total = 0.
-    n_expect_sr = 0.
-    n_data_sr = 0.
     for gcut in range(0,gcut_bins):
         n_expect_gcut = 0.
         n_data_gcut = 0.
@@ -1014,19 +1020,16 @@ def cosmic_ray_like_chi2(try_params,logE,ref_params,eigenvectors,diff_xyoff_map,
                 mask = mask_xyoff_map[idx_1d-1]
                 weight = 1.
 
+                if mask>0.:
+                    weight = 0.1
+
                 n_expect = max(0.0001,try_xyoff_map[idx_1d-1])
                 n_data = diff + init
-                if gcut==0:
-                    n_expect_sr += n_expect
-                    n_data_sr += n_data
 
                 if region_type==0:
                     if gcut==0:
                         n_data = init
-                        weight = 0.
-                        #if mask>0.: # blind
-                        #    n_data = init
-                        #    weight = regularization_scale
+                        weight = regularization_scale
                 elif region_type==1:
                     if gcut!=0: continue
 
@@ -1054,6 +1057,13 @@ def cosmic_ray_like_chi2(try_params,logE,ref_params,eigenvectors,diff_xyoff_map,
             else:
                 sum_log_likelihood += pow(n_expect_gcut-n_data_gcut,2)
 
+    #nuclear_norm = 0.
+    #for r in range(0,len(try_params)):
+    #    nuclear_norm += pow(try_params[r],2)*1./pow(ref_params[r],2)
+    #nuclear_norm = nuclear_norm
+    #if region_type==-1:
+    #    return nuclear_norm
+    #sum_log_likelihood += 1.*nuclear_norm
 
 
     return sum_log_likelihood
@@ -1804,30 +1814,40 @@ def PrintInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,hist_data_sky
     sum_data = 0.
     sum_bkgd = 0.
     sum_error = 0.
+    avg_energy = 0.
+    sum_flux = 0.
     for binx in range(0,len(energy_axis)):
         if energy_axis[binx]>min_energy and energy_axis[binx]<mid_energy:
             sum_data += data[binx]
             sum_bkgd += bkgd[binx]
             sum_error += bkgd_incl_err[binx]*bkgd_incl_err[binx]
+            avg_energy += flux[binx]*energy_axis[binx]
+            sum_flux += flux[binx]
     sum_error = pow(sum_error,0.5)
     significance = 0.
     if sum_error>0.:
         significance = (sum_data-sum_bkgd)/sum_error
-    print (f'E = {min_energy:0.2f}-{mid_energy:0.2f} TeV, data = {sum_data:0.1f}, bkgd = {sum_bkgd:0.1f} +/- {sum_error:0.1f}, significance = {significance:0.1f} sigma')
+    avg_energy = avg_energy/sum_flux
+    print (f'E = {min_energy:0.2f}-{mid_energy:0.2f} TeV, avg_E = {avg_energy:0.2f} TeV, data = {sum_data:0.1f}, bkgd = {sum_bkgd:0.1f} +/- {sum_error:0.1f}, significance = {significance:0.1f} sigma')
 
     sum_data = 0.
     sum_bkgd = 0.
     sum_error = 0.
+    avg_energy = 0.
+    sum_flux = 0.
     for binx in range(0,len(energy_axis)):
         if energy_axis[binx]>mid_energy and energy_axis[binx]<max_energy:
             sum_data += data[binx]
             sum_bkgd += bkgd[binx]
             sum_error += bkgd_incl_err[binx]*bkgd_incl_err[binx]
+            avg_energy += flux[binx]*energy_axis[binx]
+            sum_flux += flux[binx]
     sum_error = pow(sum_error,0.5)
     significance = 0.
     if sum_error>0.:
         significance = (sum_data-sum_bkgd)/sum_error
-    print (f'E = {mid_energy:0.2f}-{max_energy:0.2f} TeV, data = {sum_data:0.1f}, bkgd = {sum_bkgd:0.1f} +/- {sum_error:0.1f}, significance = {significance:0.1f} sigma')
+    avg_energy = avg_energy/sum_flux
+    print (f'E = {mid_energy:0.2f}-{max_energy:0.2f} TeV, avg_E = {avg_energy:0.2f} TeV, data = {sum_data:0.1f}, bkgd = {sum_bkgd:0.1f} +/- {sum_error:0.1f}, significance = {significance:0.1f} sigma')
 
     for binx in range(0,len(energy_axis)):
         significance = 0.
@@ -1874,6 +1894,30 @@ def PrintInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,hist_data_sky
     axbig.legend(loc='best')
     fig.savefig(f'output_plots/{source_name}_roi_energy_flux_{roi_name}.png',bbox_inches='tight')
     axbig.remove()
+
+def DefineRegionOfMask(src_name,src_ra,src_dec):
+
+    region_x = []
+    region_y = []
+    region_r = []
+    region_name = []
+
+    if 'Crab' in src_name:
+
+        region_x = [src_ra]
+        region_y = [src_dec]
+        region_r = [0.2]
+        region_name = ['center']
+
+    #elif 'PSR_J1856_p0245' in src_name:
+
+    #    region_x = [284.3]
+    #    region_y = [2.7]
+    #    region_r = [0.3]
+    #    region_name = ['J1857+026']
+
+
+    return region_name, region_x, region_y, region_r
 
 
 def DefineRegionOfInterest(src_name,src_ra,src_dec):
@@ -1957,20 +2001,20 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
         #region_r += [0.2]
         #region_name += ['SNR']
     
-        #SS 433 e1
-        region_x += [288.404]
-        region_y += [4.930]
+        #SS 433 w1
+        region_x += [287.45138775]
+        region_y += [5.06731983]
         region_r += [0.2]
-        region_name += ['SS433e1']
+        region_name += ['west']
+    
+        #SS 433 e1
+        region_x += [288.38690451]
+        region_y += [5.00610516]
+        region_r += [0.2]
+        region_name += ['east']
         #region_x = [288.35,288.50,288.65,288.8]
         #region_y = [4.93,4.92,4.93,4.94]
         #region_r = [0.1,0.1,0.1,0.1]
-    
-        #SS 433 w1
-        region_x += [287.654]
-        region_y += [5.037]
-        region_r += [0.2]
-        region_name += ['SS433w1']
 
     else:
 
