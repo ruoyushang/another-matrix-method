@@ -24,10 +24,10 @@ print (f'source_name = {source_name}, input_epoch = {input_epoch}')
 
 off_runlist = ReadOffRunListFromFile(f'/nevis/tehanu/home/ryshang/veritas_analysis/another-matrix-method/output_vts_query/PairList_{source_name}_{input_epoch}.txt')
 print (off_runlist)
-big_off_matrix, big_mask_matrix = build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,off_runlist,max_runs=1e10,is_bkgd=True,is_on=False)
+big_off_matrix, big_mask_matrix, big_off_matrix_fullspec, big_mask_matrix_fullspec = build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,off_runlist,max_runs=1e10,is_bkgd=True,is_on=False)
 output_filename = f'{smi_output}/big_off_matrix_{source_name}_{input_epoch}.pkl'
 with open(output_filename,"wb") as file:
-    pickle.dump(big_off_matrix, file)
+    pickle.dump([big_off_matrix,big_off_matrix_fullspec], file)
 
 
 print ('Big matrices saved.')

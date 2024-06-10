@@ -88,6 +88,7 @@ small_mimic_runlist = []
 #        small_mimic_runlist = []
 #        run_count = 0
 
+#min_exposure = 0.1 # hours
 min_exposure = 2.0 # hours
 run_exposure = 0.
 for run in range(0,total_runs):

@@ -59,7 +59,9 @@ smi_dir = os.environ.get("SMI_DIR")
 
 #ana_tag = 'linear'
 #ana_tag = 'poisson'
-ana_tag = 'rank5'
+#ana_tag = 'binspec'
+ana_tag = 'fullspec'
+#ana_tag = 'rank5'
 
 qual_cut = 0.
 #qual_cut = 20.
@@ -76,38 +78,44 @@ src_dec = float(sys.argv[3])
 onoff = sys.argv[4]
 
 logE_min = 0
-logE_mid = 5
+logE_mid = 4
 logE_max = logE_nbins
 fit_radial_profile = False
 make_symmetric_model = False
 radial_bin_scale = 0.1
 
 if 'Crab' in source_name:
-    logE_min = 2
-    logE_mid = 5
+    logE_min = 1
+    logE_mid = 4
     logE_max = logE_nbins
     fit_radial_profile = False
     make_symmetric_model = False
 if 'PSR_J1856_p0245' in source_name:
-    logE_min = 3
-    logE_mid = 6
+    logE_min = 2
+    logE_mid = 5
     logE_max = logE_nbins
     fit_radial_profile = True
     make_symmetric_model = True
 if 'PSR_J1907_p0602' in source_name:
-    logE_min = 3
-    logE_mid = 6
+    logE_min = 2
+    logE_mid = 5
     logE_max = logE_nbins
     fit_radial_profile = True
     make_symmetric_model = False
 if 'SS433' in source_name:
+    logE_min = 0
+    logE_mid = 4
+    logE_max = logE_nbins
+    fit_radial_profile = False
+    make_symmetric_model = False
+if 'PSR_J2021_p4026' in source_name:
     logE_min = 1
     logE_mid = 5
     logE_max = logE_nbins
     fit_radial_profile = False
     make_symmetric_model = False
 if 'Geminga' in source_name:
-    logE_min = 1
+    logE_min = 0
     logE_mid = 5
     logE_max = logE_nbins
     fit_radial_profile = True
@@ -116,7 +124,7 @@ if 'Geminga' in source_name:
 
 if doFluxCalibration:
     logE_min = 0
-    logE_mid = 5
+    logE_mid = 4
     logE_max = logE_nbins
 
 #input_epoch = ['V4']

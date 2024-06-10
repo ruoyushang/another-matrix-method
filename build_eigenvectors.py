@@ -12,6 +12,7 @@ import common_functions
 
 logE_nbins = common_functions.logE_nbins
 matrix_rank = common_functions.matrix_rank
+matrix_rank_fullspec = common_functions.matrix_rank_fullspec
 ReadOffRunListFromFile = common_functions.ReadOffRunListFromFile
 build_big_camera_matrix = common_functions.build_big_camera_matrix
 xoff_bins = common_functions.xoff_bins
@@ -33,21 +34,32 @@ input_epoch = sys.argv[2] # 'V4', 'V5' or 'V6'
 print ('loading matrix pickle data... ')
 input_filename = f'{smi_output}/big_off_matrix_{source_name}_{input_epoch}.pkl'
 print (f'input_filename = {input_filename}')
-big_matrix = pickle.load(open(input_filename, "rb"))
+big_matrix_pkl = pickle.load(open(input_filename, "rb"))
+big_matrix = big_matrix_pkl[0]
+big_matrix_fullspec = big_matrix_pkl[1]
 
 for logE in range(0,logE_nbins):
     n_runs = float(len(big_matrix[logE]))
     big_matrix[logE] = np.array(big_matrix[logE])*1./n_runs
+
+n_runs = float(len(big_matrix_fullspec))
+big_matrix_fullspec = np.array(big_matrix_fullspec)*1./n_runs
 
 print ('Computing SVD eigenvectors...')
 big_xyoff_map_1d = []
 for logE in range(0,logE_nbins):
     big_xyoff_map_1d += [np.zeros_like(big_matrix[logE][0])]
 
+big_xyoff_map_1d_fullspec = np.zeros_like(big_matrix_fullspec[0])
+
 for logE in range(0,logE_nbins):
     for entry in range(0,len(big_matrix[logE])):
         for pix in range(0,len(big_matrix[logE][entry])):
             big_xyoff_map_1d[logE][pix] += big_matrix[logE][entry][pix]
+
+for entry in range(0,len(big_matrix_fullspec)):
+    for pix in range(0,len(big_matrix_fullspec[entry])):
+        big_xyoff_map_1d_fullspec[pix] += big_matrix_fullspec[entry][pix]
 
 big_eigenvalues = []
 big_eigenvectors = []
@@ -93,10 +105,43 @@ for logE in range(0,logE_nbins):
     axbig.remove()
     
 
+U_full, S_full, VT_full = np.linalg.svd(big_matrix_fullspec,full_matrices=False) # perform better for perturbation method
+print (f'S_full length = {len(S_full)}')
+
+effective_matrix_rank = min(matrix_rank_fullspec,int(0.5*3./4.*(len(S_full)-1)))
+print (f'effective_matrix_rank_fullspec = {effective_matrix_rank}')
+
+U_eco = U_full[:, :effective_matrix_rank]
+VT_eco = VT_full[:effective_matrix_rank, :]
+S_eco = S_full[:effective_matrix_rank]
+big_eigenvalues_fullspec = S_eco
+big_eigenvectors_fullspec = VT_eco
+
+rank_index = []
+for entry in range(0,len(S_full)):
+    rank_index += [entry+1]
+
+plot_max_rank = min(int(0.5*len(S_full)),300)
+
+fig.clf()
+axbig = fig.add_subplot()
+label_x = 'Rank'
+label_y = 'Signular value'
+axbig.set_xlabel(label_x)
+axbig.set_ylabel(label_y)
+axbig.set_xlim(1,plot_max_rank)
+axbig.set_ylim(S_full[plot_max_rank-1],2.*S_full[0])
+axbig.set_xscale('log')
+axbig.set_yscale('log')
+axbig.plot(rank_index,S_full)
+fig.savefig(f'{smi_dir}/output_plots/signularvalue_{source_name}_{input_epoch}_fullspec.png',bbox_inches='tight')
+axbig.remove()
+    
+
 
 output_filename = f'{smi_output}/eigenvectors_{source_name}_{input_epoch}_{sky_tag}.pkl'
 with open(output_filename,"wb") as file:
-    pickle.dump([big_eigenvalues,big_eigenvectors,big_xyoff_map_1d], file)
+    pickle.dump([big_eigenvalues,big_eigenvectors,big_xyoff_map_1d,big_eigenvalues_fullspec,big_eigenvectors_fullspec,big_xyoff_map_1d_fullspec], file)
 
 
 print ('SVD eigenvectors saved.')
