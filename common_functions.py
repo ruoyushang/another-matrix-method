@@ -7,6 +7,9 @@ import csv
 from scipy.optimize import least_squares, minimize
 from scipy.optimize import curve_fit
 import matplotlib.pyplot as plt
+from matplotlib import ticker
+from matplotlib.ticker import MaxNLocator
+from matplotlib.ticker import NullFormatter
 import tracemalloc
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from astropy import wcs
@@ -33,6 +36,7 @@ if sky_tag=='binspec':
 
 if sky_tag=='init':
     regularization_scale = 1e5
+    use_fullspec = False
 
 if 'rank' in sky_tag:
     matrix_rank = int(sky_tag.strip('rank'))
@@ -75,6 +79,8 @@ doFluxCalibration = False
 calibration_radius = 0.15 # need to be larger than the PSF and smaller than the integration radius
 
 xoff_bins = [9,7,7,5,5,1,1,1]
+if sky_tag=='demo':
+    xoff_bins = [11,11,11,11,11,11,11,11]
 yoff_bins = xoff_bins
 
 chi2_cut = 0.5
@@ -1555,6 +1561,122 @@ def MakeSkymapCutout(skymap_input,cutout_frac):
             skymap_cutout.waxis[idx_x,idx_y,0] = bin_content
 
     return skymap_cutout
+
+def PlotCountProjection(fig,label_z,logE_min,logE_max,hist_map_data,hist_map_bkgd,plotname,roi_x=[],roi_y=[],roi_r=[],max_z=0.,colormap='coolwarm',layer=0):
+
+    E_min = pow(10.,logE_bins[logE_min])
+    E_max = pow(10.,logE_bins[logE_max])
+
+    hist_map = MakeSkymapCutout(hist_map_data,1.0)
+
+    xmin = hist_map.xaxis.min()
+    xmax = hist_map.xaxis.max()
+    ymin = hist_map.yaxis.min()
+    ymax = hist_map.yaxis.max()
+
+    x_pix_size = 2*abs(hist_map_data.xaxis[1]-hist_map_data.xaxis[0])
+    y_pix_size = 2*abs(hist_map_data.yaxis[1]-hist_map_data.yaxis[0])
+    x_proj_axis = MyArray1D(x_nbins=round(abs(xmax-xmin)/x_pix_size),start_x=xmin,end_x=xmax)
+    y_proj_axis = MyArray1D(x_nbins=round(abs(ymax-ymin)/y_pix_size),start_x=ymin,end_x=ymax)
+
+    x_axis_array = []
+    x_count_array = []
+    x_bkgd_array = []
+    x_error_array = []
+    for br in range(0,len(x_proj_axis.xaxis)-1):
+        x_axis_array += [0.5*(x_proj_axis.xaxis[br]+x_proj_axis.xaxis[br+1])]
+        x_count_array += [0.]
+        x_bkgd_array += [0.]
+        x_error_array += [0.]
+
+    y_axis_array = []
+    y_count_array = []
+    y_bkgd_array = []
+    y_error_array = []
+    for br in range(0,len(y_proj_axis.xaxis)-1):
+        y_axis_array += [0.5*(y_proj_axis.xaxis[br]+y_proj_axis.xaxis[br+1])]
+        y_count_array += [0.]
+        y_bkgd_array += [0.]
+        y_error_array += [0.]
+
+    for bx in range(0,len(hist_map_data.xaxis)-2):
+        for by in range(0,len(hist_map_data.yaxis)-2):
+
+            bin_ra = 0.5*(hist_map_data.xaxis[bx]+hist_map_data.xaxis[bx+1])
+            bin_dec = 0.5*(hist_map_data.yaxis[by]+hist_map_data.yaxis[by+1])
+
+            for br in range(0,len(x_proj_axis.xaxis)-1):
+                keep_event = False
+                if abs(bin_ra-x_proj_axis.xaxis[br])<=x_pix_size and abs(bin_ra-x_proj_axis.xaxis[br+1])<=x_pix_size: 
+                    keep_event = True
+                if keep_event:
+                    x_count_array[br] += hist_map_data.waxis[bx,by,0]
+                    x_bkgd_array[br] += hist_map_bkgd.waxis[bx,by,0]
+
+            for br in range(0,len(y_proj_axis.xaxis)-1):
+                keep_event = False
+                if abs(bin_dec-y_proj_axis.xaxis[br])<=y_pix_size and abs(bin_dec-y_proj_axis.xaxis[br+1])<=y_pix_size: 
+                    keep_event = True
+                if keep_event:
+                    y_count_array[br] += hist_map_data.waxis[bx,by,0]
+                    y_bkgd_array[br] += hist_map_bkgd.waxis[bx,by,0]
+
+    for br in range(0,len(x_proj_axis.xaxis)-1):
+        x_error_array[br] = pow(x_count_array[br],0.5)
+
+    for br in range(0,len(y_proj_axis.xaxis)-1):
+        y_error_array[br] = pow(y_count_array[br],0.5)
+
+    # Define the locations for the axes
+    left, width = 0.12, 0.6
+    bottom, height = 0.12, 0.6
+    bottom_h = bottom+height+0.03
+    left_h = left+width+0.03
+     
+    # Set up the geometry of the three plots
+    rect_temperature = [left, bottom, width, height] # dimensions of temp plot
+    rect_histx = [left, bottom_h, width, 0.20] # dimensions of x-histogram
+    rect_histy = [left_h, bottom, 0.20, height] # dimensions of y-histogram
+
+    # Set up the size of the figure
+    #fig = plt.figure(1, figsize=(9.5,9))
+    fig = plt.figure(1)
+    fig.set_figheight(8)
+    fig.set_figwidth(8)
+
+    fig.clf()
+    # Make the three plots
+    axTemperature = plt.axes(rect_temperature) # temperature plot
+    axHistx = plt.axes(rect_histx) # x histogram
+    axHisty = plt.axes(rect_histy) # y histogram
+
+    # Remove the inner axes numbers of the histograms
+    nullfmt = NullFormatter()
+    axHistx.xaxis.set_major_formatter(nullfmt)
+    axHisty.yaxis.set_major_formatter(nullfmt)
+
+    # Plot the temperature data
+    cax = (axTemperature.imshow(hist_map_data.waxis[:,:,layer].T,extent=(xmax,xmin,ymin,ymax),aspect='auto',origin='lower',cmap=colormap))
+
+    #Plot the axes labels
+    label_x = 'RA [deg]'
+    label_y = 'Dec [deg]'
+    axTemperature.set_xlabel(label_x)
+    axTemperature.set_ylabel(label_y)
+
+    #Plot the histograms
+    axHistx.errorbar(x_axis_array,x_count_array,yerr=x_error_array,color='k',marker='.',ls='none')
+    axHisty.errorbar(y_count_array,y_axis_array,xerr=y_error_array,color='k',marker='.',ls='none')
+    axHistx.plot(x_axis_array,x_bkgd_array,color='r',ls='solid')
+    axHisty.plot(y_bkgd_array,y_axis_array,color='r',ls='solid')
+    axHistx.set_xlim(axHistx.get_xlim()[::-1])
+    formatter = ticker.ScalarFormatter(useMathText=True)
+    formatter.set_scientific(True)
+    formatter.set_powerlimits((-1,1))
+    axHistx.yaxis.set_major_formatter(formatter)
+
+    fig.savefig(f'output_plots/{plotname}.png',bbox_inches='tight')
+
 
 def PlotSkyMap(fig,label_z,logE_min,logE_max,hist_map_input,plotname,roi_x=[],roi_y=[],roi_r=[],max_z=0.,colormap='coolwarm',layer=0):
 

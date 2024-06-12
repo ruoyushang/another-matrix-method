@@ -30,6 +30,7 @@ ReadRunListFromFile = common_functions.ReadRunListFromFile
 build_skymap = common_functions.build_skymap
 smooth_image = common_functions.smooth_image
 PlotSkyMap = common_functions.PlotSkyMap
+PlotCountProjection = common_functions.PlotCountProjection
 make_flux_map = common_functions.make_flux_map
 make_significance_map = common_functions.make_significance_map
 DefineRegionOfInterest = common_functions.DefineRegionOfInterest
@@ -110,7 +111,7 @@ if 'SS433' in source_name:
     make_symmetric_model = False
 if 'PSR_J2021_p4026' in source_name:
     logE_min = 1
-    logE_mid = 5
+    logE_mid = 4
     logE_max = logE_nbins
     fit_radial_profile = False
     make_symmetric_model = False
@@ -891,6 +892,7 @@ for mimic in range(0,n_mimic):
 print (f'total_exposure = {total_exposure}')
 print (f'good_exposure = {good_exposure}')
 
+PlotCountProjection(fig,'count',logE_min,logE_max,sum_data_sky_map_allE,sum_bkgd_sky_map_allE,f'{source_name}_projection_sky_map_allE_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
 
 
 fig.clf()

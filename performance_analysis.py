@@ -48,8 +48,8 @@ smi_dir = os.environ.get("SMI_DIR")
 #ana_tag = 'poisson'
 
 ana_tag = []
-#ana_tag += [['init','r']]
-ana_tag += [['binspec','r']]
+ana_tag += [['init','r']]
+#ana_tag += [['binspec','r']]
 ana_tag += [['fullspec','b']]
 #ana_tag += [['rank3','b']]
 #ana_tag += [['rank4','b']]
@@ -61,8 +61,8 @@ onoff = 'OFF'
 
 #exposure_per_group = 1.
 #exposure_per_group = 5.
-exposure_per_group = 10.
-#exposure_per_group = 50.
+#exposure_per_group = 10.
+exposure_per_group = 50.
 #exposure_per_group = 100.
 cr_qual_cut = 1e10
 #cr_qual_cut = 230
