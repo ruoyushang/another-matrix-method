@@ -35,8 +35,8 @@ skymap_size = common_functions.skymap_size
 skymap_bins = common_functions.skymap_bins
 
 fig, ax = plt.subplots()
-figsize_x = 8.6
-figsize_y = 6.4
+figsize_x = 6.4
+figsize_y = 4.6
 fig.set_figheight(figsize_y)
 fig.set_figwidth(figsize_x)
 
@@ -48,14 +48,17 @@ smi_dir = os.environ.get("SMI_DIR")
 #ana_tag = 'poisson'
 
 ana_tag = []
-ana_tag += [['init','r']]
 #ana_tag += [['binspec','r']]
-ana_tag += [['fullspec','b']]
-#ana_tag += [['rank3','b']]
-#ana_tag += [['rank4','b']]
-#ana_tag += [['rank5','b']]
-#ana_tag += [['rank6','b']]
-#ana_tag += [['rank7','b']]
+#ana_tag += [['fullspec','b']]
+ana_tag += [['init','r']]
+ana_tag += [['rank1','w']]
+ana_tag += [['rank2','w']]
+ana_tag += [['rank3','w']]
+ana_tag += [['rank4','w']]
+ana_tag += [['rank5','b']]
+ana_tag += [['rank6','w']]
+ana_tag += [['rank7','w']]
+ana_tag += [['rank8','w']]
 
 onoff = 'OFF'
 
@@ -111,6 +114,9 @@ ana_bkgd_count = []
 
 ana_chi2_sr = []
 ana_chi2_cr = []
+
+ana_syst_err_vs_logE = []
+ana_stat_err_vs_logE = []
 
 for ana in range(0,len(ana_tag)):
 
@@ -265,6 +271,8 @@ for ana in range(0,len(ana_tag)):
     print (f'ana_tag = {ana_tag[ana][0]}, len(grp_data_count) = {len(grp_data_count)}, exposure_per_group = {exposure_per_group}')
     print ('=================================================================================')
     bias_array = []
+    syst_err_vs_logE_array = []
+    stat_err_vs_logE_array = []
     for logE in range(0,logE_nbins):
         avg_data = 0.
         avg_bkgd = 0.
@@ -304,6 +312,9 @@ for ana in range(0,len(ana_tag)):
         avg_error_correct = 100.*avg_error_correct/sum_weight
         avg_stat_error = 100.*avg_stat_error/sum_weight
         print (f'E = {pow(10.,logE_bins[logE]):0.3f} TeV, avg_data = {avg_data:0.1f}, avg_bkgd = {avg_bkgd:0.1f}, bias = {avg_bias:0.2f} %, error = {avg_error:0.2f} +/- {avg_stat_error:0.2f} %, error (correct) = {avg_error_correct:0.2f} +/- {avg_stat_error:0.2f} %')
+
+        syst_err_vs_logE_array += [avg_error]
+        stat_err_vs_logE_array += [avg_stat_error]
     
     print (f'bias_array = {np.around(bias_array,4)}')
 
@@ -313,6 +324,39 @@ for ana in range(0,len(ana_tag)):
 
     ana_chi2_sr += [list_chi2_sr]
     ana_chi2_cr += [list_chi2_cr]
+
+    ana_syst_err_vs_logE += [syst_err_vs_logE_array]
+    ana_stat_err_vs_logE += [stat_err_vs_logE_array]
+
+energy_axis = []
+for logE in range(0,logE_nbins):
+    energy_axis += [pow(10.,logE_bins[logE])]
+
+for logE in range(0,logE_nbins):
+
+    ana_axis = []
+    for ana in range(0,len(ana_tag)):
+        ana_axis += [ana]
+
+    syst_err_axis = []
+    stat_err_axis = []
+    for ana in range(0,len(ana_tag)):
+        syst_err_axis += [ana_syst_err_vs_logE[ana][logE]]
+        stat_err_axis += [ana_stat_err_vs_logE[ana][logE]]
+
+    fig.clf()
+    axbig = fig.add_subplot()
+    label_x = '$k$'
+    label_y = '$\epsilon$ (%)'
+    axbig.set_xlabel(label_x)
+    axbig.set_ylabel(label_y)
+    E_min = pow(10.,logE_bins[logE])
+    E_max = pow(10.,logE_bins[logE+1])
+    axbig.errorbar(ana_axis,syst_err_axis,yerr=stat_err_axis,color='k',marker='.',ls='solid',label=f'E = {E_min:0.2f} - {E_max:0.2f} TeV')
+    axbig.legend(loc='best')
+    fig.savefig(f'output_plots/ana_syst_err_logE{logE}.png',bbox_inches='tight')
+    axbig.remove()
+
 
 ratio_cut = 0.3
 for logE in range(0,logE_nbins):
@@ -324,6 +368,7 @@ for logE in range(0,logE_nbins):
     axbig.set_ylabel(label_y)
 
     for ana in range(0,len(ana_tag)):
+        if ana_tag[ana][1]=='w': continue
         list_error_significance = []
         list_elev = []
         for grp in range(0,len(ana_avg_elev[ana])):
@@ -335,7 +380,7 @@ for logE in range(0,logE_nbins):
             if abs(error_ratio)>ratio_cut: continue
             list_elev += [elev]
             list_error_significance += [(data-bkgd)/pow(data,0.5)]
-        axbig.scatter(list_elev,list_error_significance,color=ana_tag[ana][1],alpha=0.2)
+        axbig.scatter(list_elev,list_error_significance,color=ana_tag[ana][1],alpha=0.3)
 
     fig.savefig(f'output_plots/error_significance_vs_elev_logE{logE}.png',bbox_inches='tight')
     axbig.remove()
@@ -349,6 +394,7 @@ for logE in range(0,logE_nbins):
     axbig.set_ylabel(label_y)
 
     for ana in range(0,len(ana_tag)):
+        if ana_tag[ana][1]=='w': continue
         list_error_significance = []
         list_elev = []
         for grp in range(0,len(ana_avg_elev[ana])):
@@ -360,7 +406,7 @@ for logE in range(0,logE_nbins):
             if abs(error_ratio)>ratio_cut: continue
             list_elev += [elev]
             list_error_significance += [(data-bkgd)/(data)]
-        axbig.scatter(list_elev,list_error_significance,color=ana_tag[ana][1],alpha=0.2)
+        axbig.scatter(list_elev,list_error_significance,color=ana_tag[ana][1],alpha=0.3)
 
     fig.savefig(f'output_plots/error_ratio_vs_elev_logE{logE}.png',bbox_inches='tight')
     axbig.remove()

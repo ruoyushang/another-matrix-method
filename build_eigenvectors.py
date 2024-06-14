@@ -11,6 +11,7 @@ from common_functions import MyArray3D
 import common_functions
 
 logE_nbins = common_functions.logE_nbins
+logE_bins = common_functions.logE_bins
 matrix_rank = common_functions.matrix_rank
 matrix_rank_fullspec = common_functions.matrix_rank_fullspec
 ReadOffRunListFromFile = common_functions.ReadOffRunListFromFile
@@ -18,8 +19,8 @@ build_big_camera_matrix = common_functions.build_big_camera_matrix
 xoff_bins = common_functions.xoff_bins
 
 fig, ax = plt.subplots()
-figsize_x = 8.6
-figsize_y = 6.4
+figsize_x = 6.4
+figsize_y = 4.6
 fig.set_figheight(figsize_y)
 fig.set_figwidth(figsize_x)
 
@@ -92,15 +93,18 @@ for logE in range(0,logE_nbins):
     
     fig.clf()
     axbig = fig.add_subplot()
-    label_x = 'Rank'
-    label_y = 'Signular value'
+    label_x = '$k$'
+    label_y = '$\sigma_{k}$'
     axbig.set_xlabel(label_x)
     axbig.set_ylabel(label_y)
     axbig.set_xlim(1,plot_max_rank)
     axbig.set_ylim(S_full[plot_max_rank-1],2.*S_full[0])
     axbig.set_xscale('log')
     axbig.set_yscale('log')
-    axbig.plot(rank_index,S_full)
+    E_min = pow(10.,logE_bins[logE])
+    E_max = pow(10.,logE_bins[logE+1])
+    axbig.plot(rank_index,S_full,label=f'E = {E_min:0.2f} - {E_max:0.2f} TeV')
+    axbig.legend(loc='best')
     fig.savefig(f'{smi_dir}/output_plots/signularvalue_{source_name}_{input_epoch}_logE{logE}.png',bbox_inches='tight')
     axbig.remove()
     
@@ -125,8 +129,8 @@ plot_max_rank = min(int(0.5*len(S_full)),300)
 
 fig.clf()
 axbig = fig.add_subplot()
-label_x = 'Rank'
-label_y = 'Signular value'
+label_x = '$k$'
+label_y = '$\sigma_{k}$'
 axbig.set_xlabel(label_x)
 axbig.set_ylabel(label_y)
 axbig.set_xlim(1,plot_max_rank)

@@ -58,6 +58,7 @@ smi_input = os.environ.get("SMI_INPUT")
 smi_output = os.environ.get("SMI_OUTPUT")
 smi_dir = os.environ.get("SMI_DIR")
 
+#ana_tag = 'demo'
 #ana_tag = 'linear'
 #ana_tag = 'poisson'
 #ana_tag = 'binspec'
@@ -72,6 +73,10 @@ elev_cut = 20.
 cr_qual_cut = 1e10
 
 #bias_array = [-0.023, -0.011, -0.022, -0.03,  -0.025,  0.018, -0.048, -0.378, -0.271]
+
+if ana_tag=='demo':
+    xoff_bins = [11,11,11,11,11,11,11,11]
+    yoff_bins = xoff_bins
 
 source_name = sys.argv[1]
 src_ra = float(sys.argv[2])
@@ -134,8 +139,8 @@ if doFluxCalibration:
 input_epoch = ['V4','V5','V6']
 
 n_mimic = 0
-#if onoff=='ON':
-#    n_mimic = 5
+if onoff=='ON':
+    n_mimic = 5
 
 xsky_start = src_ra+skymap_size
 xsky_end = src_ra-skymap_size
@@ -893,6 +898,8 @@ print (f'total_exposure = {total_exposure}')
 print (f'good_exposure = {good_exposure}')
 
 PlotCountProjection(fig,'count',logE_min,logE_max,sum_data_sky_map_allE,sum_bkgd_sky_map_allE,f'{source_name}_projection_sky_map_allE_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
+PlotCountProjection(fig,'count',logE_min,logE_mid,sum_data_sky_map_LE,sum_bkgd_sky_map_LE,f'{source_name}_projection_sky_map_LE_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
+PlotCountProjection(fig,'count',logE_mid,logE_max,sum_data_sky_map_HE,sum_bkgd_sky_map_HE,f'{source_name}_projection_sky_map_HE_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
 
 
 fig.clf()

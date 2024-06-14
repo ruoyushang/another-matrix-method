@@ -1574,8 +1574,8 @@ def PlotCountProjection(fig,label_z,logE_min,logE_max,hist_map_data,hist_map_bkg
     ymin = hist_map.yaxis.min()
     ymax = hist_map.yaxis.max()
 
-    x_pix_size = 2*abs(hist_map_data.xaxis[1]-hist_map_data.xaxis[0])
-    y_pix_size = 2*abs(hist_map_data.yaxis[1]-hist_map_data.yaxis[0])
+    x_pix_size = 3*abs(hist_map_data.xaxis[1]-hist_map_data.xaxis[0])
+    y_pix_size = 3*abs(hist_map_data.yaxis[1]-hist_map_data.yaxis[0])
     x_proj_axis = MyArray1D(x_nbins=round(abs(xmax-xmin)/x_pix_size),start_x=xmin,end_x=xmax)
     y_proj_axis = MyArray1D(x_nbins=round(abs(ymax-ymin)/y_pix_size),start_x=ymin,end_x=ymax)
 
@@ -1665,15 +1665,20 @@ def PlotCountProjection(fig,label_z,logE_min,logE_max,hist_map_data,hist_map_bkg
     axTemperature.set_ylabel(label_y)
 
     #Plot the histograms
-    axHistx.errorbar(x_axis_array,x_count_array,yerr=x_error_array,color='k',marker='.',ls='none')
+    axHistx.errorbar(x_axis_array,x_count_array,yerr=x_error_array,color='k',marker='.',ls='none',label='Observation data')
     axHisty.errorbar(y_count_array,y_axis_array,xerr=y_error_array,color='k',marker='.',ls='none')
-    axHistx.plot(x_axis_array,x_bkgd_array,color='r',ls='solid')
+    axHistx.plot(x_axis_array,x_bkgd_array,color='r',ls='solid',label='Background model')
     axHisty.plot(y_bkgd_array,y_axis_array,color='r',ls='solid')
     axHistx.set_xlim(axHistx.get_xlim()[::-1])
     formatter = ticker.ScalarFormatter(useMathText=True)
     formatter.set_scientific(True)
     formatter.set_powerlimits((-1,1))
     axHistx.yaxis.set_major_formatter(formatter)
+    axHistx.legend(loc='best')
+
+    font = {'family': 'serif', 'color':  'white', 'weight': 'normal', 'size': 10, 'rotation': 0.,}
+    lable_energy_range = f'E = {E_min:0.2f}-{E_max:0.2f} TeV'
+    txt = axTemperature.text(xmax-0.14, ymax-0.21, lable_energy_range, fontdict=font)
 
     fig.savefig(f'output_plots/{plotname}.png',bbox_inches='tight')
 
@@ -1713,7 +1718,7 @@ def PlotSkyMap(fig,label_z,logE_min,logE_max,hist_map_input,plotname,roi_x=[],ro
     #    print (f'Star {other_star_labels[star]} RA = {other_star_markers[star][0]:0.1f}, Dec = {other_star_markers[star][1]:0.1f}')
 
     fig.clf()
-    figsize_x = 7
+    figsize_x = 6
     figsize_y = 7
     fig.set_figheight(figsize_y)
     fig.set_figwidth(figsize_x)
