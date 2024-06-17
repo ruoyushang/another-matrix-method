@@ -14,6 +14,8 @@ import numpy as np
 
 all_runs_info = []
 
+output_dir = 'output_vts_query_tmp'
+
 def ReadLhaasoListFromFile():
     source_name = []
     source_ra = []
@@ -636,7 +638,7 @@ def get_run_type(run_id):
 
 def find_runs_near_galactic_plane(obs_name,epoch,obs_type,gal_b_low,gal_b_up):
 
-    out_file = open('output_vts_hours/%s.txt'%(obs_name),"w")
+    out_file = open('%s/%s.txt'%(output_dir,obs_name),"w")
 
     list_on_run_ids = []
     list_on_sources = []
@@ -802,7 +804,7 @@ def find_runs_near_galactic_plane(obs_name,epoch,obs_type,gal_b_low,gal_b_up):
 
 def find_on_runs_from_a_list(input_file_name):
 
-    input_file = open('output_vts_hours/RunList_'+input_file_name+'.txt')
+    input_file = open(output_dir+'/RunList_'+input_file_name+'.txt')
     on_run_list = []
     for line in input_file:
         on_run_list += [int(line.strip('\n'))]
@@ -813,8 +815,8 @@ def find_on_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_range
 
     global all_runs_info
 
-    out_file = open('output_vts_hours/%s.txt'%(obs_name),"w")
-    out_run_file = open('output_vts_hours/RunList_%s.txt'%(obs_name),"w")
+    out_file = open('%s/%s.txt'%(output_dir,obs_name),"w")
+    out_run_file = open('%s/RunList_%s.txt'%(output_dir,obs_name),"w")
 
     list_on_run_ids = []
     list_on_run_elev = []
@@ -1003,7 +1005,7 @@ def list_for_eventdisplay(all_lists,obs_name):
             if not run_exist:
                 runlist += [runnumber]
 
-    out_file = open('output_vts_hours/EDlist_%s.txt'%(obs_name),"a")
+    out_file = open('%s/EDlist_%s.txt'%(output_dir,obs_name),"a")
     for run in range(0,len(runlist)):
         out_file.write('%s\n'%(runlist[run]))
 
@@ -1020,8 +1022,8 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
         print ('Empty ON run list. Exit.')
         return list_off_run_ids
 
-    out_pair_file = open('output_vts_hours/%s_%s.txt'%(file_name,obs_name),"w")
-    out_off_file = open('output_vts_hours/%s_OFFRuns_%s.txt'%(file_name,obs_name),"w")
+    out_pair_file = open('%s/%s_%s.txt'%(output_dir,file_name,obs_name),"w")
+    out_off_file = open('%s/%s_OFFRuns_%s.txt'%(output_dir,file_name,obs_name),"w")
 
     require_nmatch = 5
     if not is_imposter:
@@ -1116,7 +1118,7 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
             delta_nsb = off_run_nsb-on_run_nsb
             delta_runnum = all_runs_info[run][0]-list_on_run_ids[on_run]
 
-            range_elev = 0.02
+            range_elev = 0.05
             range_nsb = 1.
             range_runnum = 10000.
 
@@ -1126,39 +1128,46 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
 
             if is_imposter:
                 if abs(delta_elev)>0.2: continue
-                if abs(delta_azim)>0.2: continue
 
-                if significance_diff_runnum>significance_diff_elev and significance_diff_runnum>significance_diff_nsb:
+                if significance_diff_runnum>1.:
                     if total_runnum_diff>0.:
                         if delta_runnum>0.: continue
                     else:
                         if delta_runnum<0.: continue
-                elif significance_diff_nsb>significance_diff_runnum and significance_diff_nsb>significance_diff_elev:
-                    if total_nsb_diff>0.:
-                        if delta_nsb>0.: continue
-                    else:
-                        if delta_nsb<0.: continue
-                else:
-                    if total_elev_diff>0.:
-                        if delta_elev>0.: continue
-                    else:
-                        if delta_elev<0.: continue
 
             else:
                 if abs(delta_elev)>0.2: continue
                 if abs(delta_azim)>0.2: continue
 
-                if significance_diff_runnum>significance_diff_elev and significance_diff_runnum>significance_diff_nsb:
+                #if significance_diff_nsb>1.:
+                #    if total_nsb_diff>0.:
+                #        if delta_nsb>0.: continue
+                #    else:
+                #        if delta_nsb<0.: continue
+
+                #if significance_diff_runnum>1.:
+                #    if total_runnum_diff>0.:
+                #        if delta_runnum>0.: continue
+                #    else:
+                #        if delta_runnum<0.: continue
+
+                #if significance_diff_elev>1.:
+                #    if total_elev_diff>0.:
+                #        if delta_elev>0.: continue
+                #    else:
+                #        if delta_elev<0.: continue
+
+                if significance_diff_runnum>significance_diff_elev and significance_diff_runnum>significance_diff_nsb and significance_diff_runnum>1.:
                     if total_runnum_diff>0.:
                         if delta_runnum>0.: continue
                     else:
                         if delta_runnum<0.: continue
-                elif significance_diff_nsb>significance_diff_runnum and significance_diff_nsb>significance_diff_elev:
+                elif significance_diff_nsb>significance_diff_runnum and significance_diff_nsb>significance_diff_elev and significance_diff_nsb>1.:
                     if total_nsb_diff>0.:
                         if delta_nsb>0.: continue
                     else:
                         if delta_nsb<0.: continue
-                else:
+                elif significance_diff_elev>1.:
                     if total_elev_diff>0.:
                         if delta_elev>0.: continue
                     else:
@@ -1186,7 +1195,7 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
         out_pair_file.write('%s %s\n'%(list_off_run_ids[run][0],list_off_run_ids[run][1]))
     out_pair_file.close()
 
-    out_file = open('output_vts_hours/%s.txt'%(obs_name),"a")
+    out_file = open('%s/%s.txt'%(output_dir,obs_name),"a")
     out_file.write('++++++++++++++++++++++++++++++++++++++++++++++++++++\n')
     out_file.write('%s ON runs do not have enought matches\n'%(file_name))
     for run in range(0,len(list_on_run_ids)):
@@ -1291,9 +1300,10 @@ else:
         my_list_on_run_ids = find_on_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,search_radius)
     my_list_off_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_on_run_ids,False,'PairList')
     my_list_imposter_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_on_run_ids,True,'ImposterList')
-    my_list_imposter_off_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_imposter_run_ids,False,'ImposterPairList')
+    #my_list_imposter_off_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_imposter_run_ids,False,'ImposterPairList')
 
-    list_for_eventdisplay([my_list_on_run_ids,my_list_off_run_ids,my_list_imposter_run_ids,my_list_imposter_off_run_ids],obs_name)
+    #list_for_eventdisplay([my_list_on_run_ids,my_list_off_run_ids,my_list_imposter_run_ids,my_list_imposter_off_run_ids],obs_name)
+    list_for_eventdisplay([my_list_on_run_ids,my_list_off_run_ids,my_list_imposter_run_ids],obs_name)
 
 
 run_id = 103322

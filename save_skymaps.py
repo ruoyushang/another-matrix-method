@@ -32,6 +32,7 @@ figsize_y = 6.4
 fig.set_figheight(figsize_y)
 fig.set_figwidth(figsize_x)
 
+smi_runlist = os.environ.get("SMI_RUNLIST")
 smi_input = os.environ.get("SMI_INPUT")
 smi_output = os.environ.get("SMI_OUTPUT")
 smi_dir = os.environ.get("SMI_DIR")
@@ -43,6 +44,11 @@ src_dec = float(sys.argv[3])
 onoff = sys.argv[4]
 input_epoch = sys.argv[5] # 'V4', 'V5' or 'V6'
 
+output_filename = f'{smi_output}/skymaps_{source_name}_{input_epoch}_{onoff}_{sky_tag}.pkl'
+if os.path.exists(output_filename):
+    print (f'{output_filename} exists, delete...')
+    os.remove(output_filename)
+
 path_to_eigenvector = f'{smi_output}/eigenvectors_{source_name}_{input_epoch}_{sky_tag}.pkl'
 print (f'path_to_eigenvector = {path_to_eigenvector}')
 path_to_big_matrix = f'{smi_output}/big_off_matrix_{source_name}_{input_epoch}.pkl'
@@ -51,9 +57,9 @@ print (f'path_to_big_matrix = {path_to_big_matrix}')
 if onoff=='ON' or 'MIMIC' in onoff:
     skymap_bins = fine_skymap_bins
 
-on_file = f'/nevis/tehanu/home/ryshang/veritas_analysis/another-matrix-method/output_vts_query/RunList_{source_name}_{input_epoch}.txt'
-off_file = f'/nevis/tehanu/home/ryshang/veritas_analysis/another-matrix-method/output_vts_query/PairList_{source_name}_{input_epoch}.txt'
-mimic_file = f'/nevis/tehanu/home/ryshang/veritas_analysis/another-matrix-method/output_vts_query/ImposterList_{source_name}_{input_epoch}.txt'
+on_file = f'{smi_runlist}/RunList_{source_name}_{input_epoch}.txt'
+off_file = f'{smi_runlist}/PairList_{source_name}_{input_epoch}.txt'
+mimic_file = f'{smi_runlist}/ImposterList_{source_name}_{input_epoch}.txt'
 on_runlist, off_runlist, mimic_runlist = ReadRunListFromFile(smi_input,on_file,off_file,mimic_file)
 
 xsky_start = src_ra+skymap_size
@@ -88,8 +94,27 @@ small_mimic_runlist = []
 #        small_mimic_runlist = []
 #        run_count = 0
 
-#min_exposure = 0.1 # hours
+total_exposure = 0.
+for run in range(0,total_runs):
+
+    rootfile_name = f'{smi_input}/{on_runlist[run]}.anasum.root'
+    print (rootfile_name)
+    if not os.path.exists(rootfile_name):
+        print (f'file does not exist.')
+        continue
+    InputFile = ROOT.TFile(rootfile_name)
+    TreeName = f'run_{on_runlist[run]}/stereo/DL3EventTree'
+    EvtTree = InputFile.Get(TreeName)
+    total_entries = EvtTree.GetEntries()
+    EvtTree.GetEntry(0)
+    time_start = EvtTree.timeOfDay
+    EvtTree.GetEntry(total_entries-1)
+    time_end = EvtTree.timeOfDay
+
+    total_exposure += (time_end-time_start)/3600.
+
 min_exposure = 2.0 # hours
+min_exposure = max(min_exposure,float(total_exposure/40.))
 run_exposure = 0.
 for run in range(0,total_runs):
 
@@ -119,6 +144,9 @@ for run in range(0,total_runs):
         big_mimic_runlist += [small_mimic_runlist]
         small_mimic_runlist = []
         run_exposure = 0.
+
+print (f'min_exposure = {min_exposure}')
+print (f'len(big_runlist) = {len(big_runlist)}')
 
 total_data_xyoff_map = []
 total_fit_xyoff_map = []

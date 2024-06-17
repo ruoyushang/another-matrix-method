@@ -49,17 +49,17 @@ input_params += [ ['Cas_A', 350.8075  , 58.8072  ,30 ,90] ]
 input_params += [ ['PSR_J2229_p6114', 337.27, 61.23, 30 ,90] ] # Boomerang
 
 input_params += [ ['Geminga'               ,98.476  ,17.770 ,30 ,90] ]
-input_params += [ ['SNR_G150_p4', 66.785, 55.458,30 ,90] ] # Jamie's SNR
 input_params += [ ['CTA1', 1.608, 72.983  ,30 ,90] ]
-input_params += [ ['Tycho', 6.28  , 64.17  ,30 ,90] ]
-input_params += [ ['2HWC_J1953_p294', 298.26 , 29.48 ,30 ,90] ]
 
-input_params += [ ['2FHL_J0431_p5553e', 67.81 , 55.89 ,30 ,90] ]
-input_params += [ ['PSR_B1937_p21', 295.45 , 21.44 ,30 ,90] ]
-input_params += [ ['RX_J0648_p1516', 102.20 , 15.27 ,30 ,90] ]
-input_params += [ ['LS_V_p4417', 70.25 , 44.53 ,30 ,90] ]
+#input_params += [ ['Tycho', 6.28  , 64.17  ,30 ,90] ]
+#input_params += [ ['SNR_G150_p4', 66.785, 55.458,30 ,90] ] # Jamie's SNR
+#input_params += [ ['2HWC_J1953_p294', 298.26 , 29.48 ,30 ,90] ]
+#input_params += [ ['2FHL_J0431_p5553e', 67.81 , 55.89 ,30 ,90] ]
+#input_params += [ ['PSR_B1937_p21', 295.45 , 21.44 ,30 ,90] ]
+#input_params += [ ['RX_J0648_p1516', 102.20 , 15.27 ,30 ,90] ]
+#input_params += [ ['LS_V_p4417', 70.25 , 44.53 ,30 ,90] ]
 
-input_params += [ ['PSR_J1747_m2809', 266.825  , -28.15  ,30 ,90] ] # Sgr A*
+#input_params += [ ['PSR_J1747_m2809', 266.825  , -28.15  ,30 ,90] ] # Sgr A*
 
 
 

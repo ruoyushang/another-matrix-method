@@ -62,8 +62,8 @@ smi_dir = os.environ.get("SMI_DIR")
 #ana_tag = 'linear'
 #ana_tag = 'poisson'
 #ana_tag = 'binspec'
-ana_tag = 'fullspec'
-#ana_tag = 'rank5'
+#ana_tag = 'fullspec'
+ana_tag = 'rank5'
 
 qual_cut = 0.
 #qual_cut = 20.
@@ -82,6 +82,10 @@ source_name = sys.argv[1]
 src_ra = float(sys.argv[2])
 src_dec = float(sys.argv[3])
 onoff = sys.argv[4]
+
+n_mimic = 0
+#if onoff=='ON':
+#    n_mimic = 5
 
 logE_min = 0
 logE_mid = 4
@@ -102,6 +106,7 @@ if 'PSR_J1856_p0245' in source_name:
     logE_max = logE_nbins
     fit_radial_profile = True
     make_symmetric_model = True
+    radial_bin_scale = 0.2
 if 'PSR_J1907_p0602' in source_name:
     logE_min = 2
     logE_mid = 5
@@ -124,9 +129,9 @@ if 'Geminga' in source_name:
     logE_min = 0
     logE_mid = 5
     logE_max = logE_nbins
-    fit_radial_profile = True
+    fit_radial_profile = False
     make_symmetric_model = False
-    radial_bin_scale = 0.3
+    radial_bin_scale = 0.2
 
 if doFluxCalibration:
     logE_min = 0
@@ -137,10 +142,6 @@ if doFluxCalibration:
 #input_epoch = ['V5']
 #input_epoch = ['V6']
 input_epoch = ['V4','V5','V6']
-
-n_mimic = 0
-if onoff=='ON':
-    n_mimic = 5
 
 xsky_start = src_ra+skymap_size
 xsky_end = src_ra-skymap_size
@@ -979,5 +980,5 @@ other_stars, other_star_type, other_star_coord = GetGammaSourceInfo()
 for star in range(0,len(other_stars)):
     if abs(src_ra-other_star_coord[star][0])>skymap_size: continue
     if abs(src_dec-other_star_coord[star][1])>skymap_size: continue
-    print (f'Star {other_stars[star]} RA = {other_star_coord[star][0]:0.1f}, Dec = {other_star_coord[star][1]:0.1f}')
+    print (f'Star {other_stars[star]} RA = {other_star_coord[star][0]:0.2f}, Dec = {other_star_coord[star][1]:0.2f}')
 

@@ -11,6 +11,10 @@ print (f'SMI_OUTPUT = {SMI_OUTPUT}')
 is_training = True
 #is_training = False
 
+training_mode = 'off'
+if not is_training:
+    training_mode = 'on'
+
 n_mimic = 5
 
 input_params = []
@@ -69,23 +73,23 @@ if not is_training:
     #input_params += [ ['UrsaMajorII'           ,132.875 ,63.13  , 'ON'] ]
     #input_params += [ ['1ES1959_p650'          ,300.00 ,65.15   , 'ON'] ]
 
-    #input_params += [ ['CrabNebula_elev_80_90' ,83.633  ,22.014 , 'ON'] ]
-    #input_params += [ ['CrabNebula_elev_70_80' ,83.633  ,22.014 , 'ON'] ]
-    #input_params += [ ['CrabNebula_elev_60_70' ,83.633  ,22.014 , 'ON'] ]
-    #input_params += [ ['CrabNebula_elev_50_60' ,83.633  ,22.014 , 'ON'] ]
-    #input_params += [ ['CrabNebula_elev_40_50' ,83.633  ,22.014 , 'ON'] ]
-    #input_params += [ ['CrabNebula_elev_30_40' ,83.633  ,22.014 , 'ON'] ]
-    #input_params += [ ['CrabNebula_1p0wobble' ,83.633  ,22.014 , 'ON'] ]
-    #input_params += [ ['CrabNebula_1p5wobble' ,83.633  ,22.014 , 'ON'] ]
-    #
-    #input_params += [ ['PSR_J1856_p0245', 284.21  , 2.76 , 'ON' ] ]
-    #input_params += [ ['SNR_G189_p03'          ,94.213  ,22.503, 'ON' ] ] # ic 443
-    #input_params += [ ['PSR_J1907_p0602'       ,286.975 ,6.337 , 'ON' ] ]
-    #input_params += [ ['PSR_J2021_p4026'       ,305.37  ,40.45 , 'ON' ] ] # gamma cygni
-    #input_params += [ ['PSR_J2021_p3651'       ,305.27  ,36.85 , 'ON' ] ] # Dragonfly
-    #input_params += [ ['SS433'       ,288.404, 4.930 , 'ON' ] ]
-    #input_params += [ ['Geminga'               ,98.476  ,17.770 , 'ON' ] ]
-    #input_params += [ ['PSR_J1928_p1746', 292.15, 17.78 , 'ON' ] ]
+    input_params += [ ['CrabNebula_elev_80_90' ,83.633  ,22.014 , 'ON'] ]
+    input_params += [ ['CrabNebula_elev_70_80' ,83.633  ,22.014 , 'ON'] ]
+    input_params += [ ['CrabNebula_elev_60_70' ,83.633  ,22.014 , 'ON'] ]
+    input_params += [ ['CrabNebula_elev_50_60' ,83.633  ,22.014 , 'ON'] ]
+    input_params += [ ['CrabNebula_elev_40_50' ,83.633  ,22.014 , 'ON'] ]
+    input_params += [ ['CrabNebula_elev_30_40' ,83.633  ,22.014 , 'ON'] ]
+    input_params += [ ['CrabNebula_1p0wobble' ,83.633  ,22.014 , 'ON'] ]
+    input_params += [ ['CrabNebula_1p5wobble' ,83.633  ,22.014 , 'ON'] ]
+    
+    input_params += [ ['PSR_J1856_p0245', 284.21  , 2.76 , 'ON' ] ]
+    input_params += [ ['SNR_G189_p03'          ,94.213  ,22.503, 'ON' ] ] # ic 443
+    input_params += [ ['PSR_J1907_p0602'       ,286.975 ,6.337 , 'ON' ] ]
+    input_params += [ ['PSR_J2021_p4026'       ,305.37  ,40.45 , 'ON' ] ] # gamma cygni
+    input_params += [ ['PSR_J2021_p3651'       ,305.27  ,36.85 , 'ON' ] ] # Dragonfly
+    input_params += [ ['SS433'       ,288.404, 4.930 , 'ON' ] ]
+    input_params += [ ['Geminga'               ,98.476  ,17.770 , 'ON' ] ]
+    input_params += [ ['PSR_J1928_p1746', 292.15, 17.78 , 'ON' ] ]
 
     #input_params += [ ['PSR_J2032_p4127', 308.05  , 41.46 , 'ON' ] ]
     #input_params += [ ['PSR_J2032_p4127_baseline', 308.05  , 41.46 , 'ON'  ] ]
@@ -117,7 +121,7 @@ for s in range(0,len(input_params)):
     file.write(f'python3 save_big_matrices.py "{source}" {src_ra} {src_dec} "V4"\n')
     file.close() 
 
-qfile = open("run/sub_condor_save_mtx.sh","w") 
+qfile = open(f"run/sub_condor_save_mtx_{training_mode}.sh","w") 
 for s in range(0,len(input_params)):
     source = input_params[s][0]
     qfile.write('universe = vanilla \n')
@@ -142,7 +146,7 @@ for s in range(0,len(input_params)):
     file.write(f'python3 build_eigenvectors.py "{source}" "V4"\n')
     file.close() 
 
-qfile = open("run/sub_condor_eigenvtr.sh","w") 
+qfile = open(f"run/sub_condor_eigenvtr_{training_mode}.sh","w") 
 for s in range(0,len(input_params)):
     source = input_params[s][0]
     qfile.write('universe = vanilla \n')
@@ -175,7 +179,7 @@ for s in range(0,len(input_params)):
             file.write(f'python3 save_skymaps.py "{source}" {src_ra} {src_dec} "MIMIC{mimic}" "V4"\n')
     file.close() 
 
-qfile = open("run/sub_condor_skymap.sh","w") 
+qfile = open(f"run/sub_condor_skymap_{training_mode}.sh","w") 
 for s in range(0,len(input_params)):
     source = input_params[s][0]
     onoff = input_params[s][3]

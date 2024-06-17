@@ -75,7 +75,7 @@ for logE in range(0,logE_nbins):
 
     effective_matrix_rank = min(matrix_rank,int(0.5*3./4.*(len(S_full)-1)))
     #effective_matrix_rank = xoff_bins[logE]
-    if density_events<3.:
+    if density_events<1.0:
         effective_matrix_rank = 1
     print (f'effective_matrix_rank = {effective_matrix_rank}')
 

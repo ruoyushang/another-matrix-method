@@ -79,6 +79,7 @@ doFluxCalibration = False
 calibration_radius = 0.15 # need to be larger than the PSF and smaller than the integration radius
 
 xoff_bins = [9,7,7,5,5,1,1,1]
+#xoff_bins = [9,7,7,5,5,3,3,1]
 if sky_tag=='demo':
     xoff_bins = [11,11,11,11,11,11,11,11]
 yoff_bins = xoff_bins
@@ -1412,9 +1413,9 @@ def GetGammaSourceInfo():
 
     near_source_cut = 0.1
 
-    drawBrightStar = True
-    drawPulsar = False
-    drawSNR = False
+    drawBrightStar = False
+    drawPulsar = True
+    drawSNR = True
     drawLHAASO = False
     drawFermi = False
     drawHAWC = False
@@ -1428,23 +1429,6 @@ def GetGammaSourceInfo():
             other_stars += [star_name[src]]
             other_stars_type += ['Star']
             other_star_coord += [[src_ra,src_dec,0.]]
-
-    if drawSNR:
-        target_snr_name, target_snr_ra, target_snr_dec, target_snr_size = ReadSNRTargetListFromCSVFile()
-        for src in range(0,len(target_snr_name)):
-            gamma_source_name = target_snr_name[src]
-            gamma_source_ra = target_snr_ra[src]
-            gamma_source_dec = target_snr_dec[src]
-            gamma_source_size = target_snr_size[src]
-            near_a_source = False
-            for entry in range(0,len(other_stars)):
-                distance = pow(gamma_source_ra-other_star_coord[entry][0],2)+pow(gamma_source_dec-other_star_coord[entry][1],2)
-                if distance<near_source_cut*near_source_cut:
-                    near_a_source = True
-            if not near_a_source:
-                other_stars += [gamma_source_name]
-                other_stars_type += ['SNR']
-                other_star_coord += [[gamma_source_ra,gamma_source_dec,gamma_source_size]]
 
     if drawPulsar:
         target_psr_name, target_psr_ra, target_psr_dec, target_psr_dist, target_psr_age = ReadATNFTargetListFromFile('ATNF_pulsar_full_list.txt')
@@ -1464,6 +1448,23 @@ def GetGammaSourceInfo():
                 else:
                         other_stars_type += ['PSR']
                 other_star_coord += [[gamma_source_ra,gamma_source_dec,0.]]
+
+    if drawSNR:
+        target_snr_name, target_snr_ra, target_snr_dec, target_snr_size = ReadSNRTargetListFromCSVFile()
+        for src in range(0,len(target_snr_name)):
+            gamma_source_name = target_snr_name[src]
+            gamma_source_ra = target_snr_ra[src]
+            gamma_source_dec = target_snr_dec[src]
+            gamma_source_size = target_snr_size[src]
+            near_a_source = False
+            for entry in range(0,len(other_stars)):
+                distance = pow(gamma_source_ra-other_star_coord[entry][0],2)+pow(gamma_source_dec-other_star_coord[entry][1],2)
+                if distance<near_source_cut*near_source_cut:
+                    near_a_source = True
+            if not near_a_source:
+                other_stars += [gamma_source_name]
+                other_stars_type += ['SNR']
+                other_star_coord += [[gamma_source_ra,gamma_source_dec,gamma_source_size]]
 
     if drawHAWC:
         target_hwc_name, target_hwc_ra, target_hwc_dec = ReadHAWCTargetListFromFile('Cat_3HWC.txt')
@@ -2097,6 +2098,14 @@ def PrintInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,hist_data_sky
     fig.savefig(f'output_plots/{source_name}_roi_flux_crab_unit_{roi_name}.png',bbox_inches='tight')
     axbig.remove()
 
+    uplims = np.zeros_like(energy_axis)
+    for x in range(0,len(flux)):
+        if flux_stat_err[x]==0.: continue
+        significance = flux[x]/flux_stat_err[x]
+        if significance<2.:
+            uplims[x] = 1.
+            flux[x] = max(2.*flux_stat_err[x],flux[x]+2.*flux_stat_err[x])
+
     fig.clf()
     figsize_x = 7
     figsize_y = 5
@@ -2110,7 +2119,7 @@ def PrintInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,hist_data_sky
     axbig.set_xscale('log')
     axbig.set_yscale('log')
     axbig.fill_between(energy_axis,np.array(flux_floor)-np.array(flux_incl_err),np.array(flux_floor)+np.array(flux_incl_err),alpha=0.2,color='b',zorder=0)
-    axbig.errorbar(energy_axis,flux,flux_stat_err,xerr=energy_error,color='k',marker='_',ls='none',label=f'VERITAS ({roi_name})',zorder=1)
+    axbig.errorbar(energy_axis,flux,flux_stat_err,xerr=energy_error,uplims=uplims,color='k',marker='_',ls='none',label=f'VERITAS ({roi_name})',zorder=1)
     if 'SS433' in source_name:
         HessSS433e_energies, HessSS433e_fluxes, HessSS433e_flux_errs = GetHessSS433e()
         HessSS433w_energies, HessSS433w_fluxes, HessSS433w_flux_errs = GetHessSS433w()
@@ -2212,6 +2221,11 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
         region_y += [2.1]
         region_r += [0.2]
         region_name += ['J1858+020']
+
+        #region_x += [284.00]
+        #region_y += [1.37]
+        #region_r += [0.25]
+        #region_name += ['W44']
 
     elif 'SS433' in src_name:
     

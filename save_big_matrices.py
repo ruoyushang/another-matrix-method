@@ -12,6 +12,7 @@ ReadOffRunListFromFile = common_functions.ReadOffRunListFromFile
 ReadRunListFromFile = common_functions.ReadRunListFromFile
 build_big_camera_matrix = common_functions.build_big_camera_matrix
 
+smi_runlist = os.environ.get("SMI_RUNLIST")
 smi_input = os.environ.get("SMI_INPUT")
 smi_output = os.environ.get("SMI_OUTPUT")
 smi_dir = os.environ.get("SMI_DIR")
@@ -22,7 +23,7 @@ src_dec = float(sys.argv[3])
 input_epoch = sys.argv[4] # 'V4', 'V5' or 'V6'
 print (f'source_name = {source_name}, input_epoch = {input_epoch}')
 
-off_runlist = ReadOffRunListFromFile(f'/nevis/tehanu/home/ryshang/veritas_analysis/another-matrix-method/output_vts_query/PairList_{source_name}_{input_epoch}.txt')
+off_runlist = ReadOffRunListFromFile(f'{smi_runlist}/PairList_{source_name}_{input_epoch}.txt')
 print (off_runlist)
 big_off_matrix, big_mask_matrix, big_off_matrix_fullspec, big_mask_matrix_fullspec = build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,off_runlist,max_runs=1e10,is_bkgd=True,is_on=False)
 output_filename = f'{smi_output}/big_off_matrix_{source_name}_{input_epoch}.pkl'
