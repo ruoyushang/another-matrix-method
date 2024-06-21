@@ -84,11 +84,11 @@ src_dec = float(sys.argv[3])
 onoff = sys.argv[4]
 
 n_mimic = 0
-#if onoff=='ON':
-#    n_mimic = 5
+if onoff=='ON':
+    n_mimic = 5
 
 logE_min = 0
-logE_mid = 4
+logE_mid = 5
 logE_max = logE_nbins
 fit_radial_profile = False
 make_symmetric_model = False
@@ -106,7 +106,6 @@ if 'PSR_J1856_p0245' in source_name:
     logE_max = logE_nbins
     fit_radial_profile = True
     make_symmetric_model = True
-    radial_bin_scale = 0.2
 if 'PSR_J1907_p0602' in source_name:
     logE_min = 2
     logE_mid = 5
@@ -129,9 +128,9 @@ if 'Geminga' in source_name:
     logE_min = 0
     logE_mid = 5
     logE_max = logE_nbins
-    fit_radial_profile = False
+    fit_radial_profile = True
     make_symmetric_model = False
-    radial_bin_scale = 0.2
+    radial_bin_scale = 0.25
 
 if doFluxCalibration:
     logE_min = 0
@@ -158,6 +157,7 @@ all_roi_name,all_roi_x,all_roi_y,all_roi_r = DefineRegionOfInterest(region_name,
 
 total_exposure = 0.
 good_exposure = 0.
+mimic_exposure = [0.] * n_mimic 
 list_run_elev = []
 list_run_azim = []
 list_truth_params = []
@@ -388,6 +388,9 @@ for epoch in input_epoch:
 
             if not 'MIMIC' in mode:
                 total_exposure += exposure
+            else:
+                mimic_index = int(mode.strip('MIMIC'))
+                mimic_exposure[mimic_index-1] += exposure
 
             is_good_run = True
             if cr_qual>cr_qual_cut:
@@ -652,24 +655,25 @@ for logE in range(logE_min,logE_max):
     if make_symmetric_model:
         build_radial_symmetric_model(radial_symmetry_sky_map[logE],on_radial_axis,on_profile_axis,roi_x,roi_y)
         
-        PrintInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,sum_data_sky_map,sum_bkgd_sky_map,radial_symmetry_sky_map,sum_flux_err_sky_map,sum_mimic_data_sky_map,sum_mimic_bkgd_sky_map,f'{roi_name}_symmetric',[roi_x],[roi_y],[roi_r],excl_roi_x,excl_roi_y,excl_roi_r)
-
-        radial_symmetry_sky_map_allE = MyArray3D()
-        radial_symmetry_sky_map_allE.just_like(radial_symmetry_sky_map[0])
-        for logE in range(logE_min,logE_max):
-            radial_symmetry_sky_map_allE.add(radial_symmetry_sky_map[logE])
-
-        radial_symmetry_sky_map_LE = MyArray3D()
-        radial_symmetry_sky_map_LE.just_like(radial_symmetry_sky_map[0])
-        if logE>=logE_min and logE<logE_mid:
-            radial_symmetry_sky_map_LE.add(radial_symmetry_sky_map[logE])
-
-        radial_symmetry_sky_map_HE = MyArray3D()
-        radial_symmetry_sky_map_HE.just_like(radial_symmetry_sky_map[0])
-        if logE>=logE_mid and logE<=logE_max:
-            radial_symmetry_sky_map_HE.add(radial_symmetry_sky_map[logE])
-
-        PlotSkyMap(fig,'$E^{2}$ dN/dE [$\mathrm{TeV}\cdot\mathrm{cm}^{-2}\mathrm{s}^{-1}$]',logE_min,logE_max,radial_symmetry_sky_map_allE,f'{source_name}_flux_sky_map_allE_symmetric_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
+if make_symmetric_model:
+    PrintInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,sum_data_sky_map,sum_bkgd_sky_map,radial_symmetry_sky_map,sum_flux_err_sky_map,sum_mimic_data_sky_map,sum_mimic_bkgd_sky_map,f'{roi_name}_symmetric',[roi_x],[roi_y],[roi_r],excl_roi_x,excl_roi_y,excl_roi_r)
+    
+    radial_symmetry_sky_map_allE = MyArray3D()
+    radial_symmetry_sky_map_allE.just_like(radial_symmetry_sky_map[0])
+    for logE in range(logE_min,logE_max):
+        radial_symmetry_sky_map_allE.add(radial_symmetry_sky_map[logE])
+    
+    radial_symmetry_sky_map_LE = MyArray3D()
+    radial_symmetry_sky_map_LE.just_like(radial_symmetry_sky_map[0])
+    if logE>=logE_min and logE<logE_mid:
+        radial_symmetry_sky_map_LE.add(radial_symmetry_sky_map[logE])
+    
+    radial_symmetry_sky_map_HE = MyArray3D()
+    radial_symmetry_sky_map_HE.just_like(radial_symmetry_sky_map[0])
+    if logE>=logE_mid and logE<=logE_max:
+        radial_symmetry_sky_map_HE.add(radial_symmetry_sky_map[logE])
+    
+    PlotSkyMap(fig,'$E^{2}$ dN/dE [$\mathrm{TeV}\cdot\mathrm{cm}^{-2}\mathrm{s}^{-1}$]',logE_min,logE_max,radial_symmetry_sky_map_allE,f'{source_name}_flux_sky_map_allE_symmetric_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
 
 for roi in range(0,len(all_roi_name)):
 
@@ -836,6 +840,31 @@ for logE in range(logE_min,logE_max):
     #    axbig.remove()
 
 fig.clf()
+figsize_y = 2.*gcut_bins
+figsize_x = 2.*(logE_max-logE_min)
+fig.set_figheight(figsize_y)
+fig.set_figwidth(figsize_x)
+ax_idx = 0
+for logE in range(logE_min,logE_max):
+    for gcut in range(0,gcut_bins):
+        ax_idx = logE-logE_min + (logE_max-logE_min)*gcut + 1
+        axbig = fig.add_subplot(gcut_bins,(logE_max-logE_min),ax_idx)
+        if logE==logE_min:
+            if gcut==0:
+                axbig.set_ylabel('SR')
+            else:
+                axbig.set_ylabel(f'CR{gcut}')
+        if gcut==0:
+            axbig.set_title(f'{pow(10.,logE_bins[logE]):0.2f}-{pow(10.,logE_bins[logE+1]):0.2f} TeV')
+        xmin = sum_data_xyoff_map[logE].xaxis.min()
+        xmax = sum_data_xyoff_map[logE].xaxis.max()
+        ymin = sum_data_xyoff_map[logE].yaxis.min()
+        ymax = sum_data_xyoff_map[logE].yaxis.max()
+        im = axbig.imshow(sum_data_xyoff_map[logE].waxis[:,:,gcut].T,origin='lower',extent=(xmin,xmax,ymin,ymax),aspect='auto')
+fig.savefig(f'output_plots/{source_name}_xyoff_map_inclusive_data_transpose_{ana_tag}.png',bbox_inches='tight')
+axbig.remove()
+
+fig.clf()
 figsize_x = 2.*gcut_bins
 figsize_y = 2.*(logE_max-logE_min)
 fig.set_figheight(figsize_y)
@@ -897,10 +926,16 @@ for mimic in range(0,n_mimic):
 
 print (f'total_exposure = {total_exposure}')
 print (f'good_exposure = {good_exposure}')
+print (f'mimic_exposure = {mimic_exposure}')
 
 PlotCountProjection(fig,'count',logE_min,logE_max,sum_data_sky_map_allE,sum_bkgd_sky_map_allE,f'{source_name}_projection_sky_map_allE_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
 PlotCountProjection(fig,'count',logE_min,logE_mid,sum_data_sky_map_LE,sum_bkgd_sky_map_LE,f'{source_name}_projection_sky_map_LE_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
 PlotCountProjection(fig,'count',logE_mid,logE_max,sum_data_sky_map_HE,sum_bkgd_sky_map_HE,f'{source_name}_projection_sky_map_HE_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
+
+for mimic in range(0,n_mimic):
+    PlotCountProjection(fig,'count',logE_min,logE_max,sum_mimic_data_sky_map_allE[mimic],sum_mimic_bkgd_sky_map_allE[mimic],f'{source_name}_projection_sky_map_allE_mimic{mimic}_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
+    PlotCountProjection(fig,'count',logE_min,logE_mid,sum_mimic_data_sky_map_LE[mimic],sum_mimic_bkgd_sky_map_LE[mimic],f'{source_name}_projection_sky_map_LE_mimic{mimic}_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
+    PlotCountProjection(fig,'count',logE_mid,logE_max,sum_mimic_data_sky_map_HE[mimic],sum_mimic_bkgd_sky_map_HE[mimic],f'{source_name}_projection_sky_map_HE_mimic{mimic}_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
 
 
 fig.clf()

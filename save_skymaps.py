@@ -4,6 +4,7 @@ import ROOT
 import numpy as np
 import pickle
 from matplotlib import pyplot as plt
+#from memory_profiler import profile
 from common_functions import MyArray1D
 from common_functions import MyArray3D
 
@@ -25,6 +26,8 @@ smooth_image = common_functions.smooth_image
 skymap_size = common_functions.skymap_size
 skymap_bins = common_functions.skymap_bins
 fine_skymap_bins = common_functions.fine_skymap_bins
+
+#@profile
 
 fig, ax = plt.subplots()
 figsize_x = 8.6
@@ -114,7 +117,7 @@ for run in range(0,total_runs):
     total_exposure += (time_end-time_start)/3600.
 
 min_exposure = 2.0 # hours
-min_exposure = max(min_exposure,float(total_exposure/40.))
+#min_exposure = max(min_exposure,float(total_exposure/40.))
 run_exposure = 0.
 for run in range(0,total_runs):
 
@@ -176,6 +179,24 @@ for logE in range(0,logE_nbins):
     fit_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
     ratio_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
 
+run_incl_sky_map = []
+run_data_sky_map = []
+run_fit_sky_map = []
+for logE in range(0,logE_nbins):
+    run_incl_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
+    run_data_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+    run_fit_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
+
+run_data_xyoff_map = []
+run_fit_xyoff_map = []
+run_fit_xyoff_map_fullspec = []
+run_ratio_xyoff_map = []
+for logE in range(0,logE_nbins):
+    run_data_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+    run_fit_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+    run_fit_xyoff_map_fullspec += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+    run_ratio_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
+
 
 run_list_count = 0
 for small_runlist in range(0,len(big_runlist)):
@@ -190,11 +211,10 @@ for small_runlist in range(0,len(big_runlist)):
         fit_xyoff_map[logE].reset()
         ratio_xyoff_map[logE].reset()
 
-
     run_list_count += 1
     print (f'analyzing {run_list_count}/{len(big_runlist)} lists...')
 
-    run_info, run_incl_sky_map, run_data_sky_map, run_fit_sky_map, run_data_xyoff_map, run_fit_xyoff_map, run_ratio_xyoff_map = build_skymap(source_name,src_ra,src_dec,smi_input,path_to_eigenvector,path_to_big_matrix,big_runlist[small_runlist],big_mimic_runlist[small_runlist],onoff,sky_tag)
+    run_info = build_skymap(source_name,src_ra,src_dec,smi_input,path_to_eigenvector,path_to_big_matrix,big_runlist[small_runlist],big_mimic_runlist[small_runlist],onoff, run_incl_sky_map, run_data_sky_map, run_fit_sky_map, run_data_xyoff_map, run_fit_xyoff_map, run_fit_xyoff_map_fullspec, run_ratio_xyoff_map)
 
     run_exposure_hours = run_info[0]
     run_elev = run_info[1]

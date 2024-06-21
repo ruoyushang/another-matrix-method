@@ -8,8 +8,8 @@ SMI_OUTPUT = os.environ['SMI_OUTPUT']
 print (f'SMI_DIR = {SMI_DIR}')
 print (f'SMI_OUTPUT = {SMI_OUTPUT}')
 
-is_training = True
-#is_training = False
+#is_training = True
+is_training = False
 
 training_mode = 'off'
 if not is_training:
@@ -91,13 +91,13 @@ if not is_training:
     input_params += [ ['Geminga'               ,98.476  ,17.770 , 'ON' ] ]
     input_params += [ ['PSR_J1928_p1746', 292.15, 17.78 , 'ON' ] ]
 
+    input_params += [ ['PSR_J2229_p6114', 337.27, 61.23 , 'ON' ] ] # Boomerang
+    input_params += [ ['CTA1', 1.608, 72.983 , 'ON' ] ]
     #input_params += [ ['PSR_J2032_p4127', 308.05  , 41.46 , 'ON' ] ]
     #input_params += [ ['PSR_J2032_p4127_baseline', 308.05  , 41.46 , 'ON'  ] ]
     #input_params += [ ['LHAASO_J0622_p3754', 95.50  , 37.90 , 'ON' ] ]
     #input_params += [ ['Cas_A', 350.8075  , 58.8072 , 'ON' ] ]
-    #input_params += [ ['PSR_J2229_p6114', 337.27, 61.23 , 'ON' ] ] # Boomerang
     #input_params += [ ['SNR_G150_p4', 66.785, 55.458 , 'ON' ] ] # Jamie's SNR
-    #input_params += [ ['CTA1', 1.608, 72.983 , 'ON' ] ]
     #input_params += [ ['Tycho', 6.28  , 64.17 , 'ON'  ] ]
     #input_params += [ ['2HWC_J1953_p294', 298.26 , 29.48 , 'ON' ] ]
     #input_params += [ ['PSR_J2238_p5903', 339.50 , 59.05 , 'ON' ] ]

@@ -1,5 +1,6 @@
 
 import os, sys
+import math
 import ROOT
 import numpy as np
 import pickle
@@ -78,8 +79,8 @@ fine_skymap_bins = 120
 doFluxCalibration = False
 calibration_radius = 0.15 # need to be larger than the PSF and smaller than the integration radius
 
-xoff_bins = [9,7,7,5,5,1,1,1]
-#xoff_bins = [9,7,7,5,5,3,3,1]
+#xoff_bins = [9,7,7,5,5,1,1,1]
+xoff_bins = [9,7,7,5,5,3,3,1]
 if sky_tag=='demo':
     xoff_bins = [11,11,11,11,11,11,11,11]
 yoff_bins = xoff_bins
@@ -629,7 +630,7 @@ def build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,runlist,max_run
 
     return big_matrix, big_mask_matrix, big_matrix_fullspec, big_mask_matrix_fullspec
 
-def build_skymap(source_name,src_ra,src_dec,smi_input,eigenvector_path,big_matrix_path,runlist,mimic_runlist,onoff,max_runs=1e10):
+def build_skymap(source_name,src_ra,src_dec,smi_input,eigenvector_path,big_matrix_path,runlist,mimic_runlist,onoff, incl_sky_map, data_sky_map, fit_sky_map, data_xyoff_map, fit_xyoff_map, fit_xyoff_map_fullspec, ratio_xyoff_map):
 
     global skymap_bins
     if onoff=='ON' or 'MIMIC' in onoff:
@@ -661,23 +662,6 @@ def build_skymap(source_name,src_ra,src_dec,smi_input,eigenvector_path,big_matri
     exposure_hours = 0.
     avg_tel_elev = 0.
     avg_tel_azim = 0.
-    incl_sky_map = []
-    data_sky_map = []
-    fit_sky_map = []
-    for logE in range(0,logE_nbins):
-        incl_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=1)]
-        data_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
-        fit_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
-
-    data_xyoff_map = []
-    fit_xyoff_map = []
-    fit_xyoff_map_fullspec = []
-    ratio_xyoff_map = []
-    for logE in range(0,logE_nbins):
-        data_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
-        fit_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
-        fit_xyoff_map_fullspec += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
-        ratio_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
 
     effective_matrix_rank = max(1,big_eigenvectors[0].shape[0])
     truth_params = [1e-3] * effective_matrix_rank
@@ -689,6 +673,9 @@ def build_skymap(source_name,src_ra,src_dec,smi_input,eigenvector_path,big_matri
     print ('build big matrix...')
 
     big_on_matrix = []
+    big_mask_matrix = []
+    big_on_matrix_fullspec = []
+    big_mask_matrix_fullspec = []
 
     print (f'runlist = {runlist}')
     print (f'mimic_runlist = {mimic_runlist}')
@@ -708,9 +695,12 @@ def build_skymap(source_name,src_ra,src_dec,smi_input,eigenvector_path,big_matri
 
     if len(big_on_matrix_fullspec)==0:
         print (f'No data. Break.')
-        return [exposure_hours,avg_tel_elev,avg_tel_azim,truth_params,fit_params,sr_qual,cr_qual], incl_sky_map, data_sky_map, fit_sky_map, data_xyoff_map, fit_xyoff_map, ratio_xyoff_map
+        return [exposure_hours,avg_tel_elev,avg_tel_azim,truth_params,fit_params,sr_qual,cr_qual]
 
     for logE in range(0,logE_nbins):
+        incl_sky_map[logE].reset()
+        data_sky_map[logE].reset()
+        fit_sky_map[logE].reset()
         data_xyoff_map[logE].reset()
         fit_xyoff_map[logE].reset()
         fit_xyoff_map_fullspec[logE].reset()
@@ -932,6 +922,9 @@ def build_skymap(source_name,src_ra,src_dec,smi_input,eigenvector_path,big_matri
 
         if 'MIMIC' in onoff:
             mimic_index = int(onoff.strip('MIMIC'))-1
+            if mimic_index+1>len(mimic_runlist[run]):
+                print (f'Not enough mimic data.')
+                continue
             run_number = mimic_runlist[run][mimic_index]
             print (f'analyzing mimic run {run_number}')
 
@@ -1020,10 +1013,15 @@ def build_skymap(source_name,src_ra,src_dec,smi_input,eigenvector_path,big_matri
 
     print (f'avg_tel_elev = {avg_tel_elev}')
 
+    del big_on_matrix
+    del big_mask_matrix
+    del big_on_matrix_fullspec
+    del big_mask_matrix_fullspec
+
     if use_fullspec:
-        return [exposure_hours,avg_tel_elev,avg_tel_azim,truth_params,fit_params,sr_qual,cr_qual], incl_sky_map, data_sky_map, fit_sky_map, data_xyoff_map, fit_xyoff_map_fullspec, ratio_xyoff_map
+        return [exposure_hours,avg_tel_elev,avg_tel_azim,truth_params,fit_params,sr_qual,cr_qual]
     else:
-        return [exposure_hours,avg_tel_elev,avg_tel_azim,truth_params,fit_params,sr_qual,cr_qual], incl_sky_map, data_sky_map, fit_sky_map, data_xyoff_map, fit_xyoff_map, ratio_xyoff_map
+        return [exposure_hours,avg_tel_elev,avg_tel_azim,truth_params,fit_params,sr_qual,cr_qual]
 
 
 def cosmic_ray_like_chi2_fullspec(try_params,ref_params,eigenvectors,diff_xyoff_map,init_xyoff_map,mask_xyoff_map,region_type):
@@ -1575,6 +1573,12 @@ def PlotCountProjection(fig,label_z,logE_min,logE_max,hist_map_data,hist_map_bkg
     ymin = hist_map.yaxis.min()
     ymax = hist_map.yaxis.max()
 
+    hist_map_significance = MyArray3D()
+    hist_map_significance.just_like(hist_map_data)
+    hist_map_excess = MyArray3D()
+    hist_map_excess.just_like(hist_map_data)
+    make_significance_map(hist_map_data,hist_map_bkgd,hist_map_significance,hist_map_excess)
+
     x_pix_size = 3*abs(hist_map_data.xaxis[1]-hist_map_data.xaxis[0])
     y_pix_size = 3*abs(hist_map_data.yaxis[1]-hist_map_data.yaxis[0])
     x_proj_axis = MyArray1D(x_nbins=round(abs(xmax-xmin)/x_pix_size),start_x=xmin,end_x=xmax)
@@ -1682,6 +1686,100 @@ def PlotCountProjection(fig,label_z,logE_min,logE_max,hist_map_data,hist_map_bkg
     txt = axTemperature.text(xmax-0.14, ymax-0.21, lable_energy_range, fontdict=font)
 
     fig.savefig(f'output_plots/{plotname}.png',bbox_inches='tight')
+
+
+    # Set up the geometry of the three plots
+    rect_temperature = [left, bottom - 0.12, width, height + 0.12] # dimensions of temp plot
+    rect_histx = [left, bottom_h, width, 0.20] # dimensions of x-histogram
+    rect_histy = [left_h, bottom, 0.20, height] # dimensions of y-histogram
+
+    fig.clf()
+    # Make the three plots
+    axTemperature = plt.axes(rect_temperature) # temperature plot
+    axHistx = plt.axes(rect_histx) # x histogram
+    axHisty = plt.axes(rect_histy) # y histogram
+
+    # Remove the inner axes numbers of the histograms
+    nullfmt = NullFormatter()
+    axHistx.xaxis.set_major_formatter(nullfmt)
+    axHisty.yaxis.set_major_formatter(nullfmt)
+
+    # Plot the temperature data
+    cax = axTemperature.imshow(hist_map_significance.waxis[:,:,layer].T,extent=(xmax,xmin,ymin,ymax),vmin=-5.,vmax=5.,aspect='auto',origin='lower',cmap='coolwarm')
+
+    divider = make_axes_locatable(axTemperature)
+    cax_app = divider.append_axes("bottom", size="5%", pad=0.7)
+    cbar = fig.colorbar(cax,orientation="horizontal",cax=cax_app)
+    cbar.set_label('significance')
+
+    #Plot the axes labels
+    label_x = 'RA [deg]'
+    label_y = 'Dec [deg]'
+    axTemperature.set_xlabel(label_x)
+    axTemperature.set_ylabel(label_y)
+
+    #Plot the histograms
+    axHistx.errorbar(x_axis_array,x_count_array,yerr=x_error_array,color='k',marker='.',ls='none',label='Observation data')
+    axHisty.errorbar(y_count_array,y_axis_array,xerr=y_error_array,color='k',marker='.',ls='none')
+    axHistx.plot(x_axis_array,x_bkgd_array,color='r',ls='solid',label='Background model')
+    axHisty.plot(y_bkgd_array,y_axis_array,color='r',ls='solid')
+    axHistx.set_xlim(axHistx.get_xlim()[::-1])
+    formatter = ticker.ScalarFormatter(useMathText=True)
+    formatter.set_scientific(True)
+    formatter.set_powerlimits((-1,1))
+    axHistx.yaxis.set_major_formatter(formatter)
+    axHistx.legend(loc='best')
+
+    font = {'family': 'serif', 'color':  'black', 'weight': 'normal', 'size': 10, 'rotation': 0.,}
+    lable_energy_range = f'E = {E_min:0.2f}-{E_max:0.2f} TeV'
+    txt = axTemperature.text(xmax-0.14, ymax-0.21, lable_energy_range, fontdict=font)
+
+    fig.savefig(f'output_plots/{plotname}_significance.png',bbox_inches='tight')
+
+
+    fig.clf()
+    # Make the three plots
+    axTemperature = plt.axes(rect_temperature) # temperature plot
+    axHistx = plt.axes(rect_histx) # x histogram
+    axHisty = plt.axes(rect_histy) # y histogram
+
+    # Remove the inner axes numbers of the histograms
+    nullfmt = NullFormatter()
+    axHistx.xaxis.set_major_formatter(nullfmt)
+    axHisty.yaxis.set_major_formatter(nullfmt)
+
+    # Plot the temperature data
+    cax = axTemperature.imshow(hist_map_excess.waxis[:,:,layer].T,extent=(xmax,xmin,ymin,ymax),aspect='auto',origin='lower',cmap=colormap)
+
+    divider = make_axes_locatable(axTemperature)
+    cax_app = divider.append_axes("bottom", size="5%", pad=0.7)
+    cbar = fig.colorbar(cax,orientation="horizontal",cax=cax_app)
+    cbar.set_label('excess count')
+
+    #Plot the axes labels
+    label_x = 'RA [deg]'
+    label_y = 'Dec [deg]'
+    axTemperature.set_xlabel(label_x)
+    axTemperature.set_ylabel(label_y)
+
+    #Plot the histograms
+    axHistx.errorbar(x_axis_array,x_count_array,yerr=x_error_array,color='k',marker='.',ls='none',label='Observation data')
+    axHisty.errorbar(y_count_array,y_axis_array,xerr=y_error_array,color='k',marker='.',ls='none')
+    axHistx.plot(x_axis_array,x_bkgd_array,color='r',ls='solid',label='Background model')
+    axHisty.plot(y_bkgd_array,y_axis_array,color='r',ls='solid')
+    axHistx.set_xlim(axHistx.get_xlim()[::-1])
+    formatter = ticker.ScalarFormatter(useMathText=True)
+    formatter.set_scientific(True)
+    formatter.set_powerlimits((-1,1))
+    axHistx.yaxis.set_major_formatter(formatter)
+    axHistx.legend(loc='best')
+
+    font = {'family': 'serif', 'color':  'white', 'weight': 'normal', 'size': 10, 'rotation': 0.,}
+    lable_energy_range = f'E = {E_min:0.2f}-{E_max:0.2f} TeV'
+    txt = axTemperature.text(xmax-0.14, ymax-0.21, lable_energy_range, fontdict=font)
+
+    fig.savefig(f'output_plots/{plotname}_excess.png',bbox_inches='tight')
+
 
 
 def PlotSkyMap(fig,label_z,logE_min,logE_max,hist_map_input,plotname,roi_x=[],roi_y=[],roi_r=[],max_z=0.,colormap='coolwarm',layer=0):
@@ -1870,7 +1968,19 @@ def GetRadialProfile(hist_flux_skymap,hist_error_skymap,roi_x,roi_y,roi_r,excl_r
         brightness_array[br] = brightness_array[br]/pixel_array[br]
         brightness_err_array[br] = pow(brightness_err_array[br],0.5)/pixel_array[br]
 
-    return radius_array, brightness_array, brightness_err_array
+    output_radius_array = []
+    output_brightness_array = []
+    output_brightness_err_array = []
+    for br in range(0,len(radial_axis.xaxis)-1):
+        radius = radius_array[br]
+        brightness = brightness_array[br]
+        brightness_err = brightness_err_array[br]
+        if brightness_err>0.:
+            output_radius_array += [radius]
+            output_brightness_array += [brightness]
+            output_brightness_err_array += [brightness_err]
+
+    return output_radius_array, output_brightness_array, output_brightness_err_array
 
 def GetRegionIntegral(hist_flux_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,hist_error_skymap=None,use_excl=True):
 
@@ -1972,6 +2082,78 @@ def GetHessSS433w():
         flux_errs += [0.5*(pow(10.,flux_errs_up[entry])-pow(10.,flux_errs_lo[entry]))*erg_to_TeV]
 
     return energies, fluxes, flux_errs
+
+def GetHAWCDiffusionFluxGeminga():
+
+    energies = [pow(10.,0.90),pow(10.,1.60)]
+    fluxes = [pow(10.,-11.12),pow(10.,-11.36)]
+    flux_errs = [0.,0.]
+    flux_errs_up = [pow(10.,-11.04),pow(10.,-11.28)]
+    flux_errs_low = [pow(10.,-11.21),pow(10.,-11.44)]
+
+    for entry in range(0,len(energies)):
+        fluxes[entry] = fluxes[entry]/(energies[entry]*energies[entry])*pow(energies[entry],2)
+        flux_errs[entry] = 0.5*(flux_errs_up[entry]-flux_errs_low[entry])/(energies[entry]*energies[entry])*pow(energies[entry],2)
+
+    return energies, fluxes, flux_errs
+
+def GetHAWCGaussianFluxGeminga():
+
+    energies = [pow(10.,0.90),pow(10.,1.60)]
+    fluxes = [pow(10.,-11.36),pow(10.,-11.52)]
+    flux_errs = [0.,0.]
+    flux_errs_up = [pow(10.,-11.28),pow(10.,-11.45)]
+    flux_errs_low = [pow(10.,-11.44),pow(10.,-11.59)]
+
+    for entry in range(0,len(energies)):
+        fluxes[entry] = fluxes[entry]/(energies[entry]*energies[entry])*pow(energies[entry],2)
+        flux_errs[entry] = 0.5*(flux_errs_up[entry]-flux_errs_low[entry])/(energies[entry]*energies[entry])*pow(energies[entry],2)
+
+    return energies, fluxes, flux_errs
+
+def GetHAWCDiskFluxGeminga():
+
+    energies = [pow(10.,0.00),pow(10.,1.70)]
+    fluxes = [pow(10.,-11.42),pow(10.,-11.81)]
+    flux_errs = [0.,0.]
+    flux_errs_up = [pow(10.,-11.30),pow(10.,-11.68)]
+    flux_errs_low = [pow(10.,-11.56),pow(10.,-11.94)]
+
+    for entry in range(0,len(energies)):
+        fluxes[entry] = fluxes[entry]/(energies[entry]*energies[entry])*pow(energies[entry],2)
+        flux_errs[entry] = 0.5*(flux_errs_up[entry]-flux_errs_low[entry])/(energies[entry]*energies[entry])*pow(energies[entry],2)
+
+    return energies, fluxes, flux_errs
+
+def GetFermiFluxGeminga():
+
+    energies = [pow(10.,1.03),pow(10.,1.30),pow(10.,1.56),pow(10.,1.82)]
+    fluxes = [pow(10.,-7.27),pow(10.,-7.29),pow(10.,-7.41),pow(10.,-7.35)]
+    flux_errs = [pow(10.,-7.27),pow(10.,-7.29),pow(10.,-7.41),pow(10.,-7.35)]
+    flux_errs_up = [pow(10.,-7.14),pow(10.,-7.16),pow(10.,-7.29),pow(10.,-7.23)]
+    flux_errs_low = [pow(10.,-7.46),pow(10.,-7.49),pow(10.,-7.58),pow(10.,-7.50)]
+
+    GeV_to_TeV = 1e-3
+    for entry in range(0,len(energies)):
+        fluxes[entry] = fluxes[entry]*GeV_to_TeV/(energies[entry]*energies[entry]/1e6)*pow(energies[entry]/1e3,2)
+        flux_errs[entry] = 0.5*(flux_errs_up[entry]-flux_errs_low[entry])*GeV_to_TeV/(energies[entry]*energies[entry]/1e6)*pow(energies[entry]/1e3,2)
+        energies[entry] = energies[entry]/1000.
+
+    return energies, fluxes, flux_errs
+
+def GetFermiUpperLimitFluxGeminga():
+
+    energies = [pow(10.,2.09),pow(10.,2.35),pow(10.,2.61),pow(10.,2.87)]
+    fluxes = [pow(10.,-7.35),pow(10.,-7.23),pow(10.,-7.34),pow(10.,-7.18)]
+    fluxes_err = [pow(10.,-7.35),pow(10.,-7.23),pow(10.,-7.34),pow(10.,-7.18)]
+
+    GeV_to_TeV = 1e-3
+    for entry in range(0,len(energies)):
+        fluxes[entry] = fluxes[entry]*GeV_to_TeV/(energies[entry]*energies[entry]/1e6)*pow(energies[entry]/1e3,2)
+        fluxes_err[entry] = fluxes[entry]*0.3
+        energies[entry] = energies[entry]/1000.
+
+    return energies, fluxes, fluxes_err
 
 
 def PrintInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,hist_data_skymap,hist_bkgd_skymap,hist_flux_skymap,hist_flux_err_skymap,hist_mimic_data_skymap,hist_mimic_bkgd_skymap,roi_name,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r):
@@ -2098,6 +2280,8 @@ def PrintInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,hist_data_sky
     fig.savefig(f'output_plots/{source_name}_roi_flux_crab_unit_{roi_name}.png',bbox_inches='tight')
     axbig.remove()
 
+    PrintSpectralDataForNaima(energy_axis,flux,flux_stat_err,f'VERITAS_{roi_name}')
+
     uplims = np.zeros_like(energy_axis)
     for x in range(0,len(flux)):
         if flux_stat_err[x]==0.: continue
@@ -2105,6 +2289,7 @@ def PrintInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,hist_data_sky
         if significance<2.:
             uplims[x] = 1.
             flux[x] = max(2.*flux_stat_err[x],flux[x]+2.*flux_stat_err[x])
+            flux_incl_err[x] += flux_stat_err[x]
 
     fig.clf()
     figsize_x = 7
@@ -2125,6 +2310,21 @@ def PrintInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,hist_data_sky
         HessSS433w_energies, HessSS433w_fluxes, HessSS433w_flux_errs = GetHessSS433w()
         axbig.errorbar(HessSS433e_energies,HessSS433e_fluxes,HessSS433e_flux_errs,marker='s',ls='none',label='HESS eastern',zorder=2)
         axbig.errorbar(HessSS433w_energies,HessSS433w_fluxes,HessSS433w_flux_errs,marker='s',ls='none',label='HESS western',zorder=3)
+    elif 'Geminga' in source_name:
+        HAWC_diff_energies, HAWC_diff_fluxes, HAWC_diff_flux_errs = GetHAWCDiffusionFluxGeminga()
+        HAWC_disk_energies, HAWC_disk_fluxes, HAWC_disk_flux_errs = GetHAWCDiskFluxGeminga()
+        HAWC_gaus_energies, HAWC_gaus_fluxes, HAWC_gaus_flux_errs = GetHAWCGaussianFluxGeminga()
+        Fermi_energies, Fermi_fluxes, Fermi_flux_errs = GetFermiFluxGeminga()
+        Fermi_UL_energies, Fermi_UL_fluxes, Fermi_UL_err = GetFermiUpperLimitFluxGeminga()
+        axbig.plot(HAWC_diff_energies, HAWC_diff_fluxes,'g-',label='HAWC diffusion')
+        axbig.fill_between(HAWC_diff_energies, np.array(HAWC_diff_fluxes)-np.array(HAWC_diff_flux_errs), np.array(HAWC_diff_fluxes)+np.array(HAWC_diff_flux_errs), alpha=0.2, color='g')
+        axbig.plot(HAWC_disk_energies, HAWC_disk_fluxes,'m-',label='HAWC disk')
+        axbig.fill_between(HAWC_disk_energies, np.array(HAWC_disk_fluxes)-np.array(HAWC_disk_flux_errs), np.array(HAWC_disk_fluxes)+np.array(HAWC_disk_flux_errs), alpha=0.2, color='m')
+        axbig.plot(HAWC_gaus_energies, HAWC_gaus_fluxes,'y-',label='HAWC gaussian')
+        axbig.fill_between(HAWC_gaus_energies, np.array(HAWC_gaus_fluxes)-np.array(HAWC_gaus_flux_errs), np.array(HAWC_gaus_fluxes)+np.array(HAWC_gaus_flux_errs), alpha=0.2, color='y')
+        axbig.errorbar(Fermi_energies,Fermi_fluxes,Fermi_flux_errs,color='r',marker='_',ls='none',label='Fermi')
+        fermi_uplims = np.array([1,1,1,1], dtype=bool)
+        axbig.errorbar(Fermi_UL_energies,Fermi_UL_fluxes,Fermi_UL_err,color='r',marker='_',ls='none',uplims=fermi_uplims)
     axbig.legend(loc='best')
     fig.savefig(f'output_plots/{source_name}_roi_energy_flux_{roi_name}.png',bbox_inches='tight')
     axbig.remove()
@@ -2177,7 +2377,7 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
 
         region_x = [src_ra]
         region_y = [src_dec]
-        region_r = [1.5]
+        region_r = [1.0]
         region_name = ['center']
 
     elif 'SNR_G189_p03' in src_name:
@@ -2195,7 +2395,7 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
         src_y = 40.43
         region_x = [src_x]
         region_y = [src_y]
-        region_r = [1.2]
+        region_r = [1.0]
         region_name += ['SNR']
 
     elif 'PSR_J1907_p0602' in src_name:
@@ -2217,15 +2417,20 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
         region_r = [1.0]
         region_name = ['J1857+026']
 
+        region_x = [284.3]
+        region_y = [2.7]
+        region_r = [0.4]
+        region_name = ['MAGIC']
+
         region_x += [284.6]
         region_y += [2.1]
         region_r += [0.2]
         region_name += ['J1858+020']
 
-        #region_x += [284.00]
-        #region_y += [1.37]
-        #region_r += [0.25]
-        #region_name += ['W44']
+        region_x += [284.00]
+        region_y += [1.37]
+        region_r += [0.25]
+        region_name += ['W44']
 
     elif 'SS433' in src_name:
     
@@ -2372,40 +2577,41 @@ def plot_radial_profile_with_systematics(fig,plotname,flux_sky_map,flux_err_sky_
 
     on_radial_axis, on_profile_axis, on_profile_err_axis = GetRadialProfile(flux_sky_map,flux_err_sky_map,roi_x,roi_y,2.0,excl_roi_x,excl_roi_y,excl_roi_r,radial_bin_scale=radial_bin_scale)
     all_radial_axis, all_profile_axis, all_profile_err_axis = GetRadialProfile(flux_sky_map,flux_err_sky_map,roi_x,roi_y,2.0,excl_roi_x,excl_roi_y,excl_roi_r,use_excl=False,radial_bin_scale=radial_bin_scale)
-    n_mimic = len(mimic_flux_sky_map)
-    fig.clf()
-    figsize_x = 7
-    figsize_y = 5
-    fig.set_figheight(figsize_y)
-    fig.set_figwidth(figsize_x)
-    axbig = fig.add_subplot()
-    label_x = 'angular distance [deg]'
-    label_y = 'surface brightness [$\mathrm{TeV}\ \mathrm{cm}^{-2}\mathrm{s}^{-1}\mathrm{sr}^{-1}$]'
-    axbig.set_xlabel(label_x)
-    axbig.set_ylabel(label_y)
-    mimic_profile_axis = []
-    mimic_profile_err_axis = []
-    for mimic in range(0,n_mimic):
-        radial_axis, profile_axis, profile_err_axis = GetRadialProfile(mimic_flux_sky_map[mimic],mimic_flux_err_sky_map[mimic],roi_x,roi_y,2.0,excl_roi_x,excl_roi_y,excl_roi_r,use_excl=False,radial_bin_scale=radial_bin_scale)
-        axbig.errorbar(radial_axis,profile_axis,profile_err_axis,marker='+',ls='none',zorder=mimic+1)
-        mimic_profile_axis += [profile_axis]
-        mimic_profile_err_axis += [profile_err_axis]
-    profile_syst_err_axis = []
-    for binx in range(0,len(on_profile_axis)):
-        syst_err = 0.
-        stat_err = 0.
-        for mimic in range(0,n_mimic):
-            syst_err += pow(mimic_profile_axis[mimic][binx],2)
-            stat_err += pow(mimic_profile_err_axis[mimic][binx],2)
-        syst_err = max(0.,syst_err-stat_err)
-        if n_mimic>0:
-            syst_err = pow(syst_err/float(n_mimic),0.5)
-        profile_syst_err_axis += [pow(pow(syst_err,2)+pow(on_profile_err_axis[binx],2),0.5)]
-    baseline_yaxis = [0. for i in range(0,len(on_radial_axis))]
-    axbig.plot(on_radial_axis, baseline_yaxis, color='b', ls='dashed')
-    axbig.fill_between(on_radial_axis,-np.array(profile_syst_err_axis),np.array(profile_syst_err_axis),alpha=0.2,color='b',zorder=0)
-    fig.savefig(f'output_plots/{plotname}_mimic.png',bbox_inches='tight')
-    axbig.remove()
+
+    #n_mimic = len(mimic_flux_sky_map)
+    #fig.clf()
+    #figsize_x = 7
+    #figsize_y = 5
+    #fig.set_figheight(figsize_y)
+    #fig.set_figwidth(figsize_x)
+    #axbig = fig.add_subplot()
+    #label_x = 'angular distance [deg]'
+    #label_y = 'surface brightness [$\mathrm{TeV}\ \mathrm{cm}^{-2}\mathrm{s}^{-1}\mathrm{sr}^{-1}$]'
+    #axbig.set_xlabel(label_x)
+    #axbig.set_ylabel(label_y)
+    #mimic_profile_axis = []
+    #mimic_profile_err_axis = []
+    #for mimic in range(0,n_mimic):
+    #    radial_axis, profile_axis, profile_err_axis = GetRadialProfile(mimic_flux_sky_map[mimic],mimic_flux_err_sky_map[mimic],roi_x,roi_y,2.0,excl_roi_x,excl_roi_y,excl_roi_r,use_excl=False,radial_bin_scale=radial_bin_scale)
+    #    axbig.errorbar(radial_axis,profile_axis,profile_err_axis,marker='+',ls='none',zorder=mimic+1)
+    #    mimic_profile_axis += [profile_axis]
+    #    mimic_profile_err_axis += [profile_err_axis]
+    #profile_syst_err_axis = []
+    #for binx in range(0,len(on_profile_axis)):
+    #    syst_err = 0.
+    #    stat_err = 0.
+    #    for mimic in range(0,n_mimic):
+    #        syst_err += pow(mimic_profile_axis[mimic][binx],2)
+    #        stat_err += pow(mimic_profile_err_axis[mimic][binx],2)
+    #    syst_err = max(0.,syst_err-stat_err)
+    #    if n_mimic>0:
+    #        syst_err = pow(syst_err/float(n_mimic),0.5)
+    #    profile_syst_err_axis += [pow(pow(syst_err,2)+pow(on_profile_err_axis[binx],2),0.5)]
+    #baseline_yaxis = [0. for i in range(0,len(on_radial_axis))]
+    #axbig.plot(on_radial_axis, baseline_yaxis, color='b', ls='dashed')
+    #axbig.fill_between(on_radial_axis,-np.array(profile_syst_err_axis),np.array(profile_syst_err_axis),alpha=0.2,color='b',zorder=0)
+    #fig.savefig(f'output_plots/{plotname}_mimic.png',bbox_inches='tight')
+    #axbig.remove()
 
     if fit_radial_profile:
 
@@ -2437,7 +2643,7 @@ def plot_radial_profile_with_systematics(fig,plotname,flux_sky_map,flux_err_sky_
     axbig.plot(on_radial_axis, baseline_yaxis, color='b', ls='dashed')
     axbig.errorbar(all_radial_axis,all_profile_axis,all_profile_err_axis,color='r',marker='+',ls='none',zorder=1)
     axbig.errorbar(on_radial_axis,on_profile_axis,on_profile_err_axis,color='k',marker='+',ls='none',zorder=2)
-    axbig.fill_between(on_radial_axis,np.array(on_profile_axis)-np.array(profile_syst_err_axis),np.array(on_profile_axis)+np.array(profile_syst_err_axis),alpha=0.2,color='b',zorder=0)
+    #axbig.fill_between(on_radial_axis,np.array(on_profile_axis)-np.array(profile_syst_err_axis),np.array(on_profile_axis)+np.array(profile_syst_err_axis),alpha=0.2,color='b',zorder=0)
     if fit_radial_profile:
         axbig.plot(on_radial_axis,diffusion_func(np.array(on_radial_axis),*popt),color='r')
     fig.savefig(f'output_plots/{plotname}.png',bbox_inches='tight')
@@ -2459,5 +2665,55 @@ def build_radial_symmetric_model(radial_symmetry_sky_map,on_radial_axis,on_profi
                 if on_profile_axis[br]<0.: continue
                 radial_symmetry_sky_map.waxis[bx,by,0] = on_profile_axis[br]*pix_size
                 break
+
+def PrintSpectralDataForNaima(energy_axis,src_flux,src_flux_err,data_name):
+    
+    energy_mean_log = [] 
+    energy_mean = [] 
+    energy_edge_lo = [] 
+    energy_edge_hi = [] 
+    flux_mean = [] 
+    flux_error = []
+    ul = []
+    for eb in range(0,len(energy_axis)):
+        energy_mean_log += [math.log10(energy_axis[eb])]
+    for eb in range(0,len(energy_axis)):
+        energy_log_delta = 0.
+        if eb+1<len(energy_axis):
+            energy_log_delta = energy_mean_log[eb+1]-energy_mean_log[eb]
+        else:
+            energy_log_delta = energy_mean_log[eb]-energy_mean_log[eb-1]
+        energy_mean += [pow(10,energy_mean_log[eb])]
+        energy_edge_lo += [pow(10,energy_mean_log[eb]-0.5*energy_log_delta)]
+        energy_edge_hi += [pow(10,energy_mean_log[eb]+0.5*energy_log_delta)]
+        flux_mean += [src_flux[eb]/((energy_axis[eb])*(energy_axis[eb]))]
+        flux_error += [src_flux_err[eb]/((energy_axis[eb])*(energy_axis[eb]))]
+    print ('=======================================================')
+    print ('NAIMA flux points')
+    print ('data_name = %s'%(data_name))
+    for eb in range(0,len(energy_axis)):
+        print ('%.4f %.4f %.4f %.2e %.2e %s'%(energy_mean[eb],energy_edge_lo[eb],energy_edge_hi[eb],flux_mean[eb],flux_error[eb],0))
+    print ('=======================================================')
+
+    qfile = open("output_plots/naima_%s.dat"%(data_name),"w") 
+    qfile.write("# %ECSV 0.9\n")
+    qfile.write("# ---\n")
+    qfile.write("# datatype:\n")
+    qfile.write("# - {name: energy, unit: TeV, datatype: float64}\n")
+    qfile.write("# - {name: energy_edge_lo, unit: TeV, datatype: float64}\n")
+    qfile.write("# - {name: energy_edge_hi, unit: TeV, datatype: float64}\n")
+    qfile.write("# - {name: flux, unit: 1 / (cm2 s TeV), datatype: float64}\n")
+    qfile.write("# - {name: flux_error, unit: 1 / (cm2 s TeV), datatype: float64}\n")
+    qfile.write("# - {name: ul, unit: '', datatype: int64}\n")
+    qfile.write("# meta: !!omap\n")
+    qfile.write("# - comments: [VHE gamma-ray spectrum of RX J1713.7-3946, 'Originally published in 2007\n")
+    qfile.write("#       from 2003, 2004, and 2005 observations. The', spectrum here is as published\n")
+    qfile.write("#       in the 2011 erratum, 'Main paper: Aharonian et al. 2007, A&A 464, 235', 'Erratum:\n")
+    qfile.write("#       Aharonian et al. 2011, A&A 531, 1', Confidence level of upper limits is 2 sigma]\n")
+    qfile.write("# - keywords: !!omap\n")
+    qfile.write("#   - cl: {value: 0.95}\n")
+    for eb in range(0,len(energy_axis)):
+        qfile.write('%.2f %.2f %.2f %.2e %.2e %s\n'%(energy_mean[eb],energy_edge_lo[eb],energy_edge_hi[eb],flux_mean[eb],flux_error[eb],0))
+    qfile.close() 
 
 

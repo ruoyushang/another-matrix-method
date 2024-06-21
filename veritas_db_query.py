@@ -1128,34 +1128,27 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
 
             if is_imposter:
                 if abs(delta_elev)>0.2: continue
+                if abs(delta_azim)>0.2: continue
 
-                if significance_diff_runnum>1.:
+                if significance_diff_runnum>significance_diff_elev and significance_diff_runnum>significance_diff_nsb and significance_diff_runnum>1.:
                     if total_runnum_diff>0.:
                         if delta_runnum>0.: continue
                     else:
                         if delta_runnum<0.: continue
+                elif significance_diff_nsb>significance_diff_runnum and significance_diff_nsb>significance_diff_elev and significance_diff_nsb>1.:
+                    if total_nsb_diff>0.:
+                        if delta_nsb>0.: continue
+                    else:
+                        if delta_nsb<0.: continue
+                elif significance_diff_elev>1.:
+                    if total_elev_diff>0.:
+                        if delta_elev>0.: continue
+                    else:
+                        if delta_elev<0.: continue
 
             else:
                 if abs(delta_elev)>0.2: continue
                 if abs(delta_azim)>0.2: continue
-
-                #if significance_diff_nsb>1.:
-                #    if total_nsb_diff>0.:
-                #        if delta_nsb>0.: continue
-                #    else:
-                #        if delta_nsb<0.: continue
-
-                #if significance_diff_runnum>1.:
-                #    if total_runnum_diff>0.:
-                #        if delta_runnum>0.: continue
-                #    else:
-                #        if delta_runnum<0.: continue
-
-                #if significance_diff_elev>1.:
-                #    if total_elev_diff>0.:
-                #        if delta_elev>0.: continue
-                #    else:
-                #        if delta_elev<0.: continue
 
                 if significance_diff_runnum>significance_diff_elev and significance_diff_runnum>significance_diff_nsb and significance_diff_runnum>1.:
                     if total_runnum_diff>0.:
