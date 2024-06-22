@@ -79,8 +79,8 @@ fine_skymap_bins = 120
 doFluxCalibration = False
 calibration_radius = 0.15 # need to be larger than the PSF and smaller than the integration radius
 
-#xoff_bins = [9,7,7,5,5,1,1,1]
-xoff_bins = [9,7,7,5,5,3,3,1]
+xoff_bins = [9,7,7,5,5,5,5,5]
+#xoff_bins = [9,7,7,5,5,3,3,1]
 if sky_tag=='demo':
     xoff_bins = [11,11,11,11,11,11,11,11]
 yoff_bins = xoff_bins
@@ -884,11 +884,17 @@ def build_skymap(source_name,src_ra,src_dec,smi_input,eigenvector_path,big_matri
         if xoff_bins[logE]==1: continue
         if yoff_bins[logE]==1: continue
 
+        sum_xyoff_map_sr = np.sum(fit_xyoff_map_fullspec[logE].waxis[:,:,0])
+        sum_xyoff_map_cr = 0.
+        for gcut in range(1,gcut_bins):
+            sum_xyoff_map_cr += np.sum(fit_xyoff_map_fullspec[logE].waxis[:,:,gcut])
+        avg_ratio = sum_xyoff_map_sr/sum_xyoff_map_cr
+
         for idx_x in range(0,xoff_bins[logE]):
             for idx_y in range(0,yoff_bins[logE]):
                 if abs(ratio_xyoff_map[logE].waxis[idx_x,idx_y,0])>100.:
-                    print (f'Very large ratio!!! Reset to 1.')
-                    ratio_xyoff_map[logE].waxis[idx_x,idx_y,0] = 1.
+                    print (f'logE = {logE}, Very large ratio!!! Reset to avg_ratio = {avg_ratio}')
+                    ratio_xyoff_map[logE].waxis[idx_x,idx_y,0] = avg_ratio
 
 
 
@@ -1751,6 +1757,10 @@ def PlotCountProjection(fig,label_z,logE_min,logE_max,hist_map_data,hist_map_bkg
     # Plot the temperature data
     cax = axTemperature.imshow(hist_map_excess.waxis[:,:,layer].T,extent=(xmax,xmin,ymin,ymax),aspect='auto',origin='lower',cmap=colormap)
 
+    for roi in range(0,len(roi_x)):
+        mycircle = plt.Circle( (roi_x[roi], roi_y[roi]), roi_r[roi], fill = False, color='white')
+        axTemperature.add_patch(mycircle)
+
     divider = make_axes_locatable(axTemperature)
     cax_app = divider.append_axes("bottom", size="5%", pad=0.7)
     cbar = fig.colorbar(cax,orientation="horizontal",cax=cax_app)
@@ -2083,6 +2093,22 @@ def GetHessSS433w():
 
     return energies, fluxes, flux_errs
 
+def GetHessGeminga():
+
+    energies = [0.2044, 0.4838, 0.8421]
+    fluxes = [-11.4839, -11.7228, -12.0616]
+    flux_errs_up = [-11.4028, -11.6260, -11.9149]
+    flux_errs_lo = [-11.5776, -11.8477, -12.2724]
+    flux_errs = []
+
+    erg_to_TeV = 0.62
+    for entry in range(0,len(energies)):
+        energies[entry] = pow(10.,energies[entry])
+        fluxes[entry] = pow(10.,fluxes[entry])*erg_to_TeV
+        flux_errs += [0.5*(pow(10.,flux_errs_up[entry])-pow(10.,flux_errs_lo[entry]))*erg_to_TeV]
+
+    return energies, fluxes, flux_errs
+
 def GetHAWCDiffusionFluxGeminga():
 
     energies = [pow(10.,0.90),pow(10.,1.60)]
@@ -2377,7 +2403,7 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
 
         region_x = [src_ra]
         region_y = [src_dec]
-        region_r = [1.0]
+        region_r = [1.5]
         region_name = ['center']
 
     elif 'SNR_G189_p03' in src_name:

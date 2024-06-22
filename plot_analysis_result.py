@@ -87,6 +87,11 @@ n_mimic = 0
 if onoff=='ON':
     n_mimic = 5
 
+#input_epoch = ['V4']
+#input_epoch = ['V5']
+#input_epoch = ['V6']
+input_epoch = ['V4','V5','V6']
+
 logE_min = 0
 logE_mid = 5
 logE_max = logE_nbins
@@ -128,7 +133,7 @@ if 'Geminga' in source_name:
     logE_min = 0
     logE_mid = 5
     logE_max = logE_nbins
-    fit_radial_profile = True
+    fit_radial_profile = False
     make_symmetric_model = False
     radial_bin_scale = 0.25
 
@@ -136,11 +141,6 @@ if doFluxCalibration:
     logE_min = 0
     logE_mid = 4
     logE_max = logE_nbins
-
-#input_epoch = ['V4']
-#input_epoch = ['V5']
-#input_epoch = ['V6']
-input_epoch = ['V4','V5','V6']
 
 xsky_start = src_ra+skymap_size
 xsky_end = src_ra-skymap_size
