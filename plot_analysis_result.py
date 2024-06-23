@@ -85,7 +85,7 @@ onoff = sys.argv[4]
 
 n_mimic = 0
 if onoff=='ON':
-    n_mimic = 5
+    n_mimic = 0
 
 #input_epoch = ['V4']
 #input_epoch = ['V5']
@@ -649,7 +649,7 @@ for logE in range(logE_min,logE_max):
     axbig.plot(on_radial_axis, baseline_yaxis, color='b', ls='dashed')
     axbig.errorbar(all_radial_axis,all_profile_axis,all_profile_err_axis,color='r',marker='+',ls='none')
     axbig.errorbar(on_radial_axis,on_profile_axis,on_profile_err_axis,color='k',marker='+',ls='none')
-    fig.savefig(f'output_plots/{source_name}_surface_brightness_logE{logE}_{roi_name}_{ana_tag}.png',bbox_inches='tight')
+    fig.savefig(f'output_plots/{source_name}_surface_brightness_logE{logE}_{roi_name[0]}_{ana_tag}.png',bbox_inches='tight')
     axbig.remove()
 
     if make_symmetric_model:

@@ -14,7 +14,8 @@ import numpy as np
 
 all_runs_info = []
 
-output_dir = 'output_vts_query_tmp'
+output_dir = 'output_vts_query'
+#output_dir = 'output_vts_query_tmp'
 
 def ReadLhaasoListFromFile():
     source_name = []
@@ -1128,7 +1129,7 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
 
             if is_imposter:
                 if abs(delta_elev)>0.2: continue
-                if abs(delta_azim)>0.2: continue
+                if abs(delta_azim)>0.3: continue
 
                 if significance_diff_runnum>significance_diff_elev and significance_diff_runnum>significance_diff_nsb and significance_diff_runnum>2.:
                     if total_runnum_diff>0.:
@@ -1293,10 +1294,10 @@ else:
         my_list_on_run_ids = find_on_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,search_radius)
     my_list_off_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_on_run_ids,False,'PairList')
     my_list_imposter_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_on_run_ids,True,'ImposterList')
-    #my_list_imposter_off_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_imposter_run_ids,False,'ImposterPairList')
+    my_list_imposter_off_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_imposter_run_ids,False,'ImposterPairList')
 
-    #list_for_eventdisplay([my_list_on_run_ids,my_list_off_run_ids,my_list_imposter_run_ids,my_list_imposter_off_run_ids],obs_name)
-    list_for_eventdisplay([my_list_on_run_ids,my_list_off_run_ids,my_list_imposter_run_ids],obs_name)
+    #list_for_eventdisplay([my_list_on_run_ids,my_list_off_run_ids,my_list_imposter_run_ids],obs_name)
+    list_for_eventdisplay([my_list_on_run_ids,my_list_off_run_ids,my_list_imposter_run_ids,my_list_imposter_off_run_ids],obs_name)
 
 
 run_id = 103322

@@ -70,6 +70,8 @@ logE_nbins = len(logE_bins)-1
 #MSCL_cut = 0.8
 MSCW_cut = [0.60,0.65,0.70,0.75,0.75,0.75,0.75,0.75]
 MSCL_cut = [0.70,0.75,0.80,0.85,0.85,0.85,0.85,0.85]
+#MSCW_cut = [0.60,0.65,0.70,0.75,0.80,0.85,0.85,0.85]
+#MSCL_cut = [0.70,0.75,0.80,0.85,0.90,0.95,0.95,0.95]
 
 skymap_size = 3.
 skymap_bins = 30
@@ -2303,10 +2305,10 @@ def PrintInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,hist_data_sky
     axbig.set_xscale('log')
     axbig.set_yscale('log')
     axbig.errorbar(energy_axis,flux_cu,flux_err_cu,xerr=energy_error,color='k',marker='_',ls='none',zorder=1)
-    fig.savefig(f'output_plots/{source_name}_roi_flux_crab_unit_{roi_name}.png',bbox_inches='tight')
+    fig.savefig(f'output_plots/{source_name}_roi_flux_crab_unit_{roi_name[0]}.png',bbox_inches='tight')
     axbig.remove()
 
-    PrintSpectralDataForNaima(energy_axis,flux,flux_stat_err,f'VERITAS_{roi_name}')
+    PrintSpectralDataForNaima(energy_axis,flux,flux_stat_err,f'VERITAS_{roi_name[0]}')
 
     uplims = np.zeros_like(energy_axis)
     for x in range(0,len(flux)):
@@ -2330,7 +2332,7 @@ def PrintInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,hist_data_sky
     axbig.set_xscale('log')
     axbig.set_yscale('log')
     axbig.fill_between(energy_axis,np.array(flux_floor)-np.array(flux_incl_err),np.array(flux_floor)+np.array(flux_incl_err),alpha=0.2,color='b',zorder=0)
-    axbig.errorbar(energy_axis,flux,flux_stat_err,xerr=energy_error,uplims=uplims,color='k',marker='_',ls='none',label=f'VERITAS ({roi_name})',zorder=1)
+    axbig.errorbar(energy_axis,flux,flux_stat_err,xerr=energy_error,uplims=uplims,color='k',marker='_',ls='none',label=f'VERITAS ({roi_name[1]})',zorder=1)
     if 'SS433' in source_name:
         HessSS433e_energies, HessSS433e_fluxes, HessSS433e_flux_errs = GetHessSS433e()
         HessSS433w_energies, HessSS433w_fluxes, HessSS433w_flux_errs = GetHessSS433w()
@@ -2340,6 +2342,7 @@ def PrintInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,hist_data_sky
         HAWC_diff_energies, HAWC_diff_fluxes, HAWC_diff_flux_errs = GetHAWCDiffusionFluxGeminga()
         HAWC_disk_energies, HAWC_disk_fluxes, HAWC_disk_flux_errs = GetHAWCDiskFluxGeminga()
         HAWC_gaus_energies, HAWC_gaus_fluxes, HAWC_gaus_flux_errs = GetHAWCGaussianFluxGeminga()
+        HESS_energies, HESS_fluxes, HESS_flux_errs = GetHessGeminga()
         Fermi_energies, Fermi_fluxes, Fermi_flux_errs = GetFermiFluxGeminga()
         Fermi_UL_energies, Fermi_UL_fluxes, Fermi_UL_err = GetFermiUpperLimitFluxGeminga()
         axbig.plot(HAWC_diff_energies, HAWC_diff_fluxes,'g-',label='HAWC diffusion')
@@ -2348,11 +2351,12 @@ def PrintInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,hist_data_sky
         axbig.fill_between(HAWC_disk_energies, np.array(HAWC_disk_fluxes)-np.array(HAWC_disk_flux_errs), np.array(HAWC_disk_fluxes)+np.array(HAWC_disk_flux_errs), alpha=0.2, color='m')
         axbig.plot(HAWC_gaus_energies, HAWC_gaus_fluxes,'y-',label='HAWC gaussian')
         axbig.fill_between(HAWC_gaus_energies, np.array(HAWC_gaus_fluxes)-np.array(HAWC_gaus_flux_errs), np.array(HAWC_gaus_fluxes)+np.array(HAWC_gaus_flux_errs), alpha=0.2, color='y')
+        axbig.errorbar(HESS_energies,HESS_fluxes,HESS_flux_errs,color='b',marker='_',ls='none',label='HESS (1.0 deg)')
         axbig.errorbar(Fermi_energies,Fermi_fluxes,Fermi_flux_errs,color='r',marker='_',ls='none',label='Fermi')
         fermi_uplims = np.array([1,1,1,1], dtype=bool)
         axbig.errorbar(Fermi_UL_energies,Fermi_UL_fluxes,Fermi_UL_err,color='r',marker='_',ls='none',uplims=fermi_uplims)
     axbig.legend(loc='best')
-    fig.savefig(f'output_plots/{source_name}_roi_energy_flux_{roi_name}.png',bbox_inches='tight')
+    fig.savefig(f'output_plots/{source_name}_roi_energy_flux_{roi_name[0]}.png',bbox_inches='tight')
     axbig.remove()
 
 def DefineRegionOfMask(src_name,src_ra,src_dec):
@@ -2389,10 +2393,10 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
 
     if 'Crab' in src_name:
 
-        region_x = [src_ra]
-        region_y = [src_dec]
-        region_r = [calibration_radius]
-        region_name = ['center']
+        region_x += [src_ra]
+        region_y += [src_dec]
+        region_r += [calibration_radius]
+        region_name += [('center','center')]
 
         region_x += [84.4]
         region_y += [21.1]
@@ -2401,97 +2405,99 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
 
     elif 'Geminga' in src_name:
 
-        region_x = [src_ra]
-        region_y = [src_dec]
-        region_r = [1.5]
-        region_name = ['center']
+        region_x += [src_ra]
+        region_y += [src_dec]
+        #region_r += [1.0]
+        #region_name += [('center','1.0 deg')]
+        region_r += [1.5]
+        region_name += [('center','1.5 deg')]
 
     elif 'SNR_G189_p03' in src_name:
 
         src_x = 94.25
         src_y = 22.57
-        region_x = [src_x]
-        region_y = [src_y]
-        region_r = [1.0]
-        region_name += ['center']
+        region_x += [src_x]
+        region_y += [src_y]
+        region_r += [1.0]
+        region_name += [('center','center')]
 
     elif 'PSR_J2021_p4026' in src_name:
 
         src_x = 305.21
         src_y = 40.43
-        region_x = [src_x]
-        region_y = [src_y]
-        region_r = [1.0]
-        region_name += ['SNR']
+        region_x += [src_x]
+        region_y += [src_y]
+        region_r += [1.0]
+        region_name += [('SNR','SNR')]
 
     elif 'PSR_J1907_p0602' in src_name:
 
-        region_x = [287.05]
-        region_y = [6.39]
-        region_r = [1.2]
-        region_name = ['3HWC']
+        region_x += [287.05]
+        region_y += [6.39]
+        region_r += [1.2]
+        region_name += [('3HWC','3HWC')]
 
         region_x += [288.0833333]
         region_y += [4.9166667]
         region_r += [0.2]
-        region_name += ['SS443']
+        region_name += [('SS433','SS 433')]
 
     elif 'PSR_J1856_p0245' in src_name:
 
-        region_x = [284.3]
-        region_y = [2.7]
-        region_r = [1.0]
-        region_name = ['J1857+026']
+        region_x += [284.3]
+        region_y += [2.7]
+        region_r += [1.0]
+        region_name += [('J1857_p026','J1857+026')]
 
-        region_x = [284.3]
-        region_y = [2.7]
-        region_r = [0.4]
-        region_name = ['MAGIC']
+        region_x += [284.3]
+        region_y += [2.7]
+        region_r += [0.4]
+        region_name += [('MAGIC','MAGIC')]
 
         region_x += [284.6]
         region_y += [2.1]
         region_r += [0.2]
-        region_name += ['J1858+020']
+        region_name += [('J1858_p020','J1858+020')]
 
         region_x += [284.00]
         region_y += [1.37]
         region_r += [0.25]
-        region_name += ['W44']
+        region_name += [('W44','W44')]
 
     elif 'SS433' in src_name:
     
-        region_x = [287.05]
-        region_y = [6.39]
-        region_r = [1.2]
-        region_name = ['3HWC']
+        region_x += [287.05]
+        region_y += [6.39]
+        region_r += [1.2]
+        region_name += [('3HWC','3HWC')]
 
         #SS 433 SNR
         #region_x += [288.0833333]
         #region_y += [4.9166667]
         #region_r += [0.2]
-        #region_name += ['SNR']
+        #region_name += [('SNR','SNR')]
     
         #SS 433 w1
         region_x += [287.45138775]
         region_y += [5.06731983]
         region_r += [0.2]
-        region_name += ['west']
+        region_name += [('west','west')]
     
         #SS 433 e1
         region_x += [288.38690451]
         region_y += [5.00610516]
         region_r += [0.2]
-        region_name += ['east']
+        region_name += [('east','east')]
         #region_x = [288.35,288.50,288.65,288.8]
         #region_y = [4.93,4.92,4.93,4.94]
         #region_r = [0.1,0.1,0.1,0.1]
 
     else:
 
-        region_x = [src_ra]
-        region_y = [src_dec]
-        region_r = [3.0]
-        region_name = ['center']
+        region_x += [src_ra]
+        region_y += [src_dec]
+        region_r += [3.0]
+        region_name += [('center','center')]
 
 
     return region_name, region_x, region_y, region_r
