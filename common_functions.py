@@ -155,16 +155,47 @@ def ReadRunListFromFile(smi_input,input_on_file,input_off_file,input_mimic_file)
 
     return on_runlist, off_runlist, mimic_runlist
 
-def ReadOffRunListFromFile(input_file):
+def ReadOffRunListFromFile(input_onlist_file, input_offlist_file, mimic_index):
 
-    runlist = []
+    on_runlist = []
+    off_runlist = []
 
-    inputFile = open(input_file)
-    for line in inputFile:
+    print (f'onlist_file = {input_onlist_file}')
+    print (f'offlist_file = {input_offlist_file}')
+
+    onlist_file = open(input_onlist_file)
+    offlist_file = open(input_offlist_file)
+
+    if mimic_index==0:
+        for line in onlist_file:
+            line_split = line.split()
+            on_runlist += [int(line_split[0])]
+    else:
+        last_on_runnumber = 0
+        last_mimic_index = 0
+        for line in onlist_file:
+            line_split = line.split()
+            on_runnumber = int(line_split[0])
+            off_runnumber = int(line_split[1])
+            if on_runnumber!=last_on_runnumber:
+                last_on_runnumber = on_runnumber
+                last_mimic_index = 0
+            last_mimic_index += 1
+            if last_mimic_index==mimic_index:
+                on_runlist += [off_runnumber]
+
+    for line in offlist_file:
         line_split = line.split()
-        runlist += [int(line_split[1])]
+        on_runnumber = int(line_split[0])
+        off_runnumber = int(line_split[1])
+        for run in range(0,len(on_runlist)):
+            if on_runnumber==on_runlist[run]:
+                off_runlist += [off_runnumber]
 
-    return runlist
+    print (f'on_runlist = {on_runlist}')
+    print (f'off_runlist = {off_runlist}')
+
+    return off_runlist
 
 def smooth_image(image_data,xaxis,yaxis,kernel_radius=0.07):
 
@@ -2204,11 +2235,18 @@ def PrintInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,hist_data_sky
         list_mimic_bkgd += [mimic_bkgd]
     for binx in range(0,len(energy_axis)):
         stat_err = data_stat_err[binx]
+        on_data = data[binx]
         syst_err = 0.
         for mimic in range(0,n_mimic):
-            syst_err += pow(list_mimic_data[mimic][binx]-list_mimic_bkgd[mimic][binx],2)
+            if list_mimic_data[mimic][binx]==0.: continue
+            # syst error is measured as a relative error
+            mimic_data = list_mimic_data[mimic][binx]
+            mimic_bkgd = list_mimic_bkgd[mimic][binx]
+            mimic_stat_err = pow(mimic_data,0.5)
+            syst_err += max(0.,pow(mimic_data-mimic_bkgd,2)-pow(mimic_stat_err,2))/pow(mimic_data,2)
         if n_mimic>0:
-            syst_err = pow(max(syst_err/float(n_mimic)-stat_err*stat_err,0.),0.5)
+            syst_err = syst_err*pow(on_data,2)
+            syst_err = pow(syst_err/float(n_mimic),0.5)
         bkgd_syst_err[binx] = syst_err
         bkgd_incl_err[binx] = pow(pow(stat_err,2)+pow(syst_err,2),0.5)
         if stat_err>0.:
@@ -2316,8 +2354,8 @@ def PrintInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,hist_data_sky
         significance = flux[x]/flux_stat_err[x]
         if significance<2.:
             uplims[x] = 1.
-            flux[x] = max(2.*flux_stat_err[x],flux[x]+2.*flux_stat_err[x])
-            flux_incl_err[x] += flux_stat_err[x]
+            flux[x] = max(2.*flux_incl_err[x],flux[x]+2.*flux_incl_err[x])
+            #flux_incl_err[x] = flux[x]
 
     fig.clf()
     figsize_x = 7
@@ -2331,8 +2369,8 @@ def PrintInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,hist_data_sky
     axbig.set_ylabel(label_y)
     axbig.set_xscale('log')
     axbig.set_yscale('log')
-    axbig.fill_between(energy_axis,np.array(flux_floor)-np.array(flux_incl_err),np.array(flux_floor)+np.array(flux_incl_err),alpha=0.2,color='b',zorder=0)
-    axbig.errorbar(energy_axis,flux,flux_stat_err,xerr=energy_error,uplims=uplims,color='k',marker='_',ls='none',label=f'VERITAS ({roi_name[1]})',zorder=1)
+    #axbig.fill_between(energy_axis,np.array(flux_floor)-np.array(flux_incl_err),np.array(flux_floor)+np.array(flux_incl_err),alpha=0.2,color='b',zorder=0)
+    axbig.errorbar(energy_axis,flux,flux_incl_err,xerr=energy_error,uplims=uplims,color='k',marker='_',ls='none',label=f'VERITAS ({roi_name[1]})',zorder=1)
     if 'SS433' in source_name:
         HessSS433e_energies, HessSS433e_fluxes, HessSS433e_flux_errs = GetHessSS433e()
         HessSS433w_energies, HessSS433w_fluxes, HessSS433w_flux_errs = GetHessSS433w()
@@ -2407,10 +2445,13 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
 
         region_x += [src_ra]
         region_y += [src_dec]
-        #region_r += [1.0]
-        #region_name += [('center','1.0 deg')]
         region_r += [1.5]
-        region_name += [('center','1.5 deg')]
+        region_name += [('1p5deg','1.5 deg')]
+
+        region_x += [src_ra]
+        region_y += [src_dec]
+        region_r += [1.0]
+        region_name += [('1p0deg','1.0 deg')]
 
     elif 'SNR_G189_p03' in src_name:
 
@@ -2449,10 +2490,10 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
         region_r += [1.0]
         region_name += [('J1857_p026','J1857+026')]
 
-        region_x += [284.3]
-        region_y += [2.7]
-        region_r += [0.4]
-        region_name += [('MAGIC','MAGIC')]
+        #region_x += [284.3]
+        #region_y += [2.7]
+        #region_r += [0.4]
+        #region_name += [('MAGIC','MAGIC')]
 
         region_x += [284.6]
         region_y += [2.1]

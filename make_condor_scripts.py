@@ -114,20 +114,27 @@ for s in range(0,len(input_params)):
     source = input_params[s][0]
     src_ra = input_params[s][1]
     src_dec = input_params[s][2]
-    file = open("run/save_mtx_%s.sh"%(source),"w") 
+    onoff = input_params[s][3]
+    file = open("run/save_mtx_%s_%s.sh"%(source,onoff),"w") 
     file.write('cd %s\n'%(SMI_DIR))
-    file.write(f'python3 save_big_matrices.py "{source}" {src_ra} {src_dec} "V6"\n')
-    file.write(f'python3 save_big_matrices.py "{source}" {src_ra} {src_dec} "V5"\n')
-    file.write(f'python3 save_big_matrices.py "{source}" {src_ra} {src_dec} "V4"\n')
+    file.write(f'python3 save_big_matrices.py "{source}" {src_ra} {src_dec} "{onoff}" "V6"\n')
+    file.write(f'python3 save_big_matrices.py "{source}" {src_ra} {src_dec} "{onoff}" "V5"\n')
+    file.write(f'python3 save_big_matrices.py "{source}" {src_ra} {src_dec} "{onoff}" "V4"\n')
+    if onoff=='ON' and (not 'Crab' in source):
+        for mimic in range(1,n_mimic+1):
+            file.write(f'python3 save_big_matrices.py "{source}" {src_ra} {src_dec} "MIMIC{mimic}" "V6"\n')
+            file.write(f'python3 save_big_matrices.py "{source}" {src_ra} {src_dec} "MIMIC{mimic}" "V5"\n')
+            file.write(f'python3 save_big_matrices.py "{source}" {src_ra} {src_dec} "MIMIC{mimic}" "V4"\n')
     file.close() 
 
 qfile = open(f"run/sub_condor_save_mtx_{training_mode}.sh","w") 
 for s in range(0,len(input_params)):
     source = input_params[s][0]
+    onoff = input_params[s][3]
     qfile.write('universe = vanilla \n')
     qfile.write('getenv = true \n')
     qfile.write('executable = /bin/bash \n')
-    qfile.write('arguments = save_mtx_%s.sh\n'%(source))
+    qfile.write('arguments = save_mtx_%s_%s.sh\n'%(source,onoff))
     qfile.write('request_cpus = 1 \n')
     qfile.write('request_memory = 1024M \n')
     qfile.write('request_disk = 1024M \n')
@@ -139,20 +146,27 @@ qfile.close()
 
 for s in range(0,len(input_params)):
     source = input_params[s][0]
-    file = open("run/eigenvtr_%s.sh"%(source),"w") 
+    onoff = input_params[s][3]
+    file = open("run/eigenvtr_%s_%s.sh"%(source,onoff),"w") 
     file.write('cd %s\n'%(SMI_DIR))
-    file.write(f'python3 build_eigenvectors.py "{source}" "V6"\n')
-    file.write(f'python3 build_eigenvectors.py "{source}" "V5"\n')
-    file.write(f'python3 build_eigenvectors.py "{source}" "V4"\n')
+    file.write(f'python3 build_eigenvectors.py "{source}" "{onoff}" "V6"\n')
+    file.write(f'python3 build_eigenvectors.py "{source}" "{onoff}" "V5"\n')
+    file.write(f'python3 build_eigenvectors.py "{source}" "{onoff}" "V4"\n')
+    if onoff=='ON' and (not 'Crab' in source):
+        for mimic in range(1,n_mimic+1):
+            file.write(f'python3 build_eigenvectors.py "{source}" "MIMIC{mimic}" "V6"\n')
+            file.write(f'python3 build_eigenvectors.py "{source}" "MIMIC{mimic}" "V5"\n')
+            file.write(f'python3 build_eigenvectors.py "{source}" "MIMIC{mimic}" "V4"\n')
     file.close() 
 
 qfile = open(f"run/sub_condor_eigenvtr_{training_mode}.sh","w") 
 for s in range(0,len(input_params)):
     source = input_params[s][0]
+    onoff = input_params[s][3]
     qfile.write('universe = vanilla \n')
     qfile.write('getenv = true \n')
     qfile.write('executable = /bin/bash \n')
-    qfile.write('arguments = eigenvtr_%s.sh\n'%(source))
+    qfile.write('arguments = eigenvtr_%s_%s.sh\n'%(source,onoff))
     qfile.write('request_cpus = 1 \n')
     qfile.write('request_memory = 1024M \n')
     qfile.write('request_disk = 1024M \n')
@@ -172,7 +186,7 @@ for s in range(0,len(input_params)):
     file.write(f'python3 save_skymaps.py "{source}" {src_ra} {src_dec} "{onoff}" "V6"\n')
     file.write(f'python3 save_skymaps.py "{source}" {src_ra} {src_dec} "{onoff}" "V5"\n')
     file.write(f'python3 save_skymaps.py "{source}" {src_ra} {src_dec} "{onoff}" "V4"\n')
-    if onoff=='ON':
+    if onoff=='ON' and (not 'Crab' in source):
         for mimic in range(1,n_mimic+1):
             file.write(f'python3 save_skymaps.py "{source}" {src_ra} {src_dec} "MIMIC{mimic}" "V6"\n')
             file.write(f'python3 save_skymaps.py "{source}" {src_ra} {src_dec} "MIMIC{mimic}" "V5"\n')

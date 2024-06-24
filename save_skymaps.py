@@ -52,9 +52,9 @@ if os.path.exists(output_filename):
     print (f'{output_filename} exists, delete...')
     os.remove(output_filename)
 
-path_to_eigenvector = f'{smi_output}/eigenvectors_{source_name}_{input_epoch}_{sky_tag}.pkl'
+path_to_eigenvector = f'{smi_output}/eigenvectors_{source_name}_{onoff}_{input_epoch}_{sky_tag}.pkl'
 print (f'path_to_eigenvector = {path_to_eigenvector}')
-path_to_big_matrix = f'{smi_output}/big_off_matrix_{source_name}_{input_epoch}.pkl'
+path_to_big_matrix = f'{smi_output}/big_off_matrix_{source_name}_{onoff}_{input_epoch}.pkl'
 print (f'path_to_big_matrix = {path_to_big_matrix}')
 
 if onoff=='ON' or 'MIMIC' in onoff:

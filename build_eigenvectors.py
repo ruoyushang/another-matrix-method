@@ -30,10 +30,11 @@ smi_dir = os.environ.get("SMI_DIR")
 sky_tag = os.environ.get("SKY_TAG")
 
 source_name = sys.argv[1]
-input_epoch = sys.argv[2] # 'V4', 'V5' or 'V6'
+onoff = sys.argv[2]
+input_epoch = sys.argv[3] # 'V4', 'V5' or 'V6'
 
 print ('loading matrix pickle data... ')
-input_filename = f'{smi_output}/big_off_matrix_{source_name}_{input_epoch}.pkl'
+input_filename = f'{smi_output}/big_off_matrix_{source_name}_{onoff}_{input_epoch}.pkl'
 print (f'input_filename = {input_filename}')
 big_matrix_pkl = pickle.load(open(input_filename, "rb"))
 big_matrix = big_matrix_pkl[0]
@@ -143,7 +144,7 @@ axbig.remove()
     
 
 
-output_filename = f'{smi_output}/eigenvectors_{source_name}_{input_epoch}_{sky_tag}.pkl'
+output_filename = f'{smi_output}/eigenvectors_{source_name}_{onoff}_{input_epoch}_{sky_tag}.pkl'
 with open(output_filename,"wb") as file:
     pickle.dump([big_eigenvalues,big_eigenvectors,big_xyoff_map_1d,big_eigenvalues_fullspec,big_eigenvectors_fullspec,big_xyoff_map_1d_fullspec], file)
 
