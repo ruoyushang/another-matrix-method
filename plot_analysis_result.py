@@ -85,7 +85,8 @@ onoff = sys.argv[4]
 
 n_mimic = 0
 if onoff=='ON':
-    n_mimic = 5
+    n_mimic = 0
+    #n_mimic = 5
 
 #input_epoch = ['V4']
 #input_epoch = ['V5']
@@ -124,16 +125,17 @@ if 'SS433' in source_name:
     fit_radial_profile = False
     make_symmetric_model = False
 if 'PSR_J2021_p4026' in source_name:
-    logE_min = 1
+    logE_min = 2
     logE_mid = 4
     logE_max = logE_nbins
     fit_radial_profile = False
     make_symmetric_model = False
+    radial_bin_scale = 0.2
 if 'Geminga' in source_name:
     logE_min = 0
     logE_mid = 5
     logE_max = logE_nbins
-    fit_radial_profile = False
+    fit_radial_profile = True
     make_symmetric_model = False
     radial_bin_scale = 0.25
 
@@ -593,6 +595,14 @@ print ('Fit 2d Gaussian (sum)')
 fit_2d_model(sum_data_sky_map_allE, sum_bkgd_sky_map_allE, all_roi_x[0], all_roi_y[0])
 print ('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
 
+low_energy = int(1000.*pow(10.,logE_bins[logE_min]))
+high_energy = int(1000.*pow(10.,logE_bins[logE_mid]))
+SaveFITS(sum_flux_sky_map_LE_smooth,f'sum_flux_sky_map_{low_energy}GeV_{high_energy}GeV')
+SaveFITS(sum_flux_err_sky_map_LE_smooth,f'sum_flux_err_sky_map_{low_energy}GeV_{high_energy}GeV')
+low_energy = int(1000.*pow(10.,logE_bins[logE_mid]))
+high_energy = int(1000.*pow(10.,logE_bins[logE_max]))
+SaveFITS(sum_flux_sky_map_HE_smooth,f'sum_flux_sky_map_{low_energy}GeV_{high_energy}GeV')
+SaveFITS(sum_flux_err_sky_map_HE_smooth,f'sum_flux_err_sky_map_{low_energy}GeV_{high_energy}GeV')
 for logE in range(logE_min,logE_max):
     low_energy = int(1000.*pow(10.,logE_bins[logE]))
     high_energy = int(1000.*pow(10.,logE_bins[logE+1]))
@@ -702,7 +712,7 @@ for roi in range(0,len(all_roi_name)):
     mimic_flux_sky_map = sum_mimic_flux_sky_map_allE
     mimic_flux_err_sky_map = sum_mimic_flux_err_sky_map_allE
     plotname = f'{source_name}_surface_brightness_allE_{roi_name[0]}_{ana_tag}'
-    plot_radial_profile_with_systematics(fig,plotname,flux_sky_map,flux_err_sky_map,mimic_flux_sky_map,mimic_flux_err_sky_map,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,fit_radial_profile_roi,radial_bin_scale=radial_bin_scale)
+    plot_radial_profile_with_systematics(fig,plotname,logE_min,logE_max,flux_sky_map,flux_err_sky_map,mimic_flux_sky_map,mimic_flux_err_sky_map,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,fit_radial_profile_roi,radial_bin_scale=radial_bin_scale)
     
     flux_sky_map = sum_flux_sky_map_LE
     if roi!=0 and make_symmetric_model:
@@ -711,7 +721,7 @@ for roi in range(0,len(all_roi_name)):
     mimic_flux_sky_map = sum_mimic_flux_sky_map_LE
     mimic_flux_err_sky_map = sum_mimic_flux_err_sky_map_LE
     plotname = f'{source_name}_surface_brightness_LE_{roi_name[0]}_{ana_tag}'
-    plot_radial_profile_with_systematics(fig,plotname,flux_sky_map,flux_err_sky_map,mimic_flux_sky_map,mimic_flux_err_sky_map,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,fit_radial_profile_roi,radial_bin_scale=radial_bin_scale)
+    plot_radial_profile_with_systematics(fig,plotname,logE_min,logE_mid,flux_sky_map,flux_err_sky_map,mimic_flux_sky_map,mimic_flux_err_sky_map,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,fit_radial_profile_roi,radial_bin_scale=radial_bin_scale)
     
     flux_sky_map = sum_flux_sky_map_HE
     if roi!=0 and make_symmetric_model:
@@ -720,7 +730,7 @@ for roi in range(0,len(all_roi_name)):
     mimic_flux_sky_map = sum_mimic_flux_sky_map_HE
     mimic_flux_err_sky_map = sum_mimic_flux_err_sky_map_HE
     plotname = f'{source_name}_surface_brightness_HE_{roi_name[0]}_{ana_tag}'
-    plot_radial_profile_with_systematics(fig,plotname,flux_sky_map,flux_err_sky_map,mimic_flux_sky_map,mimic_flux_err_sky_map,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,fit_radial_profile_roi,radial_bin_scale=radial_bin_scale)
+    plot_radial_profile_with_systematics(fig,plotname,logE_mid,logE_max,flux_sky_map,flux_err_sky_map,mimic_flux_sky_map,mimic_flux_err_sky_map,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,fit_radial_profile_roi,radial_bin_scale=radial_bin_scale)
 
 if 'PSR_J1856_p0245' in source_name:
 

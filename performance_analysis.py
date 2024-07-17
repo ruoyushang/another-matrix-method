@@ -50,23 +50,23 @@ smi_dir = os.environ.get("SMI_DIR")
 ana_tag = []
 #ana_tag += [['binspec','r']]
 #ana_tag += [['fullspec','b']]
-ana_tag += [['init','r']]
+#ana_tag += [['init','r']]
 #ana_tag += [['rank1','w']]
 #ana_tag += [['rank2','w']]
 #ana_tag += [['rank3','w']]
-#ana_tag += [['rank4','w']]
+ana_tag += [['rank4','w']]
 ana_tag += [['rank5','b']]
-#ana_tag += [['rank6','w']]
-#ana_tag += [['rank7','w']]
-#ana_tag += [['rank8','w']]
+ana_tag += [['rank6','w']]
+ana_tag += [['rank7','w']]
+ana_tag += [['rank8','w']]
 
 onoff = 'OFF'
 
 #exposure_per_group = 1.
 #exposure_per_group = 5.
 #exposure_per_group = 10.
-exposure_per_group = 50.
-#exposure_per_group = 100.
+#exposure_per_group = 50.
+exposure_per_group = 100.
 cr_qual_cut = 1e10
 #cr_qual_cut = 230
 

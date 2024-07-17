@@ -657,6 +657,11 @@ def build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,runlist,max_run
         big_matrix_fullspec += [xyoff_map_1d]
         big_mask_matrix_fullspec += [xyoff_mask_map_1d]
 
+        del xyoff_map
+        del xyoff_mask_map
+        del xyoff_map_1d
+        del xyoff_mask_map_1d
+
 
         InputFile.Close()
         if run_count==max_runs: break
@@ -882,6 +887,7 @@ def build_skymap(source_name,src_ra,src_dec,smi_input,eigenvector_path,big_matri
                 for idx_y in range(0,yoff_bins[logE]):
                     idx_1d += 1
                     fit_xyoff_map_fullspec[logE].waxis[idx_x,idx_y,gcut] += fit_xyoff_map_1d_fullspec[idx_1d-1]
+
 
     print ('===================================================================================')
     for logE in range(0,logE_nbins):
@@ -1612,6 +1618,23 @@ def PlotCountProjection(fig,label_z,logE_min,logE_max,hist_map_data,hist_map_bkg
     ymin = hist_map.yaxis.min()
     ymax = hist_map.yaxis.max()
 
+    other_stars, other_star_type, other_star_coord = GetGammaSourceInfo() 
+
+    other_star_labels = []
+    other_star_types = []
+    other_star_markers = []
+    star_range = 0.8*(xmax-xmin)/2.
+    source_ra = (xmax+xmin)/2.
+    source_dec = (ymax+ymin)/2.
+    n_stars = 0
+    for star in range(0,len(other_stars)):
+        if abs(source_ra-other_star_coord[star][0])>star_range: continue
+        if abs(source_dec-other_star_coord[star][1])>star_range: continue
+        other_star_markers += [[other_star_coord[star][0],other_star_coord[star][1],other_star_coord[star][2]]]
+        other_star_labels += ['%s'%(other_stars[star])]
+        other_star_types += [other_star_type[star]]
+        n_stars += 1
+
     hist_map_significance = MyArray3D()
     hist_map_significance.just_like(hist_map_data)
     hist_map_excess = MyArray3D()
@@ -2018,10 +2041,13 @@ def GetRadialProfile(hist_flux_skymap,hist_error_skymap,roi_x,roi_y,roi_r,excl_r
         radius = radius_array[br]
         brightness = brightness_array[br]
         brightness_err = brightness_err_array[br]
-        if brightness_err>0.:
-            output_radius_array += [radius]
-            output_brightness_array += [brightness]
-            output_brightness_err_array += [brightness_err]
+        #if brightness_err>0.:
+        #    output_radius_array += [radius]
+        #    output_brightness_array += [brightness]
+        #    output_brightness_err_array += [brightness_err]
+        output_radius_array += [radius]
+        output_brightness_array += [brightness]
+        output_brightness_err_array += [brightness_err]
 
     return output_radius_array, output_brightness_array, output_brightness_err_array
 
@@ -2448,10 +2474,10 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
         region_r += [1.5]
         region_name += [('1p5deg','1.5 deg')]
 
-        region_x += [src_ra]
-        region_y += [src_dec]
-        region_r += [1.0]
-        region_name += [('1p0deg','1.0 deg')]
+        #region_x += [src_ra]
+        #region_y += [src_dec]
+        #region_r += [1.0]
+        #region_name += [('1p0deg','1.0 deg')]
 
     elif 'SNR_G189_p03' in src_name:
 
@@ -2469,7 +2495,12 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
         region_x += [src_x]
         region_y += [src_y]
         region_r += [1.0]
-        region_name += [('SNR','SNR')]
+        region_name += [('SNR_full','SNR (full)')]
+
+        region_x += [src_x]
+        region_y += [src_y]
+        region_r += [0.5]
+        region_name += [('SNR_core','SNR (core)')]
 
     elif 'PSR_J1907_p0602' in src_name:
 
@@ -2646,51 +2677,65 @@ def fit_2d_model(data_sky_map,bkgd_sky_map, src_x, src_y):
 def diffusion_func(x,A,d):
     return A*1.22/(pow(3.14,1.5)*d*(x+0.06*d))*np.exp(-x*x/(d*d))
 
-def plot_radial_profile_with_systematics(fig,plotname,flux_sky_map,flux_err_sky_map,mimic_flux_sky_map,mimic_flux_err_sky_map,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,fit_radial_profile,radial_bin_scale=0.1):
+def plot_radial_profile_with_systematics(fig,plotname,logE_min,logE_max,flux_sky_map,flux_err_sky_map,mimic_flux_sky_map,mimic_flux_err_sky_map,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,fit_radial_profile,radial_bin_scale=0.1):
+
+    E_min = pow(10.,logE_bins[logE_min])
+    E_max = pow(10.,logE_bins[logE_max])
 
     on_radial_axis, on_profile_axis, on_profile_err_axis = GetRadialProfile(flux_sky_map,flux_err_sky_map,roi_x,roi_y,2.0,excl_roi_x,excl_roi_y,excl_roi_r,radial_bin_scale=radial_bin_scale)
     all_radial_axis, all_profile_axis, all_profile_err_axis = GetRadialProfile(flux_sky_map,flux_err_sky_map,roi_x,roi_y,2.0,excl_roi_x,excl_roi_y,excl_roi_r,use_excl=False,radial_bin_scale=radial_bin_scale)
 
-    #n_mimic = len(mimic_flux_sky_map)
-    #fig.clf()
-    #figsize_x = 7
-    #figsize_y = 5
-    #fig.set_figheight(figsize_y)
-    #fig.set_figwidth(figsize_x)
-    #axbig = fig.add_subplot()
-    #label_x = 'angular distance [deg]'
-    #label_y = 'surface brightness [$\mathrm{TeV}\ \mathrm{cm}^{-2}\mathrm{s}^{-1}\mathrm{sr}^{-1}$]'
-    #axbig.set_xlabel(label_x)
-    #axbig.set_ylabel(label_y)
-    #mimic_profile_axis = []
-    #mimic_profile_err_axis = []
-    #for mimic in range(0,n_mimic):
-    #    radial_axis, profile_axis, profile_err_axis = GetRadialProfile(mimic_flux_sky_map[mimic],mimic_flux_err_sky_map[mimic],roi_x,roi_y,2.0,excl_roi_x,excl_roi_y,excl_roi_r,use_excl=False,radial_bin_scale=radial_bin_scale)
-    #    axbig.errorbar(radial_axis,profile_axis,profile_err_axis,marker='+',ls='none',zorder=mimic+1)
-    #    mimic_profile_axis += [profile_axis]
-    #    mimic_profile_err_axis += [profile_err_axis]
-    #profile_syst_err_axis = []
-    #for binx in range(0,len(on_profile_axis)):
-    #    syst_err = 0.
-    #    stat_err = 0.
-    #    for mimic in range(0,n_mimic):
-    #        syst_err += pow(mimic_profile_axis[mimic][binx],2)
-    #        stat_err += pow(mimic_profile_err_axis[mimic][binx],2)
-    #    syst_err = max(0.,syst_err-stat_err)
-    #    if n_mimic>0:
-    #        syst_err = pow(syst_err/float(n_mimic),0.5)
-    #    profile_syst_err_axis += [pow(pow(syst_err,2)+pow(on_profile_err_axis[binx],2),0.5)]
-    #baseline_yaxis = [0. for i in range(0,len(on_radial_axis))]
-    #axbig.plot(on_radial_axis, baseline_yaxis, color='b', ls='dashed')
-    #axbig.fill_between(on_radial_axis,-np.array(profile_syst_err_axis),np.array(profile_syst_err_axis),alpha=0.2,color='b',zorder=0)
-    #fig.savefig(f'output_plots/{plotname}_mimic.png',bbox_inches='tight')
-    #axbig.remove()
+    n_mimic = len(mimic_flux_sky_map)
+    fig.clf()
+    figsize_x = 7
+    figsize_y = 5
+    fig.set_figheight(figsize_y)
+    fig.set_figwidth(figsize_x)
+    axbig = fig.add_subplot()
+    label_x = 'angular distance [deg]'
+    label_y = 'surface brightness [$\mathrm{TeV}\ \mathrm{cm}^{-2}\mathrm{s}^{-1}\mathrm{sr}^{-1}$]'
+    axbig.set_xlabel(label_x)
+    axbig.set_ylabel(label_y)
+    mimic_profile_axis = []
+    mimic_profile_err_axis = []
+    for mimic in range(0,n_mimic):
+        radial_axis, profile_axis, profile_err_axis = GetRadialProfile(mimic_flux_sky_map[mimic],mimic_flux_err_sky_map[mimic],roi_x,roi_y,2.0,excl_roi_x,excl_roi_y,excl_roi_r,use_excl=False,radial_bin_scale=radial_bin_scale)
+        axbig.errorbar(radial_axis,profile_axis,profile_err_axis,marker='+',ls='none',zorder=mimic+1)
+        mimic_profile_axis += [profile_axis]
+        mimic_profile_err_axis += [profile_err_axis]
+    profile_syst_err_axis = []
+    for binx in range(0,len(on_profile_axis)):
+        syst_err = 0.
+        stat_err = 0.
+        for mimic in range(0,n_mimic):
+            syst_err += pow(mimic_profile_axis[mimic][binx],2)
+            stat_err += pow(mimic_profile_err_axis[mimic][binx],2)
+        if n_mimic>0:
+            syst_err = pow(syst_err/float(n_mimic),0.5)
+        profile_syst_err_axis += [syst_err]
+    baseline_yaxis = [0. for i in range(0,len(on_radial_axis))]
+    axbig.plot(on_radial_axis, baseline_yaxis, color='b', ls='dashed')
+    axbig.fill_between(on_radial_axis,-np.array(profile_syst_err_axis),np.array(profile_syst_err_axis),alpha=0.2,color='b',zorder=0)
+    fig.savefig(f'output_plots/{plotname}_mimic.png',bbox_inches='tight')
+    axbig.remove()
 
     if fit_radial_profile:
 
+        curve_fit_radius_array = []
+        curve_fit_brightness_array = []
+        curve_fit_brightness_err_array = []
+        for br in range(0,len(on_radial_axis)):
+            radius = on_radial_axis[br]
+            brightness = on_profile_axis[br]
+            brightness_err = on_profile_err_axis[br]
+            if radius>1.7: continue
+            curve_fit_radius_array += [radius]
+            curve_fit_brightness_array += [brightness]
+            curve_fit_brightness_err_array += [brightness_err]
+
         profile_sum = np.sum(on_profile_axis)
         start = (profile_sum, 0.5)
-        popt, pcov = curve_fit(diffusion_func,on_radial_axis,on_profile_axis,p0=start,sigma=on_profile_err_axis,absolute_sigma=True,bounds=((0, 0.01), (np.inf, np.inf)))
+        popt, pcov = curve_fit(diffusion_func,curve_fit_radius_array,curve_fit_brightness_array,p0=start,sigma=curve_fit_brightness_err_array,absolute_sigma=True,bounds=((0, 0.01), (np.inf, np.inf)))
         profile_fit = diffusion_func(np.array(on_radial_axis), *popt)
         residual = np.array(on_profile_axis) - profile_fit
         chisq = np.sum((residual/np.array(on_profile_err_axis))**2)
@@ -2699,8 +2744,18 @@ def plot_radial_profile_with_systematics(fig,plotname,flux_sky_map,flux_err_sky_
         print (f'plotname = {plotname}')
         print ('diffusion flux = %0.2E +/- %0.2E'%(popt[0],pow(pcov[0][0],0.5)))
         print ('diffusion radius = %0.2f +/- %0.2f deg (chi2/dof = %0.2f)'%(popt[1],pow(pcov[1][1],0.5),chisq/dof))
-        for entry in range(0,len(on_radial_axis)):
-            print (f'x = {on_radial_axis[entry]:0.2f}, y = {on_profile_axis[entry]:0.2e}, err = {on_profile_err_axis[entry]:0.2e}')
+
+    print ('++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
+    print (f'plotname = {plotname}')
+    lines = []
+    lines += [f'Source location: RA = {roi_x:0.3f}, Dec = {roi_y:0.3f} deg \n']
+    lines += [f'Energy range: {E_min:0.3f} - {E_max:0.3f} TeV \n']
+    lines += ['radial distance [deg] \t surface brightness [TeV/cm2/s/sr] \t brightness error [TeV/cm2/s/sr] \n']
+    for entry in range(0,len(on_radial_axis)):
+        print (f'x = {on_radial_axis[entry]:0.2f}, y = {on_profile_axis[entry]:0.2e}, err = {on_profile_err_axis[entry]:0.2e}')
+        lines += [f'{on_radial_axis[entry]:0.2f} \t {on_profile_axis[entry]:0.2e} \t {on_profile_err_axis[entry]:0.2e} \n']
+    with open(f'output_plots/{plotname}_radial_profile.txt', 'w') as file:
+        file.writelines(lines)
 
     baseline_yaxis = [0. for i in range(0,len(on_radial_axis))]
     fig.clf()

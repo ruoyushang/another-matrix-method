@@ -295,11 +295,13 @@ for small_runlist in range(0,len(big_runlist)):
         analysis_result += [[[run_exposure_hours, run_elev, run_azim, truth_params, fit_params, sr_qual, cr_qual], incl_sky_map, data_sky_map, bkgd_sky_map, data_xyoff_map, fit_xyoff_map,ratio_xyoff_map]]
         with open(output_filename,"wb") as file:
             pickle.dump(analysis_result, file)
+        del analysis_result
     else:
         analysis_result = pickle.load(open(output_filename, "rb"))
         analysis_result += [[[run_exposure_hours, run_elev, run_azim, truth_params, fit_params, sr_qual, cr_qual], incl_sky_map, data_sky_map, bkgd_sky_map, data_xyoff_map, fit_xyoff_map,ratio_xyoff_map]]
         with open(output_filename,"wb") as file:
             pickle.dump(analysis_result, file)
+        del analysis_result
     print ('=================================================================================')
 
 #output_filename = f'{smi_output}/skymaps_{source_name}_{input_epoch}_{onoff}_{sky_tag}.pkl'

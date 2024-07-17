@@ -8,8 +8,8 @@ SMI_OUTPUT = os.environ['SMI_OUTPUT']
 print (f'SMI_DIR = {SMI_DIR}')
 print (f'SMI_OUTPUT = {SMI_OUTPUT}')
 
-#is_training = True
-is_training = False
+is_training = True
+#is_training = False
 
 training_mode = 'off'
 if not is_training:
@@ -136,7 +136,7 @@ for s in range(0,len(input_params)):
     qfile.write('executable = /bin/bash \n')
     qfile.write('arguments = save_mtx_%s_%s.sh\n'%(source,onoff))
     qfile.write('request_cpus = 1 \n')
-    qfile.write('request_memory = 1024M \n')
+    qfile.write('request_memory = 2048M \n')
     qfile.write('request_disk = 1024M \n')
     qfile.write('output = condor_save_mtx_%s.out\n'%(source))
     qfile.write('error = condor_save_mtx_%s.err\n'%(source))
@@ -168,7 +168,7 @@ for s in range(0,len(input_params)):
     qfile.write('executable = /bin/bash \n')
     qfile.write('arguments = eigenvtr_%s_%s.sh\n'%(source,onoff))
     qfile.write('request_cpus = 1 \n')
-    qfile.write('request_memory = 1024M \n')
+    qfile.write('request_memory = 2048M \n')
     qfile.write('request_disk = 1024M \n')
     qfile.write('output = condor_eigenvtr_%s.out\n'%(source))
     qfile.write('error = condor_eigenvtr_%s.err\n'%(source))
@@ -202,7 +202,7 @@ for s in range(0,len(input_params)):
     qfile.write('executable = /bin/bash \n')
     qfile.write('arguments = skymap_%s_%s.sh\n'%(source,onoff))
     qfile.write('request_cpus = 1 \n')
-    qfile.write('request_memory = 1024M \n')
+    qfile.write('request_memory = 2048M \n')
     qfile.write('request_disk = 1024M \n')
     qfile.write('output = condor_skymap_%s_%s.out\n'%(source,onoff))
     qfile.write('error = condor_skymap_%s_%s.err\n'%(source,onoff))
