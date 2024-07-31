@@ -26,6 +26,7 @@ yoff_end = common_functions.yoff_end
 gcut_start = common_functions.gcut_start
 gcut_end = common_functions.gcut_end
 SaveFITS = common_functions.SaveFITS
+GetSlicedDataCubeMap = common_functions.GetSlicedDataCubeMap
 ReadRunListFromFile = common_functions.ReadRunListFromFile
 build_skymap = common_functions.build_skymap
 smooth_image = common_functions.smooth_image
@@ -34,9 +35,10 @@ PlotCountProjection = common_functions.PlotCountProjection
 make_flux_map = common_functions.make_flux_map
 make_significance_map = common_functions.make_significance_map
 DefineRegionOfInterest = common_functions.DefineRegionOfInterest
-PrintInformationRoI = common_functions.PrintInformationRoI
+PrintAndPlotInformationRoI = common_functions.PrintAndPlotInformationRoI
 GetRadialProfile = common_functions.GetRadialProfile
 plot_radial_profile_with_systematics = common_functions.plot_radial_profile_with_systematics
+plot_radial_profile_ratio = common_functions.plot_radial_profile_ratio
 fit_2d_model = common_functions.fit_2d_model
 matrix_rank = common_functions.matrix_rank
 skymap_size = common_functions.skymap_size
@@ -63,7 +65,8 @@ smi_dir = os.environ.get("SMI_DIR")
 #ana_tag = 'poisson'
 #ana_tag = 'binspec'
 #ana_tag = 'fullspec'
-ana_tag = 'rank5'
+#ana_tag = 'init'
+ana_tag = 'rank4'
 
 qual_cut = 0.
 #qual_cut = 20.
@@ -110,10 +113,11 @@ if 'PSR_J1856_p0245' in source_name:
     logE_min = 2
     logE_mid = 5
     logE_max = logE_nbins
-    fit_radial_profile = False
+    fit_radial_profile = True
     make_symmetric_model = True
 if 'PSR_J1907_p0602' in source_name:
-    logE_min = 2
+    #logE_min = 2
+    logE_min = 3
     logE_mid = 5
     logE_max = logE_nbins
     fit_radial_profile = True
@@ -125,8 +129,10 @@ if 'SS433' in source_name:
     fit_radial_profile = False
     make_symmetric_model = False
 if 'PSR_J2021_p4026' in source_name:
-    logE_min = 2
-    logE_mid = 4
+    #logE_min = 2
+    #logE_mid = 4
+    logE_min = 0
+    logE_mid = 3
     logE_max = logE_nbins
     fit_radial_profile = False
     make_symmetric_model = False
@@ -619,7 +625,7 @@ for roi in range(0,len(all_roi_name)):
     excl_roi_y = []
     excl_roi_r = []
 
-    PrintInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,sum_data_sky_map,sum_bkgd_sky_map,sum_flux_sky_map,sum_flux_err_sky_map,sum_mimic_data_sky_map,sum_mimic_bkgd_sky_map,roi_name,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
+    PrintAndPlotInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,sum_data_sky_map,sum_bkgd_sky_map,sum_flux_sky_map,sum_flux_err_sky_map,sum_mimic_data_sky_map,sum_mimic_bkgd_sky_map,roi_name,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
 
 
 roi_name = all_roi_name[0]
@@ -666,7 +672,7 @@ for logE in range(logE_min,logE_max):
         build_radial_symmetric_model(radial_symmetry_sky_map[logE],on_radial_axis,on_profile_axis,roi_x,roi_y)
         
 if make_symmetric_model:
-    PrintInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,sum_data_sky_map,sum_bkgd_sky_map,radial_symmetry_sky_map,sum_flux_err_sky_map,sum_mimic_data_sky_map,sum_mimic_bkgd_sky_map,f'{roi_name[0]}_symmetric',[roi_x],[roi_y],[roi_r],excl_roi_x,excl_roi_y,excl_roi_r)
+    PrintAndPlotInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,sum_data_sky_map,sum_bkgd_sky_map,radial_symmetry_sky_map,sum_flux_err_sky_map,sum_mimic_data_sky_map,sum_mimic_bkgd_sky_map,['symmetric'],[roi_x],[roi_y],[roi_r],excl_roi_x,excl_roi_y,excl_roi_r)
     
     radial_symmetry_sky_map_allE = MyArray3D()
     radial_symmetry_sky_map_allE.just_like(radial_symmetry_sky_map[0])
@@ -946,6 +952,23 @@ for mimic in range(0,n_mimic):
     PlotCountProjection(fig,'count',logE_min,logE_max,sum_mimic_data_sky_map_allE[mimic],sum_mimic_bkgd_sky_map_allE[mimic],f'{source_name}_projection_sky_map_allE_mimic{mimic}_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
     PlotCountProjection(fig,'count',logE_min,logE_mid,sum_mimic_data_sky_map_LE[mimic],sum_mimic_bkgd_sky_map_LE[mimic],f'{source_name}_projection_sky_map_LE_mimic{mimic}_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
     PlotCountProjection(fig,'count',logE_mid,logE_max,sum_mimic_data_sky_map_HE[mimic],sum_mimic_bkgd_sky_map_HE[mimic],f'{source_name}_projection_sky_map_HE_mimic{mimic}_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
+
+
+if 'PSR_J2021_p4026' in source_name:
+    HI_sky_map = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
+    MWL_map_file = '/nevis/ged/data/rshang/MWL_maps/CGPS/CGPS_MO2_HI_line_image.fits' 
+    GetSlicedDataCubeMap(MWL_map_file, HI_sky_map, -3., 5.)
+    PlotSkyMap(fig,'Intensity',logE_min,logE_max,HI_sky_map,f'{source_name}_HI_sky_map_m03_p05_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
+    GetSlicedDataCubeMap(MWL_map_file, HI_sky_map, -27., -19.)
+    PlotSkyMap(fig,'Intensity',logE_min,logE_max,HI_sky_map,f'{source_name}_HI_sky_map_m27_m19_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
+    GetSlicedDataCubeMap(MWL_map_file, HI_sky_map, -19., -3.)
+    PlotSkyMap(fig,'Intensity',logE_min,logE_max,HI_sky_map,f'{source_name}_HI_sky_map_m19_m03_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
+
+    plotname = f'{source_name}_surface_brightness_ratio_LE_{roi_name[0]}_{ana_tag}'
+    plot_radial_profile_ratio(fig,plotname,sum_flux_sky_map_LE,sum_flux_err_sky_map_LE,HI_sky_map,None,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,radial_bin_scale=radial_bin_scale)
+    plotname = f'{source_name}_surface_brightness_ratio_HE_{roi_name[0]}_{ana_tag}'
+    plot_radial_profile_ratio(fig,plotname,sum_flux_sky_map_HE,sum_flux_err_sky_map_HE,HI_sky_map,None,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,radial_bin_scale=radial_bin_scale)
+
 
 
 fig.clf()

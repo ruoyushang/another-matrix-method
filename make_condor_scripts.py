@@ -8,8 +8,8 @@ SMI_OUTPUT = os.environ['SMI_OUTPUT']
 print (f'SMI_DIR = {SMI_DIR}')
 print (f'SMI_OUTPUT = {SMI_OUTPUT}')
 
-is_training = True
-#is_training = False
+#is_training = True
+is_training = False
 
 training_mode = 'off'
 if not is_training:

@@ -15,6 +15,7 @@ import tracemalloc
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 from astropy import wcs
 from astropy.io import fits
+from astropy.wcs import WCS
 
 sky_tag = os.environ.get("SKY_TAG")
 
@@ -1159,7 +1160,7 @@ def cosmic_ray_like_chi2(try_params,logE,ref_params,eigenvectors,diff_xyoff_map,
 
                 if region_type==0:
                     if gcut==0:
-                        n_data = max(0.0001,init)
+                        n_data = max(0.0001,init) # blind signal region with init background model
                         weight = regularization_scale
                 elif region_type==1:
                     if gcut!=0: continue
@@ -1903,11 +1904,11 @@ def PlotSkyMap(fig,label_z,logE_min,logE_max,hist_map_input,plotname,roi_x=[],ro
     cbar = fig.colorbar(im,orientation="horizontal",cax=cax)
     cbar.set_label(label_z)
 
-    font = {'family': 'serif', 'color':  'k', 'weight': 'normal', 'size': 10, 'rotation': 0.,}
-
     favorite_color = 'k'
     if colormap=='magma':
         favorite_color = 'deepskyblue'
+    font = {'family': 'serif', 'color':  favorite_color, 'weight': 'normal', 'size': 10, 'rotation': 0.,}
+
     for star in range(0,len(other_star_markers)):
         marker_size = 60
         if other_star_types[star]=='PSR':
@@ -1927,7 +1928,7 @@ def PlotSkyMap(fig,label_z,logE_min,logE_max,hist_map_input,plotname,roi_x=[],ro
             axbig.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c=favorite_color, marker='+', label=other_star_labels[star])
         if other_star_types[star]=='Star':
             axbig.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c='k', marker='+', label=other_star_labels[star])
-        txt = axbig.text(other_star_markers[star][0]-0.07, other_star_markers[star][1]+0.07, other_star_labels[star], fontdict=font, c=favorite_color)
+        #txt = axbig.text(other_star_markers[star][0]-0.07, other_star_markers[star][1]+0.07, other_star_labels[star], fontdict=font, c=favorite_color)
 
     for roi in range(0,len(roi_x)):
         mycircle = plt.Circle( (roi_x[roi], roi_y[roi]), roi_r[roi], fill = False, color='white')
@@ -2029,7 +2030,8 @@ def GetRadialProfile(hist_flux_skymap,hist_error_skymap,roi_x,roi_y,roi_r,excl_r
                 if keep_event:
                     pixel_array[br] += 1.*pix_size
                     brightness_array[br] += hist_flux_skymap.waxis[bx,by,0]
-                    brightness_err_array[br] += pow(hist_error_skymap.waxis[bx,by,0],2)
+                    if not hist_error_skymap==None:
+                        brightness_err_array[br] += pow(hist_error_skymap.waxis[bx,by,0],2)
         if pixel_array[br]==0.: continue
         brightness_array[br] = brightness_array[br]/pixel_array[br]
         brightness_err_array[br] = pow(brightness_err_array[br],0.5)/pixel_array[br]
@@ -2241,7 +2243,7 @@ def GetFermiUpperLimitFluxGeminga():
     return energies, fluxes, fluxes_err
 
 
-def PrintInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,hist_data_skymap,hist_bkgd_skymap,hist_flux_skymap,hist_flux_err_skymap,hist_mimic_data_skymap,hist_mimic_bkgd_skymap,roi_name,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r):
+def PrintAndPlotInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,hist_data_skymap,hist_bkgd_skymap,hist_flux_skymap,hist_flux_err_skymap,hist_mimic_data_skymap,hist_mimic_bkgd_skymap,roi_name,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r):
 
     energy_axis, energy_error, flux, flux_stat_err = GetRegionSpectrum(hist_flux_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,hist_error_skymap=hist_flux_err_skymap)
     energy_axis, energy_error, data, data_stat_err = GetRegionSpectrum(hist_data_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
@@ -2305,7 +2307,7 @@ def PrintInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,hist_data_sky
     print ('new flux_calibration = %s'%(formatted_numbers))
 
     print ('===============================================================================================================')
-    print (f'RoI : {roi_name}')
+    print (f'RoI : {roi_name[0]}')
 
     min_energy = pow(10.,logE_bins[logE_min])
     mid_energy = pow(10.,logE_bins[logE_mid])
@@ -2396,7 +2398,7 @@ def PrintInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,hist_data_sky
     axbig.set_xscale('log')
     axbig.set_yscale('log')
     #axbig.fill_between(energy_axis,np.array(flux_floor)-np.array(flux_incl_err),np.array(flux_floor)+np.array(flux_incl_err),alpha=0.2,color='b',zorder=0)
-    axbig.errorbar(energy_axis,flux,flux_incl_err,xerr=energy_error,uplims=uplims,color='k',marker='_',ls='none',label=f'VERITAS ({roi_name[1]})',zorder=1)
+    axbig.errorbar(energy_axis,flux,flux_incl_err,xerr=energy_error,uplims=uplims,color='k',marker='_',ls='none',label=f'VERITAS ({roi_name[0]})',zorder=1)
     if 'SS433' in source_name:
         HessSS433e_energies, HessSS433e_fluxes, HessSS433e_flux_errs = GetHessSS433e()
         HessSS433w_energies, HessSS433w_fluxes, HessSS433w_flux_errs = GetHessSS433w()
@@ -2497,22 +2499,27 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
         region_r += [1.0]
         region_name += [('SNR_full','SNR (full)')]
 
-        region_x += [src_x]
-        region_y += [src_y]
-        region_r += [0.5]
-        region_name += [('SNR_core','SNR (core)')]
+        #region_x += [src_x]
+        #region_y += [src_y]
+        #region_r += [0.5]
+        #region_name += [('SNR_core','SNR (core)')]
 
     elif 'PSR_J1907_p0602' in src_name:
 
-        region_x += [287.05]
-        region_y += [6.39]
-        region_r += [1.2]
-        region_name += [('3HWC','3HWC')]
+        #region_x += [287.05]
+        #region_y += [6.39]
+        #region_r += [1.2]
+        #region_name += [('3HWC','3HWC')]
 
-        region_x += [288.0833333]
-        region_y += [4.9166667]
-        region_r += [0.2]
-        region_name += [('SS433','SS 433')]
+        region_x += [286.98]
+        region_y += [6.04]
+        region_r += [1.5]
+        region_name += [('PSR','PSR')]
+
+        #region_x += [288.0833333]
+        #region_y += [4.9166667]
+        #region_r += [0.2]
+        #region_name += [('SS433','SS 433')]
 
     elif 'PSR_J1856_p0245' in src_name:
 
@@ -2757,6 +2764,14 @@ def plot_radial_profile_with_systematics(fig,plotname,logE_min,logE_max,flux_sky
     with open(f'output_plots/{plotname}_radial_profile.txt', 'w') as file:
         file.writelines(lines)
 
+    uplims = np.zeros_like(on_radial_axis)
+    for x in range(0,len(on_radial_axis)):
+        if on_profile_err_axis[x]==0.: continue
+        significance = on_profile_axis[x]/on_profile_err_axis[x]
+        if significance<2.:
+            uplims[x] = 1.
+            on_profile_axis[x] = max(2.*on_profile_err_axis[x],on_profile_axis[x]+2.*on_profile_err_axis[x])
+
     baseline_yaxis = [0. for i in range(0,len(on_radial_axis))]
     fig.clf()
     figsize_x = 7
@@ -2769,11 +2784,53 @@ def plot_radial_profile_with_systematics(fig,plotname,logE_min,logE_max,flux_sky
     axbig.set_xlabel(label_x)
     axbig.set_ylabel(label_y)
     axbig.plot(on_radial_axis, baseline_yaxis, color='b', ls='dashed')
-    axbig.errorbar(all_radial_axis,all_profile_axis,all_profile_err_axis,color='r',marker='+',ls='none',zorder=1)
-    axbig.errorbar(on_radial_axis,on_profile_axis,on_profile_err_axis,color='k',marker='+',ls='none',zorder=2)
+    axbig.errorbar(on_radial_axis,on_profile_axis,on_profile_err_axis,uplims=uplims,color='k',marker='_',ls='none',zorder=2)
     #axbig.fill_between(on_radial_axis,np.array(on_profile_axis)-np.array(profile_syst_err_axis),np.array(on_profile_axis)+np.array(profile_syst_err_axis),alpha=0.2,color='b',zorder=0)
     if fit_radial_profile:
         axbig.plot(on_radial_axis,diffusion_func(np.array(on_radial_axis),*popt),color='r')
+    fig.savefig(f'output_plots/{plotname}.png',bbox_inches='tight')
+    axbig.remove()
+
+def plot_radial_profile_ratio(fig,plotname,flux_sky_map_1,flux_err_sky_map_1,flux_sky_map_2,flux_err_sky_map_2,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,radial_bin_scale=0.1):
+
+    radial_axis_1, profile_axis_1, profile_err_axis_1 = GetRadialProfile(flux_sky_map_1,flux_err_sky_map_1,roi_x,roi_y,2.0,excl_roi_x,excl_roi_y,excl_roi_r,radial_bin_scale=radial_bin_scale)
+    radial_axis_2, profile_axis_2, profile_err_axis_2 = GetRadialProfile(flux_sky_map_2,flux_err_sky_map_2,roi_x,roi_y,2.0,excl_roi_x,excl_roi_y,excl_roi_r,radial_bin_scale=radial_bin_scale)
+
+    profile_ratio_axis = []
+    profile_ratio_err_axis = []
+    ylim_max = 0.
+    ylim_min = 0.
+    for entry in range(0,len(profile_axis_1)):
+        numerator = profile_axis_1[entry]
+        numerator_err = profile_err_axis_1[entry]
+        denominator = profile_axis_2[entry]
+        denominator_err = profile_err_axis_2[entry]
+        if denominator_err > denominator:
+            denominator = 0.5*denominator_err
+        if numerator_err > numerator:
+            numerator = 0.5*numerator_err
+        ratio_err = pow(pow(numerator_err / denominator,2) + pow(numerator / denominator * denominator_err / denominator,2),0.5)
+        ratio = numerator / denominator
+        profile_ratio_axis += [ratio]
+        profile_ratio_err_axis += [ratio_err]
+        if abs(ratio / ratio_err) > 1.:
+            if ratio+ratio_err>ylim_max:
+                ylim_max = ratio+ratio_err
+            if ratio-ratio_err<ylim_min:
+                ylim_min = ratio-ratio_err
+
+    fig.clf()
+    figsize_x = 7
+    figsize_y = 5
+    fig.set_figheight(figsize_y)
+    fig.set_figwidth(figsize_x)
+    axbig = fig.add_subplot()
+    label_x = 'angular distance [deg]'
+    label_y = 'surface brightness ratio'
+    axbig.set_xlabel(label_x)
+    axbig.set_ylabel(label_y)
+    axbig.errorbar(radial_axis_1,profile_ratio_axis,profile_ratio_err_axis,color='k',marker='+',ls='none',zorder=2)
+    axbig.set_ylim(ylim_min,ylim_max)
     fig.savefig(f'output_plots/{plotname}.png',bbox_inches='tight')
     axbig.remove()
 
@@ -2843,5 +2900,100 @@ def PrintSpectralDataForNaima(energy_axis,src_flux,src_flux_err,data_name):
     for eb in range(0,len(energy_axis)):
         qfile.write('%.2f %.2f %.2f %.2e %.2e %s\n'%(energy_mean[eb],energy_edge_lo[eb],energy_edge_hi[eb],flux_mean[eb],flux_error[eb],0))
     qfile.close() 
+
+def ConvertRaDecToGalactic(ra, dec):
+
+    delta = dec*np.pi/180.
+    delta_G = 27.12825*np.pi/180.
+    alpha = ra*np.pi/180.
+    alpha_G = 192.85948*np.pi/180.
+    l_NCP = 122.93192*np.pi/180.
+    sin_b = np.sin(delta)*np.sin(delta_G)+np.cos(delta)*np.cos(delta_G)*np.cos(alpha-alpha_G)
+    cos_b = np.cos(np.arcsin(sin_b))
+    sin_l_NCP_m_l = np.cos(delta)*np.sin(alpha-alpha_G)/cos_b
+    cos_l_NCP_m_l = (np.cos(delta_G)*np.sin(delta)-np.sin(delta_G)*np.cos(delta)*np.cos(alpha-alpha_G))/cos_b
+    b = (np.arcsin(sin_b))*180./np.pi
+    l = (l_NCP-np.arctan2(sin_l_NCP_m_l,cos_l_NCP_m_l))*180./np.pi
+    return l, b
+
+def GetSlicedDataCubeMap(map_file, sky_map, vel_low, vel_up):
+
+    sky_map.reset()
+
+    nbins_x = len(sky_map.xaxis)-1
+    nbins_y = len(sky_map.yaxis)-1
+    ra_min = sky_map.xaxis[0]
+    ra_max = sky_map.xaxis[len(sky_map.xaxis)-1]
+    dec_min = sky_map.yaxis[0]
+    dec_max = sky_map.yaxis[len(sky_map.yaxis)-1]
+    map_center_ra = 0.5 * (ra_min+ra_max)
+    map_center_dec = 0.5 * (dec_min+dec_max)
+    map_center_lon, map_center_lat = ConvertRaDecToGalactic(map_center_ra, map_center_dec)
+
+    filename = map_file
+
+    hdu = fits.open(filename)[0]
+    wcs = WCS(hdu.header)
+    image_data = hdu.data
+    print (f"image_data.shape = {image_data.shape}")
+    print ("wcs")
+    print (wcs)
+
+    world_coord = wcs.all_pix2world(0,0,0,0,0)
+    min_vel = world_coord[2]
+    world_coord = wcs.all_pix2world(0,0,image_data.shape[1]-1,0,0)
+    max_vel = world_coord[2]
+    print (f"min_vel = {min_vel}")
+    print (f"max_vel = {max_vel}")
+
+    all_pix_lon = []
+    all_pix_lat = []
+    for idx_x in range(0,image_data.shape[2]-1):
+        for idx_y in range(0,image_data.shape[3]-1):
+            world_coord = wcs.all_pix2world(idx_x,idx_y,0,0,0) 
+            lon = world_coord[0]
+            lat = world_coord[1]
+            all_pix_lon += [lon]
+            all_pix_lat += [lat]
+    max_lon = np.max(all_pix_lon)
+    max_lat = np.max(all_pix_lat)
+    min_lon = np.min(all_pix_lon)
+    min_lat = np.min(all_pix_lat)
+    print (f"max_lon = {max_lon}")
+    print (f"max_lat = {max_lat}")
+    print (f"min_lon = {min_lon}")
+    print (f"min_lat = {min_lat}")
+
+    pixs_start = wcs.all_world2pix(map_center_lon,map_center_lat,vel_up*1e3,1.0,1.0)
+    pixs_end = wcs.all_world2pix(map_center_lon,map_center_lat,vel_low*1e3,1.0,1.0)
+    print (f"pixs_start = {pixs_start}")
+    print (f"pixs_end = {pixs_end}")
+    vel_idx_start = int(pixs_start[2])
+    vel_idx_end = int(pixs_end[2])
+
+    image_data_reduced_z = np.full((image_data[0,vel_idx_start, :, :].shape),0.)
+    for idx in range(vel_idx_start,vel_idx_end):
+        world_coord = wcs.all_pix2world(0,0,idx,0,0) 
+        velocity = world_coord[2]
+        world_coord = wcs.all_pix2world(0,0,idx+1,0,0) 
+        velocity_next = world_coord[2]
+        delta_vel = velocity_next - velocity
+        image_data_reduced_z += image_data[0,idx, :, :]
+
+    for idx_x in range(0,nbins_x):
+        for idx_y in range(0,nbins_y):
+            sky_ra = sky_map.xaxis[idx_x]
+            sky_dec = sky_map.yaxis[idx_y]
+            sky_lon, sky_lat = ConvertRaDecToGalactic(sky_ra, sky_dec)
+            if sky_lon>max_lon: continue
+            if sky_lat>max_lat: continue
+            if sky_lon<min_lon: continue
+            if sky_lat<min_lat: continue
+            map_pixs = wcs.all_world2pix(sky_lon, sky_lat, vel_low, 1, 1)
+            pix_ra = int(map_pixs[0])
+            pix_dec = int(map_pixs[1])
+            if pix_ra>=image_data_reduced_z.shape[0]: continue
+            if pix_dec>=image_data_reduced_z.shape[1]: continue
+            sky_map.waxis[idx_x,idx_y,0] += image_data_reduced_z[pix_dec,pix_ra]
 
 
