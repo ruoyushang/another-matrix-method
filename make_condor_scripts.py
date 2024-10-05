@@ -65,7 +65,7 @@ if not is_training:
     #input_params += [ ['H1426'                 ,217.136  ,42.673, 'ON' ] ]
     input_params += [ ['NGC1275'               ,49.950  ,41.512 , 'ON'] ]
     input_params += [ ['Segue1'                ,151.767 ,16.082 , 'ON'] ]
-    #input_params += [ ['3C273'                 ,187.277 ,2.05   , 'ON'] ]
+    input_params += [ ['3C273'                 ,187.277 ,2.05   , 'ON'] ]
     input_params += [ ['PG1553'                ,238.936 ,11.195 , 'ON'] ]
     #input_params += [ ['PKS1424'               ,216.750 ,23.783 , 'ON'] ]
     #input_params += [ ['RGB_J0710_p591'        ,107.61  ,59.15  , 'ON'] ]
@@ -93,6 +93,7 @@ if not is_training:
 
     input_params += [ ['PSR_J2229_p6114', 337.27, 61.23 , 'ON' ] ] # Boomerang
     input_params += [ ['CTA1', 1.608, 72.983 , 'ON' ] ]
+    input_params += [ ['PSR_J2030_p4415', 307.7139583  , 44.2605833 , 'ON' ] ]
     #input_params += [ ['PSR_J2032_p4127', 308.05  , 41.46 , 'ON' ] ]
     #input_params += [ ['PSR_J2032_p4127_baseline', 308.05  , 41.46 , 'ON'  ] ]
     #input_params += [ ['LHAASO_J0622_p3754', 95.50  , 37.90 , 'ON' ] ]

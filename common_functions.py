@@ -60,7 +60,6 @@ xoff_end = 2.
 yoff_start = -2.
 yoff_end = 2.
 gcut_bins = 4
-#gcut_bins = 6
 gcut_start = 0
 gcut_end = gcut_bins
 
@@ -69,10 +68,12 @@ logE_nbins = len(logE_bins)-1
 
 #MSCW_cut = 0.7
 #MSCL_cut = 0.8
-MSCW_cut = [0.60,0.65,0.70,0.75,0.75,0.75,0.75,0.75]
-MSCL_cut = [0.70,0.75,0.80,0.85,0.85,0.85,0.85,0.85]
-#MSCW_cut = [0.60,0.65,0.70,0.75,0.80,0.85,0.85,0.85]
-#MSCL_cut = [0.70,0.75,0.80,0.85,0.90,0.95,0.95,0.95]
+#MSCW_cut = [0.60,0.65,0.70,0.75,0.75,0.75,0.75,0.75] # nominal
+#MSCL_cut = [0.70,0.75,0.80,0.85,0.85,0.85,0.85,0.85] # nominal
+#str_flux_calibration = ['1.44e+03', '1.60e+03', '1.69e+03', '1.99e+03', '4.20e+03', '9.81e+03', '2.30e+04', '5.20e+04']
+MSCW_cut = [0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60]
+MSCL_cut = [0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70]
+str_flux_calibration = ['1.44e+03', '1.52e+03', '1.52e+03', '1.73e+03', '3.54e+03', '8.05e+03', '1.84e+04', '3.78e+04']
 
 skymap_size = 3.
 skymap_bins = 30
@@ -1849,12 +1850,12 @@ def PlotCountProjection(fig,label_z,logE_min,logE_max,hist_map_data,hist_map_bkg
 
 
 
-def PlotSkyMap(fig,label_z,logE_min,logE_max,hist_map_input,plotname,roi_x=[],roi_y=[],roi_r=[],max_z=0.,colormap='coolwarm',layer=0):
+def PlotSkyMap(fig,label_z,logE_min,logE_max,hist_map_input,plotname,roi_x=[],roi_y=[],roi_r=[],max_z=0.,colormap='coolwarm',layer=0,zoomin=1.0):
 
     E_min = pow(10.,logE_bins[logE_min])
     E_max = pow(10.,logE_bins[logE_max])
 
-    hist_map = MakeSkymapCutout(hist_map_input,1.0)
+    hist_map = MakeSkymapCutout(hist_map_input,zoomin)
 
     xmin = hist_map.xaxis.min()
     xmax = hist_map.xaxis.max()
@@ -1944,8 +1945,6 @@ def GetFluxCalibration(energy):
 
     if doFluxCalibration:
         return 1.
-
-    str_flux_calibration = ['7.81e+02', '9.12e+02', '9.95e+02', '1.24e+03', '2.79e+03', '6.56e+03', '1.56e+04', '3.81e+04']
 
     flux_calibration = []
     for string in str_flux_calibration:
@@ -2358,6 +2357,14 @@ def PrintAndPlotInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,hist_d
         print (f'E = {energy_axis[binx]:0.2f} TeV, data = {data[binx]:0.1f} +/- {data_stat_err[binx]:0.1f}, bkgd = {bkgd[binx]:0.1f} +/- {bkgd_syst_err[binx]:0.1f}, flux = {flux[binx]:0.2e} +/- {flux_incl_err[binx]:0.2e} TeV/cm2/s ({flux_cu[binx]:0.2f} CU), significance = {significance:0.1f} sigma')
     print ('===============================================================================================================')
 
+    cu_uplims = np.zeros_like(energy_axis)
+    for x in range(0,len(flux)):
+        if flux_err_cu[x]==0.: continue
+        significance = flux_cu[x]/flux_err_cu[x]
+        if significance<2.:
+            cu_uplims[x] = 1.
+            flux_cu[x] = max(2.*flux_err_cu[x],flux_cu[x]+2.*flux_err_cu[x])
+
     fig.clf()
     figsize_x = 7
     figsize_y = 5
@@ -2370,7 +2377,7 @@ def PrintAndPlotInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,hist_d
     axbig.set_ylabel(label_y)
     axbig.set_xscale('log')
     axbig.set_yscale('log')
-    axbig.errorbar(energy_axis,flux_cu,flux_err_cu,xerr=energy_error,color='k',marker='_',ls='none',zorder=1)
+    axbig.errorbar(energy_axis,flux_cu,flux_err_cu,xerr=energy_error,uplims=cu_uplims,color='k',marker='_',ls='none',zorder=1)
     fig.savefig(f'output_plots/{source_name}_roi_flux_crab_unit_{roi_name[0]}.png',bbox_inches='tight')
     axbig.remove()
 
@@ -2398,7 +2405,7 @@ def PrintAndPlotInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,hist_d
     axbig.set_xscale('log')
     axbig.set_yscale('log')
     #axbig.fill_between(energy_axis,np.array(flux_floor)-np.array(flux_incl_err),np.array(flux_floor)+np.array(flux_incl_err),alpha=0.2,color='b',zorder=0)
-    axbig.errorbar(energy_axis,flux,flux_incl_err,xerr=energy_error,uplims=uplims,color='k',marker='_',ls='none',label=f'VERITAS ({roi_name[0]})',zorder=1)
+    axbig.errorbar(energy_axis,flux,flux_incl_err,xerr=energy_error,uplims=uplims,color='k',marker='_',ls='none',label=f'VERITAS ({roi_name[1]})',zorder=1)
     if 'SS433' in source_name:
         HessSS433e_energies, HessSS433e_fluxes, HessSS433e_flux_errs = GetHessSS433e()
         HessSS433w_energies, HessSS433w_fluxes, HessSS433w_flux_errs = GetHessSS433w()
@@ -2452,134 +2459,235 @@ def DefineRegionOfMask(src_name,src_ra,src_dec):
 
 def DefineRegionOfInterest(src_name,src_ra,src_dec):
 
+    region_name = ('default','default region')
     region_x = []
     region_y = []
     region_r = []
-    region_name = []
+    excl_x = []
+    excl_y = []
+    excl_r = []
 
     if 'Crab' in src_name:
 
+        region_name = ('center','center')
         region_x += [src_ra]
         region_y += [src_dec]
         region_r += [calibration_radius]
-        region_name += [('center','center')]
 
-        region_x += [84.4]
-        region_y += [21.1]
-        region_r += [calibration_radius]
-        region_name += ['star']
+        #region_name = ('star','star')
+        #region_x += [84.4]
+        #region_y += [21.1]
+        #region_r += [calibration_radius]
 
     elif 'Geminga' in src_name:
 
+        region_name = ('1p5deg','1.5 deg')
         region_x += [src_ra]
         region_y += [src_dec]
         region_r += [1.5]
-        region_name += [('1p5deg','1.5 deg')]
 
+        #region_name = ('1p0deg','1.0 deg')
         #region_x += [src_ra]
         #region_y += [src_dec]
         #region_r += [1.0]
-        #region_name += [('1p0deg','1.0 deg')]
 
     elif 'SNR_G189_p03' in src_name:
 
-        src_x = 94.25
-        src_y = 22.57
+        #region_name = ('SNR','SNR')
+        #src_x = 94.25
+        #src_y = 22.57
+        #region_x += [src_x]
+        #region_y += [src_y]
+        #region_r += [0.5]
+
+        region_name = ('HAWC','HAWC')
+        src_x = 93.67
+        src_y = 22.22
         region_x += [src_x]
         region_y += [src_y]
-        region_r += [1.0]
-        region_name += [('center','center')]
+        region_r += [1.05]
 
     elif 'PSR_J2021_p4026' in src_name:
 
+        #region_name = ('SNR_full','SNR (full)')
+        #src_x = 305.21
+        #src_y = 40.43
+        #region_x += [src_x]
+        #region_y += [src_y]
+        #region_r += [1.0]
+
+        region_name = ('SNR_core','SNR (core)')
         src_x = 305.21
         src_y = 40.43
         region_x += [src_x]
         region_y += [src_y]
-        region_r += [1.0]
-        region_name += [('SNR_full','SNR (full)')]
+        region_r += [0.5]
 
+        #region_name = ('SNR_shell','SNR (shell)')
+        #src_x = 305.21
+        #src_y = 40.43
         #region_x += [src_x]
         #region_y += [src_y]
-        #region_r += [0.5]
-        #region_name += [('SNR_core','SNR (core)')]
+        #region_r += [1.0]
+        #excl_x += [src_x]
+        #excl_y += [src_y]
+        #excl_r += [0.5]
+
+        #region_name = ('SNR_no_hotspot','SNR shell excluding MAGIC J2019+408')
+        #src_x = 305.21
+        #src_y = 40.43
+        #region_x += [src_x]
+        #region_y += [src_y]
+        #region_r += [1.0]
+        #excl_x += [src_x]
+        #excl_y += [src_y]
+        #excl_r += [0.5]
+        #excl_x += [304.93]
+        #excl_y += [40.87]
+        #excl_r += [0.26]
+
+        #region_name = ('SNR_no_hotspot','SNR excluding MAGIC J2019+408')
+        #src_x = 305.21
+        #src_y = 40.43
+        #region_x += [src_x]
+        #region_y += [src_y]
+        #region_r += [1.0]
+        #excl_x += [304.93]
+        #excl_y += [40.87]
+        #excl_r += [0.26]
 
     elif 'PSR_J1907_p0602' in src_name:
 
+        #region_name = ('3HWC','3HWC')
         #region_x += [287.05]
         #region_y += [6.39]
         #region_r += [1.2]
-        #region_name += [('3HWC','3HWC')]
 
-        region_x += [286.98]
-        region_y += [6.04]
-        region_r += [1.5]
-        region_name += [('PSR','PSR')]
-
+        #region_name = ('SS433','SS 433')
         #region_x += [288.0833333]
         #region_y += [4.9166667]
         #region_r += [0.2]
-        #region_name += [('SS433','SS 433')]
+
+        region_name = ('J1907_p0602_full','J1907+0602 (full)')
+        src_x = 286.98
+        src_y = 6.04
+        region_x += [src_x]
+        region_y += [src_y]
+        region_r += [1.5]
+
+        #region_name = ('J1907_p0602_inner','J1907+0602 (inner)')
+        #src_x = 286.98
+        #src_y = 6.04
+        #region_x += [src_x]
+        #region_y += [src_y]
+        #region_r += [0.5]
+
+        #region_name = ('J1907_p0602_outer','J1907+0602 (outer)')
+        #src_x = 286.98
+        #src_y = 6.04
+        #region_x += [src_x]
+        #region_y += [src_y]
+        #region_r += [1.5]
+        #excl_x += [src_x]
+        #excl_y += [src_y]
+        #excl_r += [0.5]
 
     elif 'PSR_J1856_p0245' in src_name:
 
-        region_x += [284.3]
-        region_y += [2.7]
+        region_name = ('J1856_p0245_full','J1856+0245 (full)')
+        src_x = 284.21
+        src_y = 2.76
+        region_x += [src_x]
+        region_y += [src_y]
         region_r += [1.0]
-        region_name += [('J1857_p026','J1857+026')]
 
+        #region_name = ('J1856_p0245_inner','J1856+0245 (inner)')
+        #src_x = 284.21
+        #src_y = 2.76
+        #region_x += [src_x]
+        #region_y += [src_y]
+        #region_r += [0.15]
+        #excl_x += [284.6]
+        #excl_y += [2.1]
+        #excl_r += [0.2]
+
+        #region_name = ('J1856_p0245_outer','J1856+0245 (outer)')
+        #src_x = 284.21
+        #src_y = 2.76
+        #region_x += [src_x]
+        #region_y += [src_y]
+        #region_r += [1.0]
+        #excl_x += [src_x]
+        #excl_y += [src_y]
+        #excl_r += [0.2]
+        #excl_x += [284.6]
+        #excl_y += [2.1]
+        #excl_r += [0.2]
+
+        #region_name = ('J1857_p026_full','J1857+026')
+        #src_x = 284.3
+        #src_y = 2.7
+        #region_x += [src_x]
+        #region_y += [src_y]
+        #region_r += [1.0]
+
+        #region_name = ('MAGIC','MAGIC')
         #region_x += [284.3]
         #region_y += [2.7]
         #region_r += [0.4]
-        #region_name += [('MAGIC','MAGIC')]
 
-        region_x += [284.6]
-        region_y += [2.1]
-        region_r += [0.2]
-        region_name += [('J1858_p020','J1858+020')]
+        #region_name = ('J1858_p020','J1858+020')
+        #region_x += [284.6]
+        #region_y += [2.1]
+        #region_r += [0.2]
 
-        region_x += [284.00]
-        region_y += [1.37]
-        region_r += [0.25]
-        region_name += [('W44','W44')]
+        #region_name = ('W44','W44')
+        #region_x += [284.00]
+        #region_y += [1.37]
+        #region_r += [0.25]
 
     elif 'SS433' in src_name:
     
+        region_name = ('3HWC','3HWC')
         region_x += [287.05]
         region_y += [6.39]
         region_r += [1.2]
-        region_name += [('3HWC','3HWC')]
 
-        #SS 433 SNR
+        #region_name = ('SNR','SS 433 SNR')
         #region_x += [288.0833333]
         #region_y += [4.9166667]
         #region_r += [0.2]
-        #region_name += [('SNR','SNR')]
     
-        #SS 433 w1
-        region_x += [287.45138775]
-        region_y += [5.06731983]
-        region_r += [0.2]
-        region_name += [('west','west')]
+        #region_name = ('west','SS 433 west')
+        #region_x += [287.45138775]
+        #region_y += [5.06731983]
+        #region_r += [0.2]
     
-        #SS 433 e1
-        region_x += [288.38690451]
-        region_y += [5.00610516]
-        region_r += [0.2]
-        region_name += [('east','east')]
+        #region_name = ('east','SS 433 east')
+        #region_x += [288.38690451]
+        #region_y += [5.00610516]
+        #region_r += [0.2]
+
         #region_x = [288.35,288.50,288.65,288.8]
         #region_y = [4.93,4.92,4.93,4.94]
         #region_r = [0.1,0.1,0.1,0.1]
 
+    elif 'PSR_J2030_p4415' in src_name:
+    
+        region_name = ('1p5deg','1.5-deg diameter')
+        region_x += [src_ra]
+        region_y += [src_dec]
+        region_r += [0.15]
+
     else:
 
+        region_name = ('default','default')
         region_x += [src_ra]
         region_y += [src_dec]
         region_r += [3.0]
-        region_name += [('center','center')]
 
 
-    return region_name, region_x, region_y, region_r
+    return region_name, region_x, region_y, region_r, excl_x, excl_y, excl_r
 
 def SaveFITS(skymap_input,filename):
 
@@ -2684,7 +2792,7 @@ def fit_2d_model(data_sky_map,bkgd_sky_map, src_x, src_y):
 def diffusion_func(x,A,d):
     return A*1.22/(pow(3.14,1.5)*d*(x+0.06*d))*np.exp(-x*x/(d*d))
 
-def plot_radial_profile_with_systematics(fig,plotname,logE_min,logE_max,flux_sky_map,flux_err_sky_map,mimic_flux_sky_map,mimic_flux_err_sky_map,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,fit_radial_profile,radial_bin_scale=0.1):
+def plot_radial_profile_with_systematics(fig,plotname,logE_min,logE_max,flux_sky_map,flux_err_sky_map,mimic_flux_sky_map,mimic_flux_err_sky_map,roi_x,roi_y,excl_roi_x,excl_roi_y,excl_roi_r,fit_radial_profile,radial_bin_scale=0.1):
 
     E_min = pow(10.,logE_bins[logE_min])
     E_max = pow(10.,logE_bins[logE_max])
@@ -2765,12 +2873,12 @@ def plot_radial_profile_with_systematics(fig,plotname,logE_min,logE_max,flux_sky
         file.writelines(lines)
 
     uplims = np.zeros_like(on_radial_axis)
-    for x in range(0,len(on_radial_axis)):
-        if on_profile_err_axis[x]==0.: continue
-        significance = on_profile_axis[x]/on_profile_err_axis[x]
-        if significance<2.:
-            uplims[x] = 1.
-            on_profile_axis[x] = max(2.*on_profile_err_axis[x],on_profile_axis[x]+2.*on_profile_err_axis[x])
+    #for x in range(0,len(on_radial_axis)):
+    #    if on_profile_err_axis[x]==0.: continue
+    #    significance = on_profile_axis[x]/on_profile_err_axis[x]
+    #    if significance<2.:
+    #        uplims[x] = 1.
+    #        on_profile_axis[x] = max(2.*on_profile_err_axis[x],on_profile_axis[x]+2.*on_profile_err_axis[x])
 
     baseline_yaxis = [0. for i in range(0,len(on_radial_axis))]
     fig.clf()
@@ -2784,53 +2892,11 @@ def plot_radial_profile_with_systematics(fig,plotname,logE_min,logE_max,flux_sky
     axbig.set_xlabel(label_x)
     axbig.set_ylabel(label_y)
     axbig.plot(on_radial_axis, baseline_yaxis, color='b', ls='dashed')
-    axbig.errorbar(on_radial_axis,on_profile_axis,on_profile_err_axis,uplims=uplims,color='k',marker='_',ls='none',zorder=2)
+    #axbig.errorbar(on_radial_axis,on_profile_axis,on_profile_err_axis,uplims=uplims,color='k',marker='_',ls='none',zorder=2)
+    axbig.errorbar(on_radial_axis,on_profile_axis,on_profile_err_axis,color='k',marker='_',ls='none',zorder=2)
     #axbig.fill_between(on_radial_axis,np.array(on_profile_axis)-np.array(profile_syst_err_axis),np.array(on_profile_axis)+np.array(profile_syst_err_axis),alpha=0.2,color='b',zorder=0)
     if fit_radial_profile:
         axbig.plot(on_radial_axis,diffusion_func(np.array(on_radial_axis),*popt),color='r')
-    fig.savefig(f'output_plots/{plotname}.png',bbox_inches='tight')
-    axbig.remove()
-
-def plot_radial_profile_ratio(fig,plotname,flux_sky_map_1,flux_err_sky_map_1,flux_sky_map_2,flux_err_sky_map_2,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,radial_bin_scale=0.1):
-
-    radial_axis_1, profile_axis_1, profile_err_axis_1 = GetRadialProfile(flux_sky_map_1,flux_err_sky_map_1,roi_x,roi_y,2.0,excl_roi_x,excl_roi_y,excl_roi_r,radial_bin_scale=radial_bin_scale)
-    radial_axis_2, profile_axis_2, profile_err_axis_2 = GetRadialProfile(flux_sky_map_2,flux_err_sky_map_2,roi_x,roi_y,2.0,excl_roi_x,excl_roi_y,excl_roi_r,radial_bin_scale=radial_bin_scale)
-
-    profile_ratio_axis = []
-    profile_ratio_err_axis = []
-    ylim_max = 0.
-    ylim_min = 0.
-    for entry in range(0,len(profile_axis_1)):
-        numerator = profile_axis_1[entry]
-        numerator_err = profile_err_axis_1[entry]
-        denominator = profile_axis_2[entry]
-        denominator_err = profile_err_axis_2[entry]
-        if denominator_err > denominator:
-            denominator = 0.5*denominator_err
-        if numerator_err > numerator:
-            numerator = 0.5*numerator_err
-        ratio_err = pow(pow(numerator_err / denominator,2) + pow(numerator / denominator * denominator_err / denominator,2),0.5)
-        ratio = numerator / denominator
-        profile_ratio_axis += [ratio]
-        profile_ratio_err_axis += [ratio_err]
-        if abs(ratio / ratio_err) > 1.:
-            if ratio+ratio_err>ylim_max:
-                ylim_max = ratio+ratio_err
-            if ratio-ratio_err<ylim_min:
-                ylim_min = ratio-ratio_err
-
-    fig.clf()
-    figsize_x = 7
-    figsize_y = 5
-    fig.set_figheight(figsize_y)
-    fig.set_figwidth(figsize_x)
-    axbig = fig.add_subplot()
-    label_x = 'angular distance [deg]'
-    label_y = 'surface brightness ratio'
-    axbig.set_xlabel(label_x)
-    axbig.set_ylabel(label_y)
-    axbig.errorbar(radial_axis_1,profile_ratio_axis,profile_ratio_err_axis,color='k',marker='+',ls='none',zorder=2)
-    axbig.set_ylim(ylim_min,ylim_max)
     fig.savefig(f'output_plots/{plotname}.png',bbox_inches='tight')
     axbig.remove()
 

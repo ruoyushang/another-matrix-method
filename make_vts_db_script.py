@@ -50,6 +50,7 @@ input_params += [ ['PSR_J2229_p6114', 337.27, 61.23, 30 ,90] ] # Boomerang
 
 input_params += [ ['Geminga'               ,98.476  ,17.770 ,30 ,90] ]
 input_params += [ ['CTA1', 1.608, 72.983  ,30 ,90] ]
+input_params += [ ['PSR_J2030_p4415', 307.7139583  , 44.2605833 , 30, 90] ]
 
 #input_params += [ ['Tycho', 6.28  , 64.17  ,30 ,90] ]
 #input_params += [ ['SNR_G150_p4', 66.785, 55.458,30 ,90] ] # Jamie's SNR

@@ -10,13 +10,21 @@ from common_functions import MyArray3D
 
 import common_functions
 
-logE_nbins = common_functions.logE_nbins
 logE_bins = common_functions.logE_bins
 matrix_rank = common_functions.matrix_rank
 matrix_rank_fullspec = common_functions.matrix_rank_fullspec
 ReadOffRunListFromFile = common_functions.ReadOffRunListFromFile
 build_big_camera_matrix = common_functions.build_big_camera_matrix
+logE_nbins = common_functions.logE_nbins
+gcut_bins = common_functions.gcut_bins
 xoff_bins = common_functions.xoff_bins
+yoff_bins = common_functions.yoff_bins
+xoff_start = common_functions.xoff_start
+xoff_end = common_functions.xoff_end
+yoff_start = common_functions.yoff_start
+yoff_end = common_functions.yoff_end
+gcut_start = common_functions.gcut_start
+gcut_end = common_functions.gcut_end
 
 fig, ax = plt.subplots()
 figsize_x = 6.4
@@ -109,8 +117,39 @@ for logE in range(0,logE_nbins):
     fig.savefig(f'{smi_dir}/output_plots/signularvalue_{source_name}_{input_epoch}_logE{logE}.png',bbox_inches='tight')
     axbig.remove()
     
+if onoff=="ON":
+    for logE in range(0,logE_nbins):
+        max_matrix_rank = min(5,big_eigenvectors[logE].shape[0])
+        for rank in range(0,max_matrix_rank):
+            idx_1d = 0
+            eigen_xyoff_map = MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)
+            for gcut in range(0,gcut_bins):
+                for idx_x in range(0,xoff_bins[logE]):
+                    for idx_y in range(0,yoff_bins[logE]):
+                        idx_1d += 1
+                        eigen_xyoff_map.waxis[idx_x,idx_y,gcut] += big_eigenvectors[logE][rank][idx_1d-1]
+        
+            fig.clf()
+            figsize_x = 7
+            figsize_y = 7
+            fig.set_figheight(figsize_y)
+            fig.set_figwidth(figsize_x)
+            axbig = fig.add_subplot()
+            label_x = 'Xoff'
+            label_y = 'Yoff'
+            axbig.set_xlabel(label_x)
+            axbig.set_ylabel(label_y)
+            xmin = eigen_xyoff_map.xaxis.min()
+            xmax = eigen_xyoff_map.xaxis.max()
+            ymin = eigen_xyoff_map.yaxis.min()
+            ymax = eigen_xyoff_map.yaxis.max()
+            im = axbig.imshow(eigen_xyoff_map.waxis[:,:,0].T,origin='lower',extent=(xmin,xmax,ymin,ymax),aspect='auto')
+            cbar = fig.colorbar(im)
+            fig.savefig(f'{smi_dir}/output_plots/eigenmap_{source_name}_{input_epoch}_logE{logE}_rank{rank}.png',bbox_inches='tight')
+            axbig.remove()
 
 U_full, S_full, VT_full = np.linalg.svd(big_matrix_fullspec,full_matrices=False) # perform better for perturbation method
+print (f'big_matrix_fullspec.shape = {big_matrix_fullspec.shape}')
 print (f'S_full length = {len(S_full)}')
 
 effective_matrix_rank = min(matrix_rank_fullspec,int(0.5*3./4.*(len(S_full)-1)))
