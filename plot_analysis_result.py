@@ -27,6 +27,7 @@ gcut_start = common_functions.gcut_start
 gcut_end = common_functions.gcut_end
 SaveFITS = common_functions.SaveFITS
 GetSlicedDataCubeMap = common_functions.GetSlicedDataCubeMap
+GetSlicedDataCubeMapGALFA = common_functions.GetSlicedDataCubeMapGALFA
 ReadRunListFromFile = common_functions.ReadRunListFromFile
 build_skymap = common_functions.build_skymap
 smooth_image = common_functions.smooth_image
@@ -138,7 +139,7 @@ if 'PSR_J1907_p0602' in source_name:
     logE_min = 0
     logE_mid = 5
     logE_max = logE_nbins
-    fit_radial_profile = True
+    fit_radial_profile = False
     make_symmetric_model = False
 if 'SS433' in source_name:
     logE_min = 0
@@ -979,6 +980,31 @@ for logE in range(logE_min,logE_max):
 fig.savefig(f'output_plots/{source_name}_xyoff_map_inclusive_err_{ana_tag}.png',bbox_inches='tight')
 axbig.remove()
 
+#fig.clf()
+#figsize_x = 3.*gcut_bins
+#figsize_y = 24.
+#fig.set_figheight(figsize_y)
+#fig.set_figwidth(figsize_x)
+#ax_idx = 0
+#for logE in range(logE_min,logE_min+1):
+#    for gcut in range(0,gcut_bins):
+#        ax_idx = gcut + (logE-logE_min)*gcut_bins + 1
+#        axbig = fig.add_subplot((logE_max-logE_min),gcut_bins,ax_idx)
+#        if logE==logE_min:
+#            if gcut==0:
+#                axbig.set_title('SR')
+#            else:
+#                axbig.set_title(f'CR{gcut}')
+#        if gcut==0:
+#            axbig.set_ylabel(f'E = {pow(10.,logE_bins[logE]):0.2f}-{pow(10.,logE_bins[logE+1]):0.2f} TeV')
+#        xmin = sum_data_xyoff_map[logE].xaxis.min()
+#        xmax = sum_data_xyoff_map[logE].xaxis.max()
+#        ymin = sum_data_xyoff_map[logE].yaxis.min()
+#        ymax = sum_data_xyoff_map[logE].yaxis.max()
+#        im = axbig.imshow(sum_err_xyoff_map[logE].waxis[:,:,gcut].T,origin='lower',extent=(xmin,xmax,ymin,ymax),aspect='auto',vmin=-max_z,vmax=max_z,cmap='coolwarm')
+#fig.savefig(f'output_plots/{source_name}_xyoff_map_inclusive_err_{ana_tag}.png',bbox_inches='tight')
+#axbig.remove()
+
 PlotSkyMap(fig,'significance',logE_min,logE_max,sum_significance_sky_map_allE,f'{source_name}_significance_sky_map_allE_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,max_z=5.,zoomin=zoomin)
 PlotSkyMap(fig,'excess count',logE_min,logE_max,sum_excess_sky_map_allE,f'{source_name}_excess_sky_map_allE_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma',zoomin=zoomin)
 PlotSkyMap(fig,'significance',logE_min,logE_mid,sum_significance_sky_map_LE,f'{source_name}_significance_sky_map_LE_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,max_z=5.,zoomin=zoomin)
@@ -1012,6 +1038,12 @@ if 'PSR_J2021_p4026' in source_name:
     PlotSkyMap(fig,'Intensity',logE_min,logE_max,HI_sky_map,f'{source_name}_HI_sky_map_m27_m19_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma',zoomin=zoomin)
     GetSlicedDataCubeMap(MWL_map_file, HI_sky_map, -19., -3.)
     PlotSkyMap(fig,'Intensity',logE_min,logE_max,HI_sky_map,f'{source_name}_HI_sky_map_m19_m03_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma',zoomin=zoomin)
+
+if 'PSR_J1856_p0245' in source_name:
+    HI_sky_map = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
+    MWL_map_file = '/nevis/ged/data/rshang/MW_FITS/GALFA_HI_RA+DEC_284.00+02.35_N.fits' 
+    GetSlicedDataCubeMapGALFA(MWL_map_file, HI_sky_map, 81.*1e3, 102.*1e3)
+    PlotSkyMap(fig,'Intensity',logE_min,logE_max,HI_sky_map,f'{source_name}_HI_sky_map_p81_p102_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma',zoomin=zoomin)
 
 
 

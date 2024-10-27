@@ -2354,7 +2354,7 @@ def PrintAndPlotInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,hist_d
         significance = 0.
         if bkgd_incl_err[binx]>0.:
             significance = (data[binx]-bkgd[binx])/bkgd_incl_err[binx]
-        print (f'E = {energy_axis[binx]:0.2f} TeV, data = {data[binx]:0.1f} +/- {data_stat_err[binx]:0.1f}, bkgd = {bkgd[binx]:0.1f} +/- {bkgd_syst_err[binx]:0.1f}, flux = {flux[binx]:0.2e} +/- {flux_incl_err[binx]:0.2e} TeV/cm2/s ({flux_cu[binx]:0.2f} CU), significance = {significance:0.1f} sigma')
+        print (f'E = {energy_axis[binx]:0.2f} ({pow(10.,logE_bins[binx]):0.2f}-{pow(10.,logE_bins[binx+1]):0.2f})TeV, data = {data[binx]:0.1f} +/- {data_stat_err[binx]:0.1f}, bkgd = {bkgd[binx]:0.1f} +/- {bkgd_syst_err[binx]:0.1f}, flux = {flux[binx]:0.2e} +/- {flux_incl_err[binx]:0.2e} TeV/cm2/s ({flux_cu[binx]:0.2f} CU), significance = {significance:0.1f} sigma')
     print ('===============================================================================================================')
 
     cu_uplims = np.zeros_like(energy_axis)
@@ -3060,6 +3060,82 @@ def GetSlicedDataCubeMap(map_file, sky_map, vel_low, vel_up):
             pix_dec = int(map_pixs[1])
             if pix_ra>=image_data_reduced_z.shape[0]: continue
             if pix_dec>=image_data_reduced_z.shape[1]: continue
+            sky_map.waxis[idx_x,idx_y,0] += image_data_reduced_z[pix_dec,pix_ra]
+
+
+def GetSlicedDataCubeMapGALFA(map_file, sky_map, vel_low, vel_up):
+
+    sky_map.reset()
+
+    nbins_x = len(sky_map.xaxis)-1
+    nbins_y = len(sky_map.yaxis)-1
+    ra_min = sky_map.xaxis[0]
+    ra_max = sky_map.xaxis[len(sky_map.xaxis)-1]
+    dec_min = sky_map.yaxis[0]
+    dec_max = sky_map.yaxis[len(sky_map.yaxis)-1]
+    map_center_ra = 0.5 * (ra_min+ra_max)
+    map_center_dec = 0.5 * (dec_min+dec_max)
+    map_center_lon, map_center_lat = ConvertRaDecToGalactic(map_center_ra, map_center_dec)
+
+
+    filename = map_file
+
+    hdu = fits.open(filename)[0]
+    wcs = WCS(hdu.header)
+    image_data = hdu.data
+    print (f"image_data.shape = {image_data.shape}")
+    print ("wcs")
+    print (wcs)
+
+    pixs_start = wcs.all_world2pix(map_center_ra,map_center_dec,vel_low,1)
+    pixs_end = wcs.all_world2pix(map_center_ra,map_center_dec,vel_up,1)
+    vel_idx_start = int(pixs_start[2])
+    vel_idx_end = int(pixs_end[2])
+
+    image_data_reduced_z = np.full((image_data[vel_idx_start, :, :].shape),0.)
+    for idx in range(vel_idx_start,vel_idx_end):
+        world_coord = wcs.all_pix2world(0,0,idx,1) 
+        velocity = world_coord[2]
+        world_coord = wcs.all_pix2world(0,0,idx+1,1) 
+        velocity_next = world_coord[2]
+        delta_vel = velocity_next - velocity
+        image_data_reduced_z += image_data[idx, :, :]*delta_vel
+
+
+    world_coord = wcs.all_pix2world(0,0,0,0)
+    min_vel = world_coord[2]
+    world_coord = wcs.all_pix2world(0,0,image_data.shape[1]-1,0)
+    max_vel = world_coord[2]
+    print (f"min_vel = {min_vel}")
+    print (f"max_vel = {max_vel}")
+
+    all_pix_lon = []
+    all_pix_lat = []
+    for idx_x in range(0,image_data.shape[1]-1):
+        for idx_y in range(0,image_data.shape[2]-1):
+            world_coord = wcs.all_pix2world(idx_x,idx_y,0,0) 
+            lon = world_coord[0]
+            lat = world_coord[1]
+            all_pix_lon += [lon]
+            all_pix_lat += [lat]
+    max_lon = np.max(all_pix_lon)
+    max_lat = np.max(all_pix_lat)
+    min_lon = np.min(all_pix_lon)
+    min_lat = np.min(all_pix_lat)
+    print (f"max_lon = {max_lon}")
+    print (f"max_lat = {max_lat}")
+    print (f"min_lon = {min_lon}")
+    print (f"min_lat = {min_lat}")
+
+    for idx_x in range(0,nbins_x):
+        for idx_y in range(0,nbins_y):
+            sky_ra = sky_map.xaxis[idx_x]
+            sky_dec = sky_map.yaxis[idx_y]
+            map_pixs = wcs.all_world2pix(sky_ra, sky_dec, vel_low, 1)
+            pix_ra = int(map_pixs[0])
+            pix_dec = int(map_pixs[1])
+            if pix_ra>=image_data_reduced_z.shape[1]: continue
+            if pix_dec>=image_data_reduced_z.shape[0]: continue
             sky_map.waxis[idx_x,idx_y,0] += image_data_reduced_z[pix_dec,pix_ra]
 
 
