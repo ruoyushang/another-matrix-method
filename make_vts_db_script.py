@@ -25,6 +25,8 @@ input_params += [ ['PKS1424'               ,216.750 ,23.783 ,30 ,90] ]
 input_params += [ ['RGB_J0710_p591'        ,107.61  ,59.15  ,30 ,90] ]
 input_params += [ ['UrsaMinor'             ,227.285 ,67.222 ,30 ,90] ]
 input_params += [ ['UrsaMajorII'           ,132.875 ,63.13  ,30 ,90] ]
+input_params += [ ['1ES1959_p650'          ,300.00 ,65.15 ,30 ,90] ]
+
 input_params += [ ['CrabNebula_elev_80_90' ,83.633  ,22.014 ,80 ,90] ]
 input_params += [ ['CrabNebula_elev_70_80' ,83.633  ,22.014 ,70 ,80] ]
 input_params += [ ['CrabNebula_elev_60_70' ,83.633  ,22.014 ,60 ,70] ]
@@ -33,8 +35,6 @@ input_params += [ ['CrabNebula_elev_40_50' ,83.633  ,22.014 ,40 ,50] ]
 input_params += [ ['CrabNebula_elev_30_40' ,83.633  ,22.014 ,30 ,40] ]
 input_params += [ ['CrabNebula_1p0wobble' ,83.633  ,22.014 ,30 ,90] ]
 input_params += [ ['CrabNebula_1p5wobble' ,83.633  ,22.014 ,30 ,90] ]
-input_params += [ ['1ES1959_p650'          ,300.00 ,65.15 ,30 ,90] ]
-
 input_params += [ ['SNR_G189_p03'          ,94.213  ,22.503 ,30 ,90] ] # ic 443
 input_params += [ ['PSR_J1907_p0602'       ,286.975 ,6.337  ,30 ,90] ]
 input_params += [ ['PSR_J2021_p4026'       ,305.37  ,40.45  ,30 ,90] ] # gamma cygni
@@ -47,7 +47,6 @@ input_params += [ ['PSR_J1928_p1746', 292.15, 17.78, 30 ,90] ]
 input_params += [ ['LHAASO_J0622_p3754', 95.50  , 37.90  ,30 ,90] ]
 input_params += [ ['Cas_A', 350.8075  , 58.8072  ,30 ,90] ]
 input_params += [ ['PSR_J2229_p6114', 337.27, 61.23, 30 ,90] ] # Boomerang
-
 input_params += [ ['Geminga'               ,98.476  ,17.770 ,30 ,90] ]
 input_params += [ ['CTA1', 1.608, 72.983  ,30 ,90] ]
 input_params += [ ['PSR_J2030_p4415', 307.7139583  , 44.2605833 , 30, 90] ]

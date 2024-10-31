@@ -56,9 +56,10 @@ figsize_y = 6.4
 fig.set_figheight(figsize_y)
 fig.set_figwidth(figsize_x)
 
-smi_input = os.environ.get("SMI_INPUT")
-smi_output = os.environ.get("SMI_OUTPUT")
 smi_dir = os.environ.get("SMI_DIR")
+smi_input = os.environ.get("SMI_INPUT")
+#smi_output = os.environ.get("SMI_OUTPUT")
+smi_output = "/nevis/ged/data/rshang/smi_output/output_detail"
 
 smooth_size = 0.06
 #smooth_size = 0.08
@@ -75,7 +76,10 @@ zoomin = 1.0
 #ana_tag = 'rank1'
 #ana_tag = 'rank2'
 #ana_tag = 'rank4'
-ana_tag = 'rank5'
+#ana_tag = 'rank5'
+#ana_tag = 'rank6'
+#ana_tag = 'rank7'
+ana_tag = 'rank8'
 
 qual_cut = 0.
 #qual_cut = 20.

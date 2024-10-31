@@ -14,8 +14,18 @@ import numpy as np
 
 all_runs_info = []
 
-output_dir = 'output_vts_query'
-#output_dir = 'output_vts_query_tmp'
+#output_dir = 'output_vts_query_default'
+#input_range_elev = 0.05
+#input_range_azim = 0.10
+#input_range_nsb = 1.
+#input_range_runnum = 10000.
+#find_imposter = False
+output_dir = 'output_vts_query_detail'
+input_range_elev = 0.05
+input_range_azim = 0.10
+input_range_nsb = 1.
+input_range_runnum = 10000.
+find_imposter = True
 
 def ReadLhaasoListFromFile():
     source_name = []
@@ -1019,6 +1029,9 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
     list_no_repeat_off_run_ids = []
     list_off_sources = []
 
+    if not find_imposter and is_imposter:
+        return list_off_run_ids
+
     if len(list_on_run_ids)==0:
         print ('Empty ON run list. Exit.')
         return list_off_run_ids
@@ -1029,7 +1042,8 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
     require_nmatch = 5
     if not is_imposter:
         #require_nmatch = 1
-        require_nmatch = 2
+        #require_nmatch = 2
+        require_nmatch = 3
 
     # setup database connection
     dbcnx=pymysql.connect(host='romulus.ucsc.edu', db='VERITAS', user='readonly', cursorclass=pymysql.cursors.DictCursor)
@@ -1114,58 +1128,54 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
             #delta_azim = off_run_az-on_run_az
 
             delta_elev = (1./math.sin(off_run_el*math.pi/180.)-1./math.sin(on_run_el*math.pi/180.));
-            delta_elev_deg = off_run_el-on_run_el
 
             delta_nsb = off_run_nsb-on_run_nsb
             delta_runnum = all_runs_info[run][0]-list_on_run_ids[on_run]
 
-            range_elev = 0.05
-            range_nsb = 1.
-            range_runnum = 10000.
+            range_elev = input_range_elev
+            range_azim = input_range_azim
+            range_nsb = input_range_nsb
+            range_runnum = input_range_runnum
+            if is_imposter:
+                range_elev = 0.1
+                range_azim = 0.3
+                range_nsb = 2.
+                range_runnum = 100000.
 
             significance_diff_elev = abs(total_elev_diff/range_elev)
+            significance_diff_azim = abs(total_azim_diff/range_azim)
             significance_diff_nsb = abs(total_nsb_diff/range_nsb)
             significance_diff_runnum = abs(total_runnum_diff/range_runnum)
 
-            if is_imposter:
-                if abs(delta_elev)>0.2: continue
-                if abs(delta_azim)>0.3: continue
+            param_dict = {'elev':significance_diff_elev, 'azim':significance_diff_azim, 'nsb':significance_diff_nsb, 'runnum':significance_diff_runnum}
+            sorted_dict_desc = dict(sorted(param_dict.items(), key=lambda item: item[1], reverse=True))
+            first_key = next(iter(param_dict))
+            first_value = param_dict[first_key]
 
-                if significance_diff_runnum>significance_diff_elev and significance_diff_runnum>significance_diff_nsb and significance_diff_runnum>2.:
-                    if total_runnum_diff>0.:
-                        if delta_runnum>0.: continue
-                    else:
-                        if delta_runnum<0.: continue
-                elif significance_diff_nsb>significance_diff_runnum and significance_diff_nsb>significance_diff_elev and significance_diff_nsb>2.:
-                    if total_nsb_diff>0.:
-                        if delta_nsb>0.: continue
-                    else:
-                        if delta_nsb<0.: continue
-                elif significance_diff_elev>2.:
-                    if total_elev_diff>0.:
-                        if delta_elev>0.: continue
-                    else:
-                        if delta_elev<0.: continue
+            if abs(delta_elev)>2.*range_elev: continue
+            if abs(delta_azim)>2.*range_azim: continue
+            if abs(delta_nsb)>2.*range_nsb: continue
+            if first_key=='elev':
+                if total_elev_diff>0.:
+                    if delta_elev>0.: continue
+                else:
+                    if delta_elev<0.: continue
+            if first_key=='azim':
+                if total_azim_diff>0.:
+                    if delta_azim>0.: continue
+                else:
+                    if delta_azim<0.: continue
+            if first_key=='nsb':
+                if total_nsb_diff>0.:
+                    if delta_nsb>0.: continue
+                else:
+                    if delta_nsb<0.: continue
+            if first_key=='runnum':
+                if total_runnum_diff>0.:
+                    if delta_runnum>0.: continue
+                else:
+                    if delta_runnum<0.: continue
 
-            else:
-                if abs(delta_elev)>0.2: continue
-                if abs(delta_azim)>0.2: continue
-
-                if significance_diff_runnum>significance_diff_elev and significance_diff_runnum>significance_diff_nsb and significance_diff_runnum>1.:
-                    if total_runnum_diff>0.:
-                        if delta_runnum>0.: continue
-                    else:
-                        if delta_runnum<0.: continue
-                elif significance_diff_nsb>significance_diff_runnum and significance_diff_nsb>significance_diff_elev and significance_diff_nsb>1.:
-                    if total_nsb_diff>0.:
-                        if delta_nsb>0.: continue
-                    else:
-                        if delta_nsb<0.: continue
-                elif significance_diff_elev>1.:
-                    if total_elev_diff>0.:
-                        if delta_elev>0.: continue
-                    else:
-                        if delta_elev<0.: continue
 
             list_off_run_ids += [[int(list_on_run_ids[on_run]),int(all_runs_info[run][0]),on_run_el,off_run_el]]
             number_off_runs += 1
@@ -1281,7 +1291,6 @@ else:
     job_tag = ''
 
     find_off = True
-    find_imposter = True
     obs_ra = input_ra
     obs_name = '%s_%s'%(input_name,run_epoch)
     obs_dec = input_dec

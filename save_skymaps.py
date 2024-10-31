@@ -116,8 +116,8 @@ for run in range(0,total_runs):
 
     total_exposure += (time_end-time_start)/3600.
 
+#min_exposure = 0.3 # hours
 min_exposure = 2.0 # hours
-#min_exposure = max(min_exposure,float(total_exposure/40.))
 run_exposure = 0.
 for run in range(0,total_runs):
 
