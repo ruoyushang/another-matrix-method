@@ -4,6 +4,7 @@ import ROOT
 import numpy as np
 import pickle
 from matplotlib import pyplot as plt
+from matplotlib.gridspec import GridSpec
 from scipy.optimize import curve_fit
 from common_functions import MyArray1D
 from common_functions import MyArray3D
@@ -59,6 +60,9 @@ fig.set_figwidth(figsize_x)
 smi_dir = os.environ.get("SMI_DIR")
 smi_input = os.environ.get("SMI_INPUT")
 #smi_output = os.environ.get("SMI_OUTPUT")
+#smi_output = "/nevis/ged/data/rshang/smi_output/output_default"
+#smi_output = "/nevis/ged/data/rshang/smi_output/output_7x7"
+#smi_output = "/nevis/ged/data/rshang/smi_output/output_region_chi2"
 smi_output = "/nevis/ged/data/rshang/smi_output/output_detail"
 
 smooth_size = 0.06
@@ -77,9 +81,9 @@ zoomin = 1.0
 #ana_tag = 'rank2'
 #ana_tag = 'rank4'
 #ana_tag = 'rank5'
-#ana_tag = 'rank6'
+ana_tag = 'rank6'
 #ana_tag = 'rank7'
-ana_tag = 'rank8'
+#ana_tag = 'rank8'
 
 qual_cut = 0.
 #qual_cut = 20.
@@ -110,7 +114,7 @@ if onoff=='ON':
 input_epoch = ['V4','V5','V6']
 
 logE_min = 0
-logE_mid = 1
+logE_mid = 4
 logE_max = logE_nbins
 fit_radial_profile = False
 make_symmetric_model = False
@@ -209,8 +213,6 @@ list_run_elev = []
 list_run_azim = []
 list_truth_params = []
 list_fit_params = []
-list_sr_qual = []
-list_cr_qual = []
 sum_incl_sky_map = []
 sum_data_sky_map = []
 sum_bkgd_sky_map = []
@@ -424,8 +426,7 @@ for epoch in input_epoch:
             run_azim = run_info[2]
             truth_params = run_info[3]
             fit_params = run_info[4]
-            sr_qual = run_info[5]
-            cr_qual = run_info[6]
+            run_nsb = run_info[5]
 
             if run_azim>270.:
                 run_azim = run_azim-360.
@@ -440,8 +441,6 @@ for epoch in input_epoch:
                 mimic_exposure[mimic_index-1] += exposure
 
             is_good_run = True
-            if cr_qual>cr_qual_cut:
-                is_good_run = False
             if not is_good_run: 
                 print (f'bad fitting. reject the run.')
                 continue
@@ -459,8 +458,6 @@ for epoch in input_epoch:
                 list_run_azim += [run_azim]
                 list_truth_params += [truth_params]
                 list_fit_params += [fit_params]
-                list_sr_qual += [sr_qual]
-                list_cr_qual += [cr_qual]
                 n_groups += 1.
 
             logE_peak = 0
@@ -890,10 +887,11 @@ figsize_x = 2.*(logE_max-logE_min)
 fig.set_figheight(figsize_y)
 fig.set_figwidth(figsize_x)
 ax_idx = 0
+gs = GridSpec(gcut_bins, (logE_max-logE_min), hspace=0.1, wspace=0.1)
 for logE in range(logE_min,logE_max):
     for gcut in range(0,gcut_bins):
         ax_idx = logE-logE_min + (logE_max-logE_min)*gcut + 1
-        axbig = fig.add_subplot(gcut_bins,(logE_max-logE_min),ax_idx)
+        axbig = fig.add_subplot(gs[ax_idx-1])
         if logE==logE_min:
             if gcut==0:
                 axbig.set_ylabel('SR')
@@ -901,6 +899,10 @@ for logE in range(logE_min,logE_max):
                 axbig.set_ylabel(f'CR{gcut}')
         if gcut==0:
             axbig.set_title(f'{pow(10.,logE_bins[logE]):0.2f}-{pow(10.,logE_bins[logE+1]):0.2f} TeV')
+        if not logE==logE_min:
+            axbig.axes.get_yaxis().set_visible(False)
+        if not gcut==gcut_bins-1:
+            axbig.axes.get_xaxis().set_visible(False)
         xmin = sum_data_xyoff_map[logE].xaxis.min()
         xmax = sum_data_xyoff_map[logE].xaxis.max()
         ymin = sum_data_xyoff_map[logE].yaxis.min()
@@ -940,10 +942,11 @@ figsize_x = 2.*(logE_max-logE_min)
 fig.set_figheight(figsize_y)
 fig.set_figwidth(figsize_x)
 ax_idx = 0
+gs = GridSpec(gcut_bins, (logE_max-logE_min), hspace=0.1, wspace=0.1)
 for logE in range(logE_min,logE_max):
     for gcut in range(0,gcut_bins):
         ax_idx = logE-logE_min + (logE_max-logE_min)*gcut + 1
-        axbig = fig.add_subplot(gcut_bins,(logE_max-logE_min),ax_idx)
+        axbig = fig.add_subplot(gs[ax_idx-1])
         if logE==logE_min:
             if gcut==0:
                 axbig.set_ylabel('SR')
@@ -951,6 +954,10 @@ for logE in range(logE_min,logE_max):
                 axbig.set_ylabel(f'CR{gcut}')
         if gcut==0:
             axbig.set_title(f'{pow(10.,logE_bins[logE]):0.2f}-{pow(10.,logE_bins[logE+1]):0.2f} TeV')
+        if not logE==logE_min:
+            axbig.axes.get_yaxis().set_visible(False)
+        if not gcut==gcut_bins-1:
+            axbig.axes.get_xaxis().set_visible(False)
         xmin = sum_data_xyoff_map[logE].xaxis.min()
         xmax = sum_data_xyoff_map[logE].xaxis.max()
         ymin = sum_data_xyoff_map[logE].yaxis.min()
@@ -1050,52 +1057,6 @@ if 'PSR_J1856_p0245' in source_name:
     PlotSkyMap(fig,'Intensity',logE_min,logE_max,HI_sky_map,f'{source_name}_HI_sky_map_p81_p102_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma',zoomin=zoomin)
 
 
-
-
-fig.clf()
-figsize_x = 7
-figsize_y = 7
-fig.set_figheight(figsize_y)
-fig.set_figwidth(figsize_x)
-axbig = fig.add_subplot()
-label_x = 'CR chi2'
-label_y = 'SR chi2'
-axbig.set_xlabel(label_x)
-axbig.set_ylabel(label_y)
-axbig.scatter(list_cr_qual,list_sr_qual,color='b',alpha=0.5)
-#axbig.set_xscale('log')
-#axbig.set_ylim(0.,2.)
-#axbig.set_xlim(0.5,1.5)
-fig.savefig(f'output_plots/{source_name}_crsr_qual_{ana_tag}.png',bbox_inches='tight')
-axbig.remove()
-
-fig.clf()
-figsize_x = 7
-figsize_y = 5
-fig.set_figheight(figsize_y)
-fig.set_figwidth(figsize_x)
-axbig = fig.add_subplot()
-label_x = 'Run elevation'
-label_y = 'SR chi2'
-axbig.set_xlabel(label_x)
-axbig.set_ylabel(label_y)
-axbig.scatter(list_run_elev,list_sr_qual,color='b',alpha=0.5)
-fig.savefig(f'output_plots/{source_name}_elev_sr_qual_{ana_tag}.png',bbox_inches='tight')
-axbig.remove()
-
-fig.clf()
-figsize_x = 7
-figsize_y = 5
-fig.set_figheight(figsize_y)
-fig.set_figwidth(figsize_x)
-axbig = fig.add_subplot()
-label_x = 'Run azimuth'
-label_y = 'SR chi2'
-axbig.set_xlabel(label_x)
-axbig.set_ylabel(label_y)
-axbig.scatter(list_run_azim,list_sr_qual,color='b',alpha=0.5)
-fig.savefig(f'output_plots/{source_name}_azim_sr_qual_{ana_tag}.png',bbox_inches='tight')
-axbig.remove()
 
 fig.clf()
 figsize_x = 7

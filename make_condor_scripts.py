@@ -3,19 +3,21 @@ import os
 import sys
 
 SMI_DIR = os.environ['SMI_DIR']
-SMI_OUTPUT = os.environ['SMI_OUTPUT']
+#SMI_OUTPUT = os.environ['SMI_OUTPUT']
 
 print (f'SMI_DIR = {SMI_DIR}')
-print (f'SMI_OUTPUT = {SMI_OUTPUT}')
+#print (f'SMI_OUTPUT = {SMI_OUTPUT}')
 
-is_training = True
-#is_training = False
+#is_training = True
+is_training = False
+print (f"is_training = {is_training}")
 
 training_mode = 'off'
 if not is_training:
     training_mode = 'on'
 
-n_mimic = 5
+#n_mimic = 5
+n_mimic = 0
 
 input_params = []
 
@@ -138,7 +140,7 @@ for s in range(0,len(input_params)):
     qfile.write('executable = /bin/bash \n')
     qfile.write('arguments = save_mtx_%s_%s.sh\n'%(source,onoff))
     qfile.write('request_cpus = 1 \n')
-    qfile.write('request_memory = 2048M \n')
+    qfile.write('request_memory = 1024M \n')
     qfile.write('request_disk = 1024M \n')
     qfile.write('output = condor_save_mtx_%s.out\n'%(source))
     qfile.write('error = condor_save_mtx_%s.err\n'%(source))

@@ -116,7 +116,7 @@ for run in range(0,total_runs):
 
     total_exposure += (time_end-time_start)/3600.
 
-#min_exposure = 0.3 # hours
+#min_exposure = 0.1 # hours
 min_exposure = 2.0 # hours
 run_exposure = 0.
 for run in range(0,total_runs):
@@ -221,8 +221,7 @@ for small_runlist in range(0,len(big_runlist)):
     run_azim = run_info[2]
     truth_params = run_info[3]
     fit_params = run_info[4]
-    sr_qual = run_info[5]
-    cr_qual = run_info[6]
+    run_nsb = run_info[5]
     if run_exposure_hours==0.: continue
 
     run_data_xyoff_sum_sr = 0.
@@ -292,13 +291,13 @@ for small_runlist in range(0,len(big_runlist)):
     if not os.path.exists(output_filename):
         print (f'{output_filename} does not exist, create new...')
         analysis_result = []
-        analysis_result += [[[run_exposure_hours, run_elev, run_azim, truth_params, fit_params, sr_qual, cr_qual], incl_sky_map, data_sky_map, bkgd_sky_map, data_xyoff_map, fit_xyoff_map,ratio_xyoff_map]]
+        analysis_result += [[[run_exposure_hours, run_elev, run_azim, truth_params, fit_params, run_nsb], incl_sky_map, data_sky_map, bkgd_sky_map, data_xyoff_map, fit_xyoff_map,ratio_xyoff_map]]
         with open(output_filename,"wb") as file:
             pickle.dump(analysis_result, file)
         del analysis_result
     else:
         analysis_result = pickle.load(open(output_filename, "rb"))
-        analysis_result += [[[run_exposure_hours, run_elev, run_azim, truth_params, fit_params, sr_qual, cr_qual], incl_sky_map, data_sky_map, bkgd_sky_map, data_xyoff_map, fit_xyoff_map,ratio_xyoff_map]]
+        analysis_result += [[[run_exposure_hours, run_elev, run_azim, truth_params, fit_params, run_nsb], incl_sky_map, data_sky_map, bkgd_sky_map, data_xyoff_map, fit_xyoff_map,ratio_xyoff_map]]
         with open(output_filename,"wb") as file:
             pickle.dump(analysis_result, file)
         del analysis_result

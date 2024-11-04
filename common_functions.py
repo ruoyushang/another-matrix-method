@@ -18,7 +18,7 @@ from astropy.io import fits
 from astropy.wcs import WCS
 
 sky_tag = os.environ.get("SKY_TAG")
-
+smi_output = os.environ.get("SMI_OUTPUT")
 
 use_poisson_likelihood = True
 use_fullspec = False
@@ -42,7 +42,7 @@ if sky_tag=='init':
 
 if 'rank' in sky_tag:
     matrix_rank = int(sky_tag.strip('rank'))
-    matrix_rank_fullspec = int(sky_tag.strip('rank'))
+    matrix_rank_fullspec = 2*int(sky_tag.strip('rank'))
 
 run_elev_cut = 25.
 
@@ -74,7 +74,7 @@ logE_nbins = len(logE_bins)-1
 #str_flux_calibration = ['1.44e+03', '1.60e+03', '1.69e+03', '1.99e+03', '4.20e+03', '9.81e+03', '2.30e+04', '5.20e+04']
 MSCW_cut = [0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60]
 MSCL_cut = [0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70]
-str_flux_calibration = ['1.44e+03', '1.52e+03', '1.52e+03', '1.73e+03', '3.54e+03', '8.05e+03', '1.84e+04', '3.78e+04']
+str_flux_calibration = ['1.30e+03', '1.35e+03', '1.41e+03', '1.65e+03', '3.63e+03', '8.49e+03', '2.05e+04', '4.88e+04']
 
 skymap_size = 3.
 skymap_bins = 30
@@ -84,11 +84,12 @@ fine_skymap_bins = 120
 doFluxCalibration = False
 calibration_radius = 0.15 # need to be larger than the PSF and smaller than the integration radius
 
-xoff_bins = [5,5,5,5,5,5,5,5]
-#xoff_bins = [9,7,7,5,5,5,5,5]
-#xoff_bins = [9,7,7,5,5,3,3,1]
-if sky_tag=='demo':
-    xoff_bins = [11,11,11,11,11,11,11,11]
+#xoff_bins = [5,5,5,5,5,5,5,5]
+xoff_bins = [7,7,7,7,7,7,7,7]
+#xoff_bins = [9,9,9,9,9,9,9,9]
+#xoff_bins = [11,11,11,11,11,11,11,11] # consume too much memory
+if '7x7' in smi_output:
+    xoff_bins = [7,7,7,7,7,7,7,7]
 yoff_bins = xoff_bins
 
 chi2_cut = 0.5
@@ -264,6 +265,10 @@ class MyArray3D:
             self.yaxis[idx] = start_y + idx*self.delta_y
         for idx in range(0,len(self.zaxis)):
             self.zaxis[idx] = start_z + idx*self.delta_z
+
+    def __del__(self):
+        #print('Destructor called, MyArray3D deleted.')
+        pass
 
     def just_like(self, template):
         self.xaxis = np.zeros_like(template.xaxis)
@@ -659,11 +664,6 @@ def build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,runlist,max_run
         big_matrix_fullspec += [xyoff_map_1d]
         big_mask_matrix_fullspec += [xyoff_mask_map_1d]
 
-        del xyoff_map
-        del xyoff_mask_map
-        del xyoff_map_1d
-        del xyoff_mask_map_1d
-
 
         InputFile.Close()
         if run_count==max_runs: break
@@ -702,6 +702,8 @@ def build_skymap(source_name,src_ra,src_dec,smi_input,eigenvector_path,big_matri
     exposure_hours = 0.
     avg_tel_elev = 0.
     avg_tel_azim = 0.
+    avg_MeanPedvar = 0.
+    total_events = 0.
 
     effective_matrix_rank = max(1,big_eigenvectors[0].shape[0])
     truth_params = [1e-3] * effective_matrix_rank
@@ -735,7 +737,7 @@ def build_skymap(source_name,src_ra,src_dec,smi_input,eigenvector_path,big_matri
 
     if len(big_on_matrix_fullspec)==0:
         print (f'No data. Break.')
-        return [exposure_hours,avg_tel_elev,avg_tel_azim,truth_params,fit_params,sr_qual,cr_qual]
+        return [exposure_hours,avg_tel_elev,avg_tel_azim,truth_params,fit_params,avg_MeanPedvar]
 
     for logE in range(0,logE_nbins):
         incl_sky_map[logE].reset()
@@ -841,23 +843,24 @@ def build_skymap(source_name,src_ra,src_dec,smi_input,eigenvector_path,big_matri
                     for idx_y in range(0,yoff_bins[logE]):
                         idx_1d += 1
                         #init_fit_xyoff_map_1d_fullspec[idx_1d-1] = fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
-                        if gcut==0:
-                            init_fit_xyoff_map_1d_fullspec[idx_1d-1] = fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
-                        else:
-                            init_fit_xyoff_map_1d_fullspec[idx_1d-1] = data_xyoff_map_1d_fullspec[idx_1d-1]
+                        init_fit_xyoff_map_1d_fullspec[idx_1d-1] = data_xyoff_map_1d_fullspec[idx_1d-1]
+                        #if gcut==0:
+                        #    init_fit_xyoff_map_1d_fullspec[idx_1d-1] = fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
+                        #else:
+                        #    init_fit_xyoff_map_1d_fullspec[idx_1d-1] = data_xyoff_map_1d_fullspec[idx_1d-1]
 
         diff_xyoff_map_1d_fullspec = init_fit_xyoff_map_1d_fullspec - best_template_xyoff_map_1d_fullspec
         fit_params = [0.] * effective_matrix_rank_fullspec
         avg_params = big_eigenvectors_fullspec @ best_template_xyoff_map_1d_fullspec
-        truth_params = big_eigenvectors_fullspec @ diff_xyoff_map_1d_fullspec
-        #truth_params = big_eigenvectors_fullspec @ init_fit_xyoff_map_1d_fullspec
+        #truth_params = big_eigenvectors_fullspec @ diff_xyoff_map_1d_fullspec
+        truth_params = big_eigenvectors_fullspec @ init_fit_xyoff_map_1d_fullspec
 
         init_params = truth_params
         stepsize = [1e-4] * effective_matrix_rank_fullspec
         solution = minimize(
             cosmic_ray_like_chi2_fullspec,
             x0=init_params,
-            args=(truth_params,big_eigenvectors_fullspec,diff_xyoff_map_1d_fullspec,best_template_xyoff_map_1d_fullspec,mask_xyoff_map_1d_fullspec,1),
+            args=(truth_params,big_eigenvectors_fullspec,diff_xyoff_map_1d_fullspec,best_template_xyoff_map_1d_fullspec,mask_xyoff_map_1d_fullspec,0),
             method='L-BFGS-B',
             jac=None,
             options={'eps':stepsize,'ftol':0.0001},
@@ -865,8 +868,8 @@ def build_skymap(source_name,src_ra,src_dec,smi_input,eigenvector_path,big_matri
         fit_params = solution['x']
         #fit_params = truth_params
 
-        fit_xyoff_map_1d_fullspec = big_eigenvectors_fullspec.T @ fit_params + best_template_xyoff_map_1d_fullspec
-        #fit_xyoff_map_1d_fullspec = big_eigenvectors_fullspec.T @ fit_params
+        #fit_xyoff_map_1d_fullspec = big_eigenvectors_fullspec.T @ fit_params + best_template_xyoff_map_1d_fullspec
+        fit_xyoff_map_1d_fullspec = big_eigenvectors_fullspec.T @ fit_params
 
         print (f'effective_matrix_rank_fullspec = {effective_matrix_rank_fullspec}')
         print (f'big_eigenvalues_fullspec = {big_eigenvalues_fullspec}')
@@ -898,12 +901,14 @@ def build_skymap(source_name,src_ra,src_dec,smi_input,eigenvector_path,big_matri
         for gcut in range(0,gcut_bins):
             if gcut!=0: continue
             print (f'gcut = {gcut}')
-            sum_data_xyoff_map = np.sum(data_xyoff_map[logE].waxis[:,:,gcut])
-            sum_fit_xyoff_map = np.sum(fit_xyoff_map[logE].waxis[:,:,gcut])
             if use_fullspec:
+                sum_data_xyoff_map = np.sum(data_xyoff_map[logE].waxis[:,:,gcut])
+                sum_fit_xyoff_map = np.sum(fit_xyoff_map[logE].waxis[:,:,gcut])
                 sum_fit_xyoff_map_fullspec = np.sum(fit_xyoff_map_fullspec[logE].waxis[:,:,gcut])
                 print (f'sum_data_xyoff_map = {sum_data_xyoff_map:0.1f}, sum_fit_xyoff_map = {sum_fit_xyoff_map:0.1f}, sum_fit_xyoff_map_fullspec = {sum_fit_xyoff_map_fullspec:0.1f}')
             else:
+                sum_data_xyoff_map = np.sum(data_xyoff_map[logE].waxis[:,:,gcut])
+                sum_fit_xyoff_map = np.sum(fit_xyoff_map[logE].waxis[:,:,gcut])
                 print (f'sum_data_xyoff_map = {sum_data_xyoff_map:0.1f}, sum_fit_xyoff_map = {sum_fit_xyoff_map:0.1f}')
 
     for logE in range(0,logE_nbins):
@@ -1019,6 +1024,7 @@ def build_skymap(source_name,src_ra,src_dec,smi_input,eigenvector_path,big_matri
             Energy = EvtTree.Energy
             NImages = EvtTree.NImages
             EmissionHeight = EvtTree.EmissionHeight
+            MeanPedvar = EvtTree.MeanPedvar
             Xcore = EvtTree.XCore
             Ycore = EvtTree.YCore
             Roff = pow(Xoff*Xoff+Yoff*Yoff,0.5)
@@ -1037,6 +1043,9 @@ def build_skymap(source_name,src_ra,src_dec,smi_input,eigenvector_path,big_matri
             MSCW = EvtTree.MSCW/MSCW_cut[logE]
             MSCL = EvtTree.MSCL/MSCL_cut[logE]
             GammaCut = EventGammaCut(MSCL,MSCW)
+
+            avg_MeanPedvar += MeanPedvar
+            total_events += 1.
 
             Xsky = RA
             Ysky = DEC
@@ -1069,6 +1078,7 @@ def build_skymap(source_name,src_ra,src_dec,smi_input,eigenvector_path,big_matri
     if exposure_hours>0.:
         avg_tel_elev = avg_tel_elev/exposure_hours
         avg_tel_azim = avg_tel_azim/exposure_hours
+        avg_MeanPedvar = avg_MeanPedvar/total_events
 
     print (f'avg_tel_elev = {avg_tel_elev}')
 
@@ -1078,16 +1088,16 @@ def build_skymap(source_name,src_ra,src_dec,smi_input,eigenvector_path,big_matri
     del big_mask_matrix_fullspec
 
     if use_fullspec:
-        return [exposure_hours,avg_tel_elev,avg_tel_azim,truth_params,fit_params,sr_qual,cr_qual]
+        return [exposure_hours,avg_tel_elev,avg_tel_azim,truth_params,fit_params,avg_MeanPedvar]
     else:
-        return [exposure_hours,avg_tel_elev,avg_tel_azim,truth_params,fit_params,sr_qual,cr_qual]
+        return [exposure_hours,avg_tel_elev,avg_tel_azim,truth_params,fit_params,avg_MeanPedvar]
 
 
 def cosmic_ray_like_chi2_fullspec(try_params,ref_params,eigenvectors,diff_xyoff_map,init_xyoff_map,mask_xyoff_map,region_type):
 
     try_params = np.array(try_params)
-    try_xyoff_map = eigenvectors.T @ try_params + init_xyoff_map
-    #try_xyoff_map = eigenvectors.T @ try_params
+    #try_xyoff_map = eigenvectors.T @ try_params + init_xyoff_map
+    try_xyoff_map = eigenvectors.T @ try_params
 
     init_params = eigenvectors @ init_xyoff_map
 
@@ -1109,8 +1119,18 @@ def cosmic_ray_like_chi2_fullspec(try_params,ref_params,eigenvectors,diff_xyoff_
                     mask = mask_xyoff_map[idx_1d-1]
                     weight = 1.
 
+                    if mask>0.:
+                        weight = 0.1
+
                     n_expect = max(0.0001,try_xyoff_map[idx_1d-1])
                     n_data = max(0.,diff + init)
+
+                    if region_type==0:
+                        if gcut==0:
+                            n_data = max(0.0001,init) # blind signal region with init background model
+                            weight = regularization_scale
+                    elif region_type==1:
+                        if gcut!=0: continue
 
                     nbins += 1.
                     n_expect_total += n_expect
@@ -1153,6 +1173,7 @@ def cosmic_ray_like_chi2(try_params,logE,ref_params,eigenvectors,diff_xyoff_map,
     nbins = 0.
     n_expect_total = 0.
     n_data_total = 0.
+
     for gcut in range(0,gcut_bins):
         n_expect_gcut = 0.
         n_data_gcut = 0.
@@ -1193,15 +1214,15 @@ def cosmic_ray_like_chi2(try_params,logE,ref_params,eigenvectors,diff_xyoff_map,
                 else:
                     sum_log_likelihood += pow(n_expect-n_data,2)*weight
 
-        #if xoff_bins[logE]>=3:
-        #    weight = 1.
-        #    if use_poisson_likelihood:
-        #        if n_data_gcut==0.:
-        #            sum_log_likelihood += (n_expect_gcut)*weight
-        #        else:
-        #            sum_log_likelihood += (-1.*(n_data_gcut*np.log(n_expect_gcut) - n_expect_gcut - (n_data_gcut*np.log(n_data_gcut)-n_data_gcut)))*weight
-        #    else:
-        #        sum_log_likelihood += pow(n_expect_gcut-n_data_gcut,2)*weight
+        #weight = float(xoff_bins[logE]*yoff_bins[logE])
+        weight = 1.
+        if use_poisson_likelihood:
+            if n_data_gcut==0.:
+                sum_log_likelihood += (n_expect_gcut)*weight
+            else:
+                sum_log_likelihood += (-1.*(n_data_gcut*np.log(n_expect_gcut) - n_expect_gcut - (n_data_gcut*np.log(n_data_gcut)-n_data_gcut)))*weight
+        else:
+            sum_log_likelihood += pow(n_expect_gcut-n_data_gcut,2)*weight
 
     #idx_1d = 0
     #idx_x_map = []
@@ -1226,9 +1247,9 @@ def cosmic_ray_like_chi2(try_params,logE,ref_params,eigenvectors,diff_xyoff_map,
     #        idx_x2 = idx_x_map[idx_1d_2]
     #        idx_y2 = idx_y_map[idx_1d_2]
     #        if not gcut_1==gcut_2: continue
-    #        if idx_x1==idx_x2 and idx_y1==idx_y2: continue
     #        if abs(idx_x1-idx_x2)>1: continue
     #        if abs(idx_y1-idx_y2)>1: continue
+    #        #if idx_x1==idx_x2 and idx_y1==idx_y2: continue
 
     #        diff_1 = diff_xyoff_map[idx_1d_1]
     #        init_1 = init_xyoff_map[idx_1d_1]
@@ -1260,8 +1281,8 @@ def cosmic_ray_like_chi2(try_params,logE,ref_params,eigenvectors,diff_xyoff_map,
     #            if gcut_1!=0: continue
     #            if gcut_2!=0: continue
 
-    #        n_data = n_data_1 + n_data_2
-    #        n_expect = n_expect_1 + n_expect_2
+    #        n_data = (n_data_1 + n_data_2)/2.
+    #        n_expect = (n_expect_1 + n_expect_2)/2.
     #        weight = weight_1 * weight_2
     #        if use_poisson_likelihood:
     #            if n_data==0.:
