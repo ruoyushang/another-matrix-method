@@ -171,17 +171,21 @@ for logE in range(0,logE_nbins):
 
 total_data_sky_map = []
 total_bkgd_sky_map = []
+total_syst_sky_map = []
 for logE in range(0,logE_nbins):
     total_data_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
     total_bkgd_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
+    total_syst_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
 
 incl_sky_map = []
 data_sky_map = []
 bkgd_sky_map = []
+syst_sky_map = []
 for logE in range(0,logE_nbins):
     incl_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
     data_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
     bkgd_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
+    syst_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
 
 data_xyoff_map = []
 fit_xyoff_map = []
@@ -194,20 +198,24 @@ for logE in range(0,logE_nbins):
 run_incl_sky_map = []
 run_data_sky_map = []
 run_fit_sky_map = []
+run_syst_sky_map = []
 for logE in range(0,logE_nbins):
     run_incl_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
     run_data_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
     run_fit_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
+    run_syst_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
 
 run_data_xyoff_map = []
 run_fit_xyoff_map = []
-run_fit_xyoff_map_fullspec = []
+run_tolerance_xyoff_map = []
 run_ratio_xyoff_map = []
+run_syst_xyoff_map = []
 for logE in range(0,logE_nbins):
     run_data_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
     run_fit_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
-    run_fit_xyoff_map_fullspec += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+    run_tolerance_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
     run_ratio_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+    run_syst_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
 
 
 run_list_count = 0
@@ -217,6 +225,7 @@ for small_runlist in range(0,len(big_runlist)):
         incl_sky_map[logE].reset()
         data_sky_map[logE].reset()
         bkgd_sky_map[logE].reset()
+        syst_sky_map[logE].reset()
 
     for logE in range(0,logE_nbins):
         data_xyoff_map[logE].reset()
@@ -226,7 +235,26 @@ for small_runlist in range(0,len(big_runlist)):
     run_list_count += 1
     print (f'analyzing {run_list_count}/{len(big_runlist)} lists...')
 
-    run_info = build_skymap(source_name,src_ra,src_dec,smi_input,path_to_eigenvector,path_to_big_matrix,big_runlist[small_runlist],big_mimic_runlist[small_runlist],onoff, run_incl_sky_map, run_data_sky_map, run_fit_sky_map, run_data_xyoff_map, run_fit_xyoff_map, run_fit_xyoff_map_fullspec, run_ratio_xyoff_map)
+    run_info = build_skymap(
+            source_name,
+            src_ra,
+            src_dec,
+            smi_input,
+            path_to_eigenvector,
+            path_to_big_matrix,
+            big_runlist[small_runlist],
+            big_mimic_runlist[small_runlist],
+            onoff, 
+            run_incl_sky_map, 
+            run_data_sky_map, 
+            run_fit_sky_map, 
+            run_syst_sky_map, 
+            run_data_xyoff_map, 
+            run_fit_xyoff_map, 
+            run_tolerance_xyoff_map, 
+            run_ratio_xyoff_map,
+            run_syst_xyoff_map,
+        )
 
     run_exposure_hours = run_info[0]
     run_elev = run_info[1]
@@ -250,26 +278,10 @@ for small_runlist in range(0,len(big_runlist)):
 
     for logE in range(0,logE_nbins):
         data_xyoff_map[logE].add(run_data_xyoff_map[logE])
-        if use_fullspec:
-            fit_xyoff_map[logE].add(run_fit_xyoff_map_fullspec[logE])
-        else:
-            fit_xyoff_map[logE].add(run_fit_xyoff_map[logE])
+        fit_xyoff_map[logE].add(run_fit_xyoff_map[logE])
         ratio_xyoff_map[logE].add(run_ratio_xyoff_map[logE])
         total_data_xyoff_map[logE].add(run_data_xyoff_map[logE])
         total_fit_xyoff_map[logE].add(run_fit_xyoff_map[logE])
-
-        run_data_xyoff_sum_sr = np.sum(run_data_xyoff_map[logE].waxis[:,:,0])
-        run_data_sky_sum_sr = np.sum(run_data_sky_map[logE].waxis[:,:,0])
-        run_fit_xyoff_sum_sr = np.sum(run_fit_xyoff_map[logE].waxis[:,:,0])
-        run_fit_sky_sum_sr = np.sum(run_fit_sky_map[logE].waxis[:,:,0])
-
-        #renormalization = 1.
-        ##if run_fit_sky_sum_sr>0.:
-        ##    renormalization = run_fit_xyoff_sum_sr/run_fit_sky_sum_sr
-        ##renormalization = run_fit_xyoff_sum_sr/run_fit_sky_sum_sr*run_data_xyoff_sum_sr/run_data_sky_sum_sr
-        #for idx_x in range(0,skymap_bins):
-        #    for idx_y in range(0,skymap_bins):
-        #        run_fit_sky_map[logE].waxis[idx_x,idx_y,0] = run_fit_sky_map[logE].waxis[idx_x,idx_y,0]*renormalization
 
         for gcut in range(0,1):
             for idx_x in range(0,skymap_bins):
@@ -279,9 +291,12 @@ for small_runlist in range(0,len(big_runlist)):
                     data = run_data_sky_map[logE].waxis[idx_x,idx_y,gcut]
                     data_sky_map[logE].waxis[idx_x,idx_y,gcut] += data
                     bkgd = run_fit_sky_map[logE].waxis[idx_x,idx_y,gcut]
-                    bkgd_sky_map[logE].waxis[idx_x,idx_y,gcut] = bkgd
+                    syst = run_syst_sky_map[logE].waxis[idx_x,idx_y,gcut]
+                    bkgd_sky_map[logE].waxis[idx_x,idx_y,gcut] += bkgd
+                    syst_sky_map[logE].waxis[idx_x,idx_y,gcut] += syst
                     total_data_sky_map[logE].waxis[idx_x,idx_y,gcut] += data
                     total_bkgd_sky_map[logE].waxis[idx_x,idx_y,gcut] += bkgd
+                    total_syst_sky_map[logE].waxis[idx_x,idx_y,gcut] += syst
 
     print ('=================================================================================')
     total_data_sum = 0.
@@ -290,16 +305,17 @@ for small_runlist in range(0,len(big_runlist)):
         print (f'logE = {logE}')
         data_sum = np.sum(total_data_sky_map[logE].waxis[:,:,0])
         bkgd_sum = np.sum(total_bkgd_sky_map[logE].waxis[:,:,0])
+        syst_sum = np.sum(total_syst_sky_map[logE].waxis[:,:,0])
         total_data_sum += data_sum
         total_bkgd_sum += bkgd_sum
-        #data_sum = np.sum(total_data_xyoff_map[logE].waxis[:,:,0])
-        #bkgd_sum = np.sum(total_fit_xyoff_map[logE].waxis[:,:,0])
         error = 0.
         stat_error = 0.
+        syst_error = 0.
         if data_sum>0.:
             error = 100.*(data_sum-bkgd_sum)/data_sum
             stat_error = 100.*pow(data_sum,0.5)/data_sum
-        print (f'On data,  data_sum = {data_sum}, bkgd_sum = {bkgd_sum:0.1f}, error = {error:0.1f} +/- {stat_error:0.1f} %')
+            syst_error = 100.*pow(syst_sum,0.5)/data_sum
+        print (f'On data,  data_sum = {data_sum}, bkgd_sum = {bkgd_sum:0.1f}, error = {error:0.1f} +/- {stat_error:0.1f} +/- {syst_error:0.1f} %')
     print (f'total_data_sum = {total_data_sum:0.1f}, total_bkgd_sum = {total_bkgd_sum:0.1f}')
 
 
@@ -308,13 +324,13 @@ for small_runlist in range(0,len(big_runlist)):
     if not os.path.exists(output_filename):
         print (f'{output_filename} does not exist, create new...')
         analysis_result = []
-        analysis_result += [[[run_exposure_hours, run_elev, run_azim, truth_params, fit_params, run_nsb], incl_sky_map, data_sky_map, bkgd_sky_map, data_xyoff_map, fit_xyoff_map, ratio_xyoff_map]]
+        analysis_result += [[[run_exposure_hours, run_elev, run_azim, truth_params, fit_params, run_nsb], incl_sky_map, data_sky_map, bkgd_sky_map, syst_sky_map, data_xyoff_map, fit_xyoff_map, ratio_xyoff_map]]
         with open(output_filename,"wb") as file:
             pickle.dump(analysis_result, file)
         del analysis_result
     else:
         analysis_result = pickle.load(open(output_filename, "rb"))
-        analysis_result += [[[run_exposure_hours, run_elev, run_azim, truth_params, fit_params, run_nsb], incl_sky_map, data_sky_map, bkgd_sky_map, data_xyoff_map, fit_xyoff_map, ratio_xyoff_map]]
+        analysis_result += [[[run_exposure_hours, run_elev, run_azim, truth_params, fit_params, run_nsb], incl_sky_map, data_sky_map, bkgd_sky_map, syst_sky_map, data_xyoff_map, fit_xyoff_map, ratio_xyoff_map]]
         with open(output_filename,"wb") as file:
             pickle.dump(analysis_result, file)
         del analysis_result

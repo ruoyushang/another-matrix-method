@@ -79,15 +79,11 @@ zoomin = 1.0
 #ana_tag = 'init'
 #ana_tag = 'rank1'
 #ana_tag = 'rank2'
-#ana_tag = 'rank4'
-#ana_tag = 'rank5'
-#ana_tag = 'rank6'
-#ana_tag = 'rank7'
+ana_tag = 'rank4'
 #ana_tag = 'rank8'
 #ana_tag = 'rank16'
-ana_tag = 'rank32'
+#ana_tag = 'rank32'
 #ana_tag = 'rank64'
-#ana_tag = 'rank128'
 
 qual_cut = 0.
 #qual_cut = 20.
@@ -463,9 +459,10 @@ for epoch in input_epoch:
             incl_sky_map = analysis_result[run][1] 
             data_sky_map = analysis_result[run][2] 
             bkgd_sky_map = analysis_result[run][3] 
-            data_xyoff_map = analysis_result[run][4]
-            fit_xyoff_map = analysis_result[run][5]
-            ratio_xyoff_map = analysis_result[run][6]
+            syst_sky_map = analysis_result[run][4] 
+            data_xyoff_map = analysis_result[run][5]
+            fit_xyoff_map = analysis_result[run][6]
+            ratio_xyoff_map = analysis_result[run][7]
 
             if not 'MIMIC' in mode:
                 good_exposure += exposure
@@ -497,6 +494,7 @@ for epoch in input_epoch:
                     sum_incl_sky_map[logE].add(incl_sky_map[logE])
                     sum_data_sky_map[logE].add(data_sky_map[logE])
                     sum_bkgd_sky_map[logE].add(bkgd_sky_map[logE])
+                    sum_syst_sky_map[logE].add(syst_sky_map[logE])
                     sum_data_xyoff_map[logE].add(data_xyoff_map[logE])
                     sum_fit_xyoff_map[logE].add(fit_xyoff_map[logE])
                     sum_ratio_xyoff_map[logE].add(ratio_xyoff_map[logE])
@@ -517,54 +515,13 @@ for logE in range(0,logE_nbins):
             sum_init_err_xyoff_map[logE].waxis[idx_x,idx_y,0] = (data-model)/data_err
 
 for logE in range(0,logE_nbins):
-    model_syst_square = 0.
-    bkgd_norm = 0.
-    n_pix = 0.
     for idx_x in range(0,xoff_bins[logE]):
         for idx_y in range(0,yoff_bins[logE]):
-            for gcut in range(1,gcut_bins):
+            for gcut in range(0,gcut_bins):
                 data = sum_data_xyoff_map[logE].waxis[idx_x,idx_y,gcut] 
                 model = sum_fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] 
                 significance = significance_li_and_ma(data, model, 0.)
                 sum_err_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = significance
-                if data==0.: continue
-                if np.isnan(significance): continue
-                #model_syst_square += max(0., pow((data-model)/data,2) - 1./data)
-                #bkgd_norm += 1.
-                #model_syst_square += pow(data-model,2)
-                #model_syst_square += pow(significance,2)
-                model_syst_square += significance
-                bkgd_norm += data
-                n_pix += 1.
-    if bkgd_norm>0.:
-        model_syst_square = model_syst_square/n_pix
-    else:
-        model_syst_square = 0.
-
-    if not include_syst_error:
-        model_syst_square = 0.
-
-    for idx_x in range(0,xoff_bins[logE]):
-        for idx_y in range(0,yoff_bins[logE]):
-            for gcut in range(0,1):
-                data = sum_data_xyoff_map[logE].waxis[idx_x,idx_y,gcut] 
-                model = sum_fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] 
-                #model_err = pow(model_syst_square * model,0.5)
-                model_err = model_syst_square * pow(model,0.5)
-                significance = significance_li_and_ma(data, model, model_err)
-                sum_err_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = significance
-
-    for idx_x in range(0,skymap_bins):
-        for idx_y in range(0,skymap_bins):
-            for gcut in range(0,1):
-                data = sum_data_sky_map[logE].waxis[idx_x,idx_y,gcut] 
-                model = sum_bkgd_sky_map[logE].waxis[idx_x,idx_y,gcut] 
-                #model_err = pow(model_syst_square * model,0.5)
-                model_err = model_syst_square * pow(model,0.5)
-                #print (f"model_syst_square = {model_syst_square:0.4f}, data = {data}, model = {model:0.1f}, model_err = {model_err:0.1f}")
-                sum_syst_sky_map[logE].waxis[idx_x,idx_y,gcut] = model_err
-    #exit()
-
 
 for logE in range(0,logE_nbins):
     sum_data_xyoff_map[logE].scale(1./good_exposure)
@@ -586,15 +543,15 @@ for logE in range(0,logE_nbins):
     smooth_image(sum_data_sky_map_smooth[logE].waxis[:,:,0],sum_data_sky_map_smooth[logE].xaxis,sum_data_sky_map_smooth[logE].yaxis,kernel_radius=smooth_size)
     sum_data_sky_map_allE.add(sum_data_sky_map_smooth[logE])
     sum_bkgd_sky_map_allE.add(sum_bkgd_sky_map_smooth[logE])
-    sum_syst_sky_map_allE.addSquare(sum_syst_sky_map_smooth[logE])
+    sum_syst_sky_map_allE.add(sum_syst_sky_map_smooth[logE])
     if logE>=logE_min and logE<logE_mid:
         sum_data_sky_map_LE.add(sum_data_sky_map_smooth[logE])
         sum_bkgd_sky_map_LE.add(sum_bkgd_sky_map_smooth[logE])
-        sum_syst_sky_map_LE.addSquare(sum_syst_sky_map_smooth[logE])
+        sum_syst_sky_map_LE.add(sum_syst_sky_map_smooth[logE])
     if logE>=logE_mid and logE<=logE_max:
         sum_data_sky_map_HE.add(sum_data_sky_map_smooth[logE])
         sum_bkgd_sky_map_HE.add(sum_bkgd_sky_map_smooth[logE])
-        sum_syst_sky_map_HE.addSquare(sum_syst_sky_map_smooth[logE])
+        sum_syst_sky_map_HE.add(sum_syst_sky_map_smooth[logE])
 
 for logE in range(0,logE_nbins):
     for mimic in range(0,n_mimic):

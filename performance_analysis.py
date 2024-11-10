@@ -50,22 +50,18 @@ ana_tag = []
 
 #ana_tag += [['rank1','r']]
 #ana_tag += [['rank2','w']]
-#ana_tag += [['rank3','w']]
-#ana_tag += [['rank4','w']]
-#ana_tag += [['rank5','w']]
-#ana_tag += [['rank6','w']]
-#ana_tag += [['rank7','w']]
+ana_tag += [['rank4','b']]
 ana_tag += [['rank8','b']]
-ana_tag += [['rank16','b']]
-ana_tag += [['rank32','b']]
-ana_tag += [['rank64','b']]
+#ana_tag += [['rank16','b']]
+#ana_tag += [['rank32','b']]
+#ana_tag += [['rank64','b']]
 
 onoff = 'OFF'
 
-#exposure_per_group = 2.
+exposure_per_group = 2.
 #exposure_per_group = 4.
 #exposure_per_group = 10.
-exposure_per_group = 20.
+#exposure_per_group = 20.
 #exposure_per_group = 50.
 #exposure_per_group = 100.
 cr_qual_cut = 1e10
@@ -141,8 +137,9 @@ for ana in range(0,len(ana_tag)):
                 run_nsb = run_info[5]
                 data_sky_map = analysis_result[run][2] 
                 bkgd_sky_map = analysis_result[run][3] 
-                data_xyoff_map = analysis_result[run][4]
-                bkgd_xyoff_map = analysis_result[run][5]
+                syst_sky_map = analysis_result[run][4] 
+                data_xyoff_map = analysis_result[run][5]
+                bkgd_xyoff_map = analysis_result[run][6]
     
                 if run_azim>270.:
                     run_azim = run_azim-360.
