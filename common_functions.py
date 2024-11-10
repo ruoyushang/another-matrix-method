@@ -21,7 +21,7 @@ sky_tag = os.environ.get("SKY_TAG")
 smi_output = os.environ.get("SMI_OUTPUT")
 
 use_poisson_likelihood = True
-use_fullspec = False
+use_fullspec = True
 regularization_scale = 0.
 matrix_rank = 5
 matrix_rank_fullspec = 5
@@ -42,7 +42,7 @@ if sky_tag=='init':
 
 if 'rank' in sky_tag:
     matrix_rank = int(sky_tag.strip('rank'))
-    matrix_rank_fullspec = 2*int(sky_tag.strip('rank'))
+    matrix_rank_fullspec = int(sky_tag.strip('rank'))
 
 run_elev_cut = 25.
 
@@ -60,6 +60,7 @@ xoff_start = -2.
 xoff_end = 2.
 yoff_start = -2.
 yoff_end = 2.
+
 gcut_bins = 4
 gcut_start = 0
 gcut_end = gcut_bins
@@ -88,8 +89,6 @@ calibration_radius = 0.15 # need to be larger than the PSF and smaller than the 
 xoff_bins = [7,7,7,7,7,7,7,7]
 #xoff_bins = [9,9,9,9,9,9,9,9]
 #xoff_bins = [11,11,11,11,11,11,11,11] # consume too much memory
-if '7x7' in smi_output:
-    xoff_bins = [7,7,7,7,7,7,7,7]
 yoff_bins = xoff_bins
 
 chi2_cut = 0.5
@@ -97,6 +96,33 @@ chi2_cut = 0.5
 
 smi_aux = os.environ.get("SMI_AUX")
 smi_dir = os.environ.get("SMI_DIR")
+
+def significance_li_and_ma(N_on, N_bkg, N_bkg_err):
+
+    if (N_on+N_bkg)<=1.0:
+        return 0.
+
+    sign = 1.
+    if N_on<N_bkg:
+        sign = -1.
+
+    # in the limit of alpha = 1.
+
+    on_nlogn = 0.
+    if N_on>0.:
+        on_nlogn = N_on*np.log(2.*(N_on/(N_on+N_bkg)))
+    bkg_nlogn = 0.
+    if N_bkg>0.:
+        bkg_nlogn = N_bkg*np.log(2.*(N_bkg/(N_on+N_bkg)))
+
+    chi_square_stat = 2 * (on_nlogn + bkg_nlogn)
+    chi_square = chi_square_stat
+    if N_bkg_err>0.:
+        chi_square_syst = pow((N_on-N_bkg)/N_bkg_err,2)
+        chi_square = 1. / (1./chi_square_stat + 1./chi_square_syst)
+    S = sign * pow(chi_square,0.5)
+
+    return S
 
 def GetRunElevAzim(smi_input,run_number):
 
@@ -514,7 +540,7 @@ def EventGammaCut(MSCL,MSCW):
     elif abs(MSCL)<2. and abs(MSCW)<2.:
         GammaCut = 3.5
 
-    #if abs(MSCL)<1. and abs(MSCW)<1.:
+    #if   abs(MSCL)<1. and abs(MSCW)<1.:
     #    GammaCut = 0.5
     #elif abs(MSCL)<1. and abs(MSCW)<2.:
     #    GammaCut = 1.5
@@ -522,6 +548,10 @@ def EventGammaCut(MSCL,MSCW):
     #    GammaCut = 2.5
     #elif abs(MSCL)<1. and abs(MSCW)<4.:
     #    GammaCut = 3.5
+    #elif abs(MSCL)<1. and abs(MSCW)<5.:
+    #    GammaCut = 4.5
+    #elif abs(MSCL)<1. and abs(MSCW)<6.:
+    #    GammaCut = 5.5
 
 
     return GammaCut
@@ -693,6 +723,7 @@ def build_skymap(source_name,src_ra,src_dec,smi_input,eigenvector_path,big_matri
     big_eigenvalues_fullspec = eigen_stuff[3]
     big_eigenvectors_fullspec = eigen_stuff[4]
     avg_xyoff_map_1d_fullspec = eigen_stuff[5]
+    tolerance_map_1d_fullspec = eigen_stuff[6]
 
     print ('loading matrix pickle data... ')
     input_filename = big_matrix_path
@@ -708,8 +739,6 @@ def build_skymap(source_name,src_ra,src_dec,smi_input,eigenvector_path,big_matri
     effective_matrix_rank = max(1,big_eigenvectors[0].shape[0])
     truth_params = [1e-3] * effective_matrix_rank
     fit_params = [1e-3] * effective_matrix_rank
-    cr_qual = 0.
-    sr_qual = 0.
     print (f'big_eigenvectors.shape = {big_eigenvectors[0].shape}') 
 
     print ('build big matrix...')
@@ -771,25 +800,21 @@ def build_skymap(source_name,src_ra,src_dec,smi_input,eigenvector_path,big_matri
         #truth_params = big_eigenvectors[logE] @ diff_xyoff_map_1d
         truth_params = big_eigenvectors[logE] @ data_xyoff_map_1d
 
-        #init_params = [1e-4] * effective_matrix_rank
-        init_params = truth_params
-        stepsize = [1e-4] * effective_matrix_rank
-        solution = minimize(
-            cosmic_ray_like_chi2,
-            x0=init_params,
-            args=(logE,truth_params,big_eigenvectors[logE],diff_xyoff_map_1d,best_template_xyoff_map_1d,mask_xyoff_map_1d,0),
-            method='L-BFGS-B',
-            jac=None,
-            options={'eps':stepsize,'ftol':0.0001},
-        )
-        fit_params = solution['x']
-        #fit_params = truth_params
+        if not use_fullspec:
+            init_params = truth_params
+            stepsize = [1e-4] * effective_matrix_rank
+            solution = minimize(
+                cosmic_ray_like_chi2,
+                x0=init_params,
+                args=(logE,truth_params,big_eigenvectors[logE],diff_xyoff_map_1d,best_template_xyoff_map_1d,mask_xyoff_map_1d,0),
+                method='L-BFGS-B',
+                jac=None,
+                options={'eps':stepsize,'ftol':0.0001},
+            )
+            fit_params = solution['x']
 
         #fit_xyoff_map_1d = big_eigenvectors[logE].T @ fit_params + best_template_xyoff_map_1d
         fit_xyoff_map_1d = big_eigenvectors[logE].T @ fit_params
-
-        run_sr_chi2 = cosmic_ray_like_chi2(fit_params,logE,truth_params,big_eigenvectors[logE],diff_xyoff_map_1d,best_template_xyoff_map_1d,mask_xyoff_map_1d,1)
-        run_cr_chi2 = cosmic_ray_like_chi2(fit_params,logE,truth_params,big_eigenvectors[logE],diff_xyoff_map_1d,best_template_xyoff_map_1d,mask_xyoff_map_1d,0)
 
         print ('===================================================================================')
         print (f'effective_matrix_rank = {effective_matrix_rank}')
@@ -799,7 +824,6 @@ def build_skymap(source_name,src_ra,src_dec,smi_input,eigenvector_path,big_matri
         sum_truth_params = np.sum(truth_params)
         sum_fit_params = np.sum(fit_params)
         print (f'sum_truth_params = {sum_truth_params:0.1f}, sum_fit_params = {sum_fit_params:0.1f}')
-        print (f'run_sr_chi2 = {run_sr_chi2:0.3f}, run_cr_chi2 = {run_cr_chi2:0.3f}')
 
         sr_data_count = cosmic_ray_like_count(logE,data_xyoff_map_1d,region_type=0)
         fit_data_count = cosmic_ray_like_count(logE,fit_xyoff_map_1d,region_type=0)
@@ -807,16 +831,13 @@ def build_skymap(source_name,src_ra,src_dec,smi_input,eigenvector_path,big_matri
 
         print (f'sr_data_count = {sr_data_count:0.1f}, init_data_count = {init_data_count:0.1f}, fit_data_count = {fit_data_count:0.1f}')
 
-        cr_qual = run_cr_chi2
-        sr_qual = run_sr_chi2
-
         idx_1d = 0
         for gcut in range(0,gcut_bins):
             for idx_x in range(0,xoff_bins[logE]):
                 for idx_y in range(0,yoff_bins[logE]):
                     idx_1d += 1
-                    data_xyoff_map[logE].waxis[idx_x,idx_y,gcut] += data_xyoff_map_1d[idx_1d-1]
-                    fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] += fit_xyoff_map_1d[idx_1d-1]
+                    data_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = data_xyoff_map_1d[idx_1d-1]
+                    fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = fit_xyoff_map_1d[idx_1d-1]
 
 
     if use_fullspec:
@@ -855,12 +876,14 @@ def build_skymap(source_name,src_ra,src_dec,smi_input,eigenvector_path,big_matri
         #truth_params = big_eigenvectors_fullspec @ diff_xyoff_map_1d_fullspec
         truth_params = big_eigenvectors_fullspec @ init_fit_xyoff_map_1d_fullspec
 
-        init_params = truth_params
+        #init_params = truth_params
+        init_params = avg_params
+        #init_params = [0.] * effective_matrix_rank_fullspec
         stepsize = [1e-4] * effective_matrix_rank_fullspec
         solution = minimize(
             cosmic_ray_like_chi2_fullspec,
             x0=init_params,
-            args=(truth_params,big_eigenvectors_fullspec,diff_xyoff_map_1d_fullspec,best_template_xyoff_map_1d_fullspec,mask_xyoff_map_1d_fullspec,0),
+            args=(tolerance_map_1d_fullspec,truth_params,big_eigenvectors_fullspec,diff_xyoff_map_1d_fullspec,best_template_xyoff_map_1d_fullspec,mask_xyoff_map_1d_fullspec,0),
             method='L-BFGS-B',
             jac=None,
             options={'eps':stepsize,'ftol':0.0001},
@@ -914,21 +937,22 @@ def build_skymap(source_name,src_ra,src_dec,smi_input,eigenvector_path,big_matri
     for logE in range(0,logE_nbins):
         for idx_x in range(0,xoff_bins[logE]):
             for idx_y in range(0,yoff_bins[logE]):
-                sum_xyoff_map_sr = 0.
                 sum_xyoff_map_cr = 0.
-                if use_fullspec:
-                    sum_xyoff_map_sr = fit_xyoff_map_fullspec[logE].waxis[idx_x,idx_y,0]
-                else:
-                    sum_xyoff_map_sr = fit_xyoff_map[logE].waxis[idx_x,idx_y,0]
                 for gcut in range(1,gcut_bins):
                     if use_fullspec:
                         sum_xyoff_map_cr += fit_xyoff_map_fullspec[logE].waxis[idx_x,idx_y,gcut]
                     else:
                         sum_xyoff_map_cr += fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
-                ratio = 1.
-                if sum_xyoff_map_cr>0.:
-                    ratio = sum_xyoff_map_sr/sum_xyoff_map_cr
-                ratio_xyoff_map[logE].waxis[idx_x,idx_y,0] = ratio
+                for gcut in range(0,gcut_bins):
+                    sum_xyoff_map_sr = 0.
+                    if use_fullspec:
+                        sum_xyoff_map_sr = fit_xyoff_map_fullspec[logE].waxis[idx_x,idx_y,gcut]
+                    else:
+                        sum_xyoff_map_sr = fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
+                    ratio = 1.
+                    if sum_xyoff_map_cr>0.:
+                        ratio = sum_xyoff_map_sr/sum_xyoff_map_cr
+                    ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = ratio
 
     for logE in range(0,logE_nbins):
 
@@ -1062,13 +1086,12 @@ def build_skymap(source_name,src_ra,src_dec,smi_input,eigenvector_path,big_matri
             incl_sky_map[logE].fill(Xsky,Ysky,0.5)
             if GammaCut>float(gcut_end): continue
 
-            cr_correction = ratio_xyoff_map[logE].get_bin_content(Xoff,Yoff,0.5)
-            #cr_correction = ratio_xyoff_map[logE].get_bin_content(Xderot,Yderot,0.5)
+            sr_model = ratio_xyoff_map[logE].get_bin_content(Xoff,Yoff,0.5)
+            cr_model = ratio_xyoff_map[logE].get_bin_content(Xoff,Yoff,GammaCut)
             if GammaCut<1.:
-                cr_correction = 0.
-
-            data_sky_map[logE].fill(Xsky,Ysky,GammaCut)
-            fit_sky_map[logE].fill(Xsky,Ysky,0.5,weight=cr_correction)
+                data_sky_map[logE].fill(Xsky,Ysky,GammaCut)
+            if GammaCut>1.:
+                fit_sky_map[logE].fill(Xsky,Ysky,0.5,weight=sr_model)
     
         print(f'memory usage (current,peak) = {tracemalloc.get_traced_memory()}')
 
@@ -1093,7 +1116,7 @@ def build_skymap(source_name,src_ra,src_dec,smi_input,eigenvector_path,big_matri
         return [exposure_hours,avg_tel_elev,avg_tel_azim,truth_params,fit_params,avg_MeanPedvar]
 
 
-def cosmic_ray_like_chi2_fullspec(try_params,ref_params,eigenvectors,diff_xyoff_map,init_xyoff_map,mask_xyoff_map,region_type):
+def cosmic_ray_like_chi2_fullspec(try_params,tolerance_map,ref_params,eigenvectors,diff_xyoff_map,init_xyoff_map,mask_xyoff_map,region_type):
 
     try_params = np.array(try_params)
     #try_xyoff_map = eigenvectors.T @ try_params + init_xyoff_map
@@ -1110,6 +1133,11 @@ def cosmic_ray_like_chi2_fullspec(try_params,ref_params,eigenvectors,diff_xyoff_
         for logE in range(0,logE_nbins):
             n_expect_gcut = 0.
             n_data_gcut = 0.
+            list_pix_x = []
+            list_pix_y = []
+            list_data = []
+            list_bkgd = []
+            list_weight = []
             for idx_x in range(0,xoff_bins[logE]):
                 for idx_y in range(0,yoff_bins[logE]):
 
@@ -1117,10 +1145,10 @@ def cosmic_ray_like_chi2_fullspec(try_params,ref_params,eigenvectors,diff_xyoff_
                     diff = diff_xyoff_map[idx_1d-1]
                     init = init_xyoff_map[idx_1d-1]
                     mask = mask_xyoff_map[idx_1d-1]
-                    weight = 1.
+                    weight = tolerance_map[idx_1d-1]
 
                     if mask>0.:
-                        weight = 0.1
+                        weight = 0.1*tolerance_map[idx_1d-1]
 
                     n_expect = max(0.0001,try_xyoff_map[idx_1d-1])
                     n_data = max(0.,diff + init)
@@ -1129,6 +1157,12 @@ def cosmic_ray_like_chi2_fullspec(try_params,ref_params,eigenvectors,diff_xyoff_
                         if gcut==0:
                             n_data = max(0.0001,init) # blind signal region with init background model
                             weight = regularization_scale
+                        #if gcut==1:
+                        #    weight = 3.
+                        #if gcut==2:
+                        #    weight = 2.
+                        #if gcut==3:
+                        #    weight = 1.
                     elif region_type==1:
                         if gcut!=0: continue
 
@@ -1138,24 +1172,57 @@ def cosmic_ray_like_chi2_fullspec(try_params,ref_params,eigenvectors,diff_xyoff_
 
                     n_expect_gcut += n_expect*weight
                     n_data_gcut += n_data*weight
+
+                    list_pix_x += [float(idx_x)]
+                    list_pix_y += [float(idx_y)]
+                    list_data += [n_data]
+                    list_bkgd += [n_expect]
+                    list_weight += [weight]
  
                     if use_poisson_likelihood:
+                        log_likelihood = 0.
                         if n_data==0.:
-                            sum_log_likelihood += (n_expect)*weight
+                            log_likelihood = (n_expect)*weight
+                            sum_log_likelihood += log_likelihood
                         else:
-                            sum_log_likelihood += (-1.*(n_data*np.log(n_expect) - n_expect - (n_data*np.log(n_data)-n_data)))*weight
+                            log_likelihood = (-1.*(n_data*np.log(n_expect) - n_expect - (n_data*np.log(n_data)-n_data)))*weight
+                            sum_log_likelihood += log_likelihood
                     else:
                         sum_log_likelihood += pow(n_expect-n_data,2)*weight
 
-            if xoff_bins[logE]>=3:
-                if use_poisson_likelihood:
-                    if n_data_gcut==0.:
-                        sum_log_likelihood += (n_expect_gcut)
-                    else:
-                        sum_log_likelihood += (-1.*(n_data_gcut*np.log(n_expect_gcut) - n_expect_gcut - (n_data_gcut*np.log(n_data_gcut)-n_data_gcut)))
-                else:
-                    sum_log_likelihood += pow(n_expect_gcut-n_data_gcut,2)
+            #for pix1 in range(0,len(list_weight)):
+            #    idx_x_1 = list_pix_x[pix1]
+            #    idx_y_1 = list_pix_y[pix1]
+            #    sum_data = 0.
+            #    sum_bkgd = 0.
+            #    for pix2 in range(0,len(list_weight)):
+            #        idx_x_2 = list_pix_x[pix2]
+            #        idx_y_2 = list_pix_y[pix2]
+            #        if abs(idx_x_1-idx_x_2)>1: continue
+            #        if abs(idx_y_1-idx_y_2)>1: continue
+            #        n_data_2 = list_data[pix2]
+            #        n_bkgd_2 = list_bkgd[pix2]
+            #        weight_2 = list_weight[pix2]
+            #        dist_sq = (idx_x_1-idx_x_2)*(idx_x_1-idx_x_2) + (idx_y_1-idx_y_2)*(idx_y_1-idx_y_2)
+            #        dist_scale = np.exp(-dist_sq)
+            #        sum_data += n_data_2*weight_2 * dist_scale
+            #        sum_bkgd += n_bkgd_2*weight_2 * dist_scale
 
+            #    if sum_data==0.:
+            #        log_likelihood = sum_bkgd
+            #        sum_log_likelihood += log_likelihood
+            #    else:
+            #        log_likelihood = (-1.*(sum_data*np.log(sum_bkgd) - sum_bkgd - (sum_data*np.log(sum_data)-sum_data)))*weight
+            #        sum_log_likelihood += log_likelihood
+
+            #region_weight = 1.
+            #if use_poisson_likelihood:
+            #    if n_data_gcut==0.:
+            #        sum_log_likelihood += (n_expect_gcut)*region_weight
+            #    else:
+            #        sum_log_likelihood += (-1.*(n_data_gcut*np.log(n_expect_gcut) - n_expect_gcut - (n_data_gcut*np.log(n_data_gcut)-n_data_gcut)))*region_weight
+            #else:
+            #    sum_log_likelihood += pow(n_expect_gcut-n_data_gcut,2)*region_weight
 
 
     return sum_log_likelihood
@@ -1710,7 +1777,7 @@ def MakeSkymapCutout(skymap_input,cutout_frac):
 
     return skymap_cutout
 
-def PlotCountProjection(fig,label_z,logE_min,logE_max,hist_map_data,hist_map_bkgd,plotname,roi_x=[],roi_y=[],roi_r=[],max_z=0.,colormap='coolwarm',layer=0):
+def PlotCountProjection(fig,label_z,logE_min,logE_max,hist_map_data,hist_map_bkgd,plotname,hist_map_syst=None,roi_x=[],roi_y=[],roi_r=[],max_z=0.,colormap='coolwarm',layer=0):
 
     E_min = pow(10.,logE_bins[logE_min])
     E_max = pow(10.,logE_bins[logE_max])
@@ -1743,7 +1810,7 @@ def PlotCountProjection(fig,label_z,logE_min,logE_max,hist_map_data,hist_map_bkg
     hist_map_significance.just_like(hist_map_data)
     hist_map_excess = MyArray3D()
     hist_map_excess.just_like(hist_map_data)
-    make_significance_map(hist_map_data,hist_map_bkgd,hist_map_significance,hist_map_excess)
+    make_significance_map(hist_map_data,hist_map_bkgd,hist_map_significance,hist_map_excess,syst_sky_map=hist_map_syst)
 
     x_pix_size = 3*abs(hist_map_data.xaxis[1]-hist_map_data.xaxis[0])
     y_pix_size = 3*abs(hist_map_data.yaxis[1]-hist_map_data.yaxis[0])
@@ -1753,21 +1820,25 @@ def PlotCountProjection(fig,label_z,logE_min,logE_max,hist_map_data,hist_map_bkg
     x_axis_array = []
     x_count_array = []
     x_bkgd_array = []
+    x_syst_array = []
     x_error_array = []
     for br in range(0,len(x_proj_axis.xaxis)-1):
         x_axis_array += [0.5*(x_proj_axis.xaxis[br]+x_proj_axis.xaxis[br+1])]
         x_count_array += [0.]
         x_bkgd_array += [0.]
+        x_syst_array += [0.]
         x_error_array += [0.]
 
     y_axis_array = []
     y_count_array = []
     y_bkgd_array = []
+    y_syst_array = []
     y_error_array = []
     for br in range(0,len(y_proj_axis.xaxis)-1):
         y_axis_array += [0.5*(y_proj_axis.xaxis[br]+y_proj_axis.xaxis[br+1])]
         y_count_array += [0.]
         y_bkgd_array += [0.]
+        y_syst_array += [0.]
         y_error_array += [0.]
 
     for bx in range(0,len(hist_map_data.xaxis)-2):
@@ -1783,6 +1854,8 @@ def PlotCountProjection(fig,label_z,logE_min,logE_max,hist_map_data,hist_map_bkg
                 if keep_event:
                     x_count_array[br] += hist_map_data.waxis[bx,by,0]
                     x_bkgd_array[br] += hist_map_bkgd.waxis[bx,by,0]
+                    #x_syst_array[br] += pow(hist_map_syst.waxis[bx,by,0],2)
+                    x_syst_array[br] += hist_map_syst.waxis[bx,by,0]
 
             for br in range(0,len(y_proj_axis.xaxis)-1):
                 keep_event = False
@@ -1791,12 +1864,16 @@ def PlotCountProjection(fig,label_z,logE_min,logE_max,hist_map_data,hist_map_bkg
                 if keep_event:
                     y_count_array[br] += hist_map_data.waxis[bx,by,0]
                     y_bkgd_array[br] += hist_map_bkgd.waxis[bx,by,0]
+                    #y_syst_array[br] += pow(hist_map_syst.waxis[bx,by,0],2)
+                    y_syst_array[br] += hist_map_syst.waxis[bx,by,0]
 
     for br in range(0,len(x_proj_axis.xaxis)-1):
         x_error_array[br] = pow(x_count_array[br],0.5)
+        #x_syst_array[br] = pow(x_syst_array[br],0.5)
 
     for br in range(0,len(y_proj_axis.xaxis)-1):
         y_error_array[br] = pow(y_count_array[br],0.5)
+        #y_syst_array[br] = pow(y_syst_array[br],0.5)
 
     # Define the locations for the axes
     left, width = 0.12, 0.6
@@ -1836,10 +1913,12 @@ def PlotCountProjection(fig,label_z,logE_min,logE_max,hist_map_data,hist_map_bkg
     axTemperature.set_ylabel(label_y)
 
     #Plot the histograms
+    axHistx.plot(x_axis_array,x_bkgd_array,color='r',ls='solid',label='Background model')
+    axHistx.errorbar(x_axis_array,x_bkgd_array,yerr=x_syst_array,color='r',marker='.',ls='none')
+    axHisty.plot(y_bkgd_array,y_axis_array,color='r',ls='solid')
+    axHisty.errorbar(y_bkgd_array,y_axis_array,xerr=y_syst_array,color='r',marker='.',ls='none')
     axHistx.errorbar(x_axis_array,x_count_array,yerr=x_error_array,color='k',marker='.',ls='none',label='Observation data')
     axHisty.errorbar(y_count_array,y_axis_array,xerr=y_error_array,color='k',marker='.',ls='none')
-    axHistx.plot(x_axis_array,x_bkgd_array,color='r',ls='solid',label='Background model')
-    axHisty.plot(y_bkgd_array,y_axis_array,color='r',ls='solid')
     axHistx.set_xlim(axHistx.get_xlim()[::-1])
     formatter = ticker.ScalarFormatter(useMathText=True)
     formatter.set_scientific(True)
@@ -1871,12 +1950,37 @@ def PlotCountProjection(fig,label_z,logE_min,logE_max,hist_map_data,hist_map_bkg
     axHisty.yaxis.set_major_formatter(nullfmt)
 
     # Plot the temperature data
-    cax = axTemperature.imshow(hist_map_significance.waxis[:,:,layer].T,extent=(xmax,xmin,ymin,ymax),vmin=-5.,vmax=5.,aspect='auto',origin='lower',cmap='coolwarm')
+    cax = axTemperature.imshow(hist_map_significance.waxis[:,:,layer].T,extent=(xmax,xmin,ymin,ymax),vmin=-3.,vmax=3.,aspect='auto',origin='lower',cmap='coolwarm')
 
     divider = make_axes_locatable(axTemperature)
     cax_app = divider.append_axes("bottom", size="5%", pad=0.7)
     cbar = fig.colorbar(cax,orientation="horizontal",cax=cax_app)
     cbar.set_label('significance')
+
+    favorite_color = 'k'
+    font = {'family': 'serif', 'color':  favorite_color, 'weight': 'normal', 'size': 10, 'rotation': 0.,}
+
+    for star in range(0,len(other_star_markers)):
+        marker_size = 60
+        if other_star_types[star]=='PSR':
+            axTemperature.scatter(other_star_markers[star][0], other_star_markers[star][1], s=1.5*marker_size, c=favorite_color, marker='+', label=other_star_labels[star])
+        if other_star_types[star]=='SNR':
+            mycircle = plt.Circle( (other_star_markers[star][0], other_star_markers[star][1]), other_star_markers[star][2], fill = False, color=favorite_color)
+            axTemperature.add_patch(mycircle)
+        if other_star_types[star]=='LHAASO':
+            axTemperature.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c=favorite_color, marker='+', label=other_star_labels[star])
+        if other_star_types[star]=='HAWC':
+            axTemperature.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c=favorite_color, marker='+', label=other_star_labels[star])
+        if other_star_types[star]=='Fermi':
+            axTemperature.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c=favorite_color, marker='+', label=other_star_labels[star])
+        if other_star_types[star]=='MSP':
+            axTemperature.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c=favorite_color, marker='+', label=other_star_labels[star])
+        if other_star_types[star]=='TeV':
+            axTemperature.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c=favorite_color, marker='+', label=other_star_labels[star])
+        if other_star_types[star]=='Star':
+            axTemperature.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c='k', marker='+', label=other_star_labels[star])
+        #txt = axTemperature.text(other_star_markers[star][0]-0.07, other_star_markers[star][1]+0.07, other_star_labels[star], fontdict=font, c=favorite_color)
+
 
     #Plot the axes labels
     label_x = 'RA [deg]'
@@ -1885,10 +1989,12 @@ def PlotCountProjection(fig,label_z,logE_min,logE_max,hist_map_data,hist_map_bkg
     axTemperature.set_ylabel(label_y)
 
     #Plot the histograms
+    axHistx.plot(x_axis_array,x_bkgd_array,color='r',ls='solid',label='Background model')
+    axHistx.errorbar(x_axis_array,x_bkgd_array,yerr=x_syst_array,color='r',marker='.',ls='none')
+    axHisty.plot(y_bkgd_array,y_axis_array,color='r',ls='solid')
+    axHisty.errorbar(y_bkgd_array,y_axis_array,xerr=y_syst_array,color='r',marker='.',ls='none')
     axHistx.errorbar(x_axis_array,x_count_array,yerr=x_error_array,color='k',marker='.',ls='none',label='Observation data')
     axHisty.errorbar(y_count_array,y_axis_array,xerr=y_error_array,color='k',marker='.',ls='none')
-    axHistx.plot(x_axis_array,x_bkgd_array,color='r',ls='solid',label='Background model')
-    axHisty.plot(y_bkgd_array,y_axis_array,color='r',ls='solid')
     axHistx.set_xlim(axHistx.get_xlim()[::-1])
     formatter = ticker.ScalarFormatter(useMathText=True)
     formatter.set_scientific(True)
@@ -1933,10 +2039,12 @@ def PlotCountProjection(fig,label_z,logE_min,logE_max,hist_map_data,hist_map_bkg
     axTemperature.set_ylabel(label_y)
 
     #Plot the histograms
+    axHistx.plot(x_axis_array,x_bkgd_array,color='r',ls='solid',label='Background model')
+    axHistx.errorbar(x_axis_array,x_bkgd_array,yerr=x_syst_array,color='r',marker='.',ls='none')
+    axHisty.plot(y_bkgd_array,y_axis_array,color='r',ls='solid')
+    axHisty.errorbar(y_bkgd_array,y_axis_array,xerr=y_syst_array,color='r',marker='.',ls='none')
     axHistx.errorbar(x_axis_array,x_count_array,yerr=x_error_array,color='k',marker='.',ls='none',label='Observation data')
     axHisty.errorbar(y_count_array,y_axis_array,xerr=y_error_array,color='k',marker='.',ls='none')
-    axHistx.plot(x_axis_array,x_bkgd_array,color='r',ls='solid',label='Background model')
-    axHisty.plot(y_bkgd_array,y_axis_array,color='r',ls='solid')
     axHistx.set_xlim(axHistx.get_xlim()[::-1])
     formatter = ticker.ScalarFormatter(useMathText=True)
     formatter.set_scientific(True)
@@ -2054,7 +2162,7 @@ def GetFluxCalibration(energy):
 
     return 1./flux_calibration[energy]
 
-def make_significance_map(data_sky_map,bkgd_sky_map,significance_sky_map,excess_sky_map):
+def make_significance_map(data_sky_map,bkgd_sky_map,significance_sky_map,excess_sky_map,syst_sky_map=None):
   
     skymap_bins = len(data_sky_map.xaxis)-1
 
@@ -2062,12 +2170,14 @@ def make_significance_map(data_sky_map,bkgd_sky_map,significance_sky_map,excess_
         for idx_y in range(0,skymap_bins):
             data = data_sky_map.waxis[idx_x,idx_y,0]
             bkgd = bkgd_sky_map.waxis[idx_x,idx_y,0]
-            data_err = pow(data,0.5)
-            if data_err==0.: continue
-            significance_sky_map.waxis[idx_x,idx_y,0] = (data-bkgd)/data_err
+            bkgd_err = 0.
+            if syst_sky_map!=None:
+                bkgd_err = syst_sky_map.waxis[idx_x,idx_y,0]
+            significance = significance_li_and_ma(data, bkgd, bkgd_err)
+            significance_sky_map.waxis[idx_x,idx_y,0] = significance
             excess_sky_map.waxis[idx_x,idx_y,0] = (data-bkgd)
 
-def make_flux_map(incl_sky_map,data_sky_map,bkgd_sky_map,flux_sky_map,flux_err_sky_map,avg_energy,delta_energy):
+def make_flux_map(incl_sky_map,data_sky_map,bkgd_sky_map,flux_sky_map,flux_err_sky_map,flux_syst_sky_map,avg_energy,delta_energy,syst_sky_map=None):
   
     skymap_bins = len(data_sky_map.xaxis)-1
 
@@ -2078,9 +2188,13 @@ def make_flux_map(incl_sky_map,data_sky_map,bkgd_sky_map,flux_sky_map,flux_err_s
             data = data_sky_map.waxis[idx_x,idx_y,0]
             norm = incl_sky_map.waxis[idx_x,idx_y,0]
             bkgd = bkgd_sky_map.waxis[idx_x,idx_y,0]
+            bkgd_err = 0.
+            if syst_sky_map!=None:
+                bkgd_err = syst_sky_map.waxis[idx_x,idx_y,0]
             if norm>0.:
                 excess = data-bkgd
                 error = pow(data,0.5)
+                syst = bkgd_err
                 logE = logE_axis.get_bin(np.log10(avg_energy))
                 correction = GetFluxCalibration(logE)/norm*pow(avg_energy,2)/(100.*100.*3600.)/delta_energy
                 norm_ratio = norm/norm_content_max
@@ -2089,13 +2203,16 @@ def make_flux_map(incl_sky_map,data_sky_map,bkgd_sky_map,flux_sky_map,flux_err_s
                 #norm_weight = 1./(1.+np.exp(-(norm_ratio-0.3)/0.05))
                 flux = excess*correction*norm_weight
                 flux_err = error*correction*norm_weight
+                flux_syst = syst*correction*norm_weight
                 flux_sky_map.waxis[idx_x,idx_y,0] = flux
                 flux_err_sky_map.waxis[idx_x,idx_y,0] = flux_err
+                flux_syst_sky_map.waxis[idx_x,idx_y,0] = flux_syst
             else:
                 flux_sky_map.waxis[idx_x,idx_y,0] = 0.
                 flux_err_sky_map.waxis[idx_x,idx_y,0] = 0.
+                flux_syst_sky_map.waxis[idx_x,idx_y,0] = 0.
 
-def GetRadialProfile(hist_flux_skymap,hist_error_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,use_excl=True,radial_bin_scale=0.1):
+def GetRadialProfile(hist_flux_skymap,hist_error_skymap,hist_syst_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,use_excl=True,radial_bin_scale=0.1):
 
     deg2_to_sr =  3.046*1e-4
     pix_size = abs((hist_flux_skymap.yaxis[1]-hist_flux_skymap.yaxis[0])*(hist_flux_skymap.xaxis[1]-hist_flux_skymap.xaxis[0]))*deg2_to_sr
@@ -2105,12 +2222,14 @@ def GetRadialProfile(hist_flux_skymap,hist_error_skymap,roi_x,roi_y,roi_r,excl_r
     radius_array = []
     brightness_array = []
     brightness_err_array = []
+    brightness_syst_array = []
     pixel_array = []
     for br in range(0,len(radial_axis.xaxis)-1):
         radius = 0.5*(radial_axis.xaxis[br]+radial_axis.xaxis[br+1])
         radius_array += [radius]
         brightness_array += [0.]
         brightness_err_array += [0.]
+        brightness_syst_array += [0.]
         pixel_array += [0.]
 
     for br in range(0,len(radial_axis.xaxis)-1):
@@ -2133,31 +2252,36 @@ def GetRadialProfile(hist_flux_skymap,hist_error_skymap,roi_x,roi_y,roi_r,excl_r
                     brightness_array[br] += hist_flux_skymap.waxis[bx,by,0]
                     if not hist_error_skymap==None:
                         brightness_err_array[br] += pow(hist_error_skymap.waxis[bx,by,0],2)
+                    if not hist_syst_skymap==None:
+                        #brightness_syst_array[br] += pow(hist_syst_skymap.waxis[bx,by,0],2)
+                        brightness_syst_array[br] += hist_syst_skymap.waxis[bx,by,0]
         if pixel_array[br]==0.: continue
         brightness_array[br] = brightness_array[br]/pixel_array[br]
         brightness_err_array[br] = pow(brightness_err_array[br],0.5)/pixel_array[br]
+        #brightness_syst_array[br] = pow(brightness_syst_array[br],0.5)/pixel_array[br]
+        brightness_syst_array[br] = brightness_syst_array[br]/pixel_array[br]
 
     output_radius_array = []
     output_brightness_array = []
     output_brightness_err_array = []
+    output_brightness_syst_array = []
     for br in range(0,len(radial_axis.xaxis)-1):
         radius = radius_array[br]
         brightness = brightness_array[br]
         brightness_err = brightness_err_array[br]
-        #if brightness_err>0.:
-        #    output_radius_array += [radius]
-        #    output_brightness_array += [brightness]
-        #    output_brightness_err_array += [brightness_err]
+        brightness_syst = brightness_syst_array[br]
         output_radius_array += [radius]
         output_brightness_array += [brightness]
         output_brightness_err_array += [brightness_err]
+        output_brightness_syst_array += [brightness_syst]
 
-    return output_radius_array, output_brightness_array, output_brightness_err_array
+    return output_radius_array, output_brightness_array, output_brightness_err_array, output_brightness_syst_array
 
-def GetRegionIntegral(hist_flux_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,hist_error_skymap=None,use_excl=True):
+def GetRegionIntegral(hist_flux_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,hist_error_skymap=None,hist_syst_skymap=None,use_excl=True):
 
     flux_sum = 0.
     flux_stat_err = 0.
+    flux_syst_err = 0.
     for bx in range(0,len(hist_flux_skymap.xaxis)-1):
         for by in range(0,len(hist_flux_skymap.yaxis)-1):
             bin_ra = 0.5*(hist_flux_skymap.xaxis[bx]+hist_flux_skymap.xaxis[bx+1])
@@ -2173,22 +2297,23 @@ def GetRegionIntegral(hist_flux_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,e
                     if excl_distance<excl_roi_r[roi]: 
                         keep_event = False
             if keep_event:
-                if not hist_flux_skymap.waxis[bx,by,0]==0.:
-                    flux_sum += hist_flux_skymap.waxis[bx,by,0]
-                    if hist_error_skymap==None:
-                        flux_stat_err += hist_flux_skymap.waxis[bx,by,0]
-                    else:
-                        flux_stat_err += pow(hist_error_skymap.waxis[bx,by,0],2)
+                flux_sum += hist_flux_skymap.waxis[bx,by,0]
+                if hist_error_skymap==None:
+                    flux_stat_err += 0.
                 else:
-                    flux_sum += 0.
-                    if hist_error_skymap==None:
-                        flux_stat_err = max(hist_flux_skymap.waxis[bx,by,0],flux_stat_err)
-                    else:
-                        flux_stat_err = max(pow(hist_error_skymap.waxis[bx,by,0],2),flux_stat_err)
+                    flux_stat_err += pow(hist_error_skymap.waxis[bx,by,0],2)
+                if hist_syst_skymap==None:
+                    flux_syst_err += 0.
+                else:
+                    if np.isnan(hist_syst_skymap.waxis[bx,by,0]): continue
+                    #flux_syst_err += pow(hist_syst_skymap.waxis[bx,by,0],2)
+                    flux_syst_err += hist_syst_skymap.waxis[bx,by,0]
     flux_stat_err = pow(flux_stat_err,0.5)
-    return flux_sum, flux_stat_err
+    #flux_syst_err = pow(flux_syst_err,0.5)
+    flux_err = pow(flux_stat_err*flux_stat_err + flux_syst_err*flux_syst_err,0.5)
+    return flux_sum, flux_err
 
-def GetRegionSpectrum(hist_flux_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,hist_error_skymap=None,use_excl=True):
+def GetRegionSpectrum(hist_flux_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,hist_error_skymap=None,hist_syst_skymap=None,use_excl=True):
 
     x_axis = []
     x_error = []
@@ -2201,11 +2326,14 @@ def GetRegionSpectrum(hist_flux_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,e
     for binE in range(binE_start,binE_end):
         flux_sum = 0.
         flux_stat_err = 0.
-        flux_syst_err = 0.
-        if hist_error_skymap==None:
-            flux_sum, flux_stat_err = GetRegionIntegral(hist_flux_skymap[binE],roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,use_excl=use_excl)
-        else:
+        if hist_error_skymap!=None and hist_syst_skymap!=None:
+            flux_sum, flux_stat_err = GetRegionIntegral(hist_flux_skymap[binE],roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,hist_error_skymap=hist_error_skymap[binE],hist_syst_skymap=hist_syst_skymap[binE],use_excl=use_excl)
+        elif hist_error_skymap!=None:
             flux_sum, flux_stat_err = GetRegionIntegral(hist_flux_skymap[binE],roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,hist_error_skymap=hist_error_skymap[binE],use_excl=use_excl)
+        elif hist_syst_skymap!=None:
+            flux_sum, flux_stat_err = GetRegionIntegral(hist_flux_skymap[binE],roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,hist_syst_skymap=hist_syst_skymap[binE],use_excl=use_excl)
+        else:
+            flux_sum, flux_stat_err = GetRegionIntegral(hist_flux_skymap[binE],roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,use_excl=use_excl)
         x_axis += [0.5*(pow(10.,logE_axis.xaxis[binE+1])+pow(10.,logE_axis.xaxis[binE]))]
         x_error += [0.5*(pow(10.,logE_axis.xaxis[binE+1])-pow(10.,logE_axis.xaxis[binE]))]
         y_axis += [flux_sum]
@@ -2359,16 +2487,13 @@ def GetFermiUpperLimitFluxGeminga():
     return energies, fluxes, fluxes_err
 
 
-def PrintAndPlotInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,hist_data_skymap,hist_bkgd_skymap,hist_flux_skymap,hist_flux_err_skymap,hist_mimic_data_skymap,hist_mimic_bkgd_skymap,roi_name,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r):
+def PrintAndPlotInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,hist_data_skymap,hist_bkgd_skymap,hist_syst_skymap,hist_flux_skymap,hist_flux_err_skymap,hist_flux_syst_skymap,hist_mimic_data_skymap,hist_mimic_bkgd_skymap,roi_name,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r):
 
-    energy_axis, energy_error, flux, flux_stat_err = GetRegionSpectrum(hist_flux_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,hist_error_skymap=hist_flux_err_skymap)
+    energy_axis, energy_error, flux, flux_incl_err = GetRegionSpectrum(hist_flux_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,hist_error_skymap=hist_flux_err_skymap,hist_syst_skymap=hist_flux_syst_skymap)
     energy_axis, energy_error, data, data_stat_err = GetRegionSpectrum(hist_data_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
-    energy_axis, energy_error, bkgd, bkgd_stat_err = GetRegionSpectrum(hist_bkgd_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r)
+    energy_axis, energy_error, bkgd, bkgd_syst_err = GetRegionSpectrum(hist_bkgd_skymap,roi_x,roi_y,roi_r,excl_roi_x,excl_roi_y,excl_roi_r,hist_syst_skymap=hist_syst_skymap)
 
-    bkgd_syst_err = np.zeros_like(bkgd_stat_err)
-    bkgd_incl_err = np.zeros_like(bkgd_stat_err)
-    flux_syst_err = np.zeros_like(bkgd_stat_err)
-    flux_incl_err = np.zeros_like(bkgd_stat_err)
+    bkgd_incl_err = np.zeros_like(bkgd_syst_err)
     n_mimic = len(hist_mimic_data_skymap)
     list_mimic_data = []
     list_mimic_bkgd = []
@@ -2378,26 +2503,23 @@ def PrintAndPlotInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,hist_d
         list_mimic_data += [mimic_data]
         list_mimic_bkgd += [mimic_bkgd]
     for binx in range(0,len(energy_axis)):
-        stat_err = data_stat_err[binx]
         on_data = data[binx]
-        syst_err = 0.
-        for mimic in range(0,n_mimic):
-            if list_mimic_data[mimic][binx]==0.: continue
-            # syst error is measured as a relative error
-            mimic_data = list_mimic_data[mimic][binx]
-            mimic_bkgd = list_mimic_bkgd[mimic][binx]
-            mimic_stat_err = pow(mimic_data,0.5)
-            syst_err += max(0.,pow(mimic_data-mimic_bkgd,2)-pow(mimic_stat_err,2))/pow(mimic_data,2)
-        if n_mimic>0:
-            syst_err = syst_err*pow(on_data,2)
-            syst_err = pow(syst_err/float(n_mimic),0.5)
-        bkgd_syst_err[binx] = syst_err
-        bkgd_incl_err[binx] = pow(pow(stat_err,2)+pow(syst_err,2),0.5)
-        if stat_err>0.:
-            flux_syst_err[binx] = syst_err/stat_err*flux_stat_err[binx]
-        else:
-            flux_syst_err[binx] = 0.
-        flux_incl_err[binx] = pow(pow(flux_syst_err[binx],2)+pow(flux_stat_err[binx],2),0.5)
+        stat_err = pow(on_data,0.5)
+        syst_err = bkgd_syst_err[binx]
+        #syst_err = 0.
+        #for mimic in range(0,n_mimic):
+        #    if list_mimic_data[mimic][binx]==0.: continue
+        #    # syst error is measured as a relative error
+        #    mimic_data = list_mimic_data[mimic][binx]
+        #    mimic_bkgd = list_mimic_bkgd[mimic][binx]
+        #    mimic_stat_err = pow(mimic_data,0.5)
+        #    syst_err += max(0.,pow(mimic_data-mimic_bkgd,2)-pow(mimic_stat_err,2))/pow(mimic_data,2)
+        #if n_mimic>0:
+        #    syst_err = syst_err*pow(on_data,2)
+        #    syst_err = pow(syst_err/float(n_mimic),0.5)
+        #bkgd_syst_err[binx] = syst_err
+        data_stat_err[binx] = stat_err
+        bkgd_incl_err[binx] = syst_err
 
 
     vectorize_f_crab = np.vectorize(flux_crab_func)
@@ -2410,7 +2532,7 @@ def PrintAndPlotInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,hist_d
         if flux[binx]>0.:
             flux_floor += [flux[binx]]
             flux_cu += [flux[binx]/ydata_crab_ref[binx]]
-            flux_err_cu += [flux_stat_err[binx]/ydata_crab_ref[binx]]
+            flux_err_cu += [flux_incl_err[binx]/ydata_crab_ref[binx]]
         else:
             flux_floor += [0.]
             flux_cu += [0.]
@@ -2442,9 +2564,7 @@ def PrintAndPlotInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,hist_d
             avg_energy += flux[binx]*energy_axis[binx]
             sum_flux += flux[binx]
     sum_error = pow(sum_error,0.5)
-    significance = 0.
-    if sum_error>0.:
-        significance = (sum_data-sum_bkgd)/sum_error
+    significance = significance_li_and_ma(sum_data,sum_bkgd,sum_error)
     avg_energy = avg_energy/sum_flux
     print (f'E = {min_energy:0.2f}-{mid_energy:0.2f} TeV, avg_E = {avg_energy:0.2f} TeV, data = {sum_data:0.1f}, bkgd = {sum_bkgd:0.1f} +/- {sum_error:0.1f}, significance = {significance:0.1f} sigma')
 
@@ -2461,17 +2581,13 @@ def PrintAndPlotInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,hist_d
             avg_energy += flux[binx]*energy_axis[binx]
             sum_flux += flux[binx]
     sum_error = pow(sum_error,0.5)
-    significance = 0.
-    if sum_error>0.:
-        significance = (sum_data-sum_bkgd)/sum_error
+    significance = significance_li_and_ma(sum_data,sum_bkgd,sum_error)
     avg_energy = avg_energy/sum_flux
     print (f'E = {mid_energy:0.2f}-{max_energy:0.2f} TeV, avg_E = {avg_energy:0.2f} TeV, data = {sum_data:0.1f}, bkgd = {sum_bkgd:0.1f} +/- {sum_error:0.1f}, significance = {significance:0.1f} sigma')
 
     for binx in range(0,len(energy_axis)):
-        significance = 0.
-        if bkgd_incl_err[binx]>0.:
-            significance = (data[binx]-bkgd[binx])/bkgd_incl_err[binx]
-        print (f'E = {energy_axis[binx]:0.2f} ({pow(10.,logE_bins[binx]):0.2f}-{pow(10.,logE_bins[binx+1]):0.2f})TeV, data = {data[binx]:0.1f} +/- {data_stat_err[binx]:0.1f}, bkgd = {bkgd[binx]:0.1f} +/- {bkgd_syst_err[binx]:0.1f}, flux = {flux[binx]:0.2e} +/- {flux_incl_err[binx]:0.2e} TeV/cm2/s ({flux_cu[binx]:0.2f} CU), significance = {significance:0.1f} sigma')
+        significance = significance_li_and_ma(data[binx],bkgd[binx],bkgd_incl_err[binx])
+        print (f'E = {energy_axis[binx]:0.2f} ({pow(10.,logE_bins[binx]):0.2f}-{pow(10.,logE_bins[binx+1]):0.2f})TeV, data = {data[binx]:0.1f} +/- {data_stat_err[binx]:0.1f}, bkgd = {bkgd[binx]:0.1f} +/- {bkgd_incl_err[binx]:0.1f}, flux = {flux[binx]:0.2e} +/- {flux_incl_err[binx]:0.2e} TeV/cm2/s ({flux_cu[binx]:0.2f} CU), significance = {significance:0.1f} sigma')
     print ('===============================================================================================================')
 
     cu_uplims = np.zeros_like(energy_axis)
@@ -2498,12 +2614,12 @@ def PrintAndPlotInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,hist_d
     fig.savefig(f'output_plots/{source_name}_roi_flux_crab_unit_{roi_name[0]}.png',bbox_inches='tight')
     axbig.remove()
 
-    PrintSpectralDataForNaima(energy_axis,flux,flux_stat_err,f'VERITAS_{roi_name[0]}')
+    PrintSpectralDataForNaima(energy_axis,flux,flux_incl_err,f'VERITAS_{roi_name[0]}')
 
     uplims = np.zeros_like(energy_axis)
     for x in range(0,len(flux)):
-        if flux_stat_err[x]==0.: continue
-        significance = flux[x]/flux_stat_err[x]
+        if flux_incl_err[x]==0.: continue
+        significance = flux[x]/flux_incl_err[x]
         if significance<2.:
             uplims[x] = 1.
             flux[x] = max(2.*flux_incl_err[x],flux[x]+2.*flux_incl_err[x])
@@ -2613,19 +2729,19 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
 
     elif 'SNR_G189_p03' in src_name:
 
-        #region_name = ('SNR','SNR')
-        #src_x = 94.25
-        #src_y = 22.57
-        #region_x += [src_x]
-        #region_y += [src_y]
-        #region_r += [0.5]
-
-        region_name = ('HAWC','HAWC')
-        src_x = 93.67
-        src_y = 22.22
+        region_name = ('SNR','SNR')
+        src_x = 94.25
+        src_y = 22.57
         region_x += [src_x]
         region_y += [src_y]
-        region_r += [1.05]
+        region_r += [0.5]
+
+        #region_name = ('HAWC','HAWC')
+        #src_x = 93.67
+        #src_y = 22.22
+        #region_x += [src_x]
+        #region_y += [src_y]
+        #region_r += [1.05]
 
     elif 'PSR_J2021_p4026' in src_name:
 
@@ -2688,19 +2804,19 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
         #region_y += [4.9166667]
         #region_r += [0.2]
 
-        region_name = ('J1907_p0602_full','J1907+0602 (full)')
-        src_x = 286.98
-        src_y = 6.04
-        region_x += [src_x]
-        region_y += [src_y]
-        region_r += [1.5]
-
-        #region_name = ('J1907_p0602_inner','J1907+0602 (inner)')
+        #region_name = ('J1907_p0602_full','J1907+0602 (full)')
         #src_x = 286.98
         #src_y = 6.04
         #region_x += [src_x]
         #region_y += [src_y]
-        #region_r += [0.5]
+        #region_r += [1.2]
+
+        region_name = ('J1907_p0602_inner','J1907+0602 (inner)')
+        src_x = 286.98
+        src_y = 6.04
+        region_x += [src_x]
+        region_y += [src_y]
+        region_r += [0.46]
 
         #region_name = ('J1907_p0602_outer','J1907+0602 (outer)')
         #src_x = 286.98
@@ -2714,12 +2830,12 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
 
     elif 'PSR_J1856_p0245' in src_name:
 
-        region_name = ('J1856_p0245_full','J1856+0245 (full)')
-        src_x = 284.21
-        src_y = 2.76
-        region_x += [src_x]
-        region_y += [src_y]
-        region_r += [1.0]
+        #region_name = ('J1856_p0245_full','J1856+0245 (full)')
+        #src_x = 284.21
+        #src_y = 2.76
+        #region_x += [src_x]
+        #region_y += [src_y]
+        #region_r += [1.0]
 
         #region_name = ('J1856_p0245_inner','J1856+0245 (inner)')
         #src_x = 284.21
@@ -2751,10 +2867,10 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
         #region_y += [src_y]
         #region_r += [1.0]
 
-        #region_name = ('MAGIC','MAGIC')
-        #region_x += [284.3]
-        #region_y += [2.7]
-        #region_r += [0.4]
+        region_name = ('MAGIC','MAGIC')
+        region_x += [284.3]
+        region_y += [2.7]
+        region_r += [0.4]
 
         #region_name = ('J1858_p020','J1858+020')
         #region_x += [284.6]
