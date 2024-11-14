@@ -40,8 +40,8 @@ smi_dir = os.environ.get("SMI_DIR")
 smi_input = os.environ.get("SMI_INPUT")
 #smi_output = os.environ.get("SMI_OUTPUT")
 #smi_output = "/nevis/ged/data/rshang/smi_output/output_test_4"
-smi_output = "/nevis/ged/data/rshang/smi_output/output_7x7"
-#smi_output = "/nevis/ged/data/rshang/smi_output/output_default"
+#smi_output = "/nevis/ged/data/rshang/smi_output/output_3tel"
+smi_output = "/nevis/ged/data/rshang/smi_output/output_default"
 
 ana_tag = []
 #ana_tag += [['binspec','r']]
@@ -49,20 +49,20 @@ ana_tag = []
 #ana_tag += [['init','r']]
 
 #ana_tag += [['rank1','r']]
-#ana_tag += [['rank2','w']]
-ana_tag += [['rank4','b']]
+#ana_tag += [['rank2','r']]
+ana_tag += [['rank4','w']]
 ana_tag += [['rank8','b']]
 #ana_tag += [['rank16','b']]
-#ana_tag += [['rank32','b']]
-#ana_tag += [['rank64','b']]
+#ana_tag += [['rank32','w']]
+#ana_tag += [['rank64','w']]
 
 onoff = 'OFF'
 
-exposure_per_group = 2.
+#exposure_per_group = 2.
 #exposure_per_group = 4.
 #exposure_per_group = 10.
 #exposure_per_group = 20.
-#exposure_per_group = 50.
+exposure_per_group = 50.
 #exposure_per_group = 100.
 cr_qual_cut = 1e10
 #cr_qual_cut = 230

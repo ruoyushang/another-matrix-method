@@ -26,6 +26,8 @@ yoff_start = common_functions.yoff_start
 yoff_end = common_functions.yoff_end
 gcut_start = common_functions.gcut_start
 gcut_end = common_functions.gcut_end
+cosmic_ray_like_chi2_fullspec = common_functions.cosmic_ray_like_chi2_fullspec
+significance_li_and_ma = common_functions.significance_li_and_ma
 
 fig, ax = plt.subplots()
 figsize_x = 6.4
@@ -50,11 +52,13 @@ big_matrix = big_matrix_pkl[0]
 big_matrix_fullspec = big_matrix_pkl[1]
 
 for logE in range(0,logE_nbins):
-    n_runs = float(len(big_matrix[logE]))
-    big_matrix[logE] = np.array(big_matrix[logE])*1./n_runs
+    #n_runs = float(len(big_matrix[logE]))
+    #big_matrix[logE] = np.array(big_matrix[logE])*1./n_runs
+    big_matrix[logE] = np.array(big_matrix[logE])
 
-n_runs = float(len(big_matrix_fullspec))
-big_matrix_fullspec = np.array(big_matrix_fullspec)*1./n_runs
+#n_runs = float(len(big_matrix_fullspec))
+#big_matrix_fullspec = np.array(big_matrix_fullspec)*1./n_runs
+big_matrix_fullspec = np.array(big_matrix_fullspec)
 
 print ('Computing SVD eigenvectors...')
 big_xyoff_map_1d = []
@@ -138,90 +142,116 @@ for rank in range(0,max_matrix_rank):
                     idx_1d += 1
                     list_eigen_xyoff_map[logE].waxis[idx_x,idx_y,gcut] += big_eigenvectors[logE][rank][idx_1d-1]
 
-    fig.clf()
-    figsize_x = 2.*gcut_bins
-    figsize_y = 2.*logE_nbins
-    fig.set_figheight(figsize_y)
-    fig.set_figwidth(figsize_x)
-    ax_idx = 0
-    for logE in range(0,logE_nbins):
-        for gcut in range(0,gcut_bins):
-            ax_idx = gcut + (logE-0)*gcut_bins + 1
-            axbig = fig.add_subplot(logE_nbins,gcut_bins,ax_idx)
-            if logE==0:
-                if gcut==0:
-                    axbig.set_title('SR')
-                else:
-                    axbig.set_title(f'CR{gcut}')
-            if gcut==0:
-                axbig.set_ylabel(f'{pow(10.,logE_bins[logE]):0.2f}-{pow(10.,logE_bins[logE+1]):0.2f} TeV')
-            xmin = list_eigen_xyoff_map[logE].xaxis.min()
-            xmax = list_eigen_xyoff_map[logE].xaxis.max()
-            ymin = list_eigen_xyoff_map[logE].yaxis.min()
-            ymax = list_eigen_xyoff_map[logE].yaxis.max()
-            im = axbig.imshow(list_eigen_xyoff_map[logE].waxis[:,:,gcut].T,origin='lower',extent=(xmin,xmax,ymin,ymax),aspect='auto')
-    fig.savefig(f'output_plots/eigenmap_{source_name}_{input_epoch}_rank{rank}',bbox_inches='tight')
-    axbig.remove()
+    #fig.clf()
+    #figsize_x = 2.*gcut_bins
+    #figsize_y = 2.*logE_nbins
+    #fig.set_figheight(figsize_y)
+    #fig.set_figwidth(figsize_x)
+    #ax_idx = 0
+    #for logE in range(0,logE_nbins):
+    #    for gcut in range(0,gcut_bins):
+    #        ax_idx = gcut + (logE-0)*gcut_bins + 1
+    #        axbig = fig.add_subplot(logE_nbins,gcut_bins,ax_idx)
+    #        if logE==0:
+    #            if gcut==0:
+    #                axbig.set_title('SR')
+    #            else:
+    #                axbig.set_title(f'CR{gcut}')
+    #        if gcut==0:
+    #            axbig.set_ylabel(f'{pow(10.,logE_bins[logE]):0.2f}-{pow(10.,logE_bins[logE+1]):0.2f} TeV')
+    #        xmin = list_eigen_xyoff_map[logE].xaxis.min()
+    #        xmax = list_eigen_xyoff_map[logE].xaxis.max()
+    #        ymin = list_eigen_xyoff_map[logE].yaxis.min()
+    #        ymax = list_eigen_xyoff_map[logE].yaxis.max()
+    #        im = axbig.imshow(list_eigen_xyoff_map[logE].waxis[:,:,gcut].T,origin='lower',extent=(xmin,xmax,ymin,ymax),aspect='auto')
+    #fig.savefig(f'output_plots/eigenmap_{source_name}_{input_epoch}_rank{rank}',bbox_inches='tight')
+    #axbig.remove()
 
-    fig.clf()
-    figsize_x = 2.*logE_nbins
-    figsize_y = 2.*gcut_bins
-    fig.set_figheight(figsize_y)
-    fig.set_figwidth(figsize_x)
-    ax_idx = 0
-    gs = GridSpec(gcut_bins, logE_nbins, hspace=0.1, wspace=0.1)
-    for logE in range(0,logE_nbins):
-        for gcut in range(0,gcut_bins):
-            ax_idx = logE + (gcut-0)*logE_nbins + 1
-            axbig = fig.add_subplot(gs[ax_idx-1])
-            if logE==0:
-                if gcut==0:
-                    axbig.set_ylabel('SR')
-                else:
-                    axbig.set_ylabel(f'CR{gcut}')
-            if gcut==0:
-                axbig.set_title(f'{pow(10.,logE_bins[logE]):0.2f}-{pow(10.,logE_bins[logE+1]):0.2f} TeV')
-            if not logE==0:
-                axbig.axes.get_yaxis().set_visible(False)
-            if not gcut==gcut_bins-1:
-                axbig.axes.get_xaxis().set_visible(False)
-            xmin = list_eigen_xyoff_map[logE].xaxis.min()
-            xmax = list_eigen_xyoff_map[logE].xaxis.max()
-            ymin = list_eigen_xyoff_map[logE].yaxis.min()
-            ymax = list_eigen_xyoff_map[logE].yaxis.max()
-            im = axbig.imshow(list_eigen_xyoff_map[logE].waxis[:,:,gcut].T,origin='lower',extent=(xmin,xmax,ymin,ymax),aspect='auto')
-    fig.savefig(f'output_plots/eigenmap_{source_name}_{input_epoch}_rank{rank}_tanspose',bbox_inches='tight')
-    axbig.remove()
+    #fig.clf()
+    #figsize_x = 2.*logE_nbins
+    #figsize_y = 2.*gcut_bins
+    #fig.set_figheight(figsize_y)
+    #fig.set_figwidth(figsize_x)
+    #ax_idx = 0
+    #gs = GridSpec(gcut_bins, logE_nbins, hspace=0.1, wspace=0.1)
+    #for logE in range(0,logE_nbins):
+    #    for gcut in range(0,gcut_bins):
+    #        ax_idx = logE + (gcut-0)*logE_nbins + 1
+    #        axbig = fig.add_subplot(gs[ax_idx-1])
+    #        if logE==0:
+    #            if gcut==0:
+    #                axbig.set_ylabel('SR')
+    #            else:
+    #                axbig.set_ylabel(f'CR{gcut}')
+    #        if gcut==0:
+    #            axbig.set_title(f'{pow(10.,logE_bins[logE]):0.2f}-{pow(10.,logE_bins[logE+1]):0.2f} TeV')
+    #        if not logE==0:
+    #            axbig.axes.get_yaxis().set_visible(False)
+    #        if not gcut==gcut_bins-1:
+    #            axbig.axes.get_xaxis().set_visible(False)
+    #        xmin = list_eigen_xyoff_map[logE].xaxis.min()
+    #        xmax = list_eigen_xyoff_map[logE].xaxis.max()
+    #        ymin = list_eigen_xyoff_map[logE].yaxis.min()
+    #        ymax = list_eigen_xyoff_map[logE].yaxis.max()
+    #        im = axbig.imshow(list_eigen_xyoff_map[logE].waxis[:,:,gcut].T,origin='lower',extent=(xmin,xmax,ymin,ymax),aspect='auto')
+    #fig.savefig(f'output_plots/eigenmap_{source_name}_{input_epoch}_rank{rank}_tanspose',bbox_inches='tight')
+    #axbig.remove()
 
 
 U_full, S_full, VT_full = np.linalg.svd(big_matrix_fullspec,full_matrices=False) # perform better for perturbation method
 print (f'big_matrix_fullspec.shape = {big_matrix_fullspec.shape}')
 print (f'S_full length = {len(S_full)}')
 
-effective_matrix_rank = min(matrix_rank_fullspec,int(0.5*3./4.*(len(S_full)-1)))
-print (f'effective_matrix_rank_fullspec = {effective_matrix_rank}')
+effective_matrix_rank_fullspec = min(matrix_rank_fullspec,int(0.5*3./4.*(len(S_full)-1)))
+print (f'effective_matrix_rank_fullspec = {effective_matrix_rank_fullspec}')
 
-U_eco = U_full[:, :effective_matrix_rank]
-VT_eco = VT_full[:effective_matrix_rank, :]
-S_eco = S_full[:effective_matrix_rank]
+U_eco = U_full[:, :effective_matrix_rank_fullspec]
+VT_eco = VT_full[:effective_matrix_rank_fullspec, :]
+S_eco = S_full[:effective_matrix_rank_fullspec]
 big_eigenvalues_fullspec = S_eco
 big_eigenvectors_fullspec = VT_eco
 
 sq_error_map_1d_fullspec = np.zeros_like(big_matrix_fullspec[0])
 tolerance_map_1d_fullspec = np.zeros_like(big_matrix_fullspec[0])
-norm_map_1d_fullspec = np.zeros_like(big_matrix_fullspec[0])
+data_map_1d_fullspec = np.zeros_like(big_matrix_fullspec[0])
+model_map_1d_fullspec = np.zeros_like(big_matrix_fullspec[0])
+mask_xyoff_map_1d_fullspec = np.zeros_like(big_matrix_fullspec[0])
 for run in range(0,len(big_matrix_fullspec)):
     data_xyoff_map_1d_fullspec = big_matrix_fullspec[run]
     truth_params = big_eigenvectors_fullspec @ data_xyoff_map_1d_fullspec
+
+    #init_params = truth_params
+    #stepsize = [1e-4] * effective_matrix_rank_fullspec
+    #solution = minimize(
+    #    cosmic_ray_like_chi2_fullspec,
+    #    x0=init_params,
+    #    args=(
+    #        tolerance_map_1d_fullspec,
+    #        truth_params,
+    #        big_eigenvectors_fullspec,
+    #        data_xyoff_map_1d_fullspec,
+    #        data_xyoff_map_1d_fullspec,
+    #        mask_xyoff_map_1d_fullspec,
+    #        1,
+    #    ),
+    #    method='L-BFGS-B',
+    #    jac=None,
+    #    options={'eps':stepsize,'ftol':0.0001},
+    #)
+    #fit_params = solution['x']
+    #eco_xyoff_map_1d_fullspec = big_eigenvectors_fullspec.T @ fit_params
+
     eco_xyoff_map_1d_fullspec = big_eigenvectors_fullspec.T @ truth_params
     for pix in range(0,len(sq_error_map_1d_fullspec)):
         data = data_xyoff_map_1d_fullspec[pix]
         model = eco_xyoff_map_1d_fullspec[pix]
-        sq_error_map_1d_fullspec[pix] += abs(data-model)
-        norm_map_1d_fullspec[pix] += data
+        significance = significance_li_and_ma(data,model,0.)
+        sq_error_map_1d_fullspec[pix] += pow(data-model,2)
+        data_map_1d_fullspec[pix] += data
+        model_map_1d_fullspec[pix] += model
 for pix in range(0,len(sq_error_map_1d_fullspec)):
-    if sq_error_map_1d_fullspec[pix]==0.: continue
-    tolerance_map_1d_fullspec[pix] = norm_map_1d_fullspec[pix]/sq_error_map_1d_fullspec[pix]
+    if data_map_1d_fullspec[pix]==0.: continue
+    tolerance_map_1d_fullspec[pix] = pow(sq_error_map_1d_fullspec[pix]/data_map_1d_fullspec[pix],0.5)
 
 list_tolerance_xyoff_map = []
 for logE in range(0,logE_nbins):
@@ -291,7 +321,7 @@ axbig.plot(rank_index,S_full)
 fig.savefig(f'{smi_dir}/output_plots/signularvalue_{source_name}_{input_epoch}_fullspec.png',bbox_inches='tight')
 axbig.remove()
     
-max_matrix_rank = min(5,big_eigenvectors_fullspec.shape[0])
+max_matrix_rank = min(matrix_rank_fullspec,big_eigenvectors_fullspec.shape[0])
 for rank in range(0,max_matrix_rank):
 
     list_eigen_xyoff_map = []
@@ -308,30 +338,30 @@ for rank in range(0,max_matrix_rank):
                     list_eigen_xyoff_map[logE].waxis[idx_x,idx_y,gcut] += big_eigenvectors_fullspec[rank][idx_1d-1]
 
 
-    fig.clf()
-    figsize_x = 2.*gcut_bins
-    figsize_y = 2.*logE_nbins
-    fig.set_figheight(figsize_y)
-    fig.set_figwidth(figsize_x)
-    ax_idx = 0
-    for logE in range(0,logE_nbins):
-        for gcut in range(0,gcut_bins):
-            ax_idx = gcut + (logE-0)*gcut_bins + 1
-            axbig = fig.add_subplot(logE_nbins,gcut_bins,ax_idx)
-            if logE==0:
-                if gcut==0:
-                    axbig.set_title('SR')
-                else:
-                    axbig.set_title(f'CR{gcut}')
-            if gcut==0:
-                axbig.set_ylabel(f'E = {pow(10.,logE_bins[logE]):0.2f}-{pow(10.,logE_bins[logE+1]):0.2f} TeV')
-            xmin = list_eigen_xyoff_map[logE].xaxis.min()
-            xmax = list_eigen_xyoff_map[logE].xaxis.max()
-            ymin = list_eigen_xyoff_map[logE].yaxis.min()
-            ymax = list_eigen_xyoff_map[logE].yaxis.max()
-            im = axbig.imshow(list_eigen_xyoff_map[logE].waxis[:,:,gcut].T,origin='lower',extent=(xmin,xmax,ymin,ymax),aspect='auto')
-    fig.savefig(f'output_plots/fullspec_eigenmap_{source_name}_{input_epoch}_rank{rank}',bbox_inches='tight')
-    axbig.remove()
+    #fig.clf()
+    #figsize_x = 2.*gcut_bins
+    #figsize_y = 2.*logE_nbins
+    #fig.set_figheight(figsize_y)
+    #fig.set_figwidth(figsize_x)
+    #ax_idx = 0
+    #for logE in range(0,logE_nbins):
+    #    for gcut in range(0,gcut_bins):
+    #        ax_idx = gcut + (logE-0)*gcut_bins + 1
+    #        axbig = fig.add_subplot(logE_nbins,gcut_bins,ax_idx)
+    #        if logE==0:
+    #            if gcut==0:
+    #                axbig.set_title('SR')
+    #            else:
+    #                axbig.set_title(f'CR{gcut}')
+    #        if gcut==0:
+    #            axbig.set_ylabel(f'E = {pow(10.,logE_bins[logE]):0.2f}-{pow(10.,logE_bins[logE+1]):0.2f} TeV')
+    #        xmin = list_eigen_xyoff_map[logE].xaxis.min()
+    #        xmax = list_eigen_xyoff_map[logE].xaxis.max()
+    #        ymin = list_eigen_xyoff_map[logE].yaxis.min()
+    #        ymax = list_eigen_xyoff_map[logE].yaxis.max()
+    #        im = axbig.imshow(list_eigen_xyoff_map[logE].waxis[:,:,gcut].T,origin='lower',extent=(xmin,xmax,ymin,ymax),aspect='auto')
+    #fig.savefig(f'output_plots/fullspec_eigenmap_{source_name}_{input_epoch}_rank{rank}',bbox_inches='tight')
+    #axbig.remove()
 
     fig.clf()
     figsize_x = 2.*logE_nbins
