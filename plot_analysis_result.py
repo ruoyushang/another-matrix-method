@@ -72,19 +72,21 @@ zoomin = 1.0
 #zoomin = 0.5
 
 #ana_tag = 'test'
-#ana_tag = 'demo'
-#ana_tag = 'linear'
-#ana_tag = 'poisson'
-#ana_tag = 'binspec'
-#ana_tag = 'fullspec'
 #ana_tag = 'init'
 #ana_tag = 'rank1'
 #ana_tag = 'rank2'
 #ana_tag = 'rank4'
-ana_tag = 'rank8'
+#ana_tag = 'rank8'
 #ana_tag = 'rank16'
 #ana_tag = 'rank32'
 #ana_tag = 'rank64'
+#ana_tag = 'fullspec1'
+#ana_tag = 'fullspec2'
+#ana_tag = 'fullspec4'
+#ana_tag = 'fullspec8'
+#ana_tag = 'fullspec16'
+ana_tag = 'fullspec32'
+#ana_tag = 'fullspec64'
 
 qual_cut = 0.
 #qual_cut = 20.
@@ -129,8 +131,8 @@ if 'Crab' in source_name:
     logE_max = logE_nbins
     fit_radial_profile = False
 if 'UrsaMajorII' in source_name:
-    logE_min = 1
-    logE_mid = 4
+    logE_min = 2
+    logE_mid = 5
     logE_max = logE_nbins
     fit_radial_profile = False
 if 'SNR_G189_p03' in source_name:
@@ -500,7 +502,8 @@ for epoch in input_epoch:
                     sum_incl_sky_map[logE].add(incl_sky_map[logE])
                     sum_data_sky_map[logE].add(data_sky_map[logE])
                     sum_bkgd_sky_map[logE].add(bkgd_sky_map[logE])
-                    sum_syst_sky_map[logE].addSquare(syst_sky_map[logE])
+                    if include_syst_error:
+                        sum_syst_sky_map[logE].addSquare(syst_sky_map[logE])
                     sum_data_xyoff_map[logE].add(data_xyoff_map[logE])
                     sum_fit_xyoff_map[logE].add(fit_xyoff_map[logE])
                     sum_ratio_xyoff_map[logE].add(ratio_xyoff_map[logE])
@@ -711,11 +714,24 @@ label_x = 'angular distance [deg]'
 label_y = 'surface brightness [$\mathrm{TeV}\ \mathrm{cm}^{-2}\mathrm{s}^{-1}\mathrm{sr}^{-1}$]'
 axbig.set_xlabel(label_x)
 axbig.set_ylabel(label_y)
+axbig.set_title(f'{pow(10.,logE_bins[logE_min]):0.2f}-{pow(10.,logE_bins[logE_max]):0.2f} TeV')
 axbig.fill_between(on_radial_axis,np.array(baseline_yaxis)-np.array(on_profile_syst_axis),np.array(baseline_yaxis)+np.array(on_profile_syst_axis),alpha=0.2,color='b')
 axbig.plot(on_radial_axis, baseline_yaxis, color='b', ls='dashed')
 axbig.errorbar(on_radial_axis,on_profile_axis,on_profile_err_axis,color='k',marker='+',ls='none')
 fig.savefig(f'output_plots/surface_brightness_{source_name}_allE_{all_roi_name[0]}_{ana_tag}.png',bbox_inches='tight')
 axbig.remove()
+txtfile = open(f'output_plots/surface_brightness_{source_name}_allE_{all_roi_name[0]}_{ana_tag}.txt', 'w')
+output_string = f"{pow(10.,logE_bins[logE_min]):0.2f}-{pow(10.,logE_bins[logE_max]):0.2f} TeV \n"
+txtfile.write(output_string)
+output_string = "angular distance [deg] \t surface brightness [TeV/cm2/s/sr] \t surface brightness error [TeV/cm2/s/sr] \n"
+txtfile.write(output_string)
+for entry in range(0,len(on_radial_axis)):
+    radial_dist = on_radial_axis[entry]
+    profile = on_profile_axis[entry]
+    profile_err = on_profile_err_axis[entry]
+    output_string = f"{radial_dist:0.2f} \t {profile:0.2e} \t {profile_err:0.2e} \n"
+    txtfile.write(output_string)
+txtfile.close()
 
 on_radial_axis, on_profile_axis, on_profile_err_axis, on_profile_syst_axis = GetRadialProfile(sum_flux_sky_map_LE,sum_flux_err_sky_map_LE,sum_flux_syst_sky_map_LE,all_roi_x,all_roi_y,2.0,all_excl_x,all_excl_y,all_excl_r)
 baseline_yaxis = [0. for i in range(0,len(on_radial_axis))]
@@ -729,11 +745,24 @@ label_x = 'angular distance [deg]'
 label_y = 'surface brightness [$\mathrm{TeV}\ \mathrm{cm}^{-2}\mathrm{s}^{-1}\mathrm{sr}^{-1}$]'
 axbig.set_xlabel(label_x)
 axbig.set_ylabel(label_y)
+axbig.set_title(f'{pow(10.,logE_bins[logE_min]):0.2f}-{pow(10.,logE_bins[logE_mid]):0.2f} TeV')
 axbig.fill_between(on_radial_axis,np.array(baseline_yaxis)-np.array(on_profile_syst_axis),np.array(baseline_yaxis)+np.array(on_profile_syst_axis),alpha=0.2,color='b')
 axbig.plot(on_radial_axis, baseline_yaxis, color='b', ls='dashed')
 axbig.errorbar(on_radial_axis,on_profile_axis,on_profile_err_axis,color='k',marker='+',ls='none')
 fig.savefig(f'output_plots/surface_brightness_{source_name}_LE_{all_roi_name[0]}_{ana_tag}.png',bbox_inches='tight')
 axbig.remove()
+txtfile = open(f'output_plots/surface_brightness_{source_name}_LE_{all_roi_name[0]}_{ana_tag}.txt', 'w')
+output_string = f"{pow(10.,logE_bins[logE_min]):0.2f}-{pow(10.,logE_bins[logE_mid]):0.2f} TeV \n"
+txtfile.write(output_string)
+output_string = "angular distance [deg] \t surface brightness [TeV/cm2/s/sr] \t surface brightness error [TeV/cm2/s/sr] \n"
+txtfile.write(output_string)
+for entry in range(0,len(on_radial_axis)):
+    radial_dist = on_radial_axis[entry]
+    profile = on_profile_axis[entry]
+    profile_err = on_profile_err_axis[entry]
+    output_string = f"{radial_dist:0.2f} \t {profile:0.2e} \t {profile_err:0.2e} \n"
+    txtfile.write(output_string)
+txtfile.close()
 
 on_radial_axis, on_profile_axis, on_profile_err_axis, on_profile_syst_axis = GetRadialProfile(sum_flux_sky_map_HE,sum_flux_err_sky_map_HE,sum_flux_syst_sky_map_HE,all_roi_x,all_roi_y,2.0,all_excl_x,all_excl_y,all_excl_r)
 baseline_yaxis = [0. for i in range(0,len(on_radial_axis))]
@@ -747,11 +776,24 @@ label_x = 'angular distance [deg]'
 label_y = 'surface brightness [$\mathrm{TeV}\ \mathrm{cm}^{-2}\mathrm{s}^{-1}\mathrm{sr}^{-1}$]'
 axbig.set_xlabel(label_x)
 axbig.set_ylabel(label_y)
+axbig.set_title(f'{pow(10.,logE_bins[logE_mid]):0.2f}-{pow(10.,logE_bins[logE_max]):0.2f} TeV')
 axbig.fill_between(on_radial_axis,np.array(baseline_yaxis)-np.array(on_profile_syst_axis),np.array(baseline_yaxis)+np.array(on_profile_syst_axis),alpha=0.2,color='b')
 axbig.plot(on_radial_axis, baseline_yaxis, color='b', ls='dashed')
 axbig.errorbar(on_radial_axis,on_profile_axis,on_profile_err_axis,color='k',marker='+',ls='none')
 fig.savefig(f'output_plots/surface_brightness_{source_name}_HE_{all_roi_name[0]}_{ana_tag}.png',bbox_inches='tight')
 axbig.remove()
+txtfile = open(f'output_plots/surface_brightness_{source_name}_HE_{all_roi_name[0]}_{ana_tag}.txt', 'w')
+output_string = f"{pow(10.,logE_bins[logE_mid]):0.2f}-{pow(10.,logE_bins[logE_max]):0.2f} TeV \n"
+txtfile.write(output_string)
+output_string = "angular distance [deg] \t surface brightness [TeV/cm2/s/sr] \t surface brightness error [TeV/cm2/s/sr] \n"
+txtfile.write(output_string)
+for entry in range(0,len(on_radial_axis)):
+    radial_dist = on_radial_axis[entry]
+    profile = on_profile_axis[entry]
+    profile_err = on_profile_err_axis[entry]
+    output_string = f"{radial_dist:0.2f} \t {profile:0.2e} \t {profile_err:0.2e} \n"
+    txtfile.write(output_string)
+txtfile.close()
 
 
 if 'PSR_J1856_p0245' in source_name:

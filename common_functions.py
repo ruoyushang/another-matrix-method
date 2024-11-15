@@ -23,32 +23,24 @@ smi_output = os.environ.get("SMI_OUTPUT")
 use_poisson_likelihood = True
 use_fullspec = False
 regularization_scale = 0.
-matrix_rank = 5
-matrix_rank_fullspec = 5
+matrix_rank = 2
+matrix_rank_fullspec = 2
 region_normalization = False
 use_tolerance_map = False
+residual_correction = False
 
 if sky_tag=='linear':
     use_poisson_likelihood = False
-if sky_tag=='poisson':
-    use_poisson_likelihood = True
-
-if sky_tag=='fullspec':
-    use_fullspec = True
-if sky_tag=='binspec':
-    use_fullspec = False
 
 if sky_tag=='init':
     regularization_scale = 1e5
-    use_fullspec = False
 
 if 'rank' in sky_tag:
     matrix_rank = int(sky_tag.strip('rank'))
-    matrix_rank_fullspec = int(sky_tag.strip('rank'))
 
-if 'test' in sky_tag:
-    matrix_rank = 8
-    matrix_rank_fullspec = 8
+if 'fullspec' in sky_tag:
+    matrix_rank_fullspec = int(sky_tag.strip('fullspec'))
+    use_fullspec = True
 
 run_elev_cut = 25.
 
@@ -72,6 +64,9 @@ gcut_bins = 4
 #gcut_bins = 3
 gcut_start = 0
 gcut_end = gcut_bins
+gcut_weight = [1.] * gcut_bins
+gcut_weight[0] = 0.
+gcut_weight[gcut_bins-1] = 0.
 
 logE_bins = [-0.58,-0.50,-0.40,-0.25,0.00,0.25,0.50,0.75,1.0] # logE TeV
 logE_nbins = len(logE_bins)-1
@@ -904,8 +899,6 @@ def build_skymap(
         print (f'sum_truth_params = {sum_truth_params:0.1f}, sum_fit_params = {sum_fit_params:0.1f}')
 
         init_data_count = cosmic_ray_like_count(logE,fit_xyoff_map_1d,region_type=0)
-        #residual_correction(logE, data_xyoff_map_1d, fit_xyoff_map_1d, mask_xyoff_map_1d)
-
         sr_data_count = cosmic_ray_like_count(logE,data_xyoff_map_1d,region_type=0)
         fit_data_count = cosmic_ray_like_count(logE,fit_xyoff_map_1d,region_type=0)
 
@@ -990,7 +983,6 @@ def build_skymap(
         print (f'sum_truth_params = {sum_truth_params:0.1f}, sum_fit_params = {sum_fit_params:0.1f}')
 
         init_fit_data_count = cosmic_ray_like_count_fullspec(fit_xyoff_map_1d_fullspec,region_type=0)
-        #residual_correction_fullspec(data_xyoff_map_1d_fullspec, fit_xyoff_map_1d_fullspec, mask_xyoff_map_1d_fullspec)
 
         sr_data_count = cosmic_ray_like_count_fullspec(data_xyoff_map_1d_fullspec,region_type=0)
         fit_data_count = cosmic_ray_like_count_fullspec(fit_xyoff_map_1d_fullspec,region_type=0)
@@ -1017,12 +1009,18 @@ def build_skymap(
             sum_fit_xyoff_map = np.sum(fit_xyoff_map[logE].waxis[:,:,gcut])
             print (f'sum_data_xyoff_map = {sum_data_xyoff_map:0.1f}, sum_fit_xyoff_map = {sum_fit_xyoff_map:0.1f}')
 
+            if residual_correction:
+                residual_correction_fullspec(logE,data_xyoff_map[logE],fit_xyoff_map[logE])
+                final_sum_fit_xyoff_map = np.sum(fit_xyoff_map[logE].waxis[:,:,gcut])
+                print (f'sum_data_xyoff_map = {sum_data_xyoff_map:0.1f}, final_sum_fit_xyoff_map = {final_sum_fit_xyoff_map:0.1f}')
+
     for logE in range(0,logE_nbins):
         sum_xyoff_map_cr_syst_region = [0.] * (gcut_bins)
         sum_xyoff_map_cr_region = [0.] * (gcut_bins)
         for idx_x in range(0,xoff_bins[logE]):
             for idx_y in range(0,yoff_bins[logE]):
                 for gcut in range(1,gcut_bins):
+                    if gcut_weight[gcut]>0.: continue
                     model = fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
                     data = data_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
                     error = data-model
@@ -1030,29 +1028,27 @@ def build_skymap(
                     sum_xyoff_map_cr_region[gcut] += (data)
         for gcut in range(1,gcut_bins):
             if sum_xyoff_map_cr_region[gcut]==0.: continue
+            if gcut_weight[gcut]>0.: continue
             syst_error_sq = pow(sum_xyoff_map_cr_syst_region[gcut],2)
-            if syst_error_sq < 2.*sum_xyoff_map_cr_region[gcut] or sum_xyoff_map_cr_region[gcut]<float(xoff_bins[logE]*yoff_bins[logE]*gcut_bins):
-                syst_error_sq = 0.
             sum_xyoff_map_cr_syst_region[gcut] = pow(syst_error_sq,0.5) / sum_xyoff_map_cr_region[gcut]
-            sum_xyoff_map_cr_syst_region[0] += 1./float(gcut_bins-1) * sum_xyoff_map_cr_syst_region[gcut]
+            sum_xyoff_map_cr_syst_region[0] = sum_xyoff_map_cr_syst_region[gcut]
+
         for idx_x in range(0,xoff_bins[logE]):
             for idx_y in range(0,yoff_bins[logE]):
                 sum_xyoff_map_cr = 0.
                 for gcut in range(1,gcut_bins):
                     model = fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
                     data = data_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
-                    sum_xyoff_map_cr += model
+                    sum_xyoff_map_cr += data
                 for gcut in range(0,gcut_bins):
-                    sum_xyoff_map_sr = 0.
                     model = fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
-                    sum_xyoff_map_sr = model
-                    ratio = 1.
-                    ratio_syst = 1.
+                    ratio = 0.
+                    ratio_syst = 0.
                     if sum_xyoff_map_cr>0.:
-                        ratio = sum_xyoff_map_sr/sum_xyoff_map_cr
+                        ratio = model/sum_xyoff_map_cr
                         ratio_syst = sum_xyoff_map_cr_syst_region[gcut]
                     ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = ratio
-                    syst_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = ratio_syst
+                    syst_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = ratio_syst * ratio
 
     for logE in range(0,logE_nbins):
 
@@ -1063,13 +1059,12 @@ def build_skymap(
         sum_xyoff_map_sr = np.sum(fit_xyoff_map[logE].waxis[:,:,0])
         sum_xyoff_map_cr = 0.
         for gcut in range(1,gcut_bins):
-            sum_xyoff_map_cr += np.sum(fit_xyoff_map[logE].waxis[:,:,gcut])
+            sum_xyoff_map_cr += np.sum(data_xyoff_map[logE].waxis[:,:,gcut])
         avg_ratio = sum_xyoff_map_sr/sum_xyoff_map_cr
 
-        for idx_x in range(0,xoff_bins[logE]):
-            for idx_y in range(0,yoff_bins[logE]):
-                if abs(ratio_xyoff_map[logE].waxis[idx_x,idx_y,0])>100.:
-                    print (f'logE = {logE}, Very large ratio!!! Reset to avg_ratio = {avg_ratio}')
+        if sum_xyoff_map_sr<float(xoff_bins[logE]*yoff_bins[logE]):
+            for idx_x in range(0,xoff_bins[logE]):
+                for idx_y in range(0,yoff_bins[logE]):
                     ratio_xyoff_map[logE].waxis[idx_x,idx_y,0] = avg_ratio
 
 
@@ -1216,60 +1211,39 @@ def build_skymap(
         return [exposure_hours,avg_tel_elev,avg_tel_azim,truth_params,fit_params,avg_MeanPedvar]
 
 def residual_correction_fullspec(
+        logE,
         data_xyoff_map,
         bkgd_xyoff_map,
-        mask_xyoff_map,
     ):
 
-    list_gcut = []
-    list_pix_x = []
-    list_pix_y = []
-    list_logE = []
-    list_data = []
-    list_bkgd = []
-    list_weight = []
+    #residual = []
+    #for gcut in range(0,gcut_bins):
+    #    data_sum = np.sum(data_xyoff_map.waxis[:,:,gcut])
+    #    bkgd_sum = np.sum(bkgd_xyoff_map.waxis[:,:,gcut])
+    #    if bkgd_sum>0.:
+    #        residual += [(data_sum-bkgd_sum)]
+    #    else:
+    #        residual += [0.]
+    #if residual[3]==0.:
+    #    residual[0] = 0.
+    #else:
+    #    residual[0] = residual[1] * residual[2] / residual[3]
 
-    idx_1d = 0
+
+    norm = []
+    residual = []
     for gcut in range(0,gcut_bins):
-        for logE in range(0,logE_nbins):
-            for idx_x in range(0,xoff_bins[logE]):
-                for idx_y in range(0,yoff_bins[logE]):
+        data_sum = np.sum(data_xyoff_map.waxis[:,:,gcut])
+        bkgd_sum = np.sum(bkgd_xyoff_map.waxis[:,:,gcut])
+        residual += [(data_sum-bkgd_sum)]
+        norm += [bkgd_sum]
 
-                    idx_1d += 1
-                    data = data_xyoff_map[idx_1d-1]
-                    bkgd = bkgd_xyoff_map[idx_1d-1]
-                    mask = mask_xyoff_map[idx_1d-1]
-                    weight = 1.
-                    if mask>0.:
-                        weight = 0.1
+    for idx_x in range(0,xoff_bins[logE]):
+        for idx_y in range(0,yoff_bins[logE]):
+            if norm[gcut_bins-1]==0.: continue
+            old_bkgd = bkgd_xyoff_map.waxis[idx_x,idx_y,0]
+            bkgd_xyoff_map.waxis[idx_x,idx_y,0] += 1. * residual[gcut_bins-1]/norm[gcut_bins-1] * old_bkgd
 
-                    list_gcut += [gcut]
-                    list_logE += [logE]
-                    list_pix_x += [idx_x]
-                    list_pix_y += [idx_y]
-                    list_data += [data]
-                    list_bkgd += [bkgd]
-                    list_weight += [weight]
-
-    idx_1d = 0
-    for gcut in range(0,gcut_bins):
-        for logE in range(0,logE_nbins):
-            for idx_x in range(0,xoff_bins[logE]):
-                for idx_y in range(0,yoff_bins[logE]):
-                    idx_1d += 1
-                    if not gcut==0: continue
-                    for entry in range(0,len(list_data)):
-                        if not list_gcut[entry]==1: continue
-                        if not list_pix_x[entry]==idx_x: continue
-                        if not list_pix_y[entry]==idx_y: continue
-                        if not list_logE[entry]==logE: continue
-                        data = list_data[entry]
-                        bkgd = list_bkgd[entry]
-                        weight = list_weight[entry]
-                        if bkgd==0.: continue
-                        correction = (data-bkgd)/bkgd * weight
-                        old_bkgd = bkgd_xyoff_map[idx_1d-1]
-                        bkgd_xyoff_map[idx_1d-1] += correction*old_bkgd
 
 
 def cosmic_ray_like_chi2_fullspec(
@@ -1314,7 +1288,7 @@ def cosmic_ray_like_chi2_fullspec(
                     data = data_xyoff_map[idx_1d-1]
                     init = init_xyoff_map[idx_1d-1]
                     mask = mask_xyoff_map[idx_1d-1]
-                    weight = 1.
+                    weight = gcut_weight[gcut]
 
                     #total_log_likelihood = 0.
                     #if total_data==0.:
@@ -1348,7 +1322,7 @@ def cosmic_ray_like_chi2_fullspec(
                     list_bkgd += [n_expect]
                     list_weight += [weight]
  
-                    if not use_tolerance_map:
+                    if use_poisson_likelihood:
                         log_likelihood = 0.
                         if n_data==0.:
                             log_likelihood = (n_expect)*weight
@@ -1357,9 +1331,7 @@ def cosmic_ray_like_chi2_fullspec(
                             log_likelihood = (-1.*(n_data*np.log(n_expect) - n_expect - (n_data*np.log(n_data)-n_data)))*weight
                             sum_log_likelihood += log_likelihood
                     else:
-                        tolerance = tolerance_map[idx_1d-1] * n_data
-                        if tolerance>0.:
-                            sum_log_likelihood += pow(n_expect-n_data,2)/(tolerance*tolerance) * weight
+                        sum_log_likelihood += pow(n_expect-n_data,2) * weight
 
             #for pix1 in range(0,len(list_weight)):
             #    idx_x_1 = list_pix_x[pix1]
@@ -1399,58 +1371,6 @@ def cosmic_ray_like_chi2_fullspec(
 
     return sum_log_likelihood / sum_weight
 
-def residual_correction(
-        logE,
-        data_xyoff_map,
-        bkgd_xyoff_map,
-        mask_xyoff_map,
-    ):
-
-    list_gcut = []
-    list_pix_x = []
-    list_pix_y = []
-    list_data = []
-    list_bkgd = []
-    list_weight = []
-
-    idx_1d = 0
-    for gcut in range(0,gcut_bins):
-        for idx_x in range(0,xoff_bins[logE]):
-            for idx_y in range(0,yoff_bins[logE]):
-
-                idx_1d += 1
-                data = data_xyoff_map[idx_1d-1]
-                bkgd = bkgd_xyoff_map[idx_1d-1]
-                mask = mask_xyoff_map[idx_1d-1]
-                weight = 1.
-                if mask>0.:
-                    weight = 0.1
-
-                list_gcut += [gcut]
-                list_pix_x += [idx_x]
-                list_pix_y += [idx_y]
-                list_data += [data]
-                list_bkgd += [bkgd]
-                list_weight += [weight]
-
-    idx_1d = 0
-    for gcut in range(0,gcut_bins):
-        for idx_x in range(0,xoff_bins[logE]):
-            for idx_y in range(0,yoff_bins[logE]):
-                idx_1d += 1
-                if not gcut==0: continue
-                for entry in range(0,len(list_data)):
-                    if not list_gcut[entry]==1: continue
-                    if not list_pix_x[entry]==idx_x: continue
-                    if not list_pix_y[entry]==idx_y: continue
-                    data = list_data[entry]
-                    bkgd = list_bkgd[entry]
-                    weight = list_weight[entry]
-                    if bkgd==0.: continue
-                    correction = (data-bkgd)/bkgd * weight
-                    old_bkgd = bkgd_xyoff_map[idx_1d-1]
-                    bkgd_xyoff_map[idx_1d-1] += correction*old_bkgd
-
 
 def cosmic_ray_like_chi2(
         try_params,
@@ -1485,7 +1405,7 @@ def cosmic_ray_like_chi2(
                 data = data_xyoff_map[idx_1d-1]
                 init = init_xyoff_map[idx_1d-1]
                 mask = mask_xyoff_map[idx_1d-1]
-                weight = 1.
+                weight = gcut_weight[gcut]
 
                 if mask>0.:
                     weight = 0.1
@@ -2669,6 +2589,21 @@ def GetHessJ1857():
 
     return energies, fluxes, flux_errs
 
+def GetMagicJ1857():
+
+    energies = [100.597/1000., 172.933/1000., 297.285/1000., 511.054/1000., 878.539/1000., 1510.27/1000., 2596.27/1000., 4463.17/1000., 7672.51/1000., 13189.6/1000.]
+    fluxes = [1.25e-11, 8.17e-12, 1.09e-11, 9.22e-12, 9.46e-12, 9.12e-12, 7.57e-12, 4.21e-12, 3.79e-12, 7.77e-12]
+    flux_errs_lo = [7.96e-12, 2.51e-12, 2.58e-12, 2.14e-12, 2.08e-12, 2.12e-12, 2.63e-12, 2.14e-12, 1.78e-12, 4.63e-12]
+    flux_errs_up = [7.96e-12, 2.51e-12, 2.58e-12, 2.14e-12, 2.08e-12, 2.12e-12, 2.63e-12, 2.14e-12, 1.78e-12, 4.63e-12]
+    flux_errs = []
+
+    erg_to_TeV = 0.62
+    for entry in range(0,len(energies)):
+        fluxes[entry] = fluxes[entry]*erg_to_TeV
+        flux_errs += [0.5*(flux_errs_up[entry]+flux_errs_lo[entry])*erg_to_TeV]
+
+    return energies, fluxes, flux_errs
+
 def GetHAWCDiffusionFluxGeminga():
 
     energies = [pow(10.,0.90),pow(10.,1.60)]
@@ -2901,7 +2836,9 @@ def PrintAndPlotInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,hist_d
         axbig.errorbar(HessSS433w_energies,HessSS433w_fluxes,HessSS433w_flux_errs,marker='s',ls='none',label='HESS western',zorder=3)
     elif 'PSR_J1856_p0245' in source_name:
         HESS_energies, HESS_fluxes, HESS_flux_errs = GetHessJ1857()
-        axbig.errorbar(HESS_energies,HESS_fluxes,HESS_flux_errs,color='b',marker='_',ls='none',label='HESS')
+        axbig.errorbar(HESS_energies,HESS_fluxes,HESS_flux_errs,color='r',marker='_',ls='none',label='HESS')
+        Magic_energies, Magic_fluxes, Magic_flux_errs = GetMagicJ1857()
+        axbig.errorbar(Magic_energies,Magic_fluxes,Magic_flux_errs,color='g',marker='_',ls='none',label='MAGIC')
     elif 'Geminga' in source_name:
         HAWC_diff_energies, HAWC_diff_fluxes, HAWC_diff_flux_errs = GetHAWCDiffusionFluxGeminga()
         HAWC_disk_energies, HAWC_disk_fluxes, HAWC_disk_flux_errs = GetHAWCDiskFluxGeminga()
@@ -3115,17 +3052,17 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
         #excl_y += [2.1]
         #excl_r += [0.2]
 
-        #region_name = ('J1857_p026_full','J1857+026')
-        #src_x = 284.3
-        #src_y = 2.7
-        #region_x += [src_x]
-        #region_y += [src_y]
-        #region_r += [1.0]
+        region_name = ('J1857_p026_full','J1857+026')
+        src_x = 284.3
+        src_y = 2.7
+        region_x += [src_x]
+        region_y += [src_y]
+        region_r += [1.0]
 
-        region_name = ('MAGIC','MAGIC')
-        region_x += [284.3]
-        region_y += [2.7]
-        region_r += [0.4]
+        #region_name = ('MAGIC','MAGIC')
+        #region_x += [284.3]
+        #region_y += [2.7]
+        #region_r += [0.4]
 
         #region_name = ('J1858_p020','J1858+020')
         #region_x += [284.6]

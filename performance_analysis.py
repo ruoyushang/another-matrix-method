@@ -48,21 +48,26 @@ ana_tag = []
 #ana_tag += [['fullspec','b']]
 #ana_tag += [['init','r']]
 
+ana_tag += [['fullspec1','r']]
+ana_tag += [['fullspec2','w']]
+ana_tag += [['fullspec4','w']]
+ana_tag += [['fullspec8','w']]
+ana_tag += [['fullspec16','w']]
+ana_tag += [['fullspec32','w']]
+ana_tag += [['fullspec64','b']]
 #ana_tag += [['rank1','r']]
 #ana_tag += [['rank2','r']]
-ana_tag += [['rank4','w']]
-ana_tag += [['rank8','b']]
-#ana_tag += [['rank16','b']]
-#ana_tag += [['rank32','w']]
-#ana_tag += [['rank64','w']]
+#ana_tag += [['rank4','w']]
+#ana_tag += [['rank8','b']]
+#ana_tag += [['rank16','w']]
 
 onoff = 'OFF'
 
 #exposure_per_group = 2.
 #exposure_per_group = 4.
 #exposure_per_group = 10.
-#exposure_per_group = 20.
-exposure_per_group = 50.
+exposure_per_group = 20.
+#exposure_per_group = 50.
 #exposure_per_group = 100.
 cr_qual_cut = 1e10
 #cr_qual_cut = 230
@@ -251,7 +256,7 @@ for logE in range(0,logE_nbins):
             bkgd = list_bkgd_count[ana][grp][logE]
             plot_elev += [elev]
             plot_error_significance += [abs(significance_li_and_ma(data,bkgd,0.))]
-        ax.scatter(plot_elev,plot_error_significance,color=ana_tag[ana][1],alpha=0.3, label=f"{ana_tag[ana][0].strip('rank')} eigenvectors")
+        ax.scatter(plot_elev,plot_error_significance,color=ana_tag[ana][1],alpha=0.3, label=f"{ana_tag[ana][0].strip('rank').strip('fullspec')} eigenvectors")
         #ax.scatter(plot_elev,plot_error_significance,alpha=0.3, label=f"{ana_tag[ana][0].strip('rank')} eigenvectors")
     ax.legend(loc='best')
     fig.savefig(f'output_plots/fov_error_significance_vs_elev_logE{logE}.png',bbox_inches='tight')
@@ -279,7 +284,7 @@ for logE in range(0,logE_nbins):
             bkgd = list_bkgd_count[ana][grp][logE]
             plot_nsb += [nsb]
             plot_error_significance += [abs(significance_li_and_ma(data,bkgd,0.))]
-        ax.scatter(plot_nsb,plot_error_significance,color=ana_tag[ana][1],alpha=0.3, label=f"{ana_tag[ana][0].strip('rank')} eigenvectors")
+        ax.scatter(plot_nsb,plot_error_significance,color=ana_tag[ana][1],alpha=0.3, label=f"{ana_tag[ana][0].strip('rank').strip('fullspec')} eigenvectors")
         #ax.scatter(plot_nsb,plot_error_significance,alpha=0.3, label=f"{ana_tag[ana][0].strip('rank')} eigenvectors")
     ax.legend(loc='best')
     fig.savefig(f'output_plots/fov_error_significance_vs_nsb_logE{logE}.png',bbox_inches='tight')
@@ -307,7 +312,7 @@ for logE in range(0,logE_nbins):
                 significance = list_significance[ana][grp][logE][pix]
                 plot_elev += [elev]
                 plot_error_significance += [abs(significance)]
-        kc = ana_tag[ana][0].strip('rank')
+        kc = ana_tag[ana][0].strip('rank').strip('fullspec')
         scatter_color = 'k'
         if ana_tag[ana][1]=='b':
             scatter_color = 'skyblue'
@@ -366,7 +371,7 @@ for logE in range(0,logE_nbins):
                 significance = list_significance[ana][grp][logE][pix]
                 plot_nsb += [nsb]
                 plot_error_significance += [abs(significance)]
-        kc = ana_tag[ana][0].strip('rank')
+        kc = ana_tag[ana][0].strip('rank').strip('fullspec')
         n_entries = len(plot_nsb)
         scatter_color = 'k'
         if ana_tag[ana][1]=='b':
@@ -431,8 +436,8 @@ for logE in range(0,logE_nbins):
         hist_significance, bin_edges = np.histogram(plot_error_significance,bins=hist_bins,range=(-hist_range,hist_range))
         mean = np.mean(np.array(plot_error_significance))
         rms = np.sqrt(np.mean(np.square(np.array(plot_error_significance))))
-        kc = ana_tag[ana][0].strip('rank')
-        ax.hist(plot_error_significance,bin_edges,histtype='step',density=True,facecolor=ana_tag[ana][1],label='$k_{c}$='+f'{kc}, $\mu$={mean:0.2f}, $\sigma$={rms:0.2f}')
+        kc = ana_tag[ana][0].strip('rank').strip('fullspec')
+        ax.hist(plot_error_significance,bin_edges,histtype='step',density=True,facecolor=ana_tag[ana][1],label='$k_{c}$='+f'{kc}, $\sigma$={rms:0.2f}')
         #ax.hist(plot_error_significance,bin_edges,histtype='step',density=True,label=f'{ana_tag[ana][0]}')
 
     hist_binsize = 2.*hist_range/float(hist_bins)
@@ -461,7 +466,7 @@ for logE in range(0,logE_nbins):
     ana_axis_label = []
     for ana in range(0,len(ana_tag)):
         ana_axis += [ana]
-        ana_axis_label += [ana_tag[ana][0].strip("rank")]
+        ana_axis_label += [ana_tag[ana][0].strip("rank").strip('fullspec')]
 
     syst_err_axis = []
     stat_err_axis = []
@@ -501,6 +506,7 @@ for logE in range(0,logE_nbins):
     ax.errorbar(ana_axis,syst_err_axis,yerr=stat_err_axis,color='k',marker='.',ls='solid')
     ax.set_xticks(np.arange(len(ana_axis_label)), labels=ana_axis_label)
     ax.set_title(f'E = {E_min:0.2f} - {E_max:0.2f} TeV')
+    ax.set_yscale('log')
     fig.savefig(f'output_plots/ana_syst_err_logE{logE}.png',bbox_inches='tight')
     del fig
     del ax
