@@ -202,7 +202,7 @@ U_full, S_full, VT_full = np.linalg.svd(big_matrix_fullspec,full_matrices=False)
 print (f'big_matrix_fullspec.shape = {big_matrix_fullspec.shape}')
 print (f'S_full length = {len(S_full)}')
 
-effective_matrix_rank_fullspec = min(matrix_rank_fullspec,int(0.5*3./4.*(len(S_full)-1)))
+effective_matrix_rank_fullspec = min(matrix_rank_fullspec,int(0.5*(len(S_full)-1)))
 print (f'effective_matrix_rank_fullspec = {effective_matrix_rank_fullspec}')
 
 U_eco = U_full[:, :effective_matrix_rank_fullspec]

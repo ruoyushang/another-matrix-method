@@ -60,9 +60,10 @@ fig.set_figwidth(figsize_x)
 smi_dir = os.environ.get("SMI_DIR")
 smi_input = os.environ.get("SMI_INPUT")
 #smi_output = os.environ.get("SMI_OUTPUT")
+#smi_output = "/nevis/ged/data/rshang/smi_output/output_test"
 #smi_output = "/nevis/ged/data/rshang/smi_output/output_3tel"
-smi_output = "/nevis/ged/data/rshang/smi_output/output_default"
-#smi_output = "/nevis/ged/data/rshang/smi_output/output_detail"
+#smi_output = "/nevis/ged/data/rshang/smi_output/output_default"
+smi_output = "/nevis/ged/data/rshang/smi_output/output_detail"
 
 smooth_size = 0.06
 #smooth_size = 0.08
@@ -80,12 +81,12 @@ zoomin = 1.0
 #ana_tag = 'rank16'
 #ana_tag = 'rank32'
 #ana_tag = 'rank64'
-#ana_tag = 'fullspec1'
+ana_tag = 'fullspec1'
 #ana_tag = 'fullspec2'
 #ana_tag = 'fullspec4'
 #ana_tag = 'fullspec8'
 #ana_tag = 'fullspec16'
-ana_tag = 'fullspec32'
+#ana_tag = 'fullspec32'
 #ana_tag = 'fullspec64'
 
 qual_cut = 0.
@@ -128,11 +129,6 @@ include_syst_error = False
 if 'Crab' in source_name:
     logE_min = 0
     logE_mid = 4
-    logE_max = logE_nbins
-    fit_radial_profile = False
-if 'UrsaMajorII' in source_name:
-    logE_min = 2
-    logE_mid = 5
     logE_max = logE_nbins
     fit_radial_profile = False
 if 'SNR_G189_p03' in source_name:

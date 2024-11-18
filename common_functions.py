@@ -20,32 +20,10 @@ from astropy.wcs import WCS
 sky_tag = os.environ.get("SKY_TAG")
 smi_output = os.environ.get("SMI_OUTPUT")
 
-use_poisson_likelihood = True
-use_fullspec = False
-regularization_scale = 0.
-matrix_rank = 2
-matrix_rank_fullspec = 2
-region_normalization = False
-use_tolerance_map = False
-residual_correction = False
-
-if sky_tag=='linear':
-    use_poisson_likelihood = False
-
-if sky_tag=='init':
-    regularization_scale = 1e5
-
-if 'rank' in sky_tag:
-    matrix_rank = int(sky_tag.strip('rank'))
-
-if 'fullspec' in sky_tag:
-    matrix_rank_fullspec = int(sky_tag.strip('fullspec'))
-    use_fullspec = True
-
 run_elev_cut = 25.
 
-min_NImages = 2
-#min_NImages = 3
+#min_NImages = 2
+min_NImages = 3
 max_Roff = 1.7
 max_EmissionHeight_cut = 20.
 min_EmissionHeight_cut = 6.
@@ -94,6 +72,37 @@ yoff_bins = xoff_bins
 
 chi2_cut = 0.5
 #chi2_cut = 1e10
+
+
+
+use_poisson_likelihood = True
+use_fullspec = False
+regularization_scale = 0.
+matrix_rank = 1
+matrix_rank_fullspec = 1
+region_normalization = False
+use_tolerance_map = False
+residual_correction = False
+
+if sky_tag=='init':
+    regularization_scale = 1e5
+
+if 'rank' in sky_tag:
+    matrix_rank = int(sky_tag.strip('rank'))
+
+if 'fullspec' in sky_tag:
+    matrix_rank_fullspec = int(sky_tag.strip('fullspec'))
+    use_fullspec = True
+
+if 'test' in smi_output:
+    max_EmissionHeight_cut = 6.
+    min_EmissionHeight_cut = 0.
+    matrix_rank_fullspec = 16
+    use_fullspec = True
+    gcut_weight = [1.] * gcut_bins
+    gcut_weight[0] = 0.
+    gcut_weight[gcut_bins-1] = 0.
+
 
 smi_aux = os.environ.get("SMI_AUX")
 smi_dir = os.environ.get("SMI_DIR")
@@ -954,7 +963,7 @@ def build_skymap(
             x0=init_params,
             args=(
                 tolerance_map_1d_fullspec,
-                truth_params,
+                avg_params,
                 big_eigenvectors_fullspec,
                 data_xyoff_map_1d_fullspec,
                 best_template_xyoff_map_1d_fullspec,
@@ -976,8 +985,8 @@ def build_skymap(
 
         print (f'effective_matrix_rank_fullspec = {effective_matrix_rank_fullspec}')
         print (f'big_eigenvalues_fullspec = {big_eigenvalues_fullspec}')
-        #for entry in range(0,len(truth_params)):
-        #    print (f'rank: {entry}, avg_params = {avg_params[entry]:0.1f}, truth_params = {truth_params[entry]:0.1f}, fit_params = {fit_params[entry]:0.1f}')
+        for entry in range(0,len(truth_params)):
+            print (f'rank: {entry}, avg_params = {avg_params[entry]:0.1f}, truth_params = {truth_params[entry]:0.1f}, fit_params = {fit_params[entry]:0.1f}')
         sum_truth_params = np.sum(truth_params)
         sum_fit_params = np.sum(fit_params)
         print (f'sum_truth_params = {sum_truth_params:0.1f}, sum_fit_params = {sum_fit_params:0.1f}')
@@ -1297,17 +1306,17 @@ def cosmic_ray_like_chi2_fullspec(
                     #    total_log_likelihood = (-1.*(total_data*np.log(total_bkgd) - total_bkgd - (total_data*np.log(total_data)-total_data)))
 
                     if mask>0.:
-                        weight = 0.1*weight
+                        weight = 0.
 
                     n_expect = max(0.0001,try_xyoff_map[idx_1d-1])
                     n_data = data
 
-                    if region_type==0:
-                        if gcut==0:
-                            n_data = max(0.0001,init) # blind signal region with init background model
-                            weight = regularization_scale
-                    elif region_type==1:
-                        if gcut!=0: continue
+                    #if region_type==0:
+                    #    if gcut==0:
+                    #        n_data = max(0.0001,init) # blind signal region with init background model
+                    #        weight = regularization_scale
+                    #elif region_type==1:
+                    #    if gcut!=0: continue
 
                     sum_weight += weight
                     n_expect_total += n_expect
