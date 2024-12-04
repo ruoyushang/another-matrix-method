@@ -119,7 +119,7 @@ for run in range(0,total_runs):
 
 #min_exposure = 0.1 # hours
 min_exposure = 2.0 # hours
-#min_exposure = 20.0 # hours
+#min_exposure = 10.0 # hours
 run_exposure = 0.
 for run in range(0,total_runs):
 
@@ -147,7 +147,7 @@ for run in range(0,total_runs):
     time_end = EvtTree.timeOfDay
 
     small_runlist += [on_runlist[run]]
-    small_off_runlist += [off_runlist[run]]
+    small_off_runlist += off_runlist[run]
     small_mimic_runlist += [mimic_runlist[run]]
     run_exposure += (time_end-time_start)/3600.
 
@@ -245,6 +245,7 @@ for small_runlist in range(0,len(big_runlist)):
             path_to_eigenvector,
             path_to_big_matrix,
             big_runlist[small_runlist],
+            big_off_runlist[small_runlist],
             big_mimic_runlist[small_runlist],
             onoff, 
             run_incl_sky_map, 

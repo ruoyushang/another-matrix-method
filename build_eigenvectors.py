@@ -51,46 +51,64 @@ big_matrix_pkl = pickle.load(open(input_filename, "rb"))
 big_matrix = big_matrix_pkl[0]
 big_matrix_fullspec = big_matrix_pkl[1]
 
-for logE in range(0,logE_nbins):
-    #n_runs = float(len(big_matrix[logE]))
-    #big_matrix[logE] = np.array(big_matrix[logE])*1./n_runs
-    big_matrix[logE] = np.array(big_matrix[logE])
-
-#n_runs = float(len(big_matrix_fullspec))
-#big_matrix_fullspec = np.array(big_matrix_fullspec)*1./n_runs
+big_matrix = np.array(big_matrix)
 big_matrix_fullspec = np.array(big_matrix_fullspec)
+
+delete_entries = []
+for entry in range(0,len(big_matrix_fullspec)):
+    norm = np.sum(big_matrix_fullspec[entry])
+    if norm<1000.:
+        delete_entries += [entry]
+
+new_matrix = [[] for logE in range(0,logE_nbins)]
+for entry in range(0,len(big_matrix)):
+    if entry in delete_entries: continue
+    norm = np.sum(big_matrix_fullspec[entry])
+    for logE in range(0,logE_nbins):
+        new_matrix[logE] += [big_matrix[entry][logE]/norm]
+new_matrix = np.array(new_matrix)
+print (f"big_matrix.shape = {big_matrix.shape}")
+print (f"new_matrix.shape = {new_matrix.shape}")
+
+new_matrix_fullspec = []
+for entry in range(0,len(big_matrix_fullspec)):
+    if entry in delete_entries: continue
+    norm = np.sum(big_matrix_fullspec[entry])
+    new_matrix_fullspec += [big_matrix_fullspec[entry]/norm]
+new_matrix_fullspec = np.array(new_matrix_fullspec)
+
 
 print ('Computing SVD eigenvectors...')
 big_xyoff_map_1d = []
 for logE in range(0,logE_nbins):
-    big_xyoff_map_1d += [np.zeros_like(big_matrix[logE][0])]
+    big_xyoff_map_1d += [np.zeros_like(new_matrix[logE][0])]
 
-big_xyoff_map_1d_fullspec = np.zeros_like(big_matrix_fullspec[0])
+big_xyoff_map_1d_fullspec = np.zeros_like(new_matrix_fullspec[0])
 
 for logE in range(0,logE_nbins):
-    for entry in range(0,len(big_matrix[logE])):
-        for pix in range(0,len(big_matrix[logE][entry])):
-            big_xyoff_map_1d[logE][pix] += big_matrix[logE][entry][pix]
+    for entry in range(0,len(new_matrix[logE])):
+        for pix in range(0,len(new_matrix[logE][entry])):
+            big_xyoff_map_1d[logE][pix] += new_matrix[logE][entry][pix]
 
-for entry in range(0,len(big_matrix_fullspec)):
-    for pix in range(0,len(big_matrix_fullspec[entry])):
-        big_xyoff_map_1d_fullspec[pix] += big_matrix_fullspec[entry][pix]
+for entry in range(0,len(new_matrix_fullspec)):
+    for pix in range(0,len(new_matrix_fullspec[entry])):
+        big_xyoff_map_1d_fullspec[pix] += new_matrix_fullspec[entry][pix]
 
 full_eigenvalues = []
 big_eigenvalues = []
 big_eigenvectors = []
 for logE in range(0,logE_nbins):
 
-    U_full, S_full, VT_full = np.linalg.svd(big_matrix[logE],full_matrices=False) # perform better for perturbation method
+    print (f"np.sum(new_matrix[logE]) = {np.sum(new_matrix[logE])}")
+
+    U_full, S_full, VT_full = np.linalg.svd(new_matrix[logE],full_matrices=False) # perform better for perturbation method
     print (f'S_full length = {len(S_full)}')
 
-    avg_n_events = np.sum(big_matrix[logE])
+    avg_n_events = np.sum(new_matrix[logE])
     density_events = avg_n_events/float(len(S_full))
     print (f'density_events = {density_events}')
 
-    effective_matrix_rank = min(matrix_rank,int(0.5*3./4.*(len(S_full)-1)))
-    #if density_events<1.0:
-    #    effective_matrix_rank = 1
+    effective_matrix_rank = min(matrix_rank,len(S_full))
     print (f'effective_matrix_rank = {effective_matrix_rank}')
 
     U_eco = U_full[:, :effective_matrix_rank]
@@ -100,10 +118,9 @@ for logE in range(0,logE_nbins):
     big_eigenvectors += [VT_eco]
     full_eigenvalues += [S_full]
     
-    rank_index = []
-    for entry in range(0,len(S_full)):
-        rank_index += [entry+1]
-    
+rank_index = []
+for entry in range(0,len(full_eigenvalues[0])):
+    rank_index += [entry+1]
     
 fig.clf()
 axbig = fig.add_subplot()
@@ -111,7 +128,7 @@ label_x = '$k$'
 label_y = '$\sigma_{k}$'
 axbig.set_xlabel(label_x)
 axbig.set_ylabel(label_y)
-plot_max_rank = min(int(0.5*len(full_eigenvalues[0])),300)
+plot_max_rank = int(0.5*len(full_eigenvalues[0]))
 axbig.set_xlim(1,plot_max_rank)
 #axbig.set_ylim(full_eigenvalues[0][plot_max_rank-1],2.*full_eigenvalues[0][0])
 axbig.set_ylim(bottom=full_eigenvalues[0][plot_max_rank-1])
@@ -120,7 +137,7 @@ axbig.set_yscale('log')
 for logE in range(0,logE_nbins):
     E_min = pow(10.,logE_bins[logE])
     E_max = pow(10.,logE_bins[logE+1])
-    axbig.plot(full_eigenvalues[logE],label=f'E = {E_min:0.2f} - {E_max:0.2f} TeV')
+    axbig.plot(rank_index,full_eigenvalues[logE],label=f'E = {E_min:0.2f} - {E_max:0.2f} TeV')
 axbig.legend(loc='best')
 fig.savefig(f'{smi_dir}/output_plots/signularvalue_{source_name}_{input_epoch}.png',bbox_inches='tight')
 axbig.remove()
@@ -198,8 +215,8 @@ for rank in range(0,max_matrix_rank):
     #axbig.remove()
 
 
-U_full, S_full, VT_full = np.linalg.svd(big_matrix_fullspec,full_matrices=False) # perform better for perturbation method
-print (f'big_matrix_fullspec.shape = {big_matrix_fullspec.shape}')
+U_full, S_full, VT_full = np.linalg.svd(new_matrix_fullspec,full_matrices=False) # perform better for perturbation method
+print (f'new_matrix_fullspec.shape = {new_matrix_fullspec.shape}')
 print (f'S_full length = {len(S_full)}')
 
 effective_matrix_rank_fullspec = min(matrix_rank_fullspec,int(0.5*(len(S_full)-1)))
@@ -211,13 +228,13 @@ S_eco = S_full[:effective_matrix_rank_fullspec]
 big_eigenvalues_fullspec = S_eco
 big_eigenvectors_fullspec = VT_eco
 
-sq_error_map_1d_fullspec = np.zeros_like(big_matrix_fullspec[0])
-tolerance_map_1d_fullspec = np.zeros_like(big_matrix_fullspec[0])
-data_map_1d_fullspec = np.zeros_like(big_matrix_fullspec[0])
-model_map_1d_fullspec = np.zeros_like(big_matrix_fullspec[0])
-mask_xyoff_map_1d_fullspec = np.zeros_like(big_matrix_fullspec[0])
-for run in range(0,len(big_matrix_fullspec)):
-    data_xyoff_map_1d_fullspec = big_matrix_fullspec[run]
+sq_error_map_1d_fullspec = np.zeros_like(new_matrix_fullspec[0])
+tolerance_map_1d_fullspec = np.zeros_like(new_matrix_fullspec[0])
+data_map_1d_fullspec = np.zeros_like(new_matrix_fullspec[0])
+model_map_1d_fullspec = np.zeros_like(new_matrix_fullspec[0])
+mask_xyoff_map_1d_fullspec = np.zeros_like(new_matrix_fullspec[0])
+for run in range(0,len(new_matrix_fullspec)):
+    data_xyoff_map_1d_fullspec = new_matrix_fullspec[run]
     truth_params = big_eigenvectors_fullspec @ data_xyoff_map_1d_fullspec
 
     #init_params = truth_params

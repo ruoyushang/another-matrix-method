@@ -14,18 +14,29 @@ import numpy as np
 
 all_runs_info = []
 
+output_dir = 'output_vts_query_azim'
+input_range_elev = 0.05
+input_range_azim = 0.10
+input_range_nsb = 1.0
+input_range_runnum = 10000.
+#output_dir = 'output_vts_query_nsb'
+#input_range_elev = 0.05
+#input_range_azim = 0.10
+#input_range_nsb = 0.5
+#input_range_runnum = 10000.
+find_imposter = False
 #output_dir = 'output_vts_query_default'
 #input_range_elev = 0.05
 #input_range_azim = 0.10
 #input_range_nsb = 1.
 #input_range_runnum = 10000.
 #find_imposter = False
-output_dir = 'output_vts_query_detail'
-input_range_elev = 0.05
-input_range_azim = 0.10
-input_range_nsb = 1.
-input_range_runnum = 10000.
-find_imposter = True
+#output_dir = 'output_vts_query_detail'
+#input_range_elev = 0.05
+#input_range_azim = 0.10
+#input_range_nsb = 1.
+#input_range_runnum = 10000.
+#find_imposter = True
 
 def ReadLhaasoListFromFile():
     source_name = []
@@ -1098,7 +1109,6 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
                     if all_runs_info[run][0]==list_off_run_ids[off_run][1]: already_used = True
                 if already_used: continue
 
-            #if all_runs_info[run][0]<46642: continue
             if all_runs_info[run][0]<46642:
                 if not epoch=='V4': continue
             if all_runs_info[run][0]>=46642 and all_runs_info[run][0]<63373:
@@ -1124,8 +1134,8 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
             off_run_nsb = all_runs_info[run][5]
             
 
-            delta_azim = math.cos(off_run_az*math.pi/180.)-math.cos(on_run_az*math.pi/180.)
-            #delta_azim = off_run_az-on_run_az
+            #delta_azim = math.cos(off_run_az*math.pi/180.)-math.cos(on_run_az*math.pi/180.)
+            delta_azim = 1. - math.cos((off_run_az-on_run_az)*math.pi/180.)
 
             delta_elev = (1./math.sin(off_run_el*math.pi/180.)-1./math.sin(on_run_el*math.pi/180.));
 
@@ -1147,7 +1157,8 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
             significance_diff_nsb = abs(total_nsb_diff/range_nsb)
             significance_diff_runnum = abs(total_runnum_diff/range_runnum)
 
-            param_dict = {'elev':significance_diff_elev, 'azim':significance_diff_azim, 'nsb':significance_diff_nsb, 'runnum':significance_diff_runnum}
+            #param_dict = {'elev':significance_diff_elev, 'azim':significance_diff_azim, 'nsb':significance_diff_nsb, 'runnum':significance_diff_runnum}
+            param_dict = {'elev':significance_diff_elev, 'nsb':significance_diff_nsb}
             sorted_dict_desc = dict(sorted(param_dict.items(), key=lambda item: item[1], reverse=True))
             first_key = next(iter(param_dict))
             first_value = param_dict[first_key]
@@ -1155,26 +1166,28 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
             if abs(delta_elev)>2.*range_elev: continue
             if abs(delta_azim)>2.*range_azim: continue
             if abs(delta_nsb)>2.*range_nsb: continue
+            if abs(delta_runnum)>2.*range_runnum: continue
+
             if first_key=='elev':
                 if total_elev_diff>0.:
                     if delta_elev>0.: continue
                 else:
                     if delta_elev<0.: continue
-            if first_key=='azim':
-                if total_azim_diff>0.:
-                    if delta_azim>0.: continue
-                else:
-                    if delta_azim<0.: continue
             if first_key=='nsb':
                 if total_nsb_diff>0.:
                     if delta_nsb>0.: continue
                 else:
                     if delta_nsb<0.: continue
-            if first_key=='runnum':
-                if total_runnum_diff>0.:
-                    if delta_runnum>0.: continue
-                else:
-                    if delta_runnum<0.: continue
+            #if first_key=='azim':
+            #    if total_azim_diff>0.:
+            #        if delta_azim>0.: continue
+            #    else:
+            #        if delta_azim<0.: continue
+            #if first_key=='runnum':
+            #    if total_runnum_diff>0.:
+            #        if delta_runnum>0.: continue
+            #    else:
+            #        if delta_runnum<0.: continue
 
 
             list_off_run_ids += [[int(list_on_run_ids[on_run]),int(all_runs_info[run][0]),on_run_el,off_run_el]]

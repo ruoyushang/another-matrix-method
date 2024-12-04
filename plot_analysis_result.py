@@ -62,8 +62,8 @@ smi_input = os.environ.get("SMI_INPUT")
 #smi_output = os.environ.get("SMI_OUTPUT")
 #smi_output = "/nevis/ged/data/rshang/smi_output/output_test"
 #smi_output = "/nevis/ged/data/rshang/smi_output/output_3tel"
-#smi_output = "/nevis/ged/data/rshang/smi_output/output_default"
-smi_output = "/nevis/ged/data/rshang/smi_output/output_detail"
+smi_output = "/nevis/ged/data/rshang/smi_output/output_default"
+#smi_output = "/nevis/ged/data/rshang/smi_output/output_detail"
 
 smooth_size = 0.06
 #smooth_size = 0.08
@@ -81,11 +81,11 @@ zoomin = 1.0
 #ana_tag = 'rank16'
 #ana_tag = 'rank32'
 #ana_tag = 'rank64'
-ana_tag = 'fullspec1'
+#ana_tag = 'fullspec1'
 #ana_tag = 'fullspec2'
 #ana_tag = 'fullspec4'
 #ana_tag = 'fullspec8'
-#ana_tag = 'fullspec16'
+ana_tag = 'fullspec16'
 #ana_tag = 'fullspec32'
 #ana_tag = 'fullspec64'
 
@@ -94,6 +94,7 @@ qual_cut = 0.
 
 elev_cut = 20.
 #elev_cut = 55.
+#elev_cut = 75.
 cr_qual_cut = 1e10
 
 #bias_array = [-0.023, -0.011, -0.022, -0.03,  -0.025,  0.018, -0.048, -0.378, -0.271]
@@ -116,6 +117,7 @@ if onoff=='ON':
 #input_epoch = ['V5']
 #input_epoch = ['V6']
 input_epoch = ['V4','V5','V6']
+#input_epoch = ['V5','V6']
 
 logE_min = 0
 logE_mid = 4
@@ -125,6 +127,8 @@ radial_bin_scale = 0.1
 
 #include_syst_error = True
 include_syst_error = False
+#normalize_map = True
+normalize_map = False
 
 if 'Crab' in source_name:
     logE_min = 0
@@ -468,6 +472,14 @@ for epoch in input_epoch:
             fit_xyoff_map = analysis_result[run][6]
             ratio_xyoff_map = analysis_result[run][7]
 
+            if normalize_map:
+                for logE in range(0,logE_nbins):
+                    data_norm = np.sum(data_xyoff_map[logE].waxis[:,:,0])
+                    bkgd_norm = np.sum(fit_xyoff_map[logE].waxis[:,:,0])
+                    if bkgd_norm>0.:
+                        fit_xyoff_map[logE].scale(data_norm/bkgd_norm)
+                        bkgd_sky_map[logE].scale(data_norm/bkgd_norm)
+
             if not 'MIMIC' in mode:
                 good_exposure += exposure
                 list_run_elev += [run_elev]
@@ -503,6 +515,7 @@ for epoch in input_epoch:
                     sum_data_xyoff_map[logE].add(data_xyoff_map[logE])
                     sum_fit_xyoff_map[logE].add(fit_xyoff_map[logE])
                     sum_ratio_xyoff_map[logE].add(ratio_xyoff_map[logE])
+
     
 for logE in range(0,logE_nbins):
     data_integral = 0.
@@ -890,62 +903,62 @@ for logE in range(logE_min,logE_max):
     #fig.savefig(f'output_plots/{source_name}_xyoff_map_logE{logE}_data_{ana_tag}.png',bbox_inches='tight')
     #axbig.remove()
 
-    fig.clf()
-    figsize_x = 7
-    figsize_y = 7
-    fig.set_figheight(figsize_y)
-    fig.set_figwidth(figsize_x)
-    axbig = fig.add_subplot()
-    label_x = 'Camera X'
-    label_y = 'Camera Y'
-    axbig.set_xlabel(label_x)
-    axbig.set_ylabel(label_y)
-    xmin = sum_data_xyoff_map[logE].xaxis.min()
-    xmax = sum_data_xyoff_map[logE].xaxis.max()
-    ymin = sum_data_xyoff_map[logE].yaxis.min()
-    ymax = sum_data_xyoff_map[logE].yaxis.max()
-    im = axbig.imshow(sum_data_xyoff_map[logE].waxis[:,:,0].T,origin='lower',extent=(xmin,xmax,ymin,ymax),aspect='auto')
-    cbar = fig.colorbar(im)
-    fig.savefig(f'output_plots/xyoff_data_map_{source_name}_logE{logE}_{ana_tag}.png',bbox_inches='tight')
-    axbig.remove()
+    #fig.clf()
+    #figsize_x = 7
+    #figsize_y = 7
+    #fig.set_figheight(figsize_y)
+    #fig.set_figwidth(figsize_x)
+    #axbig = fig.add_subplot()
+    #label_x = 'Camera X'
+    #label_y = 'Camera Y'
+    #axbig.set_xlabel(label_x)
+    #axbig.set_ylabel(label_y)
+    #xmin = sum_data_xyoff_map[logE].xaxis.min()
+    #xmax = sum_data_xyoff_map[logE].xaxis.max()
+    #ymin = sum_data_xyoff_map[logE].yaxis.min()
+    #ymax = sum_data_xyoff_map[logE].yaxis.max()
+    #im = axbig.imshow(sum_data_xyoff_map[logE].waxis[:,:,0].T,origin='lower',extent=(xmin,xmax,ymin,ymax),aspect='auto')
+    #cbar = fig.colorbar(im)
+    #fig.savefig(f'output_plots/xyoff_data_map_{source_name}_logE{logE}_{ana_tag}.png',bbox_inches='tight')
+    #axbig.remove()
 
-    fig.clf()
-    figsize_x = 7
-    figsize_y = 7
-    fig.set_figheight(figsize_y)
-    fig.set_figwidth(figsize_x)
-    axbig = fig.add_subplot()
-    label_x = 'Camera X'
-    label_y = 'Camera Y'
-    axbig.set_xlabel(label_x)
-    axbig.set_ylabel(label_y)
-    xmin = sum_data_xyoff_map[logE].xaxis.min()
-    xmax = sum_data_xyoff_map[logE].xaxis.max()
-    ymin = sum_data_xyoff_map[logE].yaxis.min()
-    ymax = sum_data_xyoff_map[logE].yaxis.max()
-    im = axbig.imshow(sum_fit_xyoff_map[logE].waxis[:,:,0].T,origin='lower',extent=(xmin,xmax,ymin,ymax),aspect='auto')
-    cbar = fig.colorbar(im)
-    fig.savefig(f'output_plots/xyoff_fit_map_{source_name}_logE{logE}_{ana_tag}.png',bbox_inches='tight')
-    axbig.remove()
+    #fig.clf()
+    #figsize_x = 7
+    #figsize_y = 7
+    #fig.set_figheight(figsize_y)
+    #fig.set_figwidth(figsize_x)
+    #axbig = fig.add_subplot()
+    #label_x = 'Camera X'
+    #label_y = 'Camera Y'
+    #axbig.set_xlabel(label_x)
+    #axbig.set_ylabel(label_y)
+    #xmin = sum_data_xyoff_map[logE].xaxis.min()
+    #xmax = sum_data_xyoff_map[logE].xaxis.max()
+    #ymin = sum_data_xyoff_map[logE].yaxis.min()
+    #ymax = sum_data_xyoff_map[logE].yaxis.max()
+    #im = axbig.imshow(sum_fit_xyoff_map[logE].waxis[:,:,0].T,origin='lower',extent=(xmin,xmax,ymin,ymax),aspect='auto')
+    #cbar = fig.colorbar(im)
+    #fig.savefig(f'output_plots/xyoff_fit_map_{source_name}_logE{logE}_{ana_tag}.png',bbox_inches='tight')
+    #axbig.remove()
 
-    fig.clf()
-    figsize_x = 7
-    figsize_y = 7
-    fig.set_figheight(figsize_y)
-    fig.set_figwidth(figsize_x)
-    axbig = fig.add_subplot()
-    label_x = 'Camera X'
-    label_y = 'Camera Y'
-    axbig.set_xlabel(label_x)
-    axbig.set_ylabel(label_y)
-    xmin = sum_err_xyoff_map[logE].xaxis.min()
-    xmax = sum_err_xyoff_map[logE].xaxis.max()
-    ymin = sum_err_xyoff_map[logE].yaxis.min()
-    ymax = sum_err_xyoff_map[logE].yaxis.max()
-    im = axbig.imshow(sum_err_xyoff_map[logE].waxis[:,:,0].T,origin='lower',extent=(xmin,xmax,ymin,ymax),vmin=-max_z,vmax=max_z,aspect='auto',cmap='coolwarm')
-    cbar = fig.colorbar(im)
-    fig.savefig(f'output_plots/xyoff_err_map_{source_name}_logE{logE}_{ana_tag}.png',bbox_inches='tight')
-    axbig.remove()
+    #fig.clf()
+    #figsize_x = 7
+    #figsize_y = 7
+    #fig.set_figheight(figsize_y)
+    #fig.set_figwidth(figsize_x)
+    #axbig = fig.add_subplot()
+    #label_x = 'Camera X'
+    #label_y = 'Camera Y'
+    #axbig.set_xlabel(label_x)
+    #axbig.set_ylabel(label_y)
+    #xmin = sum_err_xyoff_map[logE].xaxis.min()
+    #xmax = sum_err_xyoff_map[logE].xaxis.max()
+    #ymin = sum_err_xyoff_map[logE].yaxis.min()
+    #ymax = sum_err_xyoff_map[logE].yaxis.max()
+    #im = axbig.imshow(sum_err_xyoff_map[logE].waxis[:,:,0].T,origin='lower',extent=(xmin,xmax,ymin,ymax),vmin=-max_z,vmax=max_z,aspect='auto',cmap='coolwarm')
+    #cbar = fig.colorbar(im)
+    #fig.savefig(f'output_plots/xyoff_err_map_{source_name}_logE{logE}_{ana_tag}.png',bbox_inches='tight')
+    #axbig.remove()
 
 fig.clf()
 figsize_y = 2.*gcut_bins
@@ -1109,18 +1122,23 @@ for mimic in range(0,n_mimic):
 if 'PSR_J2021_p4026' in source_name:
     HI_sky_map = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
     MWL_map_file = '/nevis/ged/data/rshang/MWL_maps/CGPS/CGPS_MO2_HI_line_image.fits' 
-    GetSlicedDataCubeMap(MWL_map_file, HI_sky_map, -3., 5.)
+    GetSlicedDataCubeMapCGPS(MWL_map_file, HI_sky_map, -3., 5.)
     PlotSkyMap(fig,'Intensity',logE_min,logE_max,HI_sky_map,f'HI_sky_map_{source_name}_m03_p05_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma',zoomin=zoomin)
-    GetSlicedDataCubeMap(MWL_map_file, HI_sky_map, -27., -19.)
+    GetSlicedDataCubeMapCGPS(MWL_map_file, HI_sky_map, -27., -19.)
     PlotSkyMap(fig,'Intensity',logE_min,logE_max,HI_sky_map,f'HI_sky_map_{source_name}_m27_m19_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma',zoomin=zoomin)
-    GetSlicedDataCubeMap(MWL_map_file, HI_sky_map, -19., -3.)
+    GetSlicedDataCubeMapCGPS(MWL_map_file, HI_sky_map, -19., -3.)
     PlotSkyMap(fig,'Intensity',logE_min,logE_max,HI_sky_map,f'HI_sky_map_{source_name}_m19_m03_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma',zoomin=zoomin)
 
 if 'PSR_J1856_p0245' in source_name:
     HI_sky_map = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
     MWL_map_file = '/nevis/ged/data/rshang/MW_FITS/GALFA_HI_RA+DEC_284.00+02.35_N.fits' 
     GetSlicedDataCubeMapGALFA(MWL_map_file, HI_sky_map, 81.*1e3, 102.*1e3)
-    PlotSkyMap(fig,'Intensity',logE_min,logE_max,HI_sky_map,f'HI_sky_map_{source_name}_p81_p102_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma',zoomin=zoomin)
+    PlotSkyMap(fig,'Intensity',logE_min,logE_max,HI_sky_map,f'Gas_HI_sky_map_{source_name}_p81_p102_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma',zoomin=zoomin)
+
+    CO_sky_map = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
+    MWL_map_file = '/nevis/ged/data/rshang/MWL_maps/DHT08_Quad1_interp.fits' 
+    GetSlicedDataCubeMap(MWL_map_file, CO_sky_map, 81., 102.)
+    PlotSkyMap(fig,'Intensity',logE_min,logE_max,CO_sky_map,f'Gas_CO_sky_map_{source_name}_p81_p102_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma',zoomin=zoomin)
 
 
 

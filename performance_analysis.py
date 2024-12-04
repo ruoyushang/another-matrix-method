@@ -35,51 +35,54 @@ skymap_size = common_functions.skymap_size
 skymap_bins = common_functions.skymap_bins
 significance_li_and_ma = common_functions.significance_li_and_ma
 
+#use_abcd_correction = True
+use_abcd_correction = False
 
 smi_dir = os.environ.get("SMI_DIR")
 smi_input = os.environ.get("SMI_INPUT")
 #smi_output = os.environ.get("SMI_OUTPUT")
-#smi_output = "/nevis/ged/data/rshang/smi_output/output_test_4"
-smi_output = "/nevis/ged/data/rshang/smi_output/output_3tel"
-#smi_output = "/nevis/ged/data/rshang/smi_output/output_default"
+#smi_output = "/nevis/ged/data/rshang/smi_output/output_test"
+#smi_output = "/nevis/ged/data/rshang/smi_output/output_3tel"
+smi_output = "/nevis/ged/data/rshang/smi_output/output_default"
 
 ana_tag = []
 #ana_tag += [['binspec','r']]
 #ana_tag += [['fullspec','b']]
 #ana_tag += [['init','r']]
 
-ana_tag += [['fullspec1','r']]
-ana_tag += [['fullspec2','w']]
+#ana_tag += [['fullspec1','r']]
+#ana_tag += [['fullspec2','w']]
 ana_tag += [['fullspec4','w']]
-ana_tag += [['fullspec8','w']]
+ana_tag += [['fullspec8','b']]
 ana_tag += [['fullspec16','b']]
 #ana_tag += [['fullspec32','w']]
 #ana_tag += [['fullspec64','w']]
 #ana_tag += [['rank1','r']]
 #ana_tag += [['rank2','r']]
 #ana_tag += [['rank4','w']]
-#ana_tag += [['rank8','b']]
+ana_tag += [['rank8','b']]
 #ana_tag += [['rank16','w']]
 #ana_tag += [['test','w']]
 
 onoff = 'OFF'
 
-#exposure_per_group = 2.
+exposure_per_group = 2.
 #exposure_per_group = 4.
 #exposure_per_group = 10.
 #exposure_per_group = 20.
-exposure_per_group = 50.
+#exposure_per_group = 50.
 #exposure_per_group = 100.
 cr_qual_cut = 1e10
 #cr_qual_cut = 230
 
 min_elev = 20.
-#min_elev = 55.
+#min_elev = 65.
 
 #input_epoch = ['V4']
 #input_epoch = ['V5']
 #input_epoch = ['V6']
 input_epoch = ['V4','V5','V6']
+#input_epoch = ['V5','V6']
 
 input_sources = []
 input_sources += [ ['1ES0647'               ,102.694 ,25.050 ] ]
@@ -154,14 +157,14 @@ for ana in range(0,len(ana_tag)):
                     continue
                 if run_elev<min_elev:
                     continue
-    
+
                 total_exposure += exposure
                 current_exposure += exposure
                 run_data += [[exposure,run_elev,run_nsb,data_xyoff_map,bkgd_xyoff_map]] # gamma-ray sources are not filtered in xyoff maps
                 #run_data += [[exposure,run_elev,run_nsb,data_sky_map,bkgd_sky_map]]
 
-                #if current_exposure>exposure_per_group or run==len(analysis_result)-1:
-                if current_exposure>exposure_per_group:
+                if current_exposure>exposure_per_group or run==len(analysis_result)-1:
+                #if current_exposure>exposure_per_group:
                     current_exposure = 0.
                     run_data = []
                     group_data += [run_data]
@@ -172,20 +175,22 @@ for ana in range(0,len(ana_tag)):
 grp_data_map = []
 grp_bkgd_map = []
 for logE in range(0,logE_nbins):
-    grp_data_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
-    grp_bkgd_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
+    grp_data_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+    grp_bkgd_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
 
 list_elev = []
 list_nsb = []
 list_data_count = []
 list_bkgd_count = []
 list_significance = []
+list_correlation = []
 for ana in range(0,len(analysis_data)):
     ana_elev = []
     ana_nsb = []
     ana_data_count = []
     ana_bkgd_count = []
     ana_significance = []
+    ana_correlation = []
     for grp  in range(0,len(analysis_data[ana])):
         grp_expo = 0.
         grp_elev = 0.
@@ -193,6 +198,7 @@ for ana in range(0,len(analysis_data)):
         grp_data_count = np.zeros(len(logE_bins)-1)
         grp_bkgd_count = np.zeros(len(logE_bins)-1)
         grp_significance = [[] for i in range(0,len(logE_bins)-1)]
+        grp_correlation = [0. for i in range(0,len(logE_bins)-1)]
         for logE in range(0,len(logE_bins)-1):
             grp_data_map[logE].reset()
             grp_bkgd_map[logE].reset()
@@ -214,6 +220,16 @@ for ana in range(0,len(analysis_data)):
                 grp_data_map[logE].add(data_map[logE])
                 grp_bkgd_map[logE].add(bkgd_map[logE])
         if grp_expo==0.: continue
+
+        if use_abcd_correction:
+            for logE in range(0,logE_nbins):
+                data_bkgd_diff = []
+                for gcut in range(1,gcut_bins):
+                    diff = np.sum(grp_data_map[logE].waxis[:,:,gcut]) / np.sum(grp_bkgd_map[logE].waxis[:,:,gcut])
+                    data_bkgd_diff += [diff]
+                grp_bkgd_map[logE].scale(data_bkgd_diff[0]*data_bkgd_diff[1]/data_bkgd_diff[2])
+                grp_bkgd_count[logE] = grp_bkgd_count[logE] * (data_bkgd_diff[0]*data_bkgd_diff[1]/data_bkgd_diff[2])
+
         grp_elev = grp_elev/grp_expo
         grp_nsb = grp_nsb/grp_expo
         ana_elev += [grp_elev]
@@ -223,19 +239,30 @@ for ana in range(0,len(analysis_data)):
         for logE in range(0,len(data_map)):
             nbins_x = len(grp_data_map[logE].xaxis)-1
             nbins_y = len(grp_data_map[logE].yaxis)-1
+            correlation = 0.
+            correlation_norm = 0.
+            sum_data = 0.
             for binx in range (0,nbins_x):
                 for biny in range (0,nbins_y):
                     data = grp_data_map[logE].waxis[binx,biny,0]
-                    bkgd = grp_bkgd_map[logE].waxis[binx,biny,0]
+                    #bkgd = grp_bkgd_map[logE].waxis[binx,biny,0]
+                    bkgd = grp_bkgd_map[logE].waxis[binx,biny,0] *grp_data_count[logE] / grp_bkgd_count[logE]
+                    sum_data += data
                     significance = significance_li_and_ma(data, bkgd, 0.)
+                    correlation += 2.*(data*bkgd)
+                    correlation_norm += (data*data)+(bkgd*bkgd)
                     if data>0.:
                         grp_significance[logE] += [significance]
+            if sum_data>20.:
+                grp_correlation[logE] = 1. - correlation/correlation_norm
         ana_significance += [grp_significance]
+        ana_correlation += [grp_correlation]
     list_elev += [ana_elev]
     list_nsb += [ana_nsb]
     list_data_count += [ana_data_count]
     list_bkgd_count += [ana_bkgd_count]
     list_significance += [ana_significance]
+    list_correlation += [ana_correlation]
 
 for logE in range(0,logE_nbins):
     fig, ax = plt.subplots()
@@ -422,7 +449,7 @@ for logE in range(0,logE_nbins):
     figsize_y = 3.8
     fig.set_figheight(figsize_y)
     fig.set_figwidth(figsize_x)
-    label_x = 'Significance'
+    label_x = 'Pixel-wise significance'
     label_y = 'Entries'
     ax.set_xlabel(label_x)
     ax.set_ylabel(label_y)
@@ -439,13 +466,10 @@ for logE in range(0,logE_nbins):
         rms = np.sqrt(np.mean(np.square(np.array(plot_error_significance))))
         kc = ana_tag[ana][0].strip('rank').strip('fullspec')
         ax.hist(plot_error_significance,bin_edges,histtype='step',density=True,facecolor=ana_tag[ana][1],label='$k_{c}$='+f'{kc}, $\sigma$={rms:0.2f}')
-        #ax.hist(plot_error_significance,bin_edges,histtype='step',density=True,label=f'{ana_tag[ana][0]}')
 
     hist_binsize = 2.*hist_range/float(hist_bins)
     significance_axis = np.arange(-5., 5., 0.01)
-    #total_entries = len(list_significance[0][logE])
     total_entries = 1.
-    #normal_dist = hist_binsize*total_entries/pow(2.*np.pi,0.5)*np.exp(-significance_axis*significance_axis/2.)
     normal_dist = hist_binsize*total_entries*np.exp(-significance_axis*significance_axis/2.)
     ax.plot(significance_axis,normal_dist,color='k',linestyle='dashed')
 
@@ -456,6 +480,41 @@ for logE in range(0,logE_nbins):
     E_max = pow(10.,logE_bins[logE+1])
     ax.set_title(f'E = {E_min:0.2f} - {E_max:0.2f} TeV')
     fig.savefig(f'output_plots/error_significance_distribution_logE{logE}.png',bbox_inches='tight')
+    del fig
+    del ax
+    plt.close()
+
+
+    hist_bins = 100
+    fig, ax = plt.subplots()
+    figsize_x = 6.4
+    figsize_y = 3.8
+    fig.set_figheight(figsize_y)
+    fig.set_figwidth(figsize_x)
+    label_x = 'log10 (1 - normalized correlation)'
+    label_y = 'Entries'
+    ax.set_xlabel(label_x)
+    ax.set_ylabel(label_y)
+    for ana in range(0,len(ana_tag)):
+        if ana_tag[ana][1]=='w': continue
+        plot_error_correlation = []
+        for grp in range(0,len(list_elev[ana])):
+            correlation = list_correlation[ana][grp][logE]
+            if np.isnan(correlation): continue
+            if correlation==0.: continue
+            plot_error_correlation += [np.log10(correlation)]
+        hist_correlation, bin_edges = np.histogram(plot_error_correlation,bins=hist_bins,range=(-4.,0.))
+        mean = np.mean(np.array(plot_error_correlation))
+        rms = np.sqrt(np.mean(np.square(np.array(plot_error_correlation))))
+        kc = ana_tag[ana][0].strip('rank').strip('fullspec')
+        ax.hist(plot_error_correlation,bin_edges,histtype='step',density=True,facecolor=ana_tag[ana][1],label='$k_{c}$='+f'{kc}, $\mu$={pow(10.,mean):0.3f}')
+
+    ax.legend(loc='best')
+    ax.set_ylim(bottom=1e-3)
+    E_min = pow(10.,logE_bins[logE])
+    E_max = pow(10.,logE_bins[logE+1])
+    ax.set_title(f'E = {E_min:0.2f} - {E_max:0.2f} TeV')
+    fig.savefig(f'output_plots/template_correlation_distribution_logE{logE}.png',bbox_inches='tight')
     del fig
     del ax
     plt.close()
