@@ -780,9 +780,9 @@ def build_skymap(
     avg_xyoff_map_1d_fullspec = eigen_stuff[5]
     tolerance_map_1d_fullspec = eigen_stuff[6]
 
-    print ('loading matrix pickle data... ')
-    input_filename = big_matrix_path
-    big_matrix = pickle.load(open(input_filename, "rb"))
+    #print ('loading matrix pickle data... ')
+    #input_filename = big_matrix_path
+    #big_matrix = pickle.load(open(input_filename, "rb"))
 
 
     exposure_hours = 0.

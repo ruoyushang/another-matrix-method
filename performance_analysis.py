@@ -41,9 +41,9 @@ use_abcd_correction = False
 smi_dir = os.environ.get("SMI_DIR")
 smi_input = os.environ.get("SMI_INPUT")
 #smi_output = os.environ.get("SMI_OUTPUT")
-#smi_output = "/nevis/ged/data/rshang/smi_output/output_test"
+smi_output = "/nevis/ged/data/rshang/smi_output/output_test"
 #smi_output = "/nevis/ged/data/rshang/smi_output/output_3tel"
-smi_output = "/nevis/ged/data/rshang/smi_output/output_default"
+#smi_output = "/nevis/ged/data/rshang/smi_output/output_default"
 
 ana_tag = []
 #ana_tag += [['binspec','r']]
@@ -52,25 +52,25 @@ ana_tag = []
 
 #ana_tag += [['fullspec1','r']]
 #ana_tag += [['fullspec2','w']]
-ana_tag += [['fullspec4','w']]
-ana_tag += [['fullspec8','b']]
+#ana_tag += [['fullspec4','b']]
+#ana_tag += [['fullspec8','b']]
 ana_tag += [['fullspec16','b']]
 #ana_tag += [['fullspec32','w']]
 #ana_tag += [['fullspec64','w']]
 #ana_tag += [['rank1','r']]
 #ana_tag += [['rank2','r']]
 #ana_tag += [['rank4','w']]
-ana_tag += [['rank8','b']]
+#ana_tag += [['rank8','b']]
 #ana_tag += [['rank16','w']]
 #ana_tag += [['test','w']]
 
 onoff = 'OFF'
 
-exposure_per_group = 2.
+#exposure_per_group = 2.
 #exposure_per_group = 4.
 #exposure_per_group = 10.
 #exposure_per_group = 20.
-#exposure_per_group = 50.
+exposure_per_group = 50.
 #exposure_per_group = 100.
 cr_qual_cut = 1e10
 #cr_qual_cut = 230
@@ -163,8 +163,8 @@ for ana in range(0,len(ana_tag)):
                 run_data += [[exposure,run_elev,run_nsb,data_xyoff_map,bkgd_xyoff_map]] # gamma-ray sources are not filtered in xyoff maps
                 #run_data += [[exposure,run_elev,run_nsb,data_sky_map,bkgd_sky_map]]
 
-                if current_exposure>exposure_per_group or run==len(analysis_result)-1:
-                #if current_exposure>exposure_per_group:
+                #if current_exposure>exposure_per_group or run==len(analysis_result)-1:
+                if current_exposure>exposure_per_group:
                     current_exposure = 0.
                     run_data = []
                     group_data += [run_data]
@@ -224,11 +224,19 @@ for ana in range(0,len(analysis_data)):
         if use_abcd_correction:
             for logE in range(0,logE_nbins):
                 data_bkgd_diff = []
-                for gcut in range(1,gcut_bins):
-                    diff = np.sum(grp_data_map[logE].waxis[:,:,gcut]) / np.sum(grp_bkgd_map[logE].waxis[:,:,gcut])
+                for gcut in range(0,gcut_bins):
+                    diff = np.sum(grp_data_map[logE].waxis[:,:,gcut]) - np.sum(grp_bkgd_map[logE].waxis[:,:,gcut])
                     data_bkgd_diff += [diff]
-                grp_bkgd_map[logE].scale(data_bkgd_diff[0]*data_bkgd_diff[1]/data_bkgd_diff[2])
-                grp_bkgd_count[logE] = grp_bkgd_count[logE] * (data_bkgd_diff[0]*data_bkgd_diff[1]/data_bkgd_diff[2])
+                #correction = data_bkgd_diff[0]
+                correction = 0.
+                if data_bkgd_diff[3]!=0.:
+                    correction = data_bkgd_diff[1]*data_bkgd_diff[2]/data_bkgd_diff[3]
+                if grp_bkgd_count[logE]!=0.:
+                    correction = correction/grp_bkgd_count[logE]
+                else:
+                    correction = 0.
+                grp_bkgd_map[logE].scale(1.+correction)
+                grp_bkgd_count[logE] = grp_bkgd_count[logE] * (1.+correction)
 
         grp_elev = grp_elev/grp_expo
         grp_nsb = grp_nsb/grp_expo

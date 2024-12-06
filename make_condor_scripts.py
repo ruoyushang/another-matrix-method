@@ -8,8 +8,8 @@ SMI_DIR = os.environ['SMI_DIR']
 print (f'SMI_DIR = {SMI_DIR}')
 #print (f'SMI_OUTPUT = {SMI_OUTPUT}')
 
-is_training = True
-#is_training = False
+#is_training = True
+is_training = False
 print (f"is_training = {is_training}")
 
 training_mode = 'off'
@@ -55,7 +55,7 @@ if is_training:
     
 if not is_training:
 
-    input_params += [ ['1ES0647'               ,102.694 ,25.050 , 'ON'] ]
+    #input_params += [ ['1ES0647'               ,102.694 ,25.050 , 'ON'] ]
     input_params += [ ['1ES1011'               ,153.767 ,49.434 , 'ON'] ]
     input_params += [ ['1ES0414'               ,64.220  ,1.089  , 'ON'] ]
     input_params += [ ['1ES0502'               ,76.983  ,67.623 , 'ON'] ]
@@ -65,7 +65,7 @@ if not is_training:
     input_params += [ ['BLLac'                 ,330.680 ,42.277 , 'ON'] ]
     input_params += [ ['Draco'                 ,260.059 ,57.921 , 'ON'] ]
     input_params += [ ['OJ287'                 ,133.705 ,20.100 , 'ON'] ]
-    input_params += [ ['H1426'                 ,217.136  ,42.673, 'ON' ] ]
+    #input_params += [ ['H1426'                 ,217.136  ,42.673, 'ON' ] ]
     input_params += [ ['NGC1275'               ,49.950  ,41.512 , 'ON'] ]
     input_params += [ ['Segue1'                ,151.767 ,16.082 , 'ON'] ]
     input_params += [ ['3C273'                 ,187.277 ,2.05   , 'ON'] ]
@@ -74,7 +74,7 @@ if not is_training:
     input_params += [ ['RGB_J0710_p591'        ,107.61  ,59.15  , 'ON'] ]
     input_params += [ ['UrsaMinor'             ,227.285 ,67.222 , 'ON'] ]
     input_params += [ ['UrsaMajorII'           ,132.875 ,63.13  , 'ON'] ]
-    input_params += [ ['1ES1959_p650'          ,300.00 ,65.15   , 'ON'] ]
+    #input_params += [ ['1ES1959_p650'          ,300.00 ,65.15   , 'ON'] ]
 
     input_params += [ ['CrabNebula_elev_80_90' ,83.633  ,22.014 , 'ON'] ]
     input_params += [ ['CrabNebula_elev_70_80' ,83.633  ,22.014 , 'ON'] ]
@@ -90,15 +90,16 @@ if not is_training:
     input_params += [ ['PSR_J1907_p0602'       ,286.975 ,6.337 , 'ON' ] ]
     input_params += [ ['PSR_J2021_p4026'       ,305.37  ,40.45 , 'ON' ] ] # gamma cygni
     input_params += [ ['PSR_J2021_p3651'       ,305.27  ,36.85 , 'ON' ] ] # Dragonfly
-    input_params += [ ['SS433'       ,288.404, 4.930 , 'ON' ] ]
     input_params += [ ['Geminga'               ,98.476  ,17.770 , 'ON' ] ]
     input_params += [ ['PSR_J1928_p1746', 292.15, 17.78 , 'ON' ] ]
+    #input_params += [ ['SS433'       ,288.404, 4.930 , 'ON' ] ]
 
-    input_params += [ ['PSR_J2229_p6114', 337.27, 61.23 , 'ON' ] ] # Boomerang
-    input_params += [ ['CTA1', 1.608, 72.983 , 'ON' ] ]
-    input_params += [ ['PSR_J2030_p4415', 307.7139583  , 44.2605833 , 'ON' ] ]
+    #input_params += [ ['PSR_J2229_p6114', 337.27, 61.23 , 'ON' ] ] # Boomerang
+    #input_params += [ ['CTA1', 1.608, 72.983 , 'ON' ] ]
+    #input_params += [ ['PSR_J2030_p4415', 307.7139583  , 44.2605833 , 'ON' ] ]
     #input_params += [ ['PSR_J2032_p4127', 308.05  , 41.46 , 'ON' ] ]
     #input_params += [ ['PSR_J2032_p4127_baseline', 308.05  , 41.46 , 'ON'  ] ]
+
     #input_params += [ ['LHAASO_J0622_p3754', 95.50  , 37.90 , 'ON' ] ]
     #input_params += [ ['Cas_A', 350.8075  , 58.8072 , 'ON' ] ]
     #input_params += [ ['SNR_G150_p4', 66.785, 55.458 , 'ON' ] ] # Jamie's SNR

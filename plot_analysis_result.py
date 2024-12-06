@@ -60,9 +60,9 @@ fig.set_figwidth(figsize_x)
 smi_dir = os.environ.get("SMI_DIR")
 smi_input = os.environ.get("SMI_INPUT")
 #smi_output = os.environ.get("SMI_OUTPUT")
-#smi_output = "/nevis/ged/data/rshang/smi_output/output_test"
+smi_output = "/nevis/ged/data/rshang/smi_output/output_test"
 #smi_output = "/nevis/ged/data/rshang/smi_output/output_3tel"
-smi_output = "/nevis/ged/data/rshang/smi_output/output_default"
+#smi_output = "/nevis/ged/data/rshang/smi_output/output_default"
 #smi_output = "/nevis/ged/data/rshang/smi_output/output_detail"
 
 smooth_size = 0.06
@@ -471,6 +471,20 @@ for epoch in input_epoch:
             data_xyoff_map = analysis_result[run][5]
             fit_xyoff_map = analysis_result[run][6]
             ratio_xyoff_map = analysis_result[run][7]
+
+            #for logE in range(0,logE_nbins):
+            #    correlation = 0.
+            #    correlation_norm = 0.
+            #    for gcut in range(1,gcut_bins):
+            #        for idx_x in range(0,xoff_bins[logE]):
+            #            for idx_y in range(0,yoff_bins[logE]):
+            #                data = data_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
+            #                bkgd = fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
+            #                correlation += 2.*data*bkgd
+            #                correlation_norm += (data*data) + (bkgd*bkgd)
+            #    if correlation_norm>0.:
+            #        data_sky_map[logE].scale(correlation/correlation_norm)
+            #        bkgd_sky_map[logE].scale(correlation/correlation_norm)
 
             if normalize_map:
                 for logE in range(0,logE_nbins):
