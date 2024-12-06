@@ -22,8 +22,8 @@ smi_output = os.environ.get("SMI_OUTPUT")
 
 run_elev_cut = 25.
 
-#min_NImages = 2
-min_NImages = 3
+min_NImages = 2
+#min_NImages = 3
 max_Roff = 1.7
 max_EmissionHeight_cut = 20.
 min_EmissionHeight_cut = 6.
@@ -55,7 +55,7 @@ logE_nbins = len(logE_bins)-1
 #str_flux_calibration = ['1.44e+03', '1.60e+03', '1.69e+03', '1.99e+03', '4.20e+03', '9.81e+03', '2.30e+04', '5.20e+04']
 MSCW_cut = [0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60]
 MSCL_cut = [0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70]
-str_flux_calibration = ['1.30e+03', '1.35e+03', '1.41e+03', '1.65e+03', '3.63e+03', '8.49e+03', '2.05e+04', '4.88e+04']
+str_flux_calibration = ['3.33e+03', '3.67e+03', '3.73e+03', '3.77e+03', '8.08e+03', '1.83e+04', '4.89e+04', '1.30e+05']
 
 skymap_size = 3.
 skymap_bins = 30
@@ -3089,20 +3089,20 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
         #region_y += [src_y]
         #region_r += [1.0]
 
-        region_name = ('all_regions','All regions')
-        # Fermi
-        region_x += [284.30]
-        region_y += [2.72]
-        region_r += [0.38]
-        # VERITAS
-        region_x += [284.339]
-        region_y += [2.661]
-        region_r += [0.239]
+        #region_name = ('all_regions','All regions')
+        ## Fermi
+        #region_x += [284.30]
+        #region_y += [2.72]
+        #region_r += [0.38]
+        ## VERITAS
+        #region_x += [284.339]
+        #region_y += [2.661]
+        #region_r += [0.239]
 
-        #region_name = ('MAGIC','MAGIC')
-        #region_x += [284.3]
-        #region_y += [2.7]
-        #region_r += [0.4]
+        region_name = ('MAGIC','MAGIC')
+        region_x += [284.3]
+        region_y += [2.7]
+        region_r += [0.4]
 
         #region_name = ('J1858_p020','J1858+020')
         #region_x += [284.6]
