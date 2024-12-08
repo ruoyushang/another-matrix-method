@@ -55,7 +55,7 @@ logE_nbins = len(logE_bins)-1
 #str_flux_calibration = ['1.48e+04', '2.05e+04', '2.67e+04', '4.01e+04', '1.23e+05', '4.27e+05', '1.14e+06', '4.19e+06']
 MSCW_cut = [0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60]
 MSCL_cut = [0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70]
-str_flux_calibration = ['3.88e+03', '5.51e+03', '6.12e+03', '8.30e+03', '2.70e+04', '6.89e+04', '4.66e+05', '1.01e+06']
+str_flux_calibration = ['3.50e+03', '4.73e+03', '5.74e+03', '8.43e+03', '1.81e+04', '5.06e+04', '2.30e+05', '5.95e+05']
 
 skymap_size = 3.
 skymap_bins = 30
@@ -2393,6 +2393,7 @@ def make_flux_map(incl_sky_map,data_sky_map,bkgd_sky_map,flux_sky_map,flux_err_s
     skymap_bins = len(data_sky_map.xaxis)-1
 
     norm_content_max = np.max(incl_sky_map.waxis[:,:,0])
+    norm_mean = np.mean(incl_sky_map.waxis[:,:,0])
 
     for idx_x in range(0,skymap_bins):
         for idx_y in range(0,skymap_bins):
@@ -2408,10 +2409,7 @@ def make_flux_map(incl_sky_map,data_sky_map,bkgd_sky_map,flux_sky_map,flux_err_s
                 syst = pow(bkgd_err_sq,0.5)
                 logE = logE_axis.get_bin(np.log10(avg_energy))
                 correction = GetFluxCalibration(logE)/norm*pow(avg_energy,2)/(100.*100.*3600.)/delta_energy
-                norm_ratio = norm/norm_content_max
                 norm_weight = 1.
-                if norm_ratio<0.3: norm_weight = 0.
-                #norm_weight = 1./(1.+np.exp(-(norm_ratio-0.3)/0.05))
                 flux = excess*correction*norm_weight
                 flux_err = error*correction*norm_weight
                 flux_syst = syst*correction*norm_weight

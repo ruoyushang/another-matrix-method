@@ -70,6 +70,11 @@ smooth_size = 0.06
 #smooth_size = 0.08
 #smooth_size = 0.2
 
+norm_smooth_size = [3.*smooth_size for i in range(0,logE_nbins)]
+for logE in range(0,logE_nbins):
+    scale_size = max(3.,float(logE))
+    norm_smooth_size[logE] = scale_size*smooth_size
+
 zoomin = 1.0
 #zoomin = 0.5
 
@@ -94,7 +99,7 @@ qual_cut = 0.
 #qual_cut = 20.
 
 elev_cut = 20.
-#elev_cut = 55.
+#elev_cut = 50.
 #elev_cut = 75.
 cr_qual_cut = 1e10
 
@@ -590,7 +595,7 @@ for logE in range(0,logE_nbins):
     sum_data_sky_map_smooth[logE].add(sum_data_sky_map[logE])
     sum_bkgd_sky_map_smooth[logE].add(sum_bkgd_sky_map[logE])
     sum_syst_sky_map_smooth[logE].addSquare(sum_syst_sky_map[logE])
-    smooth_image(sum_incl_sky_map_smooth[logE].waxis[:,:,0],sum_incl_sky_map_smooth[logE].xaxis,sum_incl_sky_map_smooth[logE].yaxis,kernel_radius=3.*smooth_size)
+    smooth_image(sum_incl_sky_map_smooth[logE].waxis[:,:,0],sum_incl_sky_map_smooth[logE].xaxis,sum_incl_sky_map_smooth[logE].yaxis,kernel_radius=norm_smooth_size[logE])
     smooth_image(sum_bkgd_sky_map_smooth[logE].waxis[:,:,0],sum_bkgd_sky_map_smooth[logE].xaxis,sum_bkgd_sky_map_smooth[logE].yaxis,kernel_radius=smooth_size)
     smooth_image(sum_syst_sky_map_smooth[logE].waxis[:,:,0],sum_syst_sky_map_smooth[logE].xaxis,sum_syst_sky_map_smooth[logE].yaxis,kernel_radius=smooth_size)
     smooth_image(sum_data_sky_map_smooth[logE].waxis[:,:,0],sum_data_sky_map_smooth[logE].xaxis,sum_data_sky_map_smooth[logE].yaxis,kernel_radius=smooth_size)
