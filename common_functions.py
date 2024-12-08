@@ -22,8 +22,8 @@ smi_output = os.environ.get("SMI_OUTPUT")
 
 run_elev_cut = 25.
 
-min_NImages = 2
-#min_NImages = 3
+#min_NImages = 2
+min_NImages = 3
 max_Roff = 1.7
 max_EmissionHeight_cut = 20.
 min_EmissionHeight_cut = 6.
@@ -52,10 +52,10 @@ logE_nbins = len(logE_bins)-1
 #MSCL_cut = 0.8
 #MSCW_cut = [0.60,0.65,0.70,0.75,0.75,0.75,0.75,0.75] # nominal
 #MSCL_cut = [0.70,0.75,0.80,0.85,0.85,0.85,0.85,0.85] # nominal
-#str_flux_calibration = ['1.44e+03', '1.60e+03', '1.69e+03', '1.99e+03', '4.20e+03', '9.81e+03', '2.30e+04', '5.20e+04']
+#str_flux_calibration = ['1.48e+04', '2.05e+04', '2.67e+04', '4.01e+04', '1.23e+05', '4.27e+05', '1.14e+06', '4.19e+06']
 MSCW_cut = [0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60]
 MSCL_cut = [0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70]
-str_flux_calibration = ['3.33e+03', '3.67e+03', '3.73e+03', '3.77e+03', '8.08e+03', '1.83e+04', '4.89e+04', '1.30e+05']
+str_flux_calibration = ['3.88e+03', '5.51e+03', '6.12e+03', '8.30e+03', '2.70e+04', '6.89e+04', '4.66e+05', '1.01e+06']
 
 skymap_size = 3.
 skymap_bins = 30
@@ -686,7 +686,7 @@ def build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,runlist,max_run
             else:
                 found_roi = CoincideWithRegionOfInterest(Xsky, Ysky, roi_ra, roi_dec, roi_r)
                 if found_roi:
-                    xyoff_mask_map[logE].fill(Xoff,Yoff,0.5)
+                    xyoff_mask_map[logE].fill(Xoff,Yoff,GammaCut)
 
 
             xyoff_map[logE].fill(Xoff,Yoff,GammaCut)
@@ -1324,14 +1324,8 @@ def cosmic_ray_like_chi2_fullspec(
                     mask = mask_xyoff_map[idx_1d-1]
                     weight = gcut_weight[gcut]
 
-                    #total_log_likelihood = 0.
-                    #if total_data==0.:
-                    #    total_log_likelihood = (total_bkgd)
-                    #else:
-                    #    total_log_likelihood = (-1.*(total_data*np.log(total_bkgd) - total_bkgd - (total_data*np.log(total_data)-total_data)))
-
-                    if mask>0.:
-                        weight = 0.
+                    #if mask>0.:
+                    #    weight = 0.
 
                     n_expect = max(0.0001,try_xyoff_map[idx_1d-1])
                     n_data = data
@@ -2613,6 +2607,98 @@ def GetHessGeminga():
 
     return energies, fluxes, flux_errs
 
+def GetHawcDiffusionFluxJ1908():
+
+    energies = [1.19,1.82,3.12,5.52,9.96,18.65,34.17,59.71,103.07,176.38]
+    fluxes = [1.95e-11,1.98e-11,2.00e-11,1.57e-11,1.18e-11,7.19e-12,4.70e-12,2.75e-12,2.13e-12,1.38e-12]
+    flux_errs = [1.95e-11,1.98e-11,2.00e-11,1.57e-11,1.18e-11,7.19e-12,4.70e-12,2.75e-12,2.13e-12,1.38e-12]
+    flux_errs_up = [+0.14e-11,+0.14e-11,+0.13e-11,+0.09e-11,+0.07e-11,+0.55e-12,+0.46e-12,+0.43e-12,+0.44e-12,+0.54e-12]
+    flux_errs_low = [-0.15e-11,-0.13e-11,-0.13e-11,-0.09e-11,-0.07e-11,-0.53e-11,-0.45e-12,-0.42e-12,-0.47e-12,-0.54e-12]
+
+    for entry in range(0,len(energies)):
+        energies[entry] = energies[entry]
+        fluxes[entry] = fluxes[entry]/(energies[entry]*energies[entry])*pow(energies[entry],2)
+        flux_errs_up[entry] = flux_errs[entry]+flux_errs_up[entry]
+        flux_errs_low[entry] = flux_errs[entry]+flux_errs_low[entry]
+        flux_errs[entry] = 0.25*fluxes[entry]
+
+    return energies, fluxes, flux_errs
+
+def flux_lhaaso_wcda_j1908_func(x):
+    # TeV^{-1}cm^{-2}s^{-1}
+    # https://arxiv.org/pdf/2305.17030.pdf
+    Flux_N0 = 7.97 
+    Gamma_index = 2.42
+    return Flux_N0*pow(10,-13)*pow(x*1./3000.,-Gamma_index)
+
+def GetHawcSaraFluxJ1908():
+
+    #energies = [1.53,2.78,4.75,7.14,11.15,18.68,36.15,61.99,108.69,187.51]
+    #fluxes = [7.0009e-12,9.5097e-12,8.4629e-12,6.6242e-12,5.6764e-12,4.4924e-12,3.2932e-12,1.5250e-12,9.1235e-13,4.1833e-13]
+    #flux_errs = [7.0009e-12,9.5097e-12,8.4629e-12,6.6242e-12,5.6764e-12,4.4924e-12,3.2932e-12,1.5250e-12,9.1235e-13,4.1833e-13]
+    #flux_errs_up = [+7.2024e-13,+6.3288e-13,+5.4679e-13,+3.9318e-13,+2.6768e-13,+2.9978e-13,+2.2130e-13,+1.8650e-13,+1.8756e-13,+1.5458e-13]
+    #flux_errs_low = [-7.1498e-13,-6.6198e-13,-5.2961e-13,-3.8152e-13,-2.8404e-13,-3.1157e-13,-2.0721e-13,-1.8818e-13,-1.7827e-13,-1.5612e-13]
+
+    energies = [1.53,2.78,4.75,7.14,11.15,18.68,36.15,61.99,108.69,187.51]
+    fluxes = [7.0009e-12,9.5097e-12,8.4629e-12,6.6242e-12,5.6764e-12,4.4924e-12,3.2932e-12,1.5250e-12,9.1235e-13,4.1833e-13]
+    flux_errs = [7.0009e-12,9.5097e-12,8.4629e-12,6.6242e-12,5.6764e-12,4.4924e-12,3.2932e-12,1.5250e-12,9.1235e-13,4.1833e-13]
+    flux_errs_low = [-1.293e-12,-1.425e-12,-1.623e-12,-1.292e-12,-8.837e-13,-4.499e-13,-4.926e-13,-2.418e-13,-1.947e-13,-1.549e-13]
+    flux_errs_up = [+8.199e-13,+6.952e-13,+7.313e-13,+5.473e-13,+4.411e-13,+4.389e-13,+3.015e-13,+1.893e-13,+2.074e-13,+1.649e-13]
+
+    for entry in range(0,len(energies)):
+        energies[entry] = energies[entry]
+        fluxes[entry] = fluxes[entry]/(energies[entry]*energies[entry])*pow(energies[entry],2)
+        flux_errs_up[entry] = flux_errs[entry]+flux_errs_up[entry]
+        flux_errs_low[entry] = flux_errs[entry]+flux_errs_low[entry]
+        flux_errs[entry] = 0.5*(flux_errs_up[entry]-flux_errs_low[entry])/(energies[entry]*energies[entry])*pow(energies[entry],2)
+
+    return energies, fluxes, flux_errs
+
+def GetHessFluxJ1908():
+    energies = [pow(10.,-0.332),pow(10.,0.022),pow(10.,0.396),pow(10.,0.769),pow(10.,1.124),pow(10.,1.478)]
+    fluxes = [pow(10.,-10.981),pow(10.,-10.967),pow(10.,-11.057),pow(10.,-11.169),pow(10.,-11.188),pow(10.,-11.386)]
+    flux_errs = [pow(10.,-0.332),pow(10.,0.022),pow(10.,0.396),pow(10.,0.769),pow(10.,1.124),pow(10.,1.478)]
+    flux_errs_up = [pow(10.,-10.895),pow(10.,-10.916),pow(10.,-11.003),pow(10.,-11.101),pow(10.,-11.101),pow(10.,-11.264)]
+    flux_errs_low = [pow(10.,-11.086),pow(10.,-11.010),pow(10.,-11.126),pow(10.,-11.264),pow(10.,-11.292),pow(10.,-11.556)]
+
+    for entry in range(0,len(energies)):
+        energies[entry] = energies[entry]
+        fluxes[entry] = fluxes[entry]/(energies[entry]*energies[entry])*pow(energies[entry],2)
+        flux_errs[entry] = 0.5*(flux_errs_up[entry]-flux_errs_low[entry])/(energies[entry]*energies[entry])*pow(energies[entry],2)
+
+    return energies, fluxes, flux_errs
+
+def GetFermiJordanFluxJ1908():
+
+    energies = [42571.11253606245,85723.52082084052,172617.57055787765,347592.1821687443]
+    fluxes = [2.856783157929038e-06,3.89109583469775e-06,5.0680678657082445e-06,9.271213817855382e-06]
+    flux_stat_errs = [1.1604625384485099e-06,1.556189798998829e-06,2.2448723890895238e-06,3.4737117958614837e-06]
+    flux_syst_errs = [1.135182978267407e-06,7.805371450450492e-07,1.6102184866176414e-06,1.5283362877401339e-06]
+    flux_errs = []
+
+    for entry in range(0,len(energies)):
+        energies[entry] = energies[entry]/1e6
+        fluxes[entry] = fluxes[entry]/1e6
+        flux_stat_errs[entry] = flux_stat_errs[entry]/1e6
+        flux_syst_errs[entry] = flux_syst_errs[entry]/1e6
+        flux_errs += [pow(pow(flux_stat_errs[entry],2)+pow(flux_syst_errs[entry],2),0.5)]
+
+    return energies, fluxes, flux_errs
+
+def GetLHAASOFluxJ1908():
+    energies = [pow(10.,1.102),pow(10.,1.302),pow(10.,1.498),pow(10.,1.700),pow(10.,1.900),pow(10.,2.099),pow(10.,2.299),pow(10.,2.498),pow(10.,2.697)]
+    fluxes = [pow(10.,-11.033),pow(10.,-10.988),pow(10.,-11.201),pow(10.,-11.324),pow(10.,-11.553),pow(10.,-11.860),pow(10.,-11.921),pow(10.,-12.346),pow(10.,-12.653)]
+    flux_errs = [pow(10.,1.102),pow(10.,1.302),pow(10.,1.498),pow(10.,1.700),pow(10.,1.900),pow(10.,2.099),pow(10.,2.299),pow(10.,2.498),pow(10.,2.697)]
+    flux_errs_up = [pow(10.,-10.966),pow(10.,-10.949),pow(10.,-11.167),pow(10.,-11.296),pow(10.,-11.513),pow(10.,-11.798),pow(10.,-11.854),pow(10.,-12.173),pow(10.,-12.391)]
+    flux_errs_low = [pow(10.,-11.094),pow(10.,-11.027),pow(10.,-11.240),pow(10.,-11.368),pow(10.,-11.597),pow(10.,-11.944),pow(10.,-12.022),pow(10.,-12.536),pow(10.,-13.128)]
+
+    erg_to_TeV = 0.62
+    for entry in range(0,len(energies)):
+        fluxes[entry] = fluxes[entry]*erg_to_TeV/(energies[entry]*energies[entry])*pow(energies[entry],2)
+        flux_errs[entry] = 0.5*(flux_errs_up[entry]-flux_errs_low[entry])*erg_to_TeV/(energies[entry]*energies[entry])*pow(energies[entry],2)
+
+    return energies, fluxes, flux_errs
+
 def GetHessJ1857():
 
     energies = [400.0/1000., 950.0/1000., 2260.0/1000., 5360.0/1000., 12710.0/1000.]
@@ -2861,7 +2947,7 @@ def PrintAndPlotInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,hist_d
     fig.set_figwidth(figsize_x)
     axbig = fig.add_subplot()
     label_x = 'Energy [TeV]'
-    label_y = 'Flux [TeV/cm2/s]'
+    label_y = '$E^{2}$ dN/dE [$\mathrm{TeV}\cdot\mathrm{cm}^{-2}\mathrm{s}^{-1}$]'
     axbig.set_xlabel(label_x)
     axbig.set_ylabel(label_y)
     axbig.set_xscale('log')
@@ -2878,6 +2964,15 @@ def PrintAndPlotInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,hist_d
         axbig.errorbar(HESS_energies,HESS_fluxes,HESS_flux_errs,color='r',marker='_',ls='none',label='HESS')
         Magic_energies, Magic_fluxes, Magic_flux_errs = GetMagicJ1857()
         axbig.errorbar(Magic_energies,Magic_fluxes,Magic_flux_errs,color='g',marker='_',ls='none',label='MAGIC')
+    elif 'PSR_J1907_p0602' in source_name:
+        HAWC_energies, HAWC_fluxes, HAWC_flux_errs = GetHawcDiffusionFluxJ1908()
+        Sara_energies, Sara_fluxes, Sara_flux_errs = GetHawcSaraFluxJ1908()
+        HESS_energies, HESS_fluxes, HESS_flux_errs = GetHessFluxJ1908()
+        Jordan_energies, Jordan_fluxes, Jordan_flux_errs = GetFermiJordanFluxJ1908()
+        LHAASO_energies, LHAASO_fluxes, LHAASO_flux_errs = GetLHAASOFluxJ1908()
+        axbig.errorbar(Jordan_energies,Jordan_fluxes,Jordan_flux_errs,color='g',marker='s',ls='none',label='Fermi-LAT',zorder=1)
+        axbig.errorbar(Sara_energies,Sara_fluxes,Sara_flux_errs,color='purple',marker='o',ls='none',label='HAWC',zorder=5)
+        axbig.errorbar(LHAASO_energies,LHAASO_fluxes,LHAASO_flux_errs,color='goldenrod',marker='^',ls='none',label='LHAASO (KM2A)',zorder=9)
     elif 'Geminga' in source_name:
         HAWC_diff_energies, HAWC_diff_fluxes, HAWC_diff_flux_errs = GetHAWCDiffusionFluxGeminga()
         HAWC_disk_energies, HAWC_disk_fluxes, HAWC_disk_flux_errs = GetHAWCDiskFluxGeminga()
@@ -2903,7 +2998,7 @@ def DefineRegionOfMask(src_name,src_ra,src_dec):
 
     region_x = [src_ra]
     region_y = [src_dec]
-    region_r = [10.]
+    region_r = [0.]
     region_name = ['center']
 
     if 'Crab' in src_name:
@@ -3026,19 +3121,19 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
         #region_y += [4.9166667]
         #region_r += [0.2]
 
-        #region_name = ('J1907_p0602_full','J1907+0602 (full)')
-        #src_x = 286.98
-        #src_y = 6.04
-        #region_x += [src_x]
-        #region_y += [src_y]
-        #region_r += [1.2]
-
-        region_name = ('J1907_p0602_inner','J1907+0602 (inner)')
+        region_name = ('J1907_p0602_full','J1907+0602 (full)')
         src_x = 286.98
         src_y = 6.04
         region_x += [src_x]
         region_y += [src_y]
-        region_r += [0.46]
+        region_r += [1.2]
+
+        #region_name = ('J1907_p0602_inner','J1907+0602 (inner)')
+        #src_x = 286.98
+        #src_y = 6.04
+        #region_x += [src_x]
+        #region_y += [src_y]
+        #region_r += [0.46]
 
         #region_name = ('J1907_p0602_outer','J1907+0602 (outer)')
         #src_x = 286.98

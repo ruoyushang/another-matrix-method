@@ -34,6 +34,7 @@ build_skymap = common_functions.build_skymap
 smooth_image = common_functions.smooth_image
 PlotSkyMap = common_functions.PlotSkyMap
 PlotCountProjection = common_functions.PlotCountProjection
+GetRegionIntegral = common_functions.GetRegionIntegral
 make_flux_map = common_functions.make_flux_map
 make_significance_map = common_functions.make_significance_map
 DefineRegionOfInterest = common_functions.DefineRegionOfInterest
@@ -488,8 +489,26 @@ for epoch in input_epoch:
 
             if normalize_map:
                 for logE in range(0,logE_nbins):
-                    data_norm = np.sum(data_xyoff_map[logE].waxis[:,:,0])
-                    bkgd_norm = np.sum(fit_xyoff_map[logE].waxis[:,:,0])
+                    data_norm, data_stat_err = GetRegionIntegral(
+                            data_sky_map[logE],
+                            [all_roi_x[0]],
+                            [all_roi_y[0]],
+                            [100.],
+                            all_roi_x,
+                            all_roi_y,
+                            all_roi_r,
+                        )
+                    bkgd_norm, bkgd_stat_err = GetRegionIntegral(
+                            bkgd_sky_map[logE],
+                            [all_roi_x[0]],
+                            [all_roi_y[0]],
+                            [100.],
+                            all_roi_x,
+                            all_roi_y,
+                            all_roi_r,
+                        )
+                    #data_norm = np.sum(data_xyoff_map[logE].waxis[:,:,0])
+                    #bkgd_norm = np.sum(fit_xyoff_map[logE].waxis[:,:,0])
                     if bkgd_norm>0.:
                         fit_xyoff_map[logE].scale(data_norm/bkgd_norm)
                         bkgd_sky_map[logE].scale(data_norm/bkgd_norm)
@@ -517,11 +536,13 @@ for epoch in input_epoch:
 
                 if 'MIMIC' in mode:
                     mimic_index = int(mode.strip('MIMIC'))-1
-                    sum_mimic_incl_sky_map[mimic_index][logE].add(incl_sky_map[logE])
+                    #sum_mimic_incl_sky_map[mimic_index][logE].add(incl_sky_map[logE])
+                    sum_mimic_incl_sky_map[mimic_index][logE].add(bkgd_sky_map[logE])
                     sum_mimic_data_sky_map[mimic_index][logE].add(data_sky_map[logE])
                     sum_mimic_bkgd_sky_map[mimic_index][logE].add(bkgd_sky_map[logE])
                 else:
-                    sum_incl_sky_map[logE].add(incl_sky_map[logE])
+                    #sum_incl_sky_map[logE].add(incl_sky_map[logE])
+                    sum_incl_sky_map[logE].add(bkgd_sky_map[logE])
                     sum_data_sky_map[logE].add(data_sky_map[logE])
                     sum_bkgd_sky_map[logE].add(bkgd_sky_map[logE])
                     if include_syst_error:
@@ -569,7 +590,7 @@ for logE in range(0,logE_nbins):
     sum_data_sky_map_smooth[logE].add(sum_data_sky_map[logE])
     sum_bkgd_sky_map_smooth[logE].add(sum_bkgd_sky_map[logE])
     sum_syst_sky_map_smooth[logE].addSquare(sum_syst_sky_map[logE])
-    smooth_image(sum_incl_sky_map_smooth[logE].waxis[:,:,0],sum_incl_sky_map_smooth[logE].xaxis,sum_incl_sky_map_smooth[logE].yaxis,kernel_radius=smooth_size)
+    smooth_image(sum_incl_sky_map_smooth[logE].waxis[:,:,0],sum_incl_sky_map_smooth[logE].xaxis,sum_incl_sky_map_smooth[logE].yaxis,kernel_radius=3.*smooth_size)
     smooth_image(sum_bkgd_sky_map_smooth[logE].waxis[:,:,0],sum_bkgd_sky_map_smooth[logE].xaxis,sum_bkgd_sky_map_smooth[logE].yaxis,kernel_radius=smooth_size)
     smooth_image(sum_syst_sky_map_smooth[logE].waxis[:,:,0],sum_syst_sky_map_smooth[logE].xaxis,sum_syst_sky_map_smooth[logE].yaxis,kernel_radius=smooth_size)
     smooth_image(sum_data_sky_map_smooth[logE].waxis[:,:,0],sum_data_sky_map_smooth[logE].xaxis,sum_data_sky_map_smooth[logE].yaxis,kernel_radius=smooth_size)
