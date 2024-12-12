@@ -63,8 +63,8 @@ smi_input = os.environ.get("SMI_INPUT")
 #smi_output = os.environ.get("SMI_OUTPUT")
 #smi_output = "/nevis/ged/data/rshang/smi_output/output_test"
 #smi_output = "/nevis/ged/data/rshang/smi_output/output_3tel"
-#smi_output = "/nevis/ged/data/rshang/smi_output/output_default"
-smi_output = "/nevis/ged/data/rshang/smi_output/output_detail"
+smi_output = "/nevis/ged/data/rshang/smi_output/output_default"
+#smi_output = "/nevis/ged/data/rshang/smi_output/output_detail"
 
 smooth_size = 0.06
 #smooth_size = 0.08
@@ -100,7 +100,7 @@ qual_cut = 0.
 
 elev_cut = 20.
 #elev_cut = 50.
-#elev_cut = 75.
+#elev_cut = 65.
 cr_qual_cut = 1e10
 
 #bias_array = [-0.023, -0.011, -0.022, -0.03,  -0.025,  0.018, -0.048, -0.378, -0.271]
@@ -142,11 +142,11 @@ if 'Crab' in source_name:
     logE_max = logE_nbins
     fit_radial_profile = False
 if 'SNR_G189_p03' in source_name:
-    logE_min = 1
-    logE_mid = 6
+    logE_min = 0
+    logE_mid = 4
     logE_max = logE_nbins
     fit_radial_profile = False
-    radial_bin_scale = 0.3
+    #radial_bin_scale = 0.3
 if 'PSR_J1856_p0245' in source_name:
     #logE_min = 2
     #logE_mid = 5
@@ -217,6 +217,7 @@ all_roi_name, all_roi_x, all_roi_y, all_roi_r, all_excl_x, all_excl_y, all_excl_
 total_exposure = 0.
 good_exposure = 0.
 mimic_exposure = [0.] * n_mimic 
+list_run_nsb = []
 list_run_elev = []
 list_run_azim = []
 list_truth_params = []
@@ -520,6 +521,7 @@ for epoch in input_epoch:
 
             if not 'MIMIC' in mode:
                 good_exposure += exposure
+                list_run_nsb += [run_nsb]
                 list_run_elev += [run_elev]
                 list_run_azim += [run_azim]
                 list_truth_params += [truth_params]
@@ -1209,6 +1211,20 @@ axbig.set_xlabel(label_x)
 axbig.set_ylabel(label_y)
 axbig.hist(list_run_elev, bins=20)
 fig.savefig(f'output_plots/elev_{source_name}_{ana_tag}.png',bbox_inches='tight')
+axbig.remove()
+
+fig.clf()
+figsize_x = 6.4
+figsize_y = 4.8
+fig.set_figheight(figsize_y)
+fig.set_figwidth(figsize_x)
+axbig = fig.add_subplot()
+label_x = 'NSB'
+label_y = 'number of runs'
+axbig.set_xlabel(label_x)
+axbig.set_ylabel(label_y)
+axbig.hist(list_run_nsb, bins=20)
+fig.savefig(f'output_plots/nsb_{source_name}_{ana_tag}.png',bbox_inches='tight')
 axbig.remove()
 
 

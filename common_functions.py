@@ -38,7 +38,7 @@ xoff_end = 2.
 yoff_start = -2.
 yoff_end = 2.
 
-gcut_bins = 4
+gcut_bins = 3
 gcut_start = 0
 gcut_end = gcut_bins
 gcut_weight = [1.] * gcut_bins
@@ -561,15 +561,15 @@ def EventGammaCut(MSCL,MSCW):
 
     GammaCut = 1e10
 
-    if gcut_bins==4:
+    if gcut_bins==3:
         if abs(MSCL)<1. and abs(MSCW)<1.:
             GammaCut = 0.5
         elif abs(MSCL)<1. and abs(MSCW)<2.:
             GammaCut = 1.5
         elif abs(MSCL)<2. and abs(MSCW)<1.:
             GammaCut = 2.5
-        elif abs(MSCL)<2. and abs(MSCW)<2.:
-            GammaCut = 3.5
+        #elif abs(MSCL)<2. and abs(MSCW)<2.:
+        #    GammaCut = 3.5
 
 
     return GammaCut
@@ -3192,10 +3192,15 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
         #region_y += [2.661]
         #region_r += [0.239]
 
-        region_name = ('MAGIC','MAGIC')
+        region_name = ('0p4_deg','0.4 deg') # MAGIC ROI
         region_x += [284.3]
         region_y += [2.7]
         region_r += [0.4]
+
+        #region_name = ('1p0_deg','1.0 deg')
+        #region_x += [284.3]
+        #region_y += [2.7]
+        #region_r += [1.0]
 
         #region_name = ('J1858_p020','J1858+020')
         #region_x += [284.6]

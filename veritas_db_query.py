@@ -14,10 +14,10 @@ import numpy as np
 
 all_runs_info = []
 
-output_dir = 'output_vts_query_default'
+output_dir = 'output_vts_query_nsb'
 input_range_elev = 0.05
 input_range_azim = 0.10
-input_range_nsb = 1.0
+input_range_nsb = 0.5
 input_range_runnum = 20000.
 find_imposter = False
 
@@ -1116,8 +1116,8 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
             off_run_nsb = all_runs_info[run][5]
             
 
-            #delta_azim = math.cos(off_run_az*math.pi/180.)-math.cos(on_run_az*math.pi/180.)
-            delta_azim = 1. - math.cos((off_run_az-on_run_az)*math.pi/180.)
+            delta_azim = math.cos(off_run_az*math.pi/180.)-math.cos(on_run_az*math.pi/180.)
+            #delta_azim = 1. - math.cos((off_run_az-on_run_az)*math.pi/180.)
 
             delta_elev = (1./math.sin(off_run_el*math.pi/180.)-1./math.sin(on_run_el*math.pi/180.));
 
@@ -1150,27 +1150,26 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
             if abs(delta_nsb)>2.*range_nsb: continue
             if abs(delta_runnum)>2.*range_runnum: continue
 
-            if first_value>2.0:
-                if first_key=='elev':
-                    if total_elev_diff>0.:
-                        if delta_elev>0.: continue
-                    else:
-                        if delta_elev<0.: continue
-                if first_key=='nsb':
-                    if total_nsb_diff>0.:
-                        if delta_nsb>0.: continue
-                    else:
-                        if delta_nsb<0.: continue
-                #if first_key=='azim':
-                #    if total_azim_diff>0.:
-                #        if delta_azim>0.: continue
-                #    else:
-                #        if delta_azim<0.: continue
-                #if first_key=='runnum':
-                #    if total_runnum_diff>0.:
-                #        if delta_runnum>0.: continue
-                #    else:
-                #        if delta_runnum<0.: continue
+            #if first_key=='nsb':
+            #    if total_nsb_diff>0.:
+            #        if delta_nsb>0.: continue
+            #    else:
+            #        if delta_nsb<0.: continue
+            #if first_key=='elev':
+            #    if total_elev_diff>0.:
+            #        if delta_elev>0.: continue
+            #    else:
+            #        if delta_elev<0.: continue
+            #if first_key=='azim':
+            #    if total_azim_diff>0.:
+            #        if delta_azim>0.: continue
+            #    else:
+            #        if delta_azim<0.: continue
+            #if first_key=='runnum':
+            #    if total_runnum_diff>0.:
+            #        if delta_runnum>0.: continue
+            #    else:
+            #        if delta_runnum<0.: continue
 
 
             list_off_run_ids += [[int(list_on_run_ids[on_run]),int(all_runs_info[run][0]),on_run_el,off_run_el]]
