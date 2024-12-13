@@ -1,0 +1,386 @@
+
+#This file was downloaded on 2022-10-01T10:34:16 UTC from snrcat.physics.umanitoba.ca
+#G;id_uncertain;id_new;id_alt;id_old;type;type_uncertain;context;remnant;SN_year;SN_association;age_min (yr);age_max (yr);distance_min (kpc);distance_max (kpc);size_coarse (arcmin);size_imprecise;size_radio;size_X;J2000_ra (hh:mm:ss);J2000_dec (dd:mm:ss);J2000_from
+G000.0+00.0;;;Sgr A East;;thermal composite;;contains CXOGC J174545.5-285829 = the Cannonball = NS candidate and possibly PWN, close to BH Sgr A*;eje,NS,PWN?;;;1200;10000;8;8;2.9;;3.5'x2.5';;17:45:44;-29:00:00;Green J coord
+G000.1-00.1;;;G0.13-0.12;;thermal & plerionic composite;1;contains PWN G0.13-0.11;eje?,PWN;;;;;;;0.7;1;;>40" x ~2";17:46:30;-28:51:30;paper J coord
+G000.3+00.0;;;;G0.33+0.04, G0.4+0.1;shell;;;eje;;;;500000;8.5;8.5;11;1;15'x8';;17:46:15;-28:38:00;Green J coord
+G000.9+00.1;;;;;plerionic composite;;contains PSR J1747-2809 + PWN G0.87+0.08;eje,PSR,PWN;;;1900;1900;8.5;10;8;;8';;17:47:21;-28:09:00;Green J coord
+G001.0-00.1;;;Sgr D;G1.05-0.1, G1.05-0.15;shell;;close to star forming region Sgr D and other SNR candidates G1.02-0.18 and G1.2-0.0;eje;;;;;8;8;8;;8';;17:48:30;-28:09:00;Green J coord
+G001.4-00.1;;;;;shell;;;eje;;;;;;;10;;10';;17:49:39;-27:46:00;Green J coord
+G001.9+00.3;;;;;shell;;;eje;;;150;220;8.5;8.5;1.5;;1.5';;17:48:45;-27:10:00;Green J coord
+G003.7-00.2;;;;G003.8-00.3;shell;;;eje;;;;;;;12;;14'x11';;17:55:26;-25:50:00;Green J coord
+G003.8+00.3;;;;;shell;1;;eje;;;;;;;18;;18';;17:52:55;-25:28:00;Green J coord
+G004.2-03.5;;;;;shell;;;eje;;;;;;;28;;28';;18:08:55;-27:03:00;Green J coord
+G004.5+06.8;;;Kepler, SN1604, 3C358, Kes 57;;shell;;;eje;1604;certain;;;3.3;8.2;3;;3';;17:30:41;-21:29:23;paper J coord
+G004.8+06.2;;;;G4.5+6.2;shell;;;eje;;;;;;;18;;18';;17:33:25;-21:34:00;Green J coord
+G005.2-02.6;;;;;shell;;;eje;;;;;;;18;;18';;18:07:30;-25:45:00;Green J coord
+G005.4-01.2;1;;Milne 56;G5.3-1.0, G5.27-0.9;plerionic composite;1;offset PSR J1801-2451 = B1757-24 = the Duck + PWN G5.27-0.9;eje,PSR?,PWN?;;;;;4.3;5.2;35;;35';;18:02:10;-24:54:00;Green J coord
+G005.5+00.3;;;;G5.55+0.32;shell;;;eje;;;;;;;13;;15'x12';;17:57:04;-24:00:00;Green J coord
+G005.7-00.1;1;;;G5.71-0.08;shell;1;close to SNR G006.4-00.1 = W28;eje;;;;;2.9;3.2;10;;12'x9';;17:58:49;-24:03:00;paper J coord
+G005.9+03.1;;;;;shell;;contains point source = possible compact remnant;eje,NS?;;;;;;;20;;20';;17:47:20;-22:16:00;Green J coord
+G006.1+00.5;;;;G6.10+0.53;shell;;;eje;;;;;;;15;;18'x12';;17:57:29;-23:25:00;Green J coord
+G006.1+01.2;;;;G6.1+1.15;filled-centre;1;;?;;;;;;;28;;30'x26';-;17:54:55;-23:05:00;Green J coord
+G006.4+04.0;;;;;shell;;;eje;;;;;;;31;;31';;17:45:10;-21:22:00;Green J coord
+G006.4+04.9;;;;;filled-centre;;bow shock PWN and PSR J1741-2054;PSR,PWN;;;;;;;2;;;2';17:42:10;-20:55:00;NS J coord
+G006.4-00.1;;;W28;G6.6-0.2;thermal composite;;close to (probably unrelated) PSR B1758-23 = J1801-2304 (SGR candidate), close to SNRs G5.7-0.1, G6.5-0.4, G7.0-0.1;eje;;;33000;36000;1.6;2.2;48;;48';;18:00:30;-23:26:00;Green J coord
+G006.5-00.4;;;;G6.51-0.48, G6.67-0.42;shell;;close to SNR G006.4-00.1 = W28;eje;;;;;;;18;;18';;18:02:11;-23:34:00;Green J coord
+G007.0-00.1;;;;G7.06-0.12;shell;;close to SNR G006.4-00.1 = W28;eje;;;;;;;15;;15';;18:01:50;-22:54:00;Green J coord
+G007.2+00.2;;;;G7.20+0.20;shell;;;eje;;;;;;;12;;12';;18:01:07;-22:38:00;Green J coord
+G007.5-01.7;1;;;;thermal & plerionic composite;;contains PWN G7.4-2.0 = Taz, close to PSR J1809-2332;eje,PWN;;;50000;50000;1.7;2;120;1;~2 deg;8'x5';18:09:00;-23:18:00;paper G name
+G007.7-03.7;;;1814-24;;shell;;;eje;386;suggested;500;2200;3.2;6;22;;22';;18:17:25;-24:04:00;Green J coord
+G008.3-00.0;;;;G8.31-0.09;shell;;close to SNR G8.7-0.1 = W30;eje;;;;;;;4.5;;5'x4';;18:04:34;-21:49:00;Green J coord
+G008.7-00.1;;;(W30);G8.6-0.1;thermal & plerionic composite;1;inside W30 complex, PSR J1803-2137 = B1800-21 and PWN G8.40+0.15 at the edge, close to new SNR G8.3-0.0;eje,PSR?,PWN?;;;15000;28000;3.2;6;45;;45';;18:05:30;-21:26:00;Green J coord
+G008.7-05.0;;;;;shell;;;eje;;;;;;;26;;26';;18:24:10;-23:48:00;Green J coord
+G008.9+00.4;;;;G8.90+0.40;shell;;;eje;;;;;;;24;;24';;18:03:58;-21:03:00;Green J coord
+G009.7-00.0;;;;G9.7-0.1, G9.70-0.06;shell;;;eje;;;;;;;13;;15'x11';;18:07:22;-20:35:00;Green J coord
+G009.8+00.6;;;;;shell;;;eje;;;;;;;12;;12';;18:05:08;-20:14:00;Green J coord
+G009.9-00.8;;;;G9.95-0.81;shell;;;eje;;;;;;;12;;12';;18:10:41;-20:43:00;Green J coord
+G010.5-00.0;;;;G10.59-0.04;shell;;;eje;;;;;;;6;;6';;18:09:08;-19:47:00;Green J coord
+G010.9-45.4;;;;G10.93-45.44;filled-centre;;PWN G10.92-45.43 and PSR J2124-3358;PSR,PWN;;;;;;;0.5;;;0.5';21:24:42;-33:58:50;paper G name
+G011.0-00.0;;;;G11.0+0.0, G11.03-0.05;shell;1;contains PWN G11.03-0.05??;eje,PWN?;;;;;2.4;3.7;10;;11'x9';;18:10:04;-19:25:00;Green J coord
+G011.1+00.1;;;;G11.18+0.11;plerionic composite;1;contains PSR J1809-1917 + PWN G11.09+0.08, close to SNR G11.2-0.3 with PSR J1811-1925 = the Turtle + PWN G11.18-0.35, close to PSR J1809-1943;eje,PSR,PWN;;;;;;;11;;12'x10';6.8';18:09:47;-19:12:00;Green J coord
+G011.1-00.7;;;;G11.15-0.71;shell;;;eje;;;;;;;8.8;;11'x7';;18:12:46;-19:38:00;Green J coord
+G011.1-01.0;;;;G11.2-1.1, G11.17-1.04;shell;;;eje;;;;;;;15;;18'x12';;18:14:03;-19:46:00;Green J coord
+G011.2-00.3;;;;;plerionic composite;;contains PSR J1811-1925 = the Turtle + PWN G11.18-0.35, close to SNR G11.1-1.0 with PSR J1809-1917 + PWN G11.09+0.08, close to PSR J1809-1943;eje,PSR,PWN;386;suggested;1400;2400;5;10;4;;4';;18:11:29;-19:25:25;NS J coord
+G011.4-00.1;;;;;shell;1;;eje;;;;;;;8;;8';;18:10:47;-19:05:00;Green J coord
+G011.8-00.2;;;;G11.89-0.21;shell;;;eje;;;;;;;4;;4';;18:12:25;-18:44:00;Green J coord
+G012.0-00.1;;;;;shell;1;;eje;;;;;;;7;;7';;18:12:11;-18:37:00;Green J coord
+G012.2+00.3;;;;G12.26+0.30;shell;;;eje;;;;;;;5.5;;6'x5';;18:11:17;-18:10:00;Green J coord
+G012.5+00.2;;;;G12.58+0.22;plerionic composite;1;;eje?;;;;;;;5.5;;6'x5';;18:12:14;-17:55:00;Green J coord
+G012.7-00.0;;;;G12.72-0.00;shell;;;eje;;;;;;;6;;6';;18:13:19;-17:54:00;Green J coord
+G012.8-00.0;;;W33;G12.82-0.02, G12.83-0.02;plerionic composite;;close to W33 complex, contains PSR J1813-1749 + PWN G12.82-0.02;eje,PSR?,PWN?;;;1200;1200;4;;3;;3';;18:13:37;-17:49:00;Green J coord
+G013.3-01.3;;;;G13.46+0.16;shell;1;;eje?;;;;;2;4;53;1;70'x40';;18:19:20;-18:00:00;Green J coord
+G013.5+00.2;;;;;shell;;;eje;;;;;;;4.5;;5'x4';;18:14:14;-17:12:00;Green J coord
+G014.1-00.1;;;;G14.18-0.12;shell;;;eje;;;;;;;5.5;;6'x5';;18:16:40;-16:41:00;Green J coord
+G014.3+00.1;;;;G14.30+0.14;shell;;;eje;;;;;;;4.5;;5'x4';;18:15:58;-16:27:00;Green J coord
+G015.1-01.6;;;;;shell;;;eje;;;;;2.1;2.2;27;;30'x24';;18:24:00;-16:34:00;Green J coord
+G015.4+00.1;;;;G15.42+0.18;plerionic composite;1;contains PWN?;eje,PWN?;;;2500;8200;4.8;9.3;15;;15'x14';;18:18:02;-15:27:00;Green J coord
+G015.9+00.2;;;;;shell;1;contains CXOU J181852.0-150213 = CCO;eje,NS;;;1000;3000;7;16;5.9;;7'x5';;18:18:52;-15:02:00;Green J coord
+G016.0-00.5;;;;G16.05-0.57;shell;;;eje;;;;;;;12;;15'x10';;18:21:56;-15:14:00;Green J coord
+G016.2-02.7;;;;;shell;;;eje;;;;;;;17;;17';;18:29:40;-16:08:00;Green J coord
+G016.4-00.5;;;;G16.41-0.55;shell;;;eje;;;;;;;13;;13';;18:22:38;-14:55:00;Green J coord
+G016.7+00.1;;;;G16.73+0.08;plerionic composite;;contains PWN G16.73+0.08, and PSR?;eje,PSR?,PWN;;;2100;2100;14;14;4;;4';;18:20:56;-14:20:00;Green J coord
+G017.0-00.0;;;;G17.02-0.04;shell;;;eje;;;;;;;5;;5';;18:21:57;-14:08:00;Green J coord
+G017.4-00.1;;;;G17.48-0.12;shell;;;eje;;;;;;;6;;6';;18:23:08;-13:46:00;Green J coord
+G017.4-02.3;;;;;shell;;;eje;;;;;;;24;;24';;18:30:55;-14:52:00;Green J coord
+G017.8-02.6;;;;;shell;;;eje;;;;;;;24;;24';;18:32:50;-14:39:00;Green J coord
+G018.0-00.7;;;Turkey;;filled-centre;1;(bow shock?) PWN G18.00-0.69 = Turkey and PSR J1826-1334 = B1823-13;eje?,PSR,PWN;;;;;2.9;3.3;0.26;1;;25"x10";18:26:13;-13:34:50;paper G name
+G018.1-00.1;;;;G18.1-0.2, G18.16-0.16;shell;;;eje;;;5100;9000;5.6;6.6;8;;8';;18:24:34;-13:11:00;Green J coord
+G018.5-00.4;;;Eel;;filled-centre;;PWN G18.5-0.4 = the Eel and PSR J1826-1256;PSR,PWN;;;;;;;20;;;20';18:26:10;-13:00:10;paper G name
+G018.6-00.2;;;;G18.62-0.28;shell;;;eje;;;;;4.2;4.6;6;;6';;18:25:55;-12:50:00;Green J coord
+G018.8+00.3;;;Kes 67;G18.9+0.3;shell;;in complex region near HII region W39;eje;;;100000;100000;13.4;14.2;14;;17'x11';;18:23:58;-12:23:00;Green J coord
+G018.9-01.1;;;;G18.95-1.1,G18.94-1.04;plerionic composite;;contains PWN and PSR candidate CXOU J182913.1-125113;eje,PSR,PWN?;;;2800;6100;1.6;2.5;33;;33';7.7';18:29:50;-12:58:00;Green J coord
+G019.1+00.2;;;;G19.15+0.27;shell;;;eje;;;;;;;27;;27';;18:24:56;-12:07:00;Green J coord
+G020.0-00.2;;;;G20.07-0.14;filled-centre;;contains PWN?, close to HII region GAL 20.08-0.14;PWN?;;;;;10.9;11.5;10;;10';1.8'x1.1';18:28:07;-11:35:00;Green J coord
+G020.4+00.1;;;;G20.47+0.16;shell;;;eje;;;;;7.6;8;8;;8';;18:27:51;-11:00:00;Green J coord
+G021.0-00.4;;;;G21.04-0.47;shell;;;eje;;;;;;;8;;9'x7';;18:31:12;-10:47:00;Green J coord
+G021.5-00.1;;;;G21.56-0.10;shell;;;eje;;;;;;;5;;5';;18:30:50;-10:09:00;Green J coord
+G021.5-00.9;;;;;plerionic composite;;contains PSR J1833-1034 + PWN G21.50-0.89;eje,PSR,PWN;;;1550;1800;4.2;4.6;5;;5';1.3';18:33:34;-10:34:07;NS J coord
+G021.6-00.8;;;;G21.64-0.84;shell;;;eje;;;;;;;13;;13';;18:33:40;-10:25:00;Green J coord
+G021.8-00.6;;;Kes 69;;thermal composite;;;eje;;;8800;9200;5.4;5.8;20;;20';;18:32:45;-10:08:00;Green J coord
+G021.9-00.1;1;simplified;;;filled-centre;1;PWN G21.88-0.10 and PSR J1831-0952;PSR,PWN?;;;;;;;0;1;;-;18:31:27;-09:52:10;paper G name
+G022.7-00.2;;;;;shell;1;overlaps SNR G23.3-0.3, contains point source XMMU J183245-0921539;eje?;;;;;4.5;4.9;26;;26';;18:33:15;-09:13:00;Green J coord
+G023.3-00.3;;;W41;;shell;1;overlaps SNR G22.7-0.2, contains PSR J1834-0845 = magnetar J1834.9-0846, close to PSR J1833-0827 and PWN G23.5+0.1;eje,PSR,PWN?;;;60000;200000;4.6;5;27;;27';;18:34:45;-08:48:00;Green J coord
+G023.5+00.1;1;;;;filled-centre;1;bow shock PWN candidate G23.5+0.1 and PSR J1833-0827 = B1830-08, close to SNR G23.3-0.3 = W41;PSR,PWN?;;;;;;;3;1;;~3';18:33:40;-08:20:20;paper G name
+G023.6+00.3;;;;;unknown;1;in complex region;eje?;;;;;5.7;6.1;10;;10';;18:33:03;-08:13:00;Green J coord
+G024.7+00.6;;;;;plerionic composite;1;contains PWN?, adjacent to HII regions;eje?,PWN?;;;9500;9500;3.2;3.7;21;1;30'x15';;18:34:10;-07:05:00;Green J coord
+G024.7-00.6;;;;;shell;1;;eje?;;;;;3.6;4;15;;15';;18:38:43;-07:32:00;Green J coord
+G025.1-02.3;;;;;shell;;;eje;;;;;2.9;2.9;50;1;80'x30';;18:45:09;-07:59:42;paper J coord
+G025.2+00.3;1;;G25.25+0.28;G025.5+00.0;plerionic composite;;contains PSR J1838-0655 + PWN G25.24-0.19 = AX J1838.0-0655, PWN candidate G25.21-0.02 = AX J1837.3-0652, adjacent to massive star cluster;eje?,PSR,PWN;;;;;;;1.6;1;;1.3' and 2';18:36:24;-06:42:00;paper J coord
+G026.6-00.1;1;;;;filled-centre;1;near PSR J1838-0537, near star forming region, close to SNR G27.4+0.0 = Kes 73;eje?,PWN?;;;;;1.3;1.3;12;;;12';18:40:10;-05:41:00;paper G name
+G027.4+00.0;;;(Kes 73), 4C-04.71;G27.3-0.1;shell;;contains AXP 1E 1841-045 (magnetar), close to SNR candidate G26.6-0.1;eje,PSR;;;750;2100;5.8;9.8;4;;4';;18:41:19;-04:56:00;Green J coord
+G027.8+00.6;;;;;filled-centre;;contains PWN?;PWN?;;;;;;;39;;50'x30';1';18:39:50;-04:24:00;Green J coord
+G028.6-00.1;;;;;shell;;;eje;;;14200;14800;7;9.6;11;;13'x9';;18:43:55;-03:53:00;Green J coord
+G028.8+01.5;;;;;thermal composite;1;;eje?;;;32000;32000;2.8;4;100;;100';;18:39:00;-02:55:00;Green J coord
+G029.4+00.1;1;simplified;G29.3667+0.1000;;plerionic composite;1;PWN in complex radio source G29.37+0.1, close to radio galaxy PMN J1844-0306;eje?,PWN;;;;;5.2;15.8;9;;9';;18:44:34;-03:07:40;paper G name
+G029.6+00.1;;;;;shell;;contains AXP candidate AX J1845-0258 (magnetar?);eje,PSR?;;;;8000;4.4;5;5;;5';;18:44:52;-02:57:00;Green J coord
+G029.7-00.3;;;Kes 75;;plerionic composite;;contains high-B PSR J1846-0258 (magnetar?) + PWN;eje,PSR,PWN;;;1690;1850;5.3;5.9;3;;3';38";18:46:25;-02:59:00;Green J coord
+G030.7+01.0;;;;;shell;1;;eje?;;;;;;;21;;24'x18';;18:44:00;-01:32:00;Green J coord
+G030.7-02.0;;;;;unknown;1;contains compact source near centre;eje?;;;;;;;16;;16';;18:54:25;-02:54:00;Green J coord
+G031.5-00.6;;;;G31.55-0.65;shell;1;;eje?;;;;;;;18;;18';;18:51:10;-01:31:00;Green J coord
+G031.9+00.0;;;3C391, Kes 77;;thermal composite;;;eje;;;7400;8400;6.7;7.5;5.9;;7'x5';;18:49:25;-00:55:00;Green J coord
+G032.0-04.9;;;3C396.1;;shell;1;;eje?;;;;;1.8;1.8;60;;60';;19:06:00;-03:00:00;Green J coord
+G032.1-00.9;1;;;;thermal composite;;;eje?;;;;;;4.6;40;;40';;18:53:10;-01:08:00;Green J coord
+G032.4+00.1;;;;G32.45+0.1;shell;;;eje;;;;;17;17;6;;6';;18:50:05;-00:25:00;Green J coord
+G032.6+00.5;1;simplified;;;filled-centre;1;PWN candidate G32.64+0.53 and PSR J1849-0001;PSR,PWN?;;;;;;;0;1;;?;18:49:01;-00:01:10;paper G name
+G032.8-00.1;;;Kes 78;G33.1-0.1;shell;;PSR J1853-0004 nearby, unrelated variable source 2XMM J185114.3-000004 in the northern part;eje;;;5700;22000;4.5;5.1;17;;17';;18:51:25;-00:08:00;Green J coord
+G033.2-00.6;;;;;shell;;;eje;;;;;;;18;;18';;18:53:50;-00:02:00;Green J coord
+G033.6+00.1;;;Kes 79, 4C00.70, HC13;G33.7+0.0;thermal composite;1;contains CCO PSR J1852+0040 = "anti-magnetar"?, close to transient magnetar 3XMM J185246.6+003317;eje,PSR;;;4400;6700;3.5;7.1;10;;10';;18:52:39;00:40:20;NS J coord
+G034.0+20.3;;simplified;G034.0+20.2;;filled-centre;;PWN G34.01+20.27 and PSR J1740+1000;PSR,PWN;;;;;;;5;;;5';17:40:26;10:00:10;paper G name
+G034.7-00.4;;;W44, 3C392;G34.6-0.5;thermal & plerionic composite;;inside W48 complex, contains PSR B1853+01 = J1856+0113 + PWN G34.56-0.50;eje,PSR,PWN;;;7900;8900;2.1;3.3;31;;35'x27';;18:56:00;01:22:00;Green J coord
+G035.6-00.4;;;;;shell;;contains (probably unrelated) PSRs J1857+0210 and J1857+0212 = B1855+02, also J1857+0143 (d = 5.2 kpc, tc = 71 kyr) nearby, overlaps with planetary nebulae PN G35.5-0.4 and IRAS 18551+0159 and with HII region G35.6-0.5;eje,PSR?;;;2300;2300;3.5;4.1;13;;15'x11';;18:57:55;02:13:00;Green J coord
+G036.0+00.1;1;simplified;G36.0-0.0?;;filled-centre;1;PWN candidate G36.01+0.06 and PSR J1856+0245;PSR,PWN?;;;;;;;0.5;;;30";18:56:51;02:46:00;paper G name
+G036.6+02.6;;;;;shell;;;eje;;;;;;;15;;17'x13';;18:48:49;04:26:00;Green J coord
+G036.6-00.7;;;;;shell;1;;eje?;;;;;;;25;;25';;19:00:35;02:56:00;Green J coord
+G038.7-01.3;;;;;thermal composite;;;eje;;;3800;14700;4;4;25;1;32'x19';;19:06:40;04:28:00;Green J coord
+G039.2-00.3;;;3C396, HC24, NRAO 593;;plerionic composite;;contains PWN G39.22-0.32;eje,PWN;;;4700;5200;6.2;8.5;7;;8'x6';;19:04:08;05:28:00;Green J coord
+G039.7-02.0;1;;W50, (SS433);G40.0-3.1;unknown;1;adjacent to HII region S74, contains microquasar binary SS433;eje,NS?;;;30000;100000;3.5;6.5;85;;2 deg x 1 deg;;19:12:20;04:55:00;Green J coord
+G040.5-00.5;;;;;shell;1;close to PSR J1907+0602 + PWN G40.16-0.89?;eje,PSR,PWN?;;;;;3.4;3.4;22;;22';;19:07:10;06:31:00;Green J coord
+G041.1-00.3;;;3C397;;thermal composite;;near PSR J1906+0722;eje;;;1350;5300;8;9;3.3;1;4.5'x2.5';;19:07:34;07:08:00;Green J coord
+G041.5+00.4;;;;;shell;1;;eje?;;;;;3.6;4.6;10;;10';;19:05:50;07:46:00;Green J coord
+G042.0-00.1;;;;;shell;1;;eje?;;;;;3.1;3.9;8;;8';;19:08:10;08:00:00;Green J coord
+G042.8+00.6;;;;G42.8+0.65;shell;;PSR J1907+0918 and SGR 1900+14 (magnetar) just outside the shell (both suggested to be possibly related);eje,NS?,PSR?;;;;;2.8;;24;;24';;19:07:20;09:05:00;Green J coord
+G043.3-00.2;;;W49B, (3C398);;thermal composite;;near HII region W49A;eje;;;2900;6000;10.9;11.7;3.5;;4'x3';;19:11:08;09:06:00;Green J coord
+G043.9+01.6;;;;;shell;1;;eje?;;;;;3.1;;60;;60';;19:05:50;10:30:00;Green J coord
+G044.5-00.2;1;simplified;;;shell;1;PWN candidate G44.48-0.17 and PSR J1913+1011;eje?,PSR,PWN?;;;70000;200000;4.1;4.1;0;1;;-;19:13:20;10:11:00;paper G name
+G045.7-00.4;;;;;shell;;;eje;;;;;;;22;;22';;19:16:25;11:09:00;Green J coord
+G046.8-00.3;;;(HC30);G46.6-0.2;shell;;part of HC30;eje;;;10000;10000;5.7;11.4;15;;17'x13';;19:18:10;12:09:00;Green J coord
+G047.4-03.9;;;;;filled-centre;;(bow shock) PWN G47.38-3.88 and PSR J1932+1059 = B1929+10;PSR,PWN;;;;;;;15;1;>12';15';19:32:13;10:59:40;paper G name
+G049.2-00.7;;;W51C;;thermal composite;1;part of W51 complex, overlaps SFR W51B, contains CXO J192318.5+1403035 + PWN?;eje?,NS?,PWN?;;;16400;18000;4.8;6;30;;30';;19:23:50;14:06:00;Green J coord
+G053.4+00.0;;simplified;G53.4+0.05;;shell;;close to PWN G054.1+00.3 and PSR J1930+1852;eje?;;;2000;5000;5.6;6.4;5;;5';;19:29:53;18:09:23;paper G name
+G053.6-02.2;;;3C400.2, NRAO 611;G53.7-2.2;thermal composite;;;eje;;;15000;50700;2.3;6.7;30;;33'x28';;19:38:50;17:14:00;Green J coord
+G054.1+00.3;;;;;plerionic composite;1;contains PSR J1930+1852 + PWN G54.10+0.27;eje?,PSR,PWN;;;1500;2400;4.1;7.2;12;1;~12';2'x1.3';19:30:31;18:52:00;Green J coord
+G054.4-00.3;;;(HC40);G54.5-0.3;shell;1;part of HC40, PSR J1932+1916 at the edge;eje,PSR?;;;61000;61000;3.3;6.6;40;;40';;19:33:20;18:56:00;Green J coord
+G055.0+00.3;;;;G55.2+0.5;shell;;PSR J1932+2020 = B1929+20 nearby;eje,PSR?;;;;;14;14;17;;20'x15';;19:32:00;19:50:00;Green J coord
+G055.7+03.4;;;;;shell;;contains (unrelated?) PSR B1919+21 = J1921+2153;eje,PSR?;;;;;;;23;;23';;19:21:20;21:44:00;Green J coord
+G057.2+00.8;;;(4C21.53);;shell;1;contains SGR J1935+2154, PSR B1937+214 = J1939+213 nearby;eje?,PSR?;;;16000;95000;5.9;7.3;12;;12';;19:34:59;21:57:00;Green J coord
+G059.2-04.7;;;Black Widow;;filled-centre;;PWN G59.20-4.70 and PSR J1959+2048 = B1957+20 = Black Widow;PSR,PWN;;;;;;;0.27;1;;>16";19:59:38;20:48:20;paper G name
+G059.5+00.1;;;;G59.6+0.1;shell;;;eje;;;;;;3;15;;15';;19:42:33;23:35:00;Green J coord
+G059.8+01.2;;;;G59.7+1.2;unknown;1;;eje?;;;;;;;18;;20'x16';;19:38:55;24:19:00;Green J coord
+G063.7+01.1;;;;;filled-centre;;contains PWN;PWN;;;8000;;3.8;6;8;;8';3.2'x4.2';19:47:52;27:45:00;Green J coord
+G064.5+00.9;;;;;shell;;compact radio source near the center;eje;;;;;11;11;8;;8';;19:50:25;28:16:00;Green J coord
+G065.1+00.6;;;;;shell;;PSR J1957+2831 nearby;eje,PSR?;;;40000;140000;9;9.6;67;1;90'x50';;19:54:40;28:35:00;Green J coord
+G065.3+05.7;;;;G65.2+5.7;thermal composite;;PSR J1931+30 nearby;eje,PSR?;;;20000;20000;0.8;0.8;270;;310'x240';;19:33:00;31:10:00;Green J coord
+G065.7+01.2;1;;DA 495;G55.7+1.2;filled-centre;;contains PWN G65.73+1.18;PWN;;;3000;155000;1;3.6;15;1;15';36";19:52:10;29:26:00;Green J coord
+G065.8-00.5;;;;;shell;;;eje;;;;;1.9;2.7;7.7;;10'x6';;19:59:20;28:38:00;Green J coord
+G066.0-00.0;;;;;shell;;;eje;;;;;2;2.6;28;;31'x25';;19:57:50;29:03:00;Green J coord
+G067.6+00.9;;;;;shell;;;eje;;;;;1.8;2.2;47;;50'x45';;19:57:45;30:53:00;Green J coord
+G067.7+01.8;;;;;shell;;;eje,NS?;;;1500;13000;7;17;13;;15'x12';;19:54:32;31:29:00;Green J coord
+G067.8+00.5;;;;;unknown;1;;eje?;;;;;;;5.9;;7'x5';;20:00:00;30:51:00;Green J coord
+G068.6-01.2;;;;;unknown;1;;eje?;;;;;;;23;;23';;20:08:40;30:37:00;Green J coord
+G069.0+02.7;1;;CTB 80, W56;G68.8+2.8;plerionic composite;;contains PSR B1951+32 = J1952+3252 + PWN G68.77+2.82;eje,PSR,PWN;1408;dubious;60000;60000;1.5;4.6;80;;80';;19:53:20;32:55:00;Green J coord
+G069.7+01.0;;;;;shell;;;eje;;;;;;;15;;16'x14';;20:02:40;32:43:00;Green J coord
+G070.0-21.5;1;;;;shell;;a few degrees away from 3 PSRs (J2113+2754, J2116+1414 and J2124+1407) and ~12 degrees away from Cygnus Loop, probably associated with hypervelocity WD;eje?;;;;;;3;4.7;;5.5'x4';5'x4';21:23:47;19:23:26;paper G name
+G073.9+00.9;;;;;shell;1;;eje?;;;11000;12000;0.5;4;27;;27';;20:14:15;36:12:00;Green J coord
+G074.0-08.5;;;Cygnus Loop, W78, Sh2-103, contains Veil Nebula, NGC 6960, NGC 6992, NGC 6995, NGC 6974, NGC 6979, IC 1340;;shell;;contains several compact sources, PWN candidate 2XMM J204920.2+290106;eje,PWN?;;;10000;20000;0.576;1;190;;230'x160';;20:51:00;30:40:00;Green J coord
+G074.9+01.2;;;CTB 87;;filled-centre;;contains PWN G74.94+1.11 and PSR candidate CXOU J201609.2+371110, close to (unrelated) cataclysmic variable RX J2015.6+3711 and blazar B2013+370;PSR?,PWN;;;4000;28000;6.1;7;6.9;;8'x6';3.3'x5';20:16:02;37:12:00;Green J coord
+G075.2+00.1;;;Cisne, Dragonfly;;filled-centre;;(bow shock?) PWN G75.23+0.12 = the Dragonfly and PSR J2021+3651;PSR,PWN;;;;;10;;1.4;1;;~30"x4';20:21:05;36:51:50;paper G name
+G076.9+01.0;;;;;filled-centre;;contains PSR J2022+3842 + PWN;PSR,PWN;;;;;8;8;9;1;9';8"x5";20:22:20;38:43:00;Green J coord
+G078.2+02.1;;;W66, DR4, gamma Cygni;G78.1+1.8;plerionic composite;1;PSR J2021+4026 at the edge + PWN G78.23+2.09, unrelated stellar wind bubble inside?;eje,PSR?,PWN;;;8000;16000;1.7;2;60;;60';10";20:20:50;40:26:00;Green J coord
+G080.2+01.0;1;;;;filled-centre;;PWN G80.22+1.02 + PSR J2032+4127 (coincident with unrelated Be star MT91 213 in Cyg OB2);PSR,PWN?;;;;;;;5;;5';~1.1';20:32:14;41:27:00;paper G name
+G082.2+05.3;;;W63;G82.5+5.3;thermal composite;;;eje;;;14100;20900;1.3;3.2;78;;95'x65';;20:19:00;45:30:00;Green J coord
+G083.0-00.3;;;;;shell;;;eje;;;;;;;7.9;;9'x7';;20:46:55;42:52:00;Green J coord
+G084.2-00.8;;;;;shell;;;eje;;;8400;11700;4.8;6.2;18;;20'x16';;20:53:20;43:27:00;Green J coord
+G085.4+00.7;;;;;thermal composite;;superimposed on radio source W80;eje;;;3500;55000;2.5;5.2;24;;24';;20:50:40;45:22:00;Green J coord
+G085.9-00.6;;;;;thermal composite;;superimposed on radio source W80;eje;;;6400;49000;3.2;6.4;24;;24';;20:58:40;44:53:00;Green J coord
+G089.0+04.7;;;HB21;;thermal composite;;contains extragalactic source 4C50.52, PSR J2047+5029 nearby;eje;;;4800;18000;0.8;2.1;100;;2 deg x 1.5 deg;;20:45:00;50:35:00;Green J coord
+G093.3+06.9;;;DA 530, 4C(T)55.38.1;G93.2+6.7;thermal & plerionic composite;1;contains PWN?;eje,PWN?;;;3200;7000;1.7;2.7;23;;27'x20';;20:52:25;55:21:00;Green J coord
+G093.7-00.2;;;CTB 104A, DA 551;G93.6-0.2, G93.7-0.3;thermal composite;1;;eje;;;;;1.5;1.5;80;;80';;21:29:20;50:50:00;Green J coord
+G094.0+01.0;;;3C434.1;;shell;;;eje;;;25000;25000;3;5.2;27;;30'x25';;21:24:50;51:53:00;Green J coord
+G096.0+02.0;;;;;shell;;;eje;;;;;4;4;26;;26';;21:30:30;53:59:00;Green J coord
+G106.3+02.7;;;Boomerang;G106.6+2.9;plerionic composite;;contains PSR J2229+6114 and PWN G106.65+2.96 = the Boomerang;eje?,PSR,PWN;;;3900;;0.8;0.8;38;1;60'x24';;22:27:30;60:50:00;Green J coord
+G107.5-01.5;1;;;;shell;;;eje;;;3000;6000;1.1;1.1;36;;36';;22:51:50;57:45:00;paper G name
+G108.2-00.6;;;;;shell;;;eje;;;;;2.6;3.8;61;;70'x54';;22:53:40;58:50:00;Green J coord
+G108.5+11.0;1;;;;shell;;;eje?;;;;;;;50;;64.9'x39';;22:00:00;68:55:00;paper G name
+G108.6+06.8;;;Guitar nebula;;filled-centre;;bow shock PWN G108.6+6.8 = the Guitar and PSR J2225+6535 = B2224+65;PSR,PWN;;;;;;;5;1;;2'-5';22:25:49;65:32:10;paper G name
+G109.1-01.0;;;CTB 109;G109.2-1.0;thermal composite;;contains AXP 1E 2259+586 (magnetar);eje,PSR;;;8800;14000;3;3.4;28;;28';;23:01:35;58:53:00;Green J coord
+G111.7-02.1;;;Cassiopeia A (Cas A), W81, 3C461;;shell;;contains CCO CXOU J232327.9+584842;eje,NS;1680;dubious;316;352;3.3;3.7;5;;5';;23:23:24;58:49:00;paper J coord
+G113.0+00.2;;;;;unknown;1;contains PSR B2324+60 = J2326+6113;eje?,PSR?;;;;;3.1;3.1;26;1;40'x17';;23:26:50;61:26:00;paper G name
+G114.3+00.3;;;;;shell;;contains HII region S165 and PSR 2334+61;eje,PSR?;;;7700;7700;0.7;0.7;70;1;90'x55';;23:37:00;61:55:00;Green J coord
+G116.5+01.1;;;;;shell;;;eje;;;15000;50000;1.6;1.6;69;;80'x60';;23:53:40;63:15:00;Green J coord
+G116.9+00.2;;;CTB 1;G117.3+0.1, G116.9+0.1;thermal composite;;close to PSR J0002+6216 = runaway PSR, superposed on larger SNR?;eje,PSR?;;;7500;18100;1.6;3.5;34;;34';;23:59:10;62:26:00;Green J coord
+G119.5+10.2;;;CTA 1;G119.5+10.3;plerionic composite;;contains PSR J0007+7303 + PWN G119.65+10.46;eje,PSR,PWN;;;13000;13000;1.1;1.7;90;;90';;00:06:40;72:45:00;Green J coord
+G120.1+01.4;;;Tycho, 3C10, SN1572;;shell;;;eje;1572;certain;;;1.5;5;8;;8';;00:25:18;64:09:00;Green J coord
+G126.2+01.6;;;;;shell;1;close to transient PSR 4U 0115+63;eje?;;;270000;270000;4.5;4.5;70;;70';;01:22:00;64:15:00;Green J coord
+G127.1+00.5;;;R5;G127.3+0.7;shell;;associated with open cluster NGC 559?;eje;;;20000;30000;1.15;1.15;45;;45';;01:28:20;63:10:00;Green J coord
+G128.5+02.6;1;;;;shell;;;eje?;;;;;;;29;1;39.6'x21.5';;01:44:20;64:54:00;paper G name
+G130.7+03.1;;;3C58, SN1181?;;plerionic composite;1;PWN 3C58 and PSR J0205+6449;eje,PSR,PWN;1181;probable;;7000;2;3.2;6.7;1;9'x5';9'x5';02:05:41;64:49:00;Green J coord
+G132.7+01.3;;;HB3;G132.4+2.2;thermal composite;;adjacent to W3/4/5 complex, PSR J0215+6218 nearby;eje,PSR?;;;25000;72000;2;2.2;80;;80';;02:17:40;62:45:00;Green J coord
+G141.2+05.0;;;;;filled-centre;;PWN G141.2+5.0 and PSR candidate CXOU J033712.8+615302;PSR?,PWN;;;350000;350000;3.5;4.5;3.5;;3.5';;03:37:12;61:53:00;paper J coord
+G148.1+00.8;;;Mushroom;;filled-centre;;bow shock PWN = the Mushroom and PSR B0355+54 = J0358+5413;PSR,PWN;;;;;;;2.2;1;;30"-50" compact, 6' trail;03:58:54;54:13:14;NS J coord
+G149.5+03.2;1;;;;shell;;;eje?;;;;;;;52;;55.6'x49.3';;04:16:40;55:06:00;paper G name
+G150.3+04.5;1;;;;shell;;;eje?;;;1000;;0.7;4.5;165;;3 deg x 2.5 deg;;04:27:10;55:27:00;paper G name
+G150.8+03.8;1;;;;shell;;;eje?;;;;;;;35;1;64.1'x18.8';;04:26:00;54:37:00;paper G name
+G151.2+02.9;1;simplified;G151.2+2.85;;shell;;;eje?;;;;;;;165;;3 deg x 2.5 deg;;04:23:19;53:39:50;paper G name
+G152.4-02.1;;;;;shell;;;eje;;;;;1;1;97;;100'x95';;04:07:50;49:11:00;Green J coord
+G156.2+05.7;;;;;shell;;;eje;;;7000;36600;1.7;3;110;;110';;04:58:40;51:50:00;Green J coord
+G159.6+07.3;;;;;shell;;;eje;;;;;;;210;;4 deg x 3 deg;;05:20:00;50:00:00;Green J coord
+G160.1-01.1;1;;;;shell;;;eje?;;;;;;;22;1;35.9'x13.2';;04:42:40;44:27:00;paper G name
+G160.9+02.6;;;HB9;G160.5+2.8, G160.4+2.8;thermal composite;1;close to SGR 0501+4516 = magnetar (possibly related), contains PSR B0459+47 = J0502+4654 (probably unrelated);eje,PSR?;;;2600;9200;0.3;1.2;130;;140'x120';;05:01:00;46:40:00;Green J coord
+G162.8-16.0;1;created;;;filled-centre;;PSR J0357+3205 = Morla and PWN;PSR,PWN;;;;;;;3.7;1;;9'x1.5';03:57:52;32:05:25;NS J coord
+G166.0+04.3;;;VRO 42.05.01;;thermal composite;;;eje;;;9000;20100;1;4.5;44;;55'x35';;05:26:30;42:56:00;Green J coord
+G172.8+01.5;1;;;;shell;;within an HII complex;eje?;;;330000;330000;1.8;1.8;230;;4.4 deg x 3.4 deg;;05:33:30;35:50:00;paper G name
+G178.2-04.2;;;;;shell;;;eje;;;;;2.9;2.9;67;;72'x62';;05:25:06;28:11:02;paper J coord
+G179.0+02.6;;;;;shell;1;contains PSR J0554+3107;eje?,PSR?;;;;;;;70;;70';;05:53:40;31:05:00;Green J coord
+G180.0-01.7;;;S147, Sh2-240, Spaghetti Nebula;;plerionic composite;;contains PSR J0538+2817 and PWN G179.72-1.69;eje,PSR,PWN;;;26000;34000;1.1;1.5;180;;180';;05:39:00;27:50:00;Green J coord
+G181.1+09.5;;;;;shell;1;close to compact source 1RXS J062246.2+321853;eje;;;;16000;0.5;2.5;74;;74';< radio?;06:26:45;32:31:00;paper J coord
+G182.4+04.3;;;;;shell;;;eje;;;3800;4400;3;;50;;50';;06:08:10;29:00:00;Green J coord
+G184.6-05.8;;;Crab Nebula, 3C144, SN1054, NGC 1952, M1;;filled-centre;;PWN = the Crab, contains PSR B0531+21 = J0534+2200;PSR,PWN;1054;certain;;;1.5;2.2;5.9;;7'x5';2.1';05:34:31;22:01:00;Green J coord
+G189.1+03.0;;;IC443, 3C157, Sh2-248, Jellyfish Nebula;;thermal & plerionic composite;;next to HII region S249, overlaps SNR G189.6+03.3, contains runaway NS CXOU J061705.3+222127 + PWN G189.23+2.90;eje,NS,PWN;837;dubious;3000;30000;0.7;2;45;;45';;06:17:00;22:34:00;Green J coord
+G189.6+03.3;1;;;;plerionic composite;1;overlaps SNR G189.1+03.0 = IC443, contains PSR + PWN ?;eje,PSR?,PWN?;;;30000;100000;1.3;1.7;68;;78'x60';~30";06:18:30;22:10:00;paper J coord
+G190.2+01.1;1;;;;shell;;;eje?;;;300000;300000;8;8;60;1;~1 deg;;06:12:20;20:39:00;paper G name
+G190.9-02.2;;;;;shell;;;eje;;;;;1;1;65;;70'x60';;06:01:55;18:24:00;Green J coord
+G192.8-01.1;1;;PKS 0607+17;G193.3-1.5;thermal composite;1;encountering a nearby star formation region that possibly contains early type star(s);?;;;300000;300000;;;48;;48';;06:09:20;17:20:00;Green J coord
+G195.1+04.3;;;Geminga;;filled-centre;;contains PSR J0633+1746 = Geminga + PWN;PSR,PWN;;;;;;;2.9;1;;50" inner, 2.7' and 3.1' outer;06:33:54;17:46:13;NS J coord
+G201.1+08.3;1;;;;filled-centre;1;PWN candidate around PSR B0656+14 = J0659+1414;PSR,PWN?;;;;;;;0.25;;;15";06:59:48;14:14:21;NS J coord
+G205.5+00.5;;;Monoceros Loop;G205.5+00.2;shell;;contains binary? interacts with Rosette nebula, close to SNR G206.9+02.3;eje;;;30000;150000;0.9;1.98;220;;220';;06:39:00;06:30:00;Green J coord
+G206.9+02.3;;;PKS 0646+06;;shell;1;close to SNR G205.5+00.5 = Monoceros Nebula;eje?;;;64000;64000;2.2;2.2;49;;60'x40';;06:48:40;06:26:00;Green J coord
+G213.0-00.6;;;G213.3-0.4;;shell;;near the HII region S284;eje;;;;;1.1;1.1;150;;160'x140';;06:50:50;-00:30:00;Green J coord
+G230.4-01.4;1;simplified;;;filled-centre;;PWN G230.39-1.42 and PSR J0729-1448;PSR,PWN;;;;;;;0;1;;?;07:18:52;-16:09:10;paper G name
+G260.4-03.4;;;Puppis A, MSH 08-44;;shell;;overlaps SNR G263.9-3.3 = Vela, contains CCO RX J0822-4300 and PSR J0821-4300;eje,PSR;;;2200;5400;1.3;2.2;55;;60'x50';;08:22:10;-43:00:00;Green J coord
+G261.9+05.5;;;;;shell;;;eje;;;;;2.9;2.9;35;;40'x30';;09:04:20;-38:42:00;Green J coord
+G263.9-03.3;;;Vela, contains NGC 2736 = Pencil Nebula;;plerionic composite;;overlaps SNR G260.4-3.4 and SNR G266.2-1.2, contains PSR B0833-45 = J0835-4510 = Vela + PWN Vela X (unrelated to eclipsing binary Vela X-1);eje,PSR,PWN;;;9000;27000;0.25;0.3;255;;255';1.5';08:34:00;-45:50:00;Green J coord
+G266.2-01.2;;;Vela Jr, RX J0852.0-4622;;shell;;overlaps SNR G263.9-3.3 = Vela, contains CCO CXOU J085201.4-461753, PSR J0855-4644 + PWN G266.97-1.00 at the edge;eje,NS;;;2400;5100;0.5;1;120;;120';;08:52:00;-46:20:00;Green J coord
+G267.0-01.0;;simplified;;;filled-centre;;PWN G266.97-1.00 + PSR J0855-4644, overlaps SNR G266.2-01.2 = Vela Jr;PSR,PWN;;;;;;0.9;2.5;;;2.5';08:55:38;-46:44:10;paper G name
+G269.7+00.0;1;;;;shell;;;eje?;;;;;;;30;;33'x27';;09:10:48;-48:03:16;paper J coord
+G272.2-03.2;;;;;thermal composite;;;eje;;;3600;11000;2;10;15;;15';;09:06:50;-52:07:00;Green J coord
+G276.5+19.0;;;Antlia;;shell;1;very large loop, close to several PSRs, with PSR J0630-2834 = B0628-28 the best candidate for a common origin, also PSR J0953+0755 = B0950+08 suggested;eje,PSR?;;;1000000;6000000;0.06;0.34;1440;;24 deg;;10:44:00;37:14:00;paper J coord
+G279.0+01.1;;;;;shell;;;eje;;;;;2.4;3;95;;95';;09:57:40;-53:15:00;Green J coord
+G284.0-01.8;;;;;filled-centre;;PWN G284.08-1.88 + PSR J1016-5857, close to SNR G284.3-01.8 = MSH 10-53;PSR,PWN;;;;;;;1.4;1;;~25" core and 1x2' finger;10:16:21;-58:57:10;paper G name
+G284.2-00.4;1;simplified;;;filled-centre;1;PWN candidate G284.19-0.39 around PSR J1023-5746;PSR,PWN?;;;;;;;2.3;;;2.3';10:23:16;-57:46:00;paper G name
+G284.3-01.8;;;MSH 10-53;G284.2-1.8;shell;;contains binary J1018.6-5856 (progenitor?), PSR J1016-5857 + PWN G284.08-1.88 nearby;eje,NS;;;10000;10000;4.8;6.2;24;;24';;10:18:15;-59:00:00;Green J coord
+G285.1-00.5;1;simplified;;;filled-centre;1;PWN candidate G285.06-00.5 around PSR J1028-5819;PSR,PWN?;;;;;5;5;9;1;;7'-9';10:28:25;-58:19:10;paper G name
+G286.5-01.2;;;;;shell;1;;eje?;;;;;;;12;1;26'x6';;10:35:40;-59:42:00;Green J coord
+G287.4+00.6;;simplified;Puppy, G287.4+00.5;;filled-centre;;(bow shock?) PWN G287.42+0.58 = Puppy and PSR J1048-5832 = B1046-58;PSR,PWN;;;;;;;0.13;1;;~6"x11";10:48:11;-58:31:50;paper G name
+G289.7-00.3;;;;;shell;;contains compact radio source;eje;;;;;;;16;;18'x14';;11:01:15;-60:18:00;Green J coord
+G290.1-00.8;;;MSH 11-61A;;thermal composite;;close to HII region MSH 11-61B, (unrelated) PSR J1105-6107 nearby, (related) PSR J1101-6101 + PWN IGR J11014-6103 nearby = Lighthouse nebula;eje,PSR?,PWN?;;;10000;20000;3.5;11;16;;19'x14';;11:03:05;-60:56:00;Green J coord
+G291.0+00.1;1;;;;shell;;;eje?;;;;;;;21;;22'x20';;11:12:33;-60:28:42;paper J coord
+G291.0-00.1;;;(MSH 11-62);;plerionic composite;;contains PWN G291.02-0.11 + PSR candidate CXOU J111148.6-603926;eje,PSR?,PWN;;;1300;10000;3;10;14;;15'x13';;11:11:54;-60:38:00;Green J coord
+G292.0+01.8;;;MSH 11-54;;plerionic composite;;contains PSR J1124-5916 + PWN G292.04+1.75;eje,PSR,PWN;;;2930;3050;6;6;9.8;;12'x8';;11:24:36;-59:16:00;Green J coord
+G292.2-00.5;;;;;thermal & plerionic composite;;contains high-B PSR J1119-6127 + PWN G292.15-0.54;eje,PSR,PWN;;;4200;7100;8.4;9.7;17;;20'x15';;11:19:20;-61:28:00;Green J coord
+G293.8+00.6;;;;;plerionic composite;1;contains PWN G293.79+0.58? and PSR J1135-6055 (related?);eje,PSR?,PWN?;;;;;;;20;;20';;11:35:00;-60:54:00;Green J coord
+G294.1-00.0;;;;;shell;;;eje;;;;;;;40;;40';;11:36:10;-61:38:00;Green J coord
+G296.1-00.5;;;;G296.05-0.50, G296.1-0.7;shell;;;eje;;;2800;28000;3.5;5.1;30;;37'x25';;11:51:10;-62:34:00;Green J coord
+G296.5+10.0;;;PKS 1209-51/52;G296.5+9.7,G295.5+9.7;shell;;contains CCO PSR J1210-5226 = 1E 1207.4-5209;eje,PSR?;;;7000;10000;1.3;3.9;76;;90'x65';;12:09:40;-52:25:00;Green J coord
+G296.6-00.4;1;;;;shell;;;eje?;;;;;;;12;;14'x10';;11:55:51;-62:34:27;paper J coord
+G296.7-00.9;;;;;shell;;close to HII region;eje;;;5800;12900;9.1;10.9;12;1;?14'x10';;11:55:31;-63:07:08;Green J coord
+G296.8-00.3;;;1156-62;;shell;;contains 2XMMi J115836.1-623516 = CCO?, close to PSR J1157-6224 = B1154-62;eje,PSR?;;;2000;11000;9;10.2;17;;20'x14';;11:58:30;-62:35:00;Green J coord
+G298.5-00.3;;;;;unknown;1;;eje?;;;;;;;5;;5';;12:12:40;-62:52:00;Green J coord
+G298.6-00.0;;;;G298.6-0.1;thermal composite;;;eje;;;;;;;10;;12'x9';;12:13:41;-62:37:00;Green J coord
+G299.2-02.9;;;;;shell;;;eje;;;4500;11400;2.8;5;14;;18'x11';;12:15:13;-65:30:00;Green J coord
+G299.3-01.5;1;;;;shell;;;eje?;;;;;;;32;;36'x29';;12:17:55;-64:09:53;paper J coord
+G299.6-00.5;;;;;shell;;;eje;;;;;;;13;;13';;12:21:45;-63:09:00;Green J coord
+G301.4-01.0;;;;;shell;;;eje;;;;;;;29;;37'x23';;12:37:55;-63:49:00;Green J coord
+G302.3+00.7;;;;;shell;;;eje;;;;;;;17;;17';;12:45:55;-62:08:00;Green J coord
+G304.1-00.2;;simplified;;;filled-centre;;PWN G304.10-0.24 and PSR J1301-6305;PSR,PWN;;;;;1.5;1.5;3;1;;2'-3';13:01:46;-63:05:20;paper G name
+G304.6+00.1;;;Kes 17;;thermal composite;;;eje;;;2000;64000;9.7;;8;;8';;13:05:59;-62:42:00;Green J coord
+G306.3-00.9;;;;;shell;;close to PSR J1322-6329;eje;;;2500;15300;8;20;4;;4';;13:21:50;-63:34:00;Green J coord
+G308.1-00.7;;;;;shell;;;eje;;;;;;;13;;13';;13:37:37;-63:04:00;Green J coord
+G308.4-01.4;;;G308.3-01.4;;shell;;contains CXOU J134124.22-634352.0 = CCO? or binary?;eje,NS?;;;2400;7500;3.1;9.8;9;1;~14'x6';;13:41:33;-63:44:41;paper J coord
+G308.8-00.1;;;;G308.7+0.0;plerionic composite;1;contains PSR J1341-6220 = B1338-62 + PWN;eje?,PSR,PWN;;;;;;;25;;30'x20';;13:42:30;-62:23:00;Green J coord
+G309.2-00.6;;;;G309.2-0.7;shell;;contains X-ray source 1WGA J1346.5-6255 = unrelated star HD 119682 in the foreground open cluster NGC 5281;eje;;;700;4000;2;7;13;;15'x12';;13:46:31;-62:54:00;Green J coord
+G309.8+00.0;;;;;shell;;;eje;;;;;;;22;;25'x19';;13:50:30;-62:05:00;Green J coord
+G309.8-02.6;;;;;filled-centre;1;PWN G309.92-2.51 and PSR J1357-6429;eje?,PSR,PWN;;;;;2.1;2.5;23;1;35'x15';1'x2';13:57:00;-64:29:20;paper G name
+G310.6-00.3;;;Kes 20B;;shell;;;eje;;;;;6.9;6.9;8;;8';;13:58:00;-62:09:00;Green J coord
+G310.6-01.6;;;;;plerionic composite;;contains PSR J1400-6325 + PWN;eje,PSR,PWN;;;700;2000;5;10;2.5;;2.5';;14:00:45;-63:26:00;Green J coord
+G310.7-05.4;1;;;;shell;;;eje?;;;;;;;30;;31'x29';;14:12:18;-67:05:03;paper J coord
+G310.8-00.4;;;Kes 20A;;shell;;;eje;;;;;5.1;5.1;12;;12';;14:00:00;-62:17:00;Green J coord
+G310.9-00.3;1;;;;shell;;;eje?;;;;;;;14;;17'x11';;13:59:55;-62:03:47;paper J coord
+G311.5-00.3;;;;;thermal composite;1;;eje;;;2500;9800;6.6;;5;;5';;14:05:38;-61:58:00;Green J coord
+G312.4-00.4;;;;;shell;1;contains PSR J1412-6145 + PWN? and PSR J1413-6141;eje,PSR,PWN?;;;;;6;;38;;38';;14:13:00;-61:44:00;Green J coord
+G312.5-03.0;;;;;shell;;;eje;;;;;;;19;;20'x18';;14:21:00;-64:12:00;Green J coord
+G313.3+00.1;;;Rabbit;;filled-centre;;PWN G313.32+0.13 = Rabbit + PSR J1418-6058, part of the Kookaburra complex;PSR,PWN;;;;;3.5;5.6;3;1;;~3';14:18:41;-60:58:10;paper G name
+G313.6+00.3;;;K3;G313.6+0.4;filled-centre;;PWN G313.54+0.23 + PSR J1420-6048, region K3 of the Kookaburra complex;PSR,PWN;;;;;;;2;1;;~2';14:20:07;-60:48:10;paper G name
+G315.1+02.7;;;;;shell;;;eje;;;;;1.7;1.7;170;;190'x150';;14:24:30;-57:50:00;Green J coord
+G315.4-00.3;;;;;unknown;1;;?;;;;;;;18;1;24'x13';;14:35:55;-60:36:00;Green J coord
+G315.4-02.3;;;RCW 86, MSH 14-63;;shell;;contains several X-ray sources, contains NS + solar-type star binary;eje;185;probable;2000;12400;2.1;3.2;42;;42';;14:43:00;-62:30:00;Green J coord
+G315.9-00.0;;;;G315.8-0.0;plerionic composite;;contains PSR J1437-5959 + PWN G315.78-0.23 = the Frying Pan;eje,PSR,PWN;;;;;;;19;1;25'x14';;14:38:25;-60:11:00;Green J coord
+G316.3-00.0;;;(MSH 14-57);;shell;;;eje;;;;;7.2;;20;1;29'x14';;14:41:30;-60:00:00;Green J coord
+G317.3-00.2;;;;;shell;;;eje;;;;;;;11;;11';;14:49:40;-59:46:00;Green J coord
+G317.9-01.8;1;simplified;;;filled-centre;1;PWN candidate G317.89-1.79 around PSR J1459-6053;PSR,PWN?;;;;;;;0;1;;-;14:59:31;-60:53:10;paper G name
+G318.2+00.1;;;;;shell;;;eje;;;8000;8000;3.5;9.2;37;;40'x35';;14:54:50;-59:04:00;Green J coord
+G318.9+00.4;1;;;;plerionic composite;1;contains PWN?;eje?,PWN?;;;;;;;21;1;30'x14';;14:58:30;-58:29:00;Green J coord
+G319.9-00.7;1;;MSC 319.9-0.7;;filled-centre;1;bow shock PWN G319.97-0.62 and PSR J1509-5850;PSR,PWN;;;;;;;6.2;1;7'x2';5.6';15:09:14;-58:54:51;paper J coord
+G320.4-01.2;;;RCW 89, MSH 15-52, Jellyfish;;plerionic composite;;overlaps SNR G320.6-01.6, contains PSR J1513-5908 = B1509-58 = the Dragon + PWN = the Jellyfish;eje,PSR,PWN;185;suggested;1900;1900;3.8;6.6;35;;35';1.6';15:14:30;-59:08:00;Green J coord
+G320.6-01.6;;;;;shell;;overlaps SNR G320.4-1.2;eje;;;;;;;42;1;60'x30';;15:17:50;-59:16:00;Green J coord
+G321.3-03.9;1;;;;shell;;;eje?;;;;;;;83;1;109'x64';;15:32:14;-60:51:54;paper J coord
+G321.9-00.3;;;;;shell;;contains PSR J1522-5735, close to SNR G321.4-00.5 and binary Circinus X-1;eje,PSR?;;;;;;;27;;31'x23';;15:20:40;-57:34:00;Green J coord
+G321.9-01.1;;;;;shell;;;eje;;;;;;;28;;28';;15:23:45;-58:13:00;Green J coord
+G322.1+00.0;;;Circinus X-1;;shell;;contains microquasar binary Circinus X-1 with jets;eje,NS;;;850;7100;8.4;10.2;6;;8'x4.5';;15:20:49;-57:10:00;Green J coord
+G322.5-00.1;;;;;plerionic composite;1;contains PWN?, contains planetary nebula Pe 2-8;eje,PWN?;;;;;;;15;;15';;15:23:23;-57:06:00;Green J coord
+G322.7+00.1;1;;;;shell;;;eje?;;;;;;;12;;13'x11';;15:24:02;-56:49:12;paper J coord
+G322.9-00.0;1;;;;shell;;;eje?;;;;;;;12;;12'x11';;15:25:40;-56:46:45;paper J coord
+G323.5+00.1;;;;;shell;;;eje;;;;;;;13;;13';;15:28:42;-56:21:00;Green J coord
+G323.7-01.0;1;;;;shell;;close to HII region;eje?;;;8000;24000;3.5;6;44;;51'x38';;15:34:30;-57:12:03;paper J coord
+G323.9+00.0;1;simplified;;;filled-centre;1;PWN candidate G323.89+0.03 and PSR J1531-5610;PSR,PWN?;;;;;;;0.12;;;7";15:31:26;-56:11:20;paper G name
+G324.1+00.0;1;;;G324.1+0.1;shell;;in a complex region, surrounded by compact HII regions;eje?;;;;;;;8.8;;11'x7';;15:32:41;-56:03:14;paper J coord
+G325.0-00.3;1;;;;shell;;;eje?;;;;;;;4.9;;6'x4';;15:39:21;-55:49:28;paper J coord
+G326.3-01.8;;;MSH 15-56, Kes 25;G326.2-1.7;plerionic composite;;contains PWN G326.12-1.81;eje,PWN;;;9800;16500;3.4;5.8;38;;38';;15:53:00;-56:10:00;Green J coord
+G327.1-01.1;;;;;plerionic composite;;contains PWN G327.15-1.04 = the Snail;eje,PWN;;;17000;17000;9;9;18;;18';;15:54:25;-55:09:00;Green J coord
+G327.2-00.1;;;;G327.24-0.13;shell;;contains AXP 1E 1547.0-5408 (magnetar);eje,PSR;;;;;4;5;5;;5';;15:50:55;-54:18:00;Green J coord
+G327.4+00.4;;;Kes 27;G327.3+0.4, G327.3+0.5;thermal composite;;;eje;;;2400;23000;4.3;6.5;21;;21';;15:48:20;-53:49:00;Green J coord
+G327.4+01.0;;;;;shell;;;eje;;;;;;;14;;14';;15:46:48;-53:20:00;Green J coord
+G327.6+14.6;;;SN1006, PKS 1459-41;;shell;;;eje;1006;certain;;;1.6;2.2;30;;30';;15:02:50;-41:56:00;Green J coord
+G328.4+00.2;;;MSH 15-57;;filled-centre;;PWN and NS;NS,PWN;;;4900;6500;17.4;;5;;5';1';15:55:30;-53:17:00;Green J coord
+G329.7+00.4;;;;;shell;;;eje;;;;;;;36;;40'x33';;16:01:20;-52:18:00;Green J coord
+G330.0+15.0;;;Lupus Loop;;shell;;contains central possibly pulsating X-ray source;eje,PSR?;;;15000;52200;0.15;0.5;180;;180';;15:10:00;-40:00:00;Green J coord
+G330.2+01.0;;;;;shell;1;contains CCO CXOU J160103.1-513353;eje,NS;;;1000;15000;5;;11;;11';;16:01:06;-51:34:00;Green J coord
+G330.7+00.1;1;;;;shell;;;eje?;;;;;;;8.9;;10'x8';;16:07:28;-51:53:08;paper J coord
+G331.5-00.6;1;created;;;shell;1;close to open cluster Pismis 22;eje?;;;;;;;0;;;;16:14:19;-51:49:12;paper J coord
+G332.0+00.2;;;;;shell;;;eje;;;;;;;12;;12';;16:13:17;-50:53:00;Green J coord
+G332.4+00.1;;;Kes 32, MSH 16-51;G332.4+0.2;shell;;PSR B1610-50 = J1614-5047 nearby;eje;;;3000;8600;7.5;11;15;;15';;16:15:20;-50:42:00;Green J coord
+G332.4-00.4;;;RCW 103;;shell;;contains 1E 161348-5055 = CCO magnetar? or binary?, close to PSR AXS J1617-5055 + PWN G332.50-0.28;eje,NS?;;;2000;4400;2.7;3.3;10;;10';;16:17:33;-51:02:00;Green J coord
+G332.5-00.3;;simplified;;;filled-centre;;PWN G332.50-0.28 and PSR J1617-5055, close to SNR G332.4-00.4 = RCW 103;PSR,PWN;;;;;;;1;1;;~1' with ~1" core;16:17:31;-50:55:20;paper G name
+G332.5-05.6;;;;;shell;;;eje;;;7000;12100;2.2;3.8;35;;35';;16:43:20;-54:30:00;Green J coord
+G333.9+00.0;1;;;;shell;;contains PSR J1622-4950 = magnetar at the centre and PSR J1622-4944 at the edge;eje?,PSR;;;;6000;;;7;;7';;16:22:38;-49:49:48;paper J coord
+G334.0-00.8;1;;;;shell;;;eje?;;;;;;;12;;14'x11';;16:26:36;-50:16:19;paper J coord
+G335.2+00.1;;;;;shell;;contains PSR J1627-4845;eje,PSR;;;;;1.8;1.8;21;;21';;16:27:45;-48:47:00;Green J coord
+G336.4+00.2;;created;;;filled-centre;;PWN, with PSR?, close to PSR J1632-4757;PSR?,PWN;;;10000;10000;3;3;0.5;;35"x26";35"x26";16:32:09;-47:49:12;paper J coord
+G336.7+00.5;;;;;shell;;;eje;;;;;;;12;;14'x10';;16:32:11;-47:19:00;Green J coord
+G336.7-00.3;1;;;;composite;1;in a complex region;eje?;;;;;;;3.8;;5'x3';;16:35:25;-47:57:01;paper J coord
+G336.9-00.5;1;;;;shell;;;eje?;;;;;;;13;;15'x12';;16:37:12;-47:57:53;paper J coord
+G337.0-00.1;;;(CTB 33);;shell;;inside the CTB 33 complex, contains SGR 1627-41 (magnetar);eje,NS?;;;5000;5000;11;11;1.5;;1.5';;16:35:57;-47:36:00;Green J coord
+G337.2+00.1;;;;;plerionic composite;1;contains PWN?;eje,PWN?;;;1500;1500;14;14;2.5;;3'x2';;16:35:55;-47:20:00;Green J coord
+G337.2-00.7;;;;;shell;;;eje;;;750;4400;2;9.3;6;;6';;16:39:28;-47:51:00;Green J coord
+G337.3+01.0;;;Kes 40;;shell;;;eje;;;;;5;5;13;;15'x12';;16:32:39;-46:36:00;Green J coord
+G337.5-00.1;1;created;;;filled-centre;1;bow shock PWN CXOU J163802.6-471358 = 3XMM J163802.6-471357;PWN?;;;;;10;;0.67;;;40";16:38:03;-47:13:58;paper J coord
+G337.8-00.1;;;Kes 41;;thermal composite;1;;eje;;;1700;16000;12.3;12.3;7.3;;9'x6';;16:39:01;-46:59:00;Green J coord
+G338.1+00.4;;;;;shell;;;eje;;;;;;;15;;15';;16:37:59;-46:24:00;Green J coord
+G338.3-00.0;;;;;plerionic composite;;contains PSR J1640-4631 and PWN G338.3-0.0, connected to SNR G338.5+00.1 by HII region G338.45+0.06;eje,PSR,PWN;;;1000;8000;8;13;8;;8';;16:41:00;-46:34:00;Green J coord
+G338.5+00.1;;;;;unknown;1;connected to SNR G338.3-00.0 and PSR J1640-4631 by HII region G338.45+0.06;eje?;;;1100;17000;11;11;9;;9';;16:41:09;-46:19:00;Green J coord
+G340.4+00.4;;;;;shell;;;eje;;;;;;;8.4;;10'x7';;16:46:31;-44:39:00;Green J coord
+G340.6+00.3;;;;;shell;;;eje;;;;;15;15;6;;6';;16:47:41;-44:34:00;Green J coord
+G341.2+00.9;;;;;plerionic composite;;contains PSR J1646-4346 = B1643-43 + PWN;eje,PSR,PWN;;;;;;;19;;22'x16';;16:47:35;-43:47:00;Green J coord
+G341.9-00.3;;;;;shell;;;eje;;;;;;;7;;7';;16:55:01;-44:01:00;Green J coord
+G342.0-00.2;;;;;shell;;;eje;;;;;;;10;;12'x9';;16:54:50;-43:53:00;Green J coord
+G342.1+00.9;;;;;shell;;;eje;;;;;;;9.5;;10'x9';;16:50:43;-43:04:00;Green J coord
+G343.0-06.0;;;RCW 114;;shell;;PSR J1730-3350 = B1727-33 nearby, associated?;eje,PSR?;;;;;1;1.5;250;;250';;17:25:00;-46:30:00;Green J coord
+G343.1-00.7;;;;;shell;;;eje;;;;;;;24;;27'x21';;17:00:25;-43:14:00;Green J coord
+G343.1-02.3;;;;;plerionic composite;1;PSR J1709-4429 = B1706-44 + PWN G343.10-2.69 near the edge;eje?,PSR?,PWN?;;;;;;;32;;32';;17:08:00;-44:16:00;Green J coord
+G344.7+00.1;1;;;;filled-centre;;PWN G344.74+0.12? and PSR J1702-4128, close to SNR G344.7-00.1;PSR,PWN?;;;;;;;0.07;;;4";17:02:52;-41:29:10;paper G name
+G344.7-00.1;;;;;thermal composite;1;contains CXOU J170357.8-414302 (=CCO?), close to PSR J1702-4128 and PWN G344.74+0.12;eje,NS?;;;3000;6000;6.3;14;8;;8';;17:03:51;-41:42:00;Green J coord
+G345.1-00.2;1;;;;composite;1;contains central source;eje?,NS?;;;;;;;5.5;;6'x5';;17:05:14;-41:26:00;paper J coord
+G345.2+00.2;1;;;G345.1+0.2;shell;;next to small HII region;eje?;;;;;;;11;;11';;17:03:44;-41:05:35;paper J coord
+G345.7-00.2;;;;;shell;;;eje;;;;;;;6;;6';;17:07:20;-40:53:00;Green J coord
+G346.2-01.0;1;;;;shell;;;eje?;;;;;;;7;;7';;17:12:11;-40:59:06;paper J coord
+G346.6-00.2;;;;;thermal composite;;close to AXP 1709-40;eje;;;4200;16000;5.5;11;8;;8';;17:10:19;-40:11:00;Green J coord
+G347.3-00.5;;;RX J1713.7-3946;;shell;1;contains CCO 1WGA J1713.4-3949, close to PSR J1713-3945;eje,NS;393;probable;1000;1700;1.1;1.1;60;;65'x55';;17:13:28;-39:49:48;NS J coord
+G348.5+00.1;;;CTB 37A;;thermal composite;;part of CTB 37 complex, overlaps SNR G348.5-0.0, contains PWN candidate CXOU J171419.8-383023;eje,PWN?;393;suggested;6000;30000;6.3;12.5;15;;15';;17:14:40;-38:32:00;paper J coord
+G348.5-00.0;;;;;shell;1;part of CTB 37 complex, overlaps SNR G348.5+0.1 = CTB 37A;eje?;;;;;;6.3;10;;10';;17:15:26;-38:28:00;Green J coord
+G348.7+00.3;;;CTB 37B;;shell;;part of CTB 37 complex, contains AXP candidate CXOU J171405.7-381031 = magnetar?;eje,PSR?;393;suggested;650;16800;9.8;13.2;17;;17';;17:13:55;-38:11:00;Green J coord
+G348.9+01.1;1;;;G348.8+1.1;shell;;;eje?;;;;;;;12;;12'x11';;17:11:29;-37:34:42;paper J coord
+G348.9-00.4;1;;;;filled-centre;;PWN G348.95-0.43 and PSR J1718-3825;PSR,PWN;;;;;;;2;;;2';17:18:13;-38:25:20;paper G name
+G349.2-00.1;;;;;shell;;contains PSR J1646-4346;eje,PSR;;;;;;;7.3;;9'x6';;17:17:15;-38:04:00;Green J coord
+G349.7+00.2;;;;;shell;;contains CXOU J171801.0-372617 = CCO?;eje,NS?;;;1800;3100;11.5;12;2.2;;2.5'x2';;17:17:59;-37:26:00;Green J coord
+G350.0-02.0;;;;G350.0-1.8;shell;;;eje,PSR?;;;;;;;45;;45';;17:27:50;-38:32:00;Green J coord
+G350.1-00.3;;;;;shell;1;contains XMMU J172054.5-372652 = candidate CCO NS;eje,NS?;;;;700;4.5;9;4;;4';;17:21:00;-37:24:00;paper G name
+G350.2-00.8;1;created;;;filled-centre;1;tail PWN? emanating from point source CXO J172337.5-373442;PWN?;;;;;0.274;0.394;0.8;;;48";17:23:37;-37:34:42;NS J coord
+G351.0-05.4;;;;;shell;;close to PSR J1744-3922;eje;;;;;;;16;;15.5';;17:45:55;-39:24:50;paper J coord
+G351.2+00.1;;;;G351.3+0.2;plerionic composite;1;;eje;;;;;;;7;;7';;17:22:27;-36:11:00;Green J coord
+G351.7+00.8;;;;;shell;;PSR J1721-3532 = B1718-35 nearby;eje;;;;68000;12.7;13.7;16;;18'x14';;17:21:00;-35:27:00;Green J coord
+G351.9-00.9;;;;;shell;;;eje;;;;;;;10;;12'x9';;17:28:52;-36:16:00;Green J coord
+G352.7-00.1;;;;;thermal composite;;;eje;;;2200;8500;7;8;6.9;;8'x6';;17:27:40;-35:07:00;Green J coord
+G353.6-00.7;;;J1731-347;;shell;;contains CCO XMMU J173203.3-344518 (magnetar?);eje,NS?,PSR?;;;27000;27000;2.4;6.1;30;;30';;17:32:00;-34:44:00;Green J coord
+G353.9-02.0;;;;;shell;;;eje;;;;;;;13;;13';;17:38:55;-35:11:00;Green J coord
+G354.1+00.1;1;;;;plerionic composite;1;PSR J1730-3350 = B1727-33 at the edge;eje?,PSR?;;;;;;;6.7;1;15'x3';;17:30:28;-33:46:00;Green J coord
+G354.1+00.3;1;;;;shell;;;eje?;;;;;;;11;;11';;17:29:38;-33:47:02;paper J coord
+G354.4+00.0;1;;;;shell;;;eje?;;;100;500;5;8;1.6;;1.6';;17:31:40;-33:40:00;paper G name
+G354.8-00.8;;;;;shell;;;eje;;;;;;;19;;19';;17:36:00;-33:42:00;Green J coord
+G355.4+00.7;;;;;shell;;;eje;;;;;;;25;;25';;17:31:20;-32:26:00;Green J coord
+G355.6-00.0;;;;;thermal composite;;;eje;;;7300;20000;13;13;6.9;;8'x6';;17:35:16;-32:38:00;Green J coord
+G355.9-02.5;;;;;shell;;;eje;;;;;;;13;;13';;17:45:53;-33:43:00;Green J coord
+G356.2+04.5;;;;G356.2+4.4;shell;;;eje;;;;;;;25;;25';;17:19:00;-29:40:00;Green J coord
+G356.3-00.3;;;;;shell;;;eje;;;;;;;8.8;;11'x7';;17:37:56;-32:16:00;Green J coord
+G356.3-01.5;;;;;shell;;;eje;;;;;;;17;;20'x15';;17:42:35;-32:52:00;Green J coord
+G357.7+00.3;;;the Square;;shell;;;eje;;;10000;10000;6.4;6.4;24;;24';;17:38:35;-30:44:00;Green J coord
+G357.7-00.1;1;;The Tornado, MSH 17-39;;thermal composite;1;contains unrelated compact source G357.63-0.06;eje?;;;;;11.8;11.8;4.9;1;8'x3';;17:40:29;-30:58:00;Green J coord
+G358.0+03.8;;;;;shell;;;eje;;;;;;;38;;38';;17:26:00;-28:36:00;Green J coord
+G358.1+00.1;;;;;shell;;;eje;;;;;;;20;;20';;17:40:38;-30:30:00;paper G name
+G358.3+00.2;1;simplified;;;filled-centre;1;PWN candidate G358.29+0.24 and PSR J1740-3015 = B1737-30;PSR,PWN?;;;;;;;0;1;;-;17:40:33;-30:15:50;paper G name
+G358.5-00.9;;;;;shell;;;eje;;;;;;;17;;17';;17:46:10;-30:40:00;Green J coord
+G358.6-01.0;1;simplified;;;filled-centre;1;PWN candidate G358.55-0.96 and PSR J1745-3040 = B1742-30;PSR,PWN?;;;;;;;0;1;;-;17:45:55;-30:40:25;paper G name
+G359.0-00.9;;;;;shell;;;eje;;;9700;9700;;;23;;23';;17:46:50;-30:16:00;Green J coord
+G359.1+00.9;;;;;shell;;;eje;;;;;;;12;;12'x11';;17:39:36;-29:11:00;Green J coord
+G359.1-00.5;;;;;thermal composite;;close to PSR J1747-2958 + PWN G359.23-0.82 = the Mouse;eje;;;17000;20700;5;8.5;24;;24';;17:45:30;-29:57:00;Green J coord
+G359.2-00.8;;;Mouse;;filled-centre;;bow shock PWN G359.23-0.82 = the Mouse and PSR J1747-2958, close to SNR G359.1-0.5;PSR,PWN;;;;;;;4.9;1;12'x2';40"-45";17:47:00;-30:01:10;paper G name
+G359.9-00.0;1;simplified;;;filled-centre;1;bow shock PWN G359.95-0.04 encompassing CXOGC J174539.7-290022 and PSR candidate CXOGC J174539.7-290020, close to BH Sgr A*, SNR Sgr A East and PWN candidate Cannonball;PSR?,PWN?;;;;;8;8;0.07;1;;8"x2";17:45:39;-29:00:00;paper G name
