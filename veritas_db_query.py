@@ -14,11 +14,11 @@ import numpy as np
 
 all_runs_info = []
 
-output_dir = 'output_vts_query_nsb'
-input_range_elev = 0.05
-input_range_azim = 0.10
+output_dir = 'output_vts_query_nsb_0p5'
+input_range_elev = 0.10
+input_range_azim = 0.20
 input_range_nsb = 0.5
-input_range_runnum = 20000.
+input_range_runnum = 100000.
 find_imposter = False
 
 def ReadLhaasoListFromFile():
@@ -209,6 +209,7 @@ def get_all_runs_info(epoch,obs_type):
 
     for x in res_run_info:
 
+        #if x['run_type']!='observing' and x['run_type']!='obsLowHV': continue
         if x['run_type']!=obs_type: continue
         if x['weather']==None: continue
         if 'C' in x['weather']: continue
@@ -1145,10 +1146,10 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
             first_key = next(iter(param_dict))
             first_value = param_dict[first_key]
 
-            if abs(delta_elev)>2.*range_elev: continue
-            if abs(delta_azim)>2.*range_azim: continue
-            if abs(delta_nsb)>2.*range_nsb: continue
-            if abs(delta_runnum)>2.*range_runnum: continue
+            if abs(delta_elev)>1.*range_elev: continue
+            if abs(delta_azim)>1.*range_azim: continue
+            if abs(delta_nsb)>1.*range_nsb: continue
+            if abs(delta_runnum)>1.*range_runnum: continue
 
             #if first_key=='nsb':
             #    if total_nsb_diff>0.:

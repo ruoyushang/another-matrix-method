@@ -48,8 +48,8 @@ smi_output = "/nevis/ged/data/rshang/smi_output/output_test"
 ana_tag = []
 #ana_tag += [['binspec','r']]
 #ana_tag += [['fullspec','b']]
-#ana_tag += [['init','r']]
 
+#ana_tag += [['init','r']]
 #ana_tag += [['fullspec1','r']]
 #ana_tag += [['fullspec2','w']]
 #ana_tag += [['fullspec4','b']]
@@ -66,17 +66,19 @@ ana_tag += [['fullspec16','b']]
 
 onoff = 'OFF'
 
-exposure_per_group = 2.
+#exposure_per_group = 2.
 #exposure_per_group = 4.
 #exposure_per_group = 10.
 #exposure_per_group = 20.
-#exposure_per_group = 50.
+exposure_per_group = 50.
 #exposure_per_group = 100.
 cr_qual_cut = 1e10
 #cr_qual_cut = 230
 
-min_elev = 20.
-#min_elev = 65.
+min_elev = 30.
+#max_elev = 60.
+#min_elev = 60.
+max_elev = 90.
 
 #input_epoch = ['V4']
 #input_epoch = ['V5']
@@ -156,6 +158,8 @@ for ana in range(0,len(ana_tag)):
                 if exposure==0.: 
                     continue
                 if run_elev<min_elev:
+                    continue
+                if run_elev>max_elev:
                     continue
 
                 total_exposure += exposure

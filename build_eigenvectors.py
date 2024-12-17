@@ -51,7 +51,7 @@ big_matrix_pkl = pickle.load(open(input_filename, "rb"))
 big_matrix = big_matrix_pkl[0]
 big_matrix_fullspec = big_matrix_pkl[1]
 
-big_matrix = np.array(big_matrix)
+#big_matrix = np.array(big_matrix)
 big_matrix_fullspec = np.array(big_matrix_fullspec)
 
 delete_entries = []
@@ -66,9 +66,9 @@ for entry in range(0,len(big_matrix)):
     norm = np.sum(big_matrix_fullspec[entry])
     for logE in range(0,logE_nbins):
         new_matrix[logE] += [big_matrix[entry][logE]/norm]
-new_matrix = np.array(new_matrix)
-print (f"big_matrix.shape = {big_matrix.shape}")
-print (f"new_matrix.shape = {new_matrix.shape}")
+#new_matrix = np.array(new_matrix)
+#print (f"big_matrix.shape = {big_matrix.shape}")
+#print (f"new_matrix.shape = {new_matrix.shape}")
 
 new_matrix_fullspec = []
 for entry in range(0,len(big_matrix_fullspec)):
@@ -122,25 +122,25 @@ rank_index = []
 for entry in range(0,len(full_eigenvalues[0])):
     rank_index += [entry+1]
     
-fig.clf()
-axbig = fig.add_subplot()
-label_x = '$k$'
-label_y = '$\sigma_{k}$'
-axbig.set_xlabel(label_x)
-axbig.set_ylabel(label_y)
-plot_max_rank = int(0.5*len(full_eigenvalues[0]))
-axbig.set_xlim(1,plot_max_rank)
-#axbig.set_ylim(full_eigenvalues[0][plot_max_rank-1],2.*full_eigenvalues[0][0])
-axbig.set_ylim(bottom=full_eigenvalues[0][plot_max_rank-1])
-axbig.set_xscale('log')
-axbig.set_yscale('log')
-for logE in range(0,logE_nbins):
-    E_min = pow(10.,logE_bins[logE])
-    E_max = pow(10.,logE_bins[logE+1])
-    axbig.plot(rank_index,full_eigenvalues[logE],label=f'E = {E_min:0.2f} - {E_max:0.2f} TeV')
-axbig.legend(loc='best')
-fig.savefig(f'{smi_dir}/output_plots/signularvalue_{source_name}_{input_epoch}.png',bbox_inches='tight')
-axbig.remove()
+#fig.clf()
+#axbig = fig.add_subplot()
+#label_x = '$k$'
+#label_y = '$\sigma_{k}$'
+#axbig.set_xlabel(label_x)
+#axbig.set_ylabel(label_y)
+#plot_max_rank = int(0.5*len(full_eigenvalues[0]))
+#axbig.set_xlim(1,plot_max_rank)
+##axbig.set_ylim(full_eigenvalues[0][plot_max_rank-1],2.*full_eigenvalues[0][0])
+#axbig.set_ylim(bottom=full_eigenvalues[0][plot_max_rank-1])
+#axbig.set_xscale('log')
+#axbig.set_yscale('log')
+#for logE in range(0,logE_nbins):
+#    E_min = pow(10.,logE_bins[logE])
+#    E_max = pow(10.,logE_bins[logE+1])
+#    axbig.plot(rank_index,full_eigenvalues[logE],label=f'E = {E_min:0.2f} - {E_max:0.2f} TeV')
+#axbig.legend(loc='best')
+#fig.savefig(f'{smi_dir}/output_plots/signularvalue_{source_name}_{input_epoch}.png',bbox_inches='tight')
+#axbig.remove()
     
 
 max_matrix_rank = min(5,big_eigenvectors[0].shape[0])

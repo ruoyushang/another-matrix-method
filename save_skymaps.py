@@ -119,6 +119,7 @@ for run in range(0,total_runs):
 
 #min_exposure = 0.1 # hours
 min_exposure = 2.0 # hours
+#min_exposure = 5.0 # hours
 #min_exposure = 10.0 # hours
 run_exposure = 0.
 for run in range(0,total_runs):
@@ -207,13 +208,13 @@ for logE in range(0,logE_nbins):
 
 run_data_xyoff_map = []
 run_fit_xyoff_map = []
-run_tolerance_xyoff_map = []
+run_init_xyoff_map = []
 run_ratio_xyoff_map = []
 run_syst_xyoff_map = []
 for logE in range(0,logE_nbins):
     run_data_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
     run_fit_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
-    run_tolerance_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+    run_init_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
     run_ratio_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
     run_syst_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
 
@@ -254,7 +255,7 @@ for small_runlist in range(0,len(big_runlist)):
             run_syst_sky_map, 
             run_data_xyoff_map, 
             run_fit_xyoff_map, 
-            run_tolerance_xyoff_map, 
+            run_init_xyoff_map, 
             run_ratio_xyoff_map,
             run_syst_xyoff_map,
             total_data_xyoff_map,
