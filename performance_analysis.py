@@ -50,27 +50,21 @@ ana_tag = []
 #ana_tag += [['fullspec','b']]
 
 #ana_tag += [['init','r']]
-#ana_tag += [['fullspec1','r']]
-#ana_tag += [['fullspec2','w']]
-#ana_tag += [['fullspec4','b']]
-#ana_tag += [['fullspec8','b']]
-ana_tag += [['fullspec16','b']]
-#ana_tag += [['fullspec32','w']]
-#ana_tag += [['fullspec64','w']]
-#ana_tag += [['rank1','r']]
-#ana_tag += [['rank2','r']]
-#ana_tag += [['rank4','w']]
-#ana_tag += [['rank8','b']]
-#ana_tag += [['rank16','w']]
-#ana_tag += [['test','w']]
+#ana_tag += [['nbin7_fullspec1','r']]
+#ana_tag += [['nbin7_fullspec2','w']]
+#ana_tag += [['nbin7_fullspec4','b']]
+#ana_tag += [['nbin7_fullspec8','b']]
+ana_tag += [['nbin7_fullspec16','b']]
+#ana_tag += [['nbin7_fullspec32','w']]
+#ana_tag += [['nbin7_fullspec64','w']]
 
 onoff = 'OFF'
 
-#exposure_per_group = 2.
+exposure_per_group = 2.
 #exposure_per_group = 4.
 #exposure_per_group = 10.
 #exposure_per_group = 20.
-exposure_per_group = 50.
+#exposure_per_group = 50.
 #exposure_per_group = 100.
 cr_qual_cut = 1e10
 #cr_qual_cut = 230
@@ -151,6 +145,22 @@ for ana in range(0,len(ana_tag)):
                 syst_sky_map = analysis_result[run][4] 
                 data_xyoff_map = analysis_result[run][5]
                 bkgd_xyoff_map = analysis_result[run][6]
+
+                logE_peak = 0
+                bkgd_peak = 0.
+                for logE in range(0,logE_nbins):
+                    bkgd = np.sum(bkgd_xyoff_map[logE].waxis[:,:,:])
+                    if bkgd>bkgd_peak:
+                        bkgd_peak = bkgd
+                        logE_peak = logE
+
+                for logE in range(0,logE_nbins):
+                    if logE<logE_peak:
+                        data_sky_map[logE].reset()
+                        bkgd_sky_map[logE].reset()
+                        syst_sky_map[logE].reset()
+                        data_xyoff_map[logE].reset()
+                        bkgd_xyoff_map[logE].reset()
     
                 if run_azim>270.:
                     run_azim = run_azim-360.
@@ -477,7 +487,7 @@ for logE in range(0,logE_nbins):
         mean = np.mean(np.array(plot_error_significance))
         rms = np.sqrt(np.mean(np.square(np.array(plot_error_significance))))
         kc = ana_tag[ana][0].strip('rank').strip('fullspec')
-        ax.hist(plot_error_significance,bin_edges,histtype='step',density=True,facecolor=ana_tag[ana][1],label='$k_{c}$='+f'{kc}, $\sigma$={rms:0.2f}')
+        ax.hist(plot_error_significance,bin_edges,histtype='step',density=True,facecolor=ana_tag[ana][1],label='$k_{c}$='+f'{kc}, $\\sigma$={rms:0.2f}')
 
     hist_binsize = 2.*hist_range/float(hist_bins)
     significance_axis = np.arange(-5., 5., 0.01)
@@ -519,7 +529,7 @@ for logE in range(0,logE_nbins):
         mean = np.mean(np.array(plot_error_correlation))
         rms = np.sqrt(np.mean(np.square(np.array(plot_error_correlation))))
         kc = ana_tag[ana][0].strip('rank').strip('fullspec')
-        ax.hist(plot_error_correlation,bin_edges,histtype='step',density=True,facecolor=ana_tag[ana][1],label='$k_{c}$='+f'{kc}, $\mu$={pow(10.,mean):0.3f}')
+        ax.hist(plot_error_correlation,bin_edges,histtype='step',density=True,facecolor=ana_tag[ana][1],label='$k_{c}$='+f'{kc}, $\\mu$={pow(10.,mean):0.3f}')
 
     ax.legend(loc='best')
     ax.set_ylim(bottom=1e-3)
@@ -570,7 +580,7 @@ for logE in range(0,logE_nbins):
     fig.set_figheight(figsize_y)
     fig.set_figwidth(figsize_x)
     label_x = '$k$ number of eigenvectors'
-    label_y = '$\epsilon$ (%)'
+    label_y = '$\\epsilon$ (%)'
     ax.set_xlabel(label_x)
     ax.set_ylabel(label_y)
     E_min = pow(10.,logE_bins[logE])

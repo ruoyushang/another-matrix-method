@@ -12,6 +12,7 @@ import common_functions
 
 use_fullspec = common_functions.use_fullspec
 logE_nbins = common_functions.logE_nbins
+logE_bins = common_functions.logE_bins
 gcut_bins = common_functions.gcut_bins
 xoff_bins = common_functions.xoff_bins
 yoff_bins = common_functions.yoff_bins
@@ -22,11 +23,16 @@ yoff_end = common_functions.yoff_end
 gcut_start = common_functions.gcut_start
 gcut_end = common_functions.gcut_end
 ReadRunListFromFile = common_functions.ReadRunListFromFile
-build_skymap = common_functions.build_skymap
 smooth_image = common_functions.smooth_image
 skymap_size = common_functions.skymap_size
 skymap_bins = common_functions.skymap_bins
 fine_skymap_bins = common_functions.fine_skymap_bins
+coordinate_type = common_functions.coordinate_type
+ConvertRaDecToGalactic = common_functions.ConvertRaDecToGalactic
+build_skymap = common_functions.build_skymap
+
+#import pytorch_functions
+#build_skymap = pytorch_functions.build_skymap
 
 #@profile
 
@@ -41,6 +47,7 @@ smi_input = os.environ.get("SMI_INPUT")
 smi_output = os.environ.get("SMI_OUTPUT")
 smi_dir = os.environ.get("SMI_DIR")
 sky_tag = os.environ.get("SKY_TAG")
+bin_tag = os.environ.get("BIN_TAG")
 
 source_name = sys.argv[1]
 src_ra = float(sys.argv[2])
@@ -48,15 +55,18 @@ src_dec = float(sys.argv[3])
 onoff = sys.argv[4]
 input_epoch = sys.argv[5] # 'V4', 'V5' or 'V6'
 
-output_filename = f'{smi_output}/skymaps_{source_name}_{input_epoch}_{onoff}_{sky_tag}.pkl'
+output_filename = f'{smi_output}/skymaps_{source_name}_{input_epoch}_{onoff}_{bin_tag}_{sky_tag}.pkl'
 if os.path.exists(output_filename):
     print (f'{output_filename} exists, delete...')
     os.remove(output_filename)
 
-path_to_eigenvector = f'{smi_output}/eigenvectors_{source_name}_{onoff}_{input_epoch}_{sky_tag}.pkl'
+path_to_eigenvector = f'{smi_output}/eigenvectors_{source_name}_{onoff}_{input_epoch}_{bin_tag}_{sky_tag}.pkl'
 print (f'path_to_eigenvector = {path_to_eigenvector}')
-path_to_big_matrix = f'{smi_output}/big_off_matrix_{source_name}_{onoff}_{input_epoch}.pkl'
+path_to_big_matrix = f'{smi_output}/big_off_matrix_{source_name}_{onoff}_{input_epoch}_{bin_tag}.pkl'
 print (f'path_to_big_matrix = {path_to_big_matrix}')
+#path_to_neuralnet = f'{smi_output}/neuralnet_{source_name}_{onoff}_{input_epoch}_{bin_tag}_{sky_tag}.pkl'
+path_to_neuralnet = f'{smi_output}/sr_norm_model_{source_name}_{onoff}_{input_epoch}_{bin_tag}_{sky_tag}.pkl'
+print (f'path_to_neuralnet = {path_to_neuralnet}')
 
 if onoff=='ON' or 'MIMIC' in onoff:
     skymap_bins = fine_skymap_bins
@@ -71,6 +81,14 @@ xsky_end = src_ra-skymap_size
 ysky_start = src_dec-skymap_size
 ysky_end = src_dec+skymap_size
 
+if coordinate_type == 'galactic':
+    src_gal_l, src_gal_b = ConvertRaDecToGalactic(src_ra, src_dec)
+    xsky_start = src_gal_l+skymap_size
+    xsky_end = src_gal_l-skymap_size
+    ysky_start = src_gal_b-skymap_size
+    ysky_end = src_gal_b+skymap_size
+
+print (f"xsky_start = {xsky_start}, xsky_end = {xsky_end}, ysky_start = {ysky_start}, ysky_end = {ysky_end}")
 
 
 total_runs = len(on_runlist)
@@ -118,8 +136,8 @@ for run in range(0,total_runs):
     total_exposure += (time_end-time_start)/3600.
 
 #min_exposure = 0.1 # hours
-min_exposure = 2.0 # hours
-#min_exposure = 5.0 # hours
+#min_exposure = 2.0 # hours
+min_exposure = 4.0 # hours
 #min_exposure = 10.0 # hours
 run_exposure = 0.
 for run in range(0,total_runs):
@@ -174,19 +192,19 @@ total_data_sky_map = []
 total_bkgd_sky_map = []
 total_syst_sky_map = []
 for logE in range(0,logE_nbins):
-    total_data_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
-    total_bkgd_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
-    total_syst_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+    total_data_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
+    total_bkgd_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
+    total_syst_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
 
 incl_sky_map = []
 data_sky_map = []
 bkgd_sky_map = []
 syst_sky_map = []
 for logE in range(0,logE_nbins):
-    incl_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
-    data_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
-    bkgd_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
-    syst_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+    incl_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
+    data_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
+    bkgd_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
+    syst_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
 
 data_xyoff_map = []
 fit_xyoff_map = []
@@ -201,10 +219,10 @@ run_data_sky_map = []
 run_fit_sky_map = []
 run_syst_sky_map = []
 for logE in range(0,logE_nbins):
-    run_incl_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
-    run_data_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
-    run_fit_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
-    run_syst_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+    run_incl_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
+    run_data_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
+    run_fit_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
+    run_syst_sky_map += [MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
 
 run_data_xyoff_map = []
 run_fit_xyoff_map = []
@@ -243,6 +261,7 @@ for small_runlist in range(0,len(big_runlist)):
             src_ra,
             src_dec,
             smi_input,
+            path_to_neuralnet,
             path_to_eigenvector,
             path_to_big_matrix,
             big_runlist[small_runlist],
@@ -289,7 +308,7 @@ for small_runlist in range(0,len(big_runlist)):
         total_data_xyoff_map[logE].add(run_data_xyoff_map[logE])
         total_fit_xyoff_map[logE].add(run_fit_xyoff_map[logE])
 
-        for gcut in range(0,gcut_bins):
+        for gcut in range(0,1):
             for idx_x in range(0,skymap_bins):
                 for idx_y in range(0,skymap_bins):
                     incl_data = run_incl_sky_map[logE].waxis[idx_x,idx_y,gcut]
@@ -308,7 +327,7 @@ for small_runlist in range(0,len(big_runlist)):
     total_data_sum = 0.
     total_bkgd_sum = 0.
     for logE in range(0,logE_nbins):
-        print (f'logE = {logE}')
+        print (f'E = {pow(10.,logE_bins[logE]):0.3f}')
         data_sum = np.sum(total_data_sky_map[logE].waxis[:,:,0])
         bkgd_sum = np.sum(total_bkgd_sky_map[logE].waxis[:,:,0])
         syst_sum = np.sum(total_syst_sky_map[logE].waxis[:,:,0])
@@ -325,7 +344,7 @@ for small_runlist in range(0,len(big_runlist)):
     print (f'total_data_sum = {total_data_sum:0.1f}, total_bkgd_sum = {total_bkgd_sum:0.1f}')
 
 
-    output_filename = f'{smi_output}/skymaps_{source_name}_{input_epoch}_{onoff}_{sky_tag}.pkl'
+    output_filename = f'{smi_output}/skymaps_{source_name}_{input_epoch}_{onoff}_{bin_tag}_{sky_tag}.pkl'
     print (f'reading {output_filename}...')
     if not os.path.exists(output_filename):
         print (f'{output_filename} does not exist, create new...')
@@ -342,7 +361,7 @@ for small_runlist in range(0,len(big_runlist)):
         del analysis_result
     print ('=================================================================================')
 
-#output_filename = f'{smi_output}/skymaps_{source_name}_{input_epoch}_{onoff}_{sky_tag}.pkl'
+#output_filename = f'{smi_output}/skymaps_{source_name}_{input_epoch}_{onoff}_{bin_tag}_{sky_tag}.pkl'
 #with open(output_filename,"wb") as file:
 #    pickle.dump(all_skymaps, file)
 
