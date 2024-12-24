@@ -32,13 +32,13 @@ if 'MIMIC' in onoff:
 else:
     off_runlist = ReadOffRunListFromFile(f'{smi_runlist}/RunList_{source_name}_{input_epoch}.txt',f'{smi_runlist}/PairList_{source_name}_{input_epoch}.txt',0)
 
-big_off_exposure, big_off_matrix_fullspec, big_mask_matrix_fullspec = build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,off_runlist,max_runs=1e10,is_bkgd=True)
+for entry in range(0,len(off_runlist)):
+    print (f"processing batch {entry}...")
+    big_off_exposure, big_off_matrix_fullspec, big_mask_matrix_fullspec = build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,off_runlist[entry],max_runs=1e10,is_bkgd=True)
 
-
-
-output_filename = f'{smi_output}/big_off_matrix_{source_name}_{onoff}_{input_epoch}_{bin_tag}.pkl'
-with open(output_filename,"wb") as file:
-    pickle.dump([big_off_exposure,big_off_matrix_fullspec], file)
+    output_filename = f'{smi_output}/big_off_matrix_{source_name}_{onoff}_{input_epoch}_{bin_tag}_batch{entry}.pkl'
+    with open(output_filename,"wb") as file:
+        pickle.dump([big_off_exposure,big_off_matrix_fullspec], file)
 
 
 print ('Big matrices saved.')

@@ -11,9 +11,6 @@ from common_functions import MyArray3D
 
 import common_functions
 
-#logE_min = common_functions.logE_min
-#logE_mid = common_functions.logE_mid
-#logE_max = common_functions.logE_max
 logE_axis = common_functions.logE_axis
 logE_nbins = common_functions.logE_nbins
 logE_bins = common_functions.logE_bins
@@ -593,6 +590,18 @@ for logE in range(0,logE_nbins):
             sum_mimic_bkgd_sky_map_HE[mimic].add(sum_mimic_bkgd_sky_map_smooth[mimic][logE])
 
 
+plot_logE_min = logE_min
+plot_logE_mid = logE_mid
+plot_logE_max = logE_max
+for logE in range(logE_min,logE_max):
+    sum_data = np.sum(sum_data_xyoff_map[logE].waxis[:,:,:])
+    if sum_data>0.:
+        plot_logE_min = logE
+        break
+if plot_logE_mid<=plot_logE_min:
+    plot_logE_mid = plot_logE_min + 1
+
+
 print ('=================================================================================')
 for logE in range(0,logE_nbins):
 
@@ -625,7 +634,7 @@ for mimic in range(0,n_mimic):
     for logE in range(0,logE_nbins):
         make_flux_map(sum_mimic_incl_sky_map_smooth[mimic][logE],sum_mimic_data_sky_map[mimic][logE],sum_mimic_bkgd_sky_map[mimic][logE],sum_mimic_flux_sky_map[mimic][logE],sum_mimic_flux_err_sky_map[mimic][logE],avg_energy,delta_energy)
 
-for logE in range(logE_min,logE_max):
+for logE in range(plot_logE_min,plot_logE_max):
     PlotSkyMap(fig,'$E^{2}$ dN/dE [$\\mathrm{TeV}\\cdot\\mathrm{cm}^{-2}\\mathrm{s}^{-1}$]',logE,logE+1,sum_flux_sky_map_smooth[logE],f'flux_sky_map_{source_name}_logE{logE}_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma',zoomin=zoomin)
     PlotSkyMap(fig,'background count',logE,logE+1,sum_bkgd_sky_map_smooth[logE],f'bkgd_sky_map_{source_name}_logE{logE}_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma',layer=0,zoomin=zoomin)
     PlotSkyMap(fig,'excess count',logE,logE+1,sum_excess_sky_map_smooth[logE],f'excess_sky_map_{source_name}_logE{logE}_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma',layer=0,zoomin=zoomin)
@@ -638,9 +647,9 @@ for logE in range(logE_min,logE_max):
     for mimic in range(0,n_mimic):
         sum_mimic_flux_sky_map_allE[mimic].add(sum_mimic_flux_sky_map[mimic][logE])
         sum_mimic_flux_err_sky_map_allE[mimic].addSquare(sum_mimic_flux_err_sky_map[mimic][logE])
-    if logE<logE_min: continue
-    if logE>logE_max: continue
-    if logE>=logE_min and logE<logE_mid:
+    if logE<plot_logE_min: continue
+    if logE>plot_logE_max: continue
+    if logE>=plot_logE_min and logE<plot_logE_mid:
         sum_flux_sky_map_LE.add(sum_flux_sky_map[logE])
         sum_flux_err_sky_map_LE.addSquare(sum_flux_err_sky_map[logE])
         sum_flux_syst_sky_map_LE.addSquare(sum_flux_syst_sky_map[logE])
@@ -650,7 +659,7 @@ for logE in range(logE_min,logE_max):
         for mimic in range(0,n_mimic):
             sum_mimic_flux_sky_map_LE[mimic].add(sum_mimic_flux_sky_map[mimic][logE])
             sum_mimic_flux_err_sky_map_LE[mimic].addSquare(sum_mimic_flux_err_sky_map[mimic][logE])
-    if logE>=logE_mid and logE<=logE_max:
+    if logE>=plot_logE_mid and logE<=plot_logE_max:
         sum_flux_sky_map_HE.add(sum_flux_sky_map[logE])
         sum_flux_err_sky_map_HE.addSquare(sum_flux_err_sky_map[logE])
         sum_flux_syst_sky_map_HE.addSquare(sum_flux_syst_sky_map[logE])
@@ -660,9 +669,9 @@ for logE in range(logE_min,logE_max):
         for mimic in range(0,n_mimic):
             sum_mimic_flux_sky_map_HE[mimic].add(sum_mimic_flux_sky_map[mimic][logE])
             sum_mimic_flux_err_sky_map_HE[mimic].addSquare(sum_mimic_flux_err_sky_map[mimic][logE])
-PlotSkyMap(fig,'$E^{2}$ dN/dE [$\\mathrm{TeV}\\cdot\\mathrm{cm}^{-2}\\mathrm{s}^{-1}$]',logE_min,logE_max,sum_flux_sky_map_allE_smooth,f'flux_sky_map_{source_name}_allE_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma',zoomin=zoomin)
-PlotSkyMap(fig,'$E^{2}$ dN/dE [$\\mathrm{TeV}\\cdot\\mathrm{cm}^{-2}\\mathrm{s}^{-1}$]',logE_min,logE_mid,sum_flux_sky_map_LE_smooth,f'flux_sky_map_{source_name}_LE_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma',zoomin=zoomin)
-PlotSkyMap(fig,'$E^{2}$ dN/dE [$\\mathrm{TeV}\\cdot\\mathrm{cm}^{-2}\\mathrm{s}^{-1}$]',logE_mid,logE_max,sum_flux_sky_map_HE_smooth,f'flux_sky_map_{source_name}_HE_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma',zoomin=zoomin)
+PlotSkyMap(fig,'$E^{2}$ dN/dE [$\\mathrm{TeV}\\cdot\\mathrm{cm}^{-2}\\mathrm{s}^{-1}$]',plot_logE_min,plot_logE_max,sum_flux_sky_map_allE_smooth,f'flux_sky_map_{source_name}_allE_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma',zoomin=zoomin)
+PlotSkyMap(fig,'$E^{2}$ dN/dE [$\\mathrm{TeV}\\cdot\\mathrm{cm}^{-2}\\mathrm{s}^{-1}$]',plot_logE_min,plot_logE_mid,sum_flux_sky_map_LE_smooth,f'flux_sky_map_{source_name}_LE_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma',zoomin=zoomin)
+PlotSkyMap(fig,'$E^{2}$ dN/dE [$\\mathrm{TeV}\\cdot\\mathrm{cm}^{-2}\\mathrm{s}^{-1}$]',plot_logE_mid,plot_logE_max,sum_flux_sky_map_HE_smooth,f'flux_sky_map_{source_name}_HE_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma',zoomin=zoomin)
 
 print ('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
 print ('Fit 2d Gaussian (LE)')
@@ -675,24 +684,24 @@ print ('Fit 2d Gaussian (sum)')
 fit_2d_model(sum_data_sky_map_allE, sum_bkgd_sky_map_allE, all_roi_x[0], all_roi_y[0])
 print ('+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++')
 
-low_energy = int(1000.*pow(10.,logE_bins[logE_min]))
-high_energy = int(1000.*pow(10.,logE_bins[logE_mid]))
+low_energy = int(1000.*pow(10.,logE_bins[plot_logE_min]))
+high_energy = int(1000.*pow(10.,logE_bins[plot_logE_mid]))
 SaveFITS(sum_flux_sky_map_LE_smooth,f'sum_flux_sky_map_{low_energy}GeV_{high_energy}GeV')
 SaveFITS(sum_flux_err_sky_map_LE_smooth,f'sum_flux_err_sky_map_{low_energy}GeV_{high_energy}GeV')
-low_energy = int(1000.*pow(10.,logE_bins[logE_mid]))
-high_energy = int(1000.*pow(10.,logE_bins[logE_max]))
+low_energy = int(1000.*pow(10.,logE_bins[plot_logE_mid]))
+high_energy = int(1000.*pow(10.,logE_bins[plot_logE_max]))
 SaveFITS(sum_flux_sky_map_HE_smooth,f'sum_flux_sky_map_{low_energy}GeV_{high_energy}GeV')
 SaveFITS(sum_flux_err_sky_map_HE_smooth,f'sum_flux_err_sky_map_{low_energy}GeV_{high_energy}GeV')
-for logE in range(logE_min,logE_max):
+for logE in range(plot_logE_min,plot_logE_max):
     low_energy = int(1000.*pow(10.,logE_bins[logE]))
     high_energy = int(1000.*pow(10.,logE_bins[logE+1]))
     SaveFITS(sum_flux_sky_map_smooth[logE],f'sum_flux_sky_map_{low_energy}GeV_{high_energy}GeV')
     SaveFITS(sum_flux_err_sky_map_smooth[logE],f'sum_flux_err_sky_map_{low_energy}GeV_{high_energy}GeV')
 
-PrintAndPlotInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,sum_data_sky_map,sum_bkgd_sky_map,sum_syst_sky_map,sum_flux_sky_map,sum_flux_err_sky_map,sum_flux_syst_sky_map,sum_mimic_data_sky_map,sum_mimic_bkgd_sky_map,all_roi_name,all_roi_x,all_roi_y,all_roi_r,all_excl_x,all_excl_y,all_excl_r)
+PrintAndPlotInformationRoI(fig,plot_logE_min,plot_logE_mid,plot_logE_max,source_name,sum_data_sky_map,sum_bkgd_sky_map,sum_syst_sky_map,sum_flux_sky_map,sum_flux_err_sky_map,sum_flux_syst_sky_map,sum_mimic_data_sky_map,sum_mimic_bkgd_sky_map,all_roi_name,all_roi_x,all_roi_y,all_roi_r,all_excl_x,all_excl_y,all_excl_r)
 
     
-for logE in range(logE_min,logE_max):
+for logE in range(plot_logE_min,plot_logE_max):
     on_radial_axis, on_profile_axis, on_profile_err_axis, on_profile_syst_axis = GetRadialProfile(sum_flux_sky_map[logE],sum_flux_err_sky_map[logE],sum_flux_syst_sky_map[logE],all_roi_x,all_roi_y,2.0,all_excl_x,all_excl_y,all_excl_r)
     baseline_yaxis = [0. for i in range(0,len(on_radial_axis))]
     fig.clf()
@@ -723,14 +732,14 @@ label_x = 'angular distance [deg]'
 label_y = 'surface brightness [$\\mathrm{TeV}\\ \\mathrm{cm}^{-2}\\mathrm{s}^{-1}\\mathrm{sr}^{-1}$]'
 axbig.set_xlabel(label_x)
 axbig.set_ylabel(label_y)
-axbig.set_title(f'{pow(10.,logE_bins[logE_min]):0.2f}-{pow(10.,logE_bins[logE_max]):0.2f} TeV')
+axbig.set_title(f'{pow(10.,logE_bins[plot_logE_min]):0.2f}-{pow(10.,logE_bins[plot_logE_max]):0.2f} TeV')
 axbig.fill_between(on_radial_axis,np.array(baseline_yaxis)-np.array(on_profile_syst_axis),np.array(baseline_yaxis)+np.array(on_profile_syst_axis),alpha=0.2,color='b')
 axbig.plot(on_radial_axis, baseline_yaxis, color='b', ls='dashed')
 axbig.errorbar(on_radial_axis,on_profile_axis,on_profile_err_axis,color='k',marker='+',ls='none')
 fig.savefig(f'output_plots/surface_brightness_{source_name}_allE_{all_roi_name[0]}_{ana_tag}.png',bbox_inches='tight')
 axbig.remove()
 txtfile = open(f'output_plots/surface_brightness_{source_name}_allE_{all_roi_name[0]}_{ana_tag}.txt', 'w')
-output_string = f"{pow(10.,logE_bins[logE_min]):0.2f}-{pow(10.,logE_bins[logE_max]):0.2f} TeV \n"
+output_string = f"{pow(10.,logE_bins[plot_logE_min]):0.2f}-{pow(10.,logE_bins[plot_logE_max]):0.2f} TeV \n"
 txtfile.write(output_string)
 output_string = "angular distance [deg] \t surface brightness [TeV/cm2/s/sr] \t surface brightness error [TeV/cm2/s/sr] \n"
 txtfile.write(output_string)
@@ -754,14 +763,14 @@ label_x = 'angular distance [deg]'
 label_y = 'surface brightness [$\\mathrm{TeV}\\ \\mathrm{cm}^{-2}\\mathrm{s}^{-1}\\mathrm{sr}^{-1}$]'
 axbig.set_xlabel(label_x)
 axbig.set_ylabel(label_y)
-axbig.set_title(f'{pow(10.,logE_bins[logE_min]):0.2f}-{pow(10.,logE_bins[logE_mid]):0.2f} TeV')
+axbig.set_title(f'{pow(10.,logE_bins[plot_logE_min]):0.2f}-{pow(10.,logE_bins[plot_logE_mid]):0.2f} TeV')
 axbig.fill_between(on_radial_axis,np.array(baseline_yaxis)-np.array(on_profile_syst_axis),np.array(baseline_yaxis)+np.array(on_profile_syst_axis),alpha=0.2,color='b')
 axbig.plot(on_radial_axis, baseline_yaxis, color='b', ls='dashed')
 axbig.errorbar(on_radial_axis,on_profile_axis,on_profile_err_axis,color='k',marker='+',ls='none')
 fig.savefig(f'output_plots/surface_brightness_{source_name}_LE_{all_roi_name[0]}_{ana_tag}.png',bbox_inches='tight')
 axbig.remove()
 txtfile = open(f'output_plots/surface_brightness_{source_name}_LE_{all_roi_name[0]}_{ana_tag}.txt', 'w')
-output_string = f"{pow(10.,logE_bins[logE_min]):0.2f}-{pow(10.,logE_bins[logE_mid]):0.2f} TeV \n"
+output_string = f"{pow(10.,logE_bins[plot_logE_min]):0.2f}-{pow(10.,logE_bins[plot_logE_mid]):0.2f} TeV \n"
 txtfile.write(output_string)
 output_string = "angular distance [deg] \t surface brightness [TeV/cm2/s/sr] \t surface brightness error [TeV/cm2/s/sr] \n"
 txtfile.write(output_string)
@@ -785,14 +794,14 @@ label_x = 'angular distance [deg]'
 label_y = 'surface brightness [$\\mathrm{TeV}\\ \\mathrm{cm}^{-2}\\mathrm{s}^{-1}\\mathrm{sr}^{-1}$]'
 axbig.set_xlabel(label_x)
 axbig.set_ylabel(label_y)
-axbig.set_title(f'{pow(10.,logE_bins[logE_mid]):0.2f}-{pow(10.,logE_bins[logE_max]):0.2f} TeV')
+axbig.set_title(f'{pow(10.,logE_bins[plot_logE_mid]):0.2f}-{pow(10.,logE_bins[plot_logE_max]):0.2f} TeV')
 axbig.fill_between(on_radial_axis,np.array(baseline_yaxis)-np.array(on_profile_syst_axis),np.array(baseline_yaxis)+np.array(on_profile_syst_axis),alpha=0.2,color='b')
 axbig.plot(on_radial_axis, baseline_yaxis, color='b', ls='dashed')
 axbig.errorbar(on_radial_axis,on_profile_axis,on_profile_err_axis,color='k',marker='+',ls='none')
 fig.savefig(f'output_plots/surface_brightness_{source_name}_HE_{all_roi_name[0]}_{ana_tag}.png',bbox_inches='tight')
 axbig.remove()
 txtfile = open(f'output_plots/surface_brightness_{source_name}_HE_{all_roi_name[0]}_{ana_tag}.txt', 'w')
-output_string = f"{pow(10.,logE_bins[logE_mid]):0.2f}-{pow(10.,logE_bins[logE_max]):0.2f} TeV \n"
+output_string = f"{pow(10.,logE_bins[plot_logE_mid]):0.2f}-{pow(10.,logE_bins[plot_logE_max]):0.2f} TeV \n"
 txtfile.write(output_string)
 output_string = "angular distance [deg] \t surface brightness [TeV/cm2/s/sr] \t surface brightness error [TeV/cm2/s/sr] \n"
 txtfile.write(output_string)
@@ -840,19 +849,11 @@ if 'PSR_J1856_p0245' in source_name:
     fig.savefig(f'output_plots/surface_brightness_{source_name}_Fermi_{ana_tag}.png',bbox_inches='tight')
     axbig.remove()
 
-for logE in range(logE_min,logE_max):
+for logE in range(plot_logE_min,plot_logE_max):
 
     PlotSkyMap(fig,'significance',logE,logE+1,sum_significance_sky_map[logE],f'significance_sky_map_{source_name}_logE{logE}_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,max_z=3.,zoomin=zoomin)
 
 max_z = 5.
-
-plot_logE_min = logE_min
-plot_logE_max = logE_max
-for logE in range(logE_min,logE_max):
-    sum_data = np.sum(sum_data_xyoff_map[logE].waxis[:,:,:])
-    if sum_data>0.:
-        plot_logE_min = logE
-        break
 
 fig.clf()
 figsize_y = 2.*gcut_bins
@@ -917,50 +918,50 @@ axbig.remove()
 
 
 
-PlotSkyMap(fig,'significance',logE_min,logE_max,sum_significance_sky_map_allE,f'significance_sky_map_{source_name}_allE_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,max_z=3.,zoomin=zoomin)
-PlotSkyMap(fig,'excess count',logE_min,logE_max,sum_excess_sky_map_allE,f'excess_sky_map_{source_name}_allE_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma',zoomin=zoomin)
-PlotSkyMap(fig,'significance',logE_min,logE_mid,sum_significance_sky_map_LE,f'significance_sky_map_{source_name}_LE_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,max_z=3.,zoomin=zoomin)
-PlotSkyMap(fig,'excess count',logE_min,logE_mid,sum_excess_sky_map_LE,f'excess_sky_map_{source_name}_LE_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma',zoomin=zoomin)
-PlotSkyMap(fig,'significance',logE_mid,logE_max,sum_significance_sky_map_HE,f'significance_sky_map_{source_name}_HE_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,max_z=3.,zoomin=zoomin)
-PlotSkyMap(fig,'excess count',logE_mid,logE_max,sum_excess_sky_map_HE,f'excess_sky_map_{source_name}_HE_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
+PlotSkyMap(fig,'significance',plot_logE_min,plot_logE_max,sum_significance_sky_map_allE,f'significance_sky_map_{source_name}_allE_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,max_z=3.,zoomin=zoomin)
+PlotSkyMap(fig,'excess count',plot_logE_min,plot_logE_max,sum_excess_sky_map_allE,f'excess_sky_map_{source_name}_allE_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma',zoomin=zoomin)
+PlotSkyMap(fig,'significance',plot_logE_min,plot_logE_mid,sum_significance_sky_map_LE,f'significance_sky_map_{source_name}_LE_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,max_z=3.,zoomin=zoomin)
+PlotSkyMap(fig,'excess count',plot_logE_min,plot_logE_mid,sum_excess_sky_map_LE,f'excess_sky_map_{source_name}_LE_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma',zoomin=zoomin)
+PlotSkyMap(fig,'significance',plot_logE_mid,plot_logE_max,sum_significance_sky_map_HE,f'significance_sky_map_{source_name}_HE_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,max_z=3.,zoomin=zoomin)
+PlotSkyMap(fig,'excess count',plot_logE_mid,plot_logE_max,sum_excess_sky_map_HE,f'excess_sky_map_{source_name}_HE_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
 
 for mimic in range(0,n_mimic):
-    PlotSkyMap(fig,'significance',logE_min,logE_max,sum_mimic_significance_sky_map_allE[mimic],f'significance_sky_map_{source_name}_allE_mimic{mimic}_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,max_z=3.,zoomin=zoomin)
+    PlotSkyMap(fig,'significance',plot_logE_min,plot_logE_max,sum_mimic_significance_sky_map_allE[mimic],f'significance_sky_map_{source_name}_allE_mimic{mimic}_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,max_z=3.,zoomin=zoomin)
 
 print (f'total_exposure = {total_exposure}')
 print (f'good_exposure = {good_exposure}')
 print (f'mimic_exposure = {mimic_exposure}')
 
-PlotCountProjection(fig,'count',logE_min,logE_max,sum_data_sky_map_allE,sum_bkgd_sky_map_allE,f'projection_sky_map_{source_name}_allE_{ana_tag}',hist_map_syst=sum_syst_sky_map_allE,roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
-PlotCountProjection(fig,'count',logE_min,logE_mid,sum_data_sky_map_LE,sum_bkgd_sky_map_LE,f'projection_sky_map_{source_name}_LE_{ana_tag}',hist_map_syst=sum_syst_sky_map_LE,roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
-PlotCountProjection(fig,'count',logE_mid,logE_max,sum_data_sky_map_HE,sum_bkgd_sky_map_HE,f'projection_sky_map_{source_name}_HE_{ana_tag}',hist_map_syst=sum_syst_sky_map_HE,roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
+PlotCountProjection(fig,'count',plot_logE_min,plot_logE_max,sum_data_sky_map_allE,sum_bkgd_sky_map_allE,f'projection_sky_map_{source_name}_allE_{ana_tag}',hist_map_syst=sum_syst_sky_map_allE,roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
+PlotCountProjection(fig,'count',plot_logE_min,plot_logE_mid,sum_data_sky_map_LE,sum_bkgd_sky_map_LE,f'projection_sky_map_{source_name}_LE_{ana_tag}',hist_map_syst=sum_syst_sky_map_LE,roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
+PlotCountProjection(fig,'count',plot_logE_mid,plot_logE_max,sum_data_sky_map_HE,sum_bkgd_sky_map_HE,f'projection_sky_map_{source_name}_HE_{ana_tag}',hist_map_syst=sum_syst_sky_map_HE,roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
 
 for mimic in range(0,n_mimic):
-    PlotCountProjection(fig,'count',logE_min,logE_max,sum_mimic_data_sky_map_allE[mimic],sum_mimic_bkgd_sky_map_allE[mimic],f'projection_sky_map_{source_name}_allE_mimic{mimic}_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
-    PlotCountProjection(fig,'count',logE_min,logE_mid,sum_mimic_data_sky_map_LE[mimic],sum_mimic_bkgd_sky_map_LE[mimic],f'projection_sky_map_{source_name}_LE_mimic{mimic}_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
-    PlotCountProjection(fig,'count',logE_mid,logE_max,sum_mimic_data_sky_map_HE[mimic],sum_mimic_bkgd_sky_map_HE[mimic],f'projection_sky_map_{source_name}_HE_mimic{mimic}_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
+    PlotCountProjection(fig,'count',plot_logE_min,plot_logE_max,sum_mimic_data_sky_map_allE[mimic],sum_mimic_bkgd_sky_map_allE[mimic],f'projection_sky_map_{source_name}_allE_mimic{mimic}_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
+    PlotCountProjection(fig,'count',plot_logE_min,plot_logE_mid,sum_mimic_data_sky_map_LE[mimic],sum_mimic_bkgd_sky_map_LE[mimic],f'projection_sky_map_{source_name}_LE_mimic{mimic}_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
+    PlotCountProjection(fig,'count',plot_logE_mid,plot_logE_max,sum_mimic_data_sky_map_HE[mimic],sum_mimic_bkgd_sky_map_HE[mimic],f'projection_sky_map_{source_name}_HE_mimic{mimic}_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
 
 
 if 'PSR_J2021_p4026' in source_name:
     HI_sky_map = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
     MWL_map_file = '/nevis/ged/data/rshang/MWL_maps/CGPS/CGPS_MO2_HI_line_image.fits' 
     GetSlicedDataCubeMapCGPS(MWL_map_file, HI_sky_map, -3., 5.)
-    PlotSkyMap(fig,'Intensity',logE_min,logE_max,HI_sky_map,f'HI_sky_map_{source_name}_m03_p05_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma',zoomin=zoomin)
+    PlotSkyMap(fig,'Intensity',plot_logE_min,plot_logE_max,HI_sky_map,f'HI_sky_map_{source_name}_m03_p05_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma',zoomin=zoomin)
     GetSlicedDataCubeMapCGPS(MWL_map_file, HI_sky_map, -27., -19.)
-    PlotSkyMap(fig,'Intensity',logE_min,logE_max,HI_sky_map,f'HI_sky_map_{source_name}_m27_m19_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma',zoomin=zoomin)
+    PlotSkyMap(fig,'Intensity',plot_logE_min,plot_logE_max,HI_sky_map,f'HI_sky_map_{source_name}_m27_m19_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma',zoomin=zoomin)
     GetSlicedDataCubeMapCGPS(MWL_map_file, HI_sky_map, -19., -3.)
-    PlotSkyMap(fig,'Intensity',logE_min,logE_max,HI_sky_map,f'HI_sky_map_{source_name}_m19_m03_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma',zoomin=zoomin)
+    PlotSkyMap(fig,'Intensity',plot_logE_min,plot_logE_max,HI_sky_map,f'HI_sky_map_{source_name}_m19_m03_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma',zoomin=zoomin)
 
 if 'PSR_J1856_p0245' in source_name:
     HI_sky_map = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
     MWL_map_file = '/nevis/ged/data/rshang/MW_FITS/GALFA_HI_RA+DEC_284.00+02.35_N.fits' 
     GetSlicedDataCubeMapGALFA(MWL_map_file, HI_sky_map, 81.*1e3, 102.*1e3)
-    PlotSkyMap(fig,'Intensity',logE_min,logE_max,HI_sky_map,f'Gas_HI_sky_map_{source_name}_p81_p102_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma',zoomin=zoomin)
+    PlotSkyMap(fig,'Intensity',plot_logE_min,plot_logE_max,HI_sky_map,f'Gas_HI_sky_map_{source_name}_p81_p102_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma',zoomin=zoomin)
 
     CO_sky_map = MyArray3D(x_bins=skymap_bins,start_x=xsky_start,end_x=xsky_end,y_bins=skymap_bins,start_y=ysky_start,end_y=ysky_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)
     MWL_map_file = '/nevis/ged/data/rshang/MWL_maps/DHT08_Quad1_interp.fits' 
     GetSlicedDataCubeMap(MWL_map_file, CO_sky_map, 81., 102.)
-    PlotSkyMap(fig,'Intensity',logE_min,logE_max,CO_sky_map,f'Gas_CO_sky_map_{source_name}_p81_p102_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma',zoomin=zoomin)
+    PlotSkyMap(fig,'Intensity',plot_logE_min,plot_logE_max,CO_sky_map,f'Gas_CO_sky_map_{source_name}_p81_p102_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma',zoomin=zoomin)
 
 
 

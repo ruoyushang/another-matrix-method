@@ -46,8 +46,8 @@ yoff_end = 2.
 gcut_bins = 5
 gcut_start = 0
 gcut_end = gcut_bins
-gcut_weight = [1.] * gcut_bins
-gcut_weight[0] = 0.
+gcut_weight = [0.] * gcut_bins
+gcut_weight[1] = 1.
 
 #logE_bins = [-0.70,-0.60,-0.50,-0.40,-0.25,0.00,0.25,0.50,0.75,1.0,1.5] # logE TeV
 logE_bins = [-0.90,-0.80,-0.70,-0.60,-0.50,-0.40,-0.25,0.00,0.25,0.50,0.75,1.00,1.25] # logE TeV
@@ -227,7 +227,6 @@ def ReadRunListFromFile(smi_input,input_on_file,input_off_file,input_mimic_file)
 def ReadOffRunListFromFile(input_onlist_file, input_offlist_file, mimic_index):
 
     on_runlist = []
-    off_runlist = []
 
     print (f'onlist_file = {input_onlist_file}')
     print (f'offlist_file = {input_offlist_file}')
@@ -253,13 +252,14 @@ def ReadOffRunListFromFile(input_onlist_file, input_offlist_file, mimic_index):
             if last_mimic_index==mimic_index:
                 on_runlist += [off_runnumber]
 
+    off_runlist = [[] for i in range(0,len(on_runlist))]
     for line in offlist_file:
         line_split = line.split()
         on_runnumber = int(line_split[0])
         off_runnumber = int(line_split[1])
         for run in range(0,len(on_runlist)):
             if on_runnumber==on_runlist[run]:
-                off_runlist += [off_runnumber]
+                off_runlist[run] += [off_runnumber]
 
     print (f'on_runlist = {on_runlist}')
     print (f'off_runlist = {off_runlist}')
@@ -925,7 +925,7 @@ def cosmic_ray_like_chi2_fullspec(
                 n_data_gcut = abs(sr_norm[logE])
                 n_data_err_gcut = abs(sr_norm_err[logE])
             else:
-                weight_gut = 1.
+                weight_gut = gcut_weight[gcut]
 
             if n_data_gcut==0.:
                 sum_log_likelihood += n_expect_gcut*weight_gut
@@ -3592,12 +3592,12 @@ def build_skymap(
                         fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = max(0.0,fit_xyoff_map_1d_fullspec[idx_1d-1])
                         syst_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = max(0.0,fit_xyoff_map_1d_fullspec[idx_1d-1]) * sr_norm_error[logE]/sr_norm_predict[logE]
 
-        #for gcut in range(0,1):
-        #    for logE in range(0,logE_nbins):
-        #        rescale = sr_norm_predict[logE] / np.sum(fit_xyoff_map[logE].waxis[:,:,gcut])
-        #        for idx_x in range(0,xoff_bins[logE]):
-        #            for idx_y in range(0,yoff_bins[logE]):
-        #                fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] * rescale
+        for gcut in range(0,1):
+            for logE in range(0,logE_nbins):
+                rescale = sr_norm_predict[logE] / np.sum(fit_xyoff_map[logE].waxis[:,:,gcut])
+                for idx_x in range(0,xoff_bins[logE]):
+                    for idx_y in range(0,yoff_bins[logE]):
+                        fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] * rescale
 
 
     print ('===================================================================================')

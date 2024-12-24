@@ -1,4 +1,5 @@
 
+import subprocess
 import os, sys
 import ROOT
 import numpy as np
@@ -59,12 +60,22 @@ input_epoch = sys.argv[3] # 'V4', 'V5' or 'V6'
 
 #print (f"line {cf.f_lineno}")
 
+# Run the 'ls' command and capture its output
+result = subprocess.run(['ls',f'{smi_output}'], capture_output=True, text=True)
+# Split the output into a list by newlines
+file_list = result.stdout.splitlines()
+
+big_exposure = []
+big_matrix_fullspec = []
+
 print ('loading matrix pickle data... ')
-input_filename = f'{smi_output}/big_off_matrix_{source_name}_{onoff}_{input_epoch}_{bin_tag}.pkl'
-print (f'input_filename = {input_filename}')
-big_matrix_pkl = pickle.load(open(input_filename, "rb"))
-big_exposure = big_matrix_pkl[0]
-big_matrix_fullspec = big_matrix_pkl[1]
+for file in file_list:
+    if f'big_off_matrix_{source_name}_{onoff}_{input_epoch}_{bin_tag}' in file:
+        input_filename = f'{smi_output}/{file}'
+        print (f'input_filename = {input_filename}')
+        big_matrix_pkl = pickle.load(open(input_filename, "rb"))
+        big_exposure += big_matrix_pkl[0]
+        big_matrix_fullspec += big_matrix_pkl[1]
 
 big_matrix_fullspec = np.array(big_matrix_fullspec)
 
