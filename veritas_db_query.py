@@ -1,6 +1,7 @@
 
 import os.path
 import sys
+import random
 import pymysql
 from datetime import datetime, timedelta
 import math
@@ -14,11 +15,11 @@ import numpy as np
 
 all_runs_info = []
 
-output_dir = 'output_vts_query_20241219'
+output_dir = 'output_vts_query_20241226'
 input_range_elev = 10.
 input_range_azim = 0.20
 input_range_nsb = 1.0
-input_range_runnum = 20000.
+input_range_runnum = 5000.
 find_imposter = False
 
 def ReadLhaasoListFromFile():
@@ -1018,6 +1019,7 @@ def list_for_eventdisplay(all_lists,obs_name):
 def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_range,list_on_run_ids,is_imposter,file_name):
 
     global all_runs_info
+    random.shuffle(all_runs_info)
 
     list_on_run_nmatch = []
     list_off_run_ids = []
@@ -1078,6 +1080,8 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
         on_run_el, on_run_az = get_run_elaz_from_aux_file(list_on_run_ids[on_run])
         on_run_nsb = get_run_nsb_from_aux_file(list_on_run_ids[on_run])
         number_off_runs = 0
+
+        print (f"finding match {on_run}/{len(list_on_run_ids)}...")
 
         for run in range(0,len(all_runs_info)):
 
@@ -1153,20 +1157,16 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
             if abs(delta_runnum)>1.*range_runnum: continue
             if abs(delta_azim)>1.*range_azim: continue
 
-            if total_elev_diff>0.:
-                if delta_elev>0.: continue
-            else:
-                if delta_elev<0.: continue
-            #if first_key=='nsb':
-            #    if total_nsb_diff>0.:
-            #        if delta_nsb>0.: continue
-            #    else:
-            #        if delta_nsb<0.: continue
-            #if first_key=='elev':
-            #    if total_elev_diff>0.:
-            #        if delta_elev>0.: continue
-            #    else:
-            #        if delta_elev<0.: continue
+            if first_key=='nsb':
+                if total_nsb_diff>0.:
+                    if delta_nsb>0.: continue
+                else:
+                    if delta_nsb<0.: continue
+            if first_key=='elev':
+                if total_elev_diff>0.:
+                    if delta_elev>0.: continue
+                else:
+                    if delta_elev<0.: continue
             #if first_key=='azim':
             #    if total_azim_diff>0.:
             #        if delta_azim>0.: continue

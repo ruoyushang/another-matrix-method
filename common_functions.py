@@ -1,6 +1,7 @@
 
 import os, sys
 import math
+import random
 import ROOT
 import numpy as np
 import pickle
@@ -43,19 +44,23 @@ xoff_end = 2.
 yoff_start = -2.
 yoff_end = 2.
 
-gcut_bins = 5
+gcut_bins = 3
 gcut_start = 0
 gcut_end = gcut_bins
-gcut_weight = [0.] * gcut_bins
-gcut_weight[1] = 1.
+gcut_weight = [1.] * gcut_bins
+gcut_weight[0] = 0.
 
 #logE_bins = [-0.70,-0.60,-0.50,-0.40,-0.25,0.00,0.25,0.50,0.75,1.0,1.5] # logE TeV
-logE_bins = [-0.90,-0.80,-0.70,-0.60,-0.50,-0.40,-0.25,0.00,0.25,0.50,0.75,1.00,1.25] # logE TeV
+#logE_bins = [-0.90,-0.80,-0.70,-0.60,-0.50,-0.40,-0.25,0.00,0.25,0.50,0.75,1.00,1.25] # logE TeV
+logE_bins = [-0.60,-0.50,-0.40,-0.25,0.00,0.25,0.50,0.75,1.00,1.25] # logE TeV
 logE_nbins = len(logE_bins)-1
 
-MSCW_cut = [0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60]
-MSCL_cut = [0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70]
-str_flux_calibration = ['0.00e+00', '6.90e+02', '1.42e+03', '2.51e+03', '2.85e+03', '2.53e+03', '3.20e+03', '8.51e+03', '2.51e+04', '1.14e+05', '3.70e+05', '1.09e+06']
+#MSCW_cut = [0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60]
+#MSCL_cut = [0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70]
+#str_flux_calibration = ['0.00e+00', '6.90e+02', '1.42e+03', '2.51e+03', '2.85e+03', '2.53e+03', '3.20e+03', '8.51e+03', '2.51e+04', '1.14e+05', '3.70e+05', '1.09e+06']
+MSCW_cut = [0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60]
+MSCL_cut = [0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70]
+str_flux_calibration = ['2.51e+03', '2.85e+03', '2.53e+03', '3.20e+03', '8.51e+03', '2.51e+04', '1.14e+05', '3.70e+05', '1.09e+06']
 
 skymap_size = 3.
 skymap_bins = 30
@@ -100,6 +105,11 @@ def weighted_least_square_solution(mtx_input,vec_output,vec_weight,plot_tag=''):
     y = np.array(vec_output)
     w = np.diag(np.array(vec_weight))
 
+    over_constrained = True
+    if x.shape[0]<=x.shape[1]:
+        over_constrained = False
+        print ("system is not over-constrained.")
+
     xTwx = x.T @ w @ x
     U, S, VT = np.linalg.svd(xTwx, full_matrices=False)
 
@@ -119,10 +129,10 @@ def weighted_least_square_solution(mtx_input,vec_output,vec_weight,plot_tag=''):
     del ax
     plt.close()
 
+    S_pseudo_inv = np.diag(1 / S)
     #for entry in range(0,len(S)):
     #    if S[entry]/S[0]<pow(10.,-3.0):
-    #        S[entry] = 1e10
-    S_pseudo_inv = np.diag(1 / S)
+    #        S_pseudo_inv[entry][entry] = 0.
 
     inv_xTwx = VT.T @ S_pseudo_inv @ U.T
 
@@ -132,7 +142,10 @@ def weighted_least_square_solution(mtx_input,vec_output,vec_weight,plot_tag=''):
     y_err = np.sqrt(np.square(y - y_predict))
     A_err = inv_xTwx @ x.T @ w @ y_err
 
-    return A, A_err
+    if over_constrained:
+        return A, A_err
+    else:
+        return A, A
 
 def significance_li_and_ma(N_on, N_bkg, N_bkg_err):
 
@@ -214,8 +227,9 @@ def ReadRunListFromFile(smi_input,input_on_file,input_off_file,input_mimic_file)
 
         all_runlist += [(onrun_elev,int(on_line),paired_off_runs,paired_mimic_runs)]
 
-    all_runlist.sort(key=sortFirst,reverse=True)
+    #all_runlist.sort(key=sortFirst,reverse=True)
     #all_runlist.sort(key=sortFirst)
+    random.shuffle(all_runlist)
 
     for run in range(0,len(all_runlist)):
         on_runlist += [all_runlist[run][1]]
@@ -224,9 +238,10 @@ def ReadRunListFromFile(smi_input,input_on_file,input_off_file,input_mimic_file)
 
     return on_runlist, off_runlist, mimic_runlist
 
-def ReadOffRunListFromFile(input_onlist_file, input_offlist_file, mimic_index):
+def ReadOffRunListFromFile(smi_input,input_onlist_file, input_offlist_file, mimic_index):
 
     on_runlist = []
+    on_runlist_elev = []
 
     print (f'onlist_file = {input_onlist_file}')
     print (f'offlist_file = {input_offlist_file}')
@@ -252,14 +267,39 @@ def ReadOffRunListFromFile(input_onlist_file, input_offlist_file, mimic_index):
             if last_mimic_index==mimic_index:
                 on_runlist += [off_runnumber]
 
-    off_runlist = [[] for i in range(0,len(on_runlist))]
+    for run in range(0,len(on_runlist)):
+        onrun_elev, onrun_azim = GetRunElevAzim(smi_input,on_runlist[run])
+        on_runlist_elev += [(onrun_elev,on_runlist[run])]
+
+    #on_runlist_elev.sort(key=sortFirst,reverse=True)
+    #on_runlist_elev.sort(key=sortFirst)
+    random.shuffle(on_runlist_elev)
+
+    runs_per_batch = 20
+    on_runlist_sorted = []
+    small_runlist = []
+    run_count = 0
+    for run in range(0,len(on_runlist_elev)):
+        run_elev = on_runlist_elev[run][0]
+        run_number = on_runlist_elev[run][1]
+        small_runlist += [run_number]
+        run_count += 1
+        if run_count==runs_per_batch or run_count==len(on_runlist_elev)-1:
+            on_runlist_sorted += [small_runlist]
+            small_runlist = []
+            run_count = 0
+        if len(on_runlist_elev)-1-run<=runs_per_batch:
+            runs_per_batch = 1e10
+
+    off_runlist = [[] for i in range(0,len(on_runlist_sorted))]
     for line in offlist_file:
         line_split = line.split()
         on_runnumber = int(line_split[0])
         off_runnumber = int(line_split[1])
-        for run in range(0,len(on_runlist)):
-            if on_runnumber==on_runlist[run]:
-                off_runlist[run] += [off_runnumber]
+        for batch in range(0,len(on_runlist_sorted)):
+            for run in range(0,len(on_runlist_sorted[batch])):
+                if on_runnumber==on_runlist_sorted[batch][run]:
+                    off_runlist[batch] += [off_runnumber]
 
     print (f'on_runlist = {on_runlist}')
     print (f'off_runlist = {off_runlist}')
@@ -644,6 +684,7 @@ def build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,runlist,max_run
     big_mask_matrix_fullspec = []
 
     big_exposure_time = []
+    big_elevation = 0.
 
     region_name = source_name
     roi_name,roi_ra,roi_dec,roi_r = DefineRegionOfMask(region_name,src_ra,src_dec)
@@ -697,6 +738,7 @@ def build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,runlist,max_run
         Time1 = EvtTree.timeOfDay
         exposure = CalculateExposure(Time0, Time1, list_timecuts)
         big_exposure_time += [exposure]
+        big_elevation += TelElevation * exposure
         for entry in range(0,total_entries):
             EvtTree.GetEntry(entry)
             RA = EvtTree.RA
@@ -784,7 +826,10 @@ def build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,runlist,max_run
         InputFile.Close()
         if run_count==max_runs: break
 
-    return big_exposure_time, big_matrix_fullspec, big_mask_matrix_fullspec
+    big_elevation = big_elevation / np.sum(np.array(big_exposure_time))
+    print (f'batch elevation = {big_elevation}')
+
+    return big_elevation, big_exposure_time, big_matrix_fullspec, big_mask_matrix_fullspec
 
 def prepare_vector_for_neuralnet(xyoff_map_1d):
 
@@ -800,7 +845,12 @@ def prepare_vector_for_neuralnet(xyoff_map_1d):
                         sr_norm[logE] += xyoff_map_1d[idx_1d-1]
                     else:
                         cr_map_1d[logE+(gcut-1)*logE_nbins] += xyoff_map_1d[idx_1d-1]
-    return np.array(sr_norm), np.array(cr_map_1d)
+
+    sr_weight = [0. for logE in range(0,logE_nbins)]
+    for logE in range(0,logE_nbins):
+        sr_weight[logE] = 1./max(1.,sr_norm[logE])
+
+    return np.array(sr_norm), np.array(sr_weight), np.array(cr_map_1d)
 
 def residual_correction_fullspec(
         logE,
@@ -840,6 +890,7 @@ def residual_correction_fullspec(
 
 def cosmic_ray_like_chi2_fullspec(
         try_params,
+        logE_peak,
         eigenvectors,
         sr_norm,
         sr_norm_err,
@@ -869,13 +920,16 @@ def cosmic_ray_like_chi2_fullspec(
                     mask = mask_xyoff_map[idx_1d-1]
                     weight = gcut_weight[gcut]
 
+                    #if logE<=logE_peak:
+                    #    weight = weight * 0.1
+
                     #if mask>0.:
                     #    weight = 0.
 
                     n_expect = max(0.0001,try_xyoff_map[idx_1d-1])
                     n_data = data
                     if gcut==0:
-                        n_data = init
+                        n_data = max(0.0001,init)
 
                     #if region_type==0:
                     #    if gcut==0:
@@ -916,24 +970,25 @@ def cosmic_ray_like_chi2_fullspec(
                     n_expect_gcut += n_expect
                     n_data = data
                     if gcut==0:
-                        n_data = init
+                        n_data = max(0.0001,init)
                     n_data_gcut += n_data
 
             if gcut==0:
                 weight_gut = 1.
-                #weight_gut = float(xyoff_map_nbins*xyoff_map_nbins)
                 n_data_gcut = abs(sr_norm[logE])
                 n_data_err_gcut = abs(sr_norm_err[logE])
+                if n_data_gcut==n_data_err_gcut:
+                    weight_gut = 0.
             else:
-                weight_gut = gcut_weight[gcut]
+                #weight_gut = gcut_weight[gcut]
+                weight_gut = 0.
 
+            #sum_log_likelihood += pow(n_expect_gcut-n_data_gcut,2)/pow(n_data_err_gcut,2) * weight_gut
             if n_data_gcut==0.:
                 sum_log_likelihood += n_expect_gcut*weight_gut
             else:
                 sum_log_likelihood += (-1.*(n_data_gcut*np.log(n_expect_gcut) - n_expect_gcut - (n_data_gcut*np.log(n_data_gcut)-n_data_gcut)))*weight_gut
 
-    #for entry in range(1,len(try_params)):
-    #    sum_log_likelihood += pow( max(0., abs(try_params[entry])-abs(try_params[entry-1])) ,2) / abs(try_params[entry-1])
 
     return sum_log_likelihood
     #return sum_log_likelihood / sum_weight
@@ -2779,15 +2834,15 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
         #region_y += [2.661]
         #region_r += [0.239]
 
-        #region_name = ('0p4_deg','0.4 deg') # MAGIC ROI
-        #region_x += [284.3]
-        #region_y += [2.7]
-        #region_r += [0.4]
-
-        region_name = ('1p0_deg','1.0 deg')
+        region_name = ('0p4_deg','0.4 deg') # MAGIC ROI
         region_x += [284.3]
         region_y += [2.7]
-        region_r += [1.0]
+        region_r += [0.4]
+
+        #region_name = ('1p0_deg','1.0 deg')
+        #region_x += [284.3]
+        #region_y += [2.7]
+        #region_r += [1.0]
 
         #region_name = ('J1858_p020','J1858+020')
         #region_x += [284.6]
@@ -2830,7 +2885,7 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
         region_name = ('1p5deg','1.5-deg diameter')
         region_x += [src_ra]
         region_y += [src_dec]
-        region_r += [0.15]
+        region_r += [1.5]
 
     else:
 
@@ -3410,8 +3465,10 @@ def build_skymap(
     #    ysky_end = src_gal_b+skymap_size
 
     print ('loading neural net... ')
-    input_filename = neuralnet_path
-    nn_model = pickle.load(open(input_filename, "rb"))
+    nn_model = []
+    for batch in range(0,len(neuralnet_path)):
+        input_filename = neuralnet_path[batch]
+        nn_model += [pickle.load(open(input_filename, "rb"))]
 
     print ('loading svd pickle data... ')
     input_filename = eigenvector_path
@@ -3445,11 +3502,11 @@ def build_skymap(
             if run>=len(mimic_runlist): continue
             if mimic_index>=len(mimic_runlist[run]): continue
             new_mimic_runlist += [mimic_runlist[run][mimic_index]]
-        big_on_exposure, big_on_matrix_fullspec, big_mask_matrix_fullspec = build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,new_mimic_runlist,max_runs=1e10,is_bkgd=True)
+        big_on_elevation, big_on_exposure, big_on_matrix_fullspec, big_mask_matrix_fullspec = build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,new_mimic_runlist,max_runs=1e10,is_bkgd=True)
     elif 'ON' in onoff:
-        big_on_exposure, big_on_matrix_fullspec, big_mask_matrix_fullspec = build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,runlist,max_runs=1e10,is_bkgd=False)
+        big_on_elevation, big_on_exposure, big_on_matrix_fullspec, big_mask_matrix_fullspec = build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,runlist,max_runs=1e10,is_bkgd=False)
     else:
-        big_on_exposure, big_on_matrix_fullspec, big_mask_matrix_fullspec = build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,runlist,max_runs=1e10,is_bkgd=True)
+        big_on_elevation, big_on_exposure, big_on_matrix_fullspec, big_mask_matrix_fullspec = build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,runlist,max_runs=1e10,is_bkgd=True)
 
     if len(big_on_matrix_fullspec)==0:
         print (f'No data. Break.')
@@ -3495,6 +3552,15 @@ def build_skymap(
                     init_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = init_xyoff_map[logE].waxis[idx_x,idx_y,gcut] * norm_cr_data/norm_cr_init
                     fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] * norm_cr_data/norm_cr_init
 
+    logE_peak = 0
+    bkgd_peak = 0.
+    for logE in range(0,logE_nbins):
+        bkgd = np.sum(fit_xyoff_map[logE].waxis[:,:,:])
+        if bkgd>bkgd_peak:
+            bkgd_peak = bkgd
+            logE_peak = logE
+    print (f'logE_peak = {logE_peak}')
+
     if not use_init:
         print ('===================================================================================')
         print ('fitting xyoff maps fullspec...')
@@ -3502,10 +3568,10 @@ def build_skymap(
         effective_matrix_rank_fullspec = big_eigenvectors_fullspec.shape[0]
         print (f"effective_matrix_rank_fullspec = {effective_matrix_rank_fullspec}")
 
-        sr_norm_truth, cr_map_1d = prepare_vector_for_neuralnet(data_xyoff_map_1d_fullspec)
+        sr_norm_truth, sr_weight_truth, cr_map_1d = prepare_vector_for_neuralnet(data_xyoff_map_1d_fullspec)
         cr_norm = np.sum(cr_map_1d)
 
-        avg_sr_norm, avg_cr_map_1d = prepare_vector_for_neuralnet(avg_xyoff_map_1d_fullspec)
+        avg_sr_norm, avg_sr_weight, avg_cr_map_1d = prepare_vector_for_neuralnet(avg_xyoff_map_1d_fullspec)
         avg_cr_norm = np.sum(avg_cr_map_1d)
 
         init_xyoff_map_1d_fullspec = np.zeros_like(big_on_matrix_fullspec[0])
@@ -3523,15 +3589,34 @@ def build_skymap(
         avg_params = big_eigenvectors_fullspec @ init_xyoff_map_1d_fullspec
         truth_params = big_eigenvectors_fullspec @ data_xyoff_map_1d_fullspec
 
+
+        total_weight = 0.
+        ls_model_weight = []
+        ls_model = []
+        ls_model_err = []
+        for batch in range(0,len(nn_model)):
+            batch_elev = nn_model[batch][0]
+            delta_elev = max(1.,abs(big_on_elevation - batch_elev))
+            weight = pow(1./delta_elev,2)
+            A = nn_model[batch][1]
+            A_err = nn_model[batch][2]
+            total_weight += weight
+            ls_model_weight += [weight]
+            ls_model += [A]
+            ls_model_err += [A_err]
+        ls_model_weight = np.array(ls_model_weight) / total_weight
+
         sr_norm_predict = []
         sr_norm_error = []
-
-        A = nn_model[0]
-        A_err = nn_model[1]
         for logE in range(0,logE_nbins):
             input_vector = cr_map_1d
-            sr_norm_predict += [input_vector @ A[logE]]
-            sr_norm_error += [input_vector @ A_err[logE]]
+            prediction = 0.
+            error = 0.
+            for batch in range(0,len(ls_model)):
+                prediction += input_vector @ ls_model[batch][logE] * ls_model_weight[batch]
+                error += input_vector @ ls_model_err[batch][logE] * ls_model_weight[batch]
+            sr_norm_predict += [prediction]
+            sr_norm_error += [error]
             print (f"sr_norm_truth = {sr_norm_truth[logE]:0.1f}, sr_norm_predict = {sr_norm_predict[logE]:0.1f}+/-{sr_norm_error[logE]:0.1f}")
 
         #with torch.no_grad():
@@ -3565,6 +3650,7 @@ def build_skymap(
             cosmic_ray_like_chi2_fullspec,
             x0=init_params,
             args=(
+                logE_peak,
                 effective_eigenvectors,
                 sr_norm_predict,
                 sr_norm_error,
@@ -3592,12 +3678,14 @@ def build_skymap(
                         fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = max(0.0,fit_xyoff_map_1d_fullspec[idx_1d-1])
                         syst_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = max(0.0,fit_xyoff_map_1d_fullspec[idx_1d-1]) * sr_norm_error[logE]/sr_norm_predict[logE]
 
-        for gcut in range(0,1):
-            for logE in range(0,logE_nbins):
-                rescale = sr_norm_predict[logE] / np.sum(fit_xyoff_map[logE].waxis[:,:,gcut])
-                for idx_x in range(0,xoff_bins[logE]):
-                    for idx_y in range(0,yoff_bins[logE]):
-                        fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] * rescale
+        #for gcut in range(0,1):
+        #    for logE in range(0,logE_nbins):
+        #        rescale = sr_norm_predict[logE] / np.sum(fit_xyoff_map[logE].waxis[:,:,gcut])
+        #        if sr_norm_predict[logE]==sr_norm_error[logE]:
+        #            rescale = 1.
+        #        for idx_x in range(0,xoff_bins[logE]):
+        #            for idx_y in range(0,yoff_bins[logE]):
+        #                fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] * rescale
 
 
     print ('===================================================================================')

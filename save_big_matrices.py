@@ -28,17 +28,17 @@ print (f'source_name = {source_name}, onoff = {onoff}, input_epoch = {input_epoc
 
 off_runlist = []
 if 'MIMIC' in onoff:
-    off_runlist = ReadOffRunListFromFile(f'{smi_runlist}/ImposterList_{source_name}_{input_epoch}.txt',f'{smi_runlist}/ImposterPairList_{source_name}_{input_epoch}.txt',int(onoff.strip('MIMIC')))
+    off_runlist = ReadOffRunListFromFile(smi_input,f'{smi_runlist}/ImposterList_{source_name}_{input_epoch}.txt',f'{smi_runlist}/ImposterPairList_{source_name}_{input_epoch}.txt',int(onoff.strip('MIMIC')))
 else:
-    off_runlist = ReadOffRunListFromFile(f'{smi_runlist}/RunList_{source_name}_{input_epoch}.txt',f'{smi_runlist}/PairList_{source_name}_{input_epoch}.txt',0)
+    off_runlist = ReadOffRunListFromFile(smi_input,f'{smi_runlist}/RunList_{source_name}_{input_epoch}.txt',f'{smi_runlist}/PairList_{source_name}_{input_epoch}.txt',0)
 
 for entry in range(0,len(off_runlist)):
-    print (f"processing batch {entry}...")
-    big_off_exposure, big_off_matrix_fullspec, big_mask_matrix_fullspec = build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,off_runlist[entry],max_runs=1e10,is_bkgd=True)
+    print (f"processing batch {entry}/{len(off_runlist)}...")
+    big_off_elevation, big_off_exposure, big_off_matrix_fullspec, big_mask_matrix_fullspec = build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,off_runlist[entry],max_runs=1e10,is_bkgd=True)
 
     output_filename = f'{smi_output}/big_off_matrix_{source_name}_{onoff}_{input_epoch}_{bin_tag}_batch{entry}.pkl'
     with open(output_filename,"wb") as file:
-        pickle.dump([big_off_exposure,big_off_matrix_fullspec], file)
+        pickle.dump([big_off_elevation,big_off_exposure,big_off_matrix_fullspec], file)
 
 
 print ('Big matrices saved.')

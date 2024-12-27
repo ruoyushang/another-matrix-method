@@ -1,4 +1,5 @@
 
+import subprocess
 import os, sys
 import ROOT
 import numpy as np
@@ -60,13 +61,21 @@ if os.path.exists(output_filename):
     print (f'{output_filename} exists, delete...')
     os.remove(output_filename)
 
-path_to_eigenvector = f'{smi_output}/eigenvectors_{source_name}_{onoff}_{input_epoch}_{bin_tag}_{sky_tag}.pkl'
+path_to_eigenvector = f'{smi_output}/model_eigenvectors_{source_name}_{onoff}_{input_epoch}_{bin_tag}_{sky_tag}.pkl'
 print (f'path_to_eigenvector = {path_to_eigenvector}')
 path_to_big_matrix = f'{smi_output}/big_off_matrix_{source_name}_{onoff}_{input_epoch}_{bin_tag}.pkl'
 print (f'path_to_big_matrix = {path_to_big_matrix}')
-#path_to_neuralnet = f'{smi_output}/neuralnet_{source_name}_{onoff}_{input_epoch}_{bin_tag}_{sky_tag}.pkl'
-path_to_neuralnet = f'{smi_output}/sr_norm_model_{source_name}_{onoff}_{input_epoch}_{bin_tag}_{sky_tag}.pkl'
-print (f'path_to_neuralnet = {path_to_neuralnet}')
+
+# Run the 'ls' command and capture its output
+result = subprocess.run(['ls',f'{smi_output}'], capture_output=True, text=True)
+# Split the output into a list by newlines
+file_list = result.stdout.splitlines()
+path_to_leastsquare_model = []
+for file in file_list:
+    if f'model_least_square_{source_name}_{onoff}_{input_epoch}_{bin_tag}_{sky_tag}' in file:
+        input_filename = f'{smi_output}/{file}'
+        path_to_leastsquare_model += [input_filename]
+        print (f'path_to_leastsquare_model = {input_filename}')
 
 if onoff=='ON' or 'MIMIC' in onoff:
     skymap_bins = fine_skymap_bins
@@ -135,8 +144,8 @@ for run in range(0,total_runs):
 
     total_exposure += (time_end-time_start)/3600.
 
-min_exposure = 0.1 # hours
-#min_exposure = 2.0 # hours
+#min_exposure = 0.1 # hours
+min_exposure = 2.0 # hours
 #min_exposure = 4.0 # hours
 #min_exposure = 10.0 # hours
 run_exposure = 0.
@@ -261,7 +270,7 @@ for small_runlist in range(0,len(big_runlist)):
             src_ra,
             src_dec,
             smi_input,
-            path_to_neuralnet,
+            path_to_leastsquare_model,
             path_to_eigenvector,
             path_to_big_matrix,
             big_runlist[small_runlist],

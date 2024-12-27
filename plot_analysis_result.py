@@ -492,7 +492,7 @@ for epoch in input_epoch:
                     logE_peak = logE
 
             for logE in range(0,logE_nbins):
-                if logE<logE_peak+1: continue
+                if logE<logE_peak: continue
                 if logE<logE_min: continue
                 if logE>logE_max: continue
 
@@ -599,7 +599,7 @@ for logE in range(logE_min,logE_max):
         plot_logE_min = logE
         break
 if plot_logE_mid<=plot_logE_min:
-    plot_logE_mid = plot_logE_min + 1
+    plot_logE_mid = plot_logE_min + 2
 
 
 print ('=================================================================================')
