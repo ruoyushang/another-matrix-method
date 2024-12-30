@@ -49,6 +49,7 @@ smi_output = os.environ.get("SMI_OUTPUT")
 smi_dir = os.environ.get("SMI_DIR")
 sky_tag = os.environ.get("SKY_TAG")
 bin_tag = os.environ.get("BIN_TAG")
+cr_tag = os.environ.get("CR_TAG")
 
 source_name = sys.argv[1]
 src_ra = float(sys.argv[2])
@@ -56,14 +57,14 @@ src_dec = float(sys.argv[3])
 onoff = sys.argv[4]
 input_epoch = sys.argv[5] # 'V4', 'V5' or 'V6'
 
-output_filename = f'{smi_output}/skymaps_{source_name}_{input_epoch}_{onoff}_{bin_tag}_{sky_tag}.pkl'
+output_filename = f'{smi_output}/skymaps_{source_name}_{input_epoch}_{onoff}_{cr_tag}_{bin_tag}_{sky_tag}.pkl'
 if os.path.exists(output_filename):
     print (f'{output_filename} exists, delete...')
     os.remove(output_filename)
 
-path_to_eigenvector = f'{smi_output}/model_eigenvectors_{source_name}_{onoff}_{input_epoch}_{bin_tag}_{sky_tag}.pkl'
+path_to_eigenvector = f'{smi_output}/model_eigenvectors_{source_name}_{onoff}_{input_epoch}_{cr_tag}_{bin_tag}_{sky_tag}.pkl'
 print (f'path_to_eigenvector = {path_to_eigenvector}')
-path_to_big_matrix = f'{smi_output}/big_off_matrix_{source_name}_{onoff}_{input_epoch}_{bin_tag}.pkl'
+path_to_big_matrix = f'{smi_output}/big_off_matrix_{source_name}_{onoff}_{input_epoch}_{cr_tag}_{bin_tag}.pkl'
 print (f'path_to_big_matrix = {path_to_big_matrix}')
 
 # Run the 'ls' command and capture its output
@@ -72,13 +73,14 @@ result = subprocess.run(['ls',f'{smi_output}'], capture_output=True, text=True)
 file_list = result.stdout.splitlines()
 path_to_leastsquare_model = []
 for file in file_list:
-    if f'model_least_square_{source_name}_{onoff}_{input_epoch}_{bin_tag}_{sky_tag}' in file:
+    if f'model_least_square_{source_name}_{onoff}_{input_epoch}_{cr_tag}_{bin_tag}_{sky_tag}' in file:
         input_filename = f'{smi_output}/{file}'
         path_to_leastsquare_model += [input_filename]
         print (f'path_to_leastsquare_model = {input_filename}')
 
-if onoff=='ON' or 'MIMIC' in onoff:
-    skymap_bins = fine_skymap_bins
+#if onoff=='ON' or 'MIMIC' in onoff:
+#    skymap_bins = fine_skymap_bins
+skymap_bins = fine_skymap_bins
 
 on_file = f'{smi_runlist}/RunList_{source_name}_{input_epoch}.txt'
 off_file = f'{smi_runlist}/PairList_{source_name}_{input_epoch}.txt'
@@ -353,7 +355,7 @@ for small_runlist in range(0,len(big_runlist)):
     print (f'total_data_sum = {total_data_sum:0.1f}, total_bkgd_sum = {total_bkgd_sum:0.1f}')
 
 
-    output_filename = f'{smi_output}/skymaps_{source_name}_{input_epoch}_{onoff}_{bin_tag}_{sky_tag}.pkl'
+    output_filename = f'{smi_output}/skymaps_{source_name}_{input_epoch}_{onoff}_{cr_tag}_{bin_tag}_{sky_tag}.pkl'
     print (f'reading {output_filename}...')
     if not os.path.exists(output_filename):
         print (f'{output_filename} does not exist, create new...')
@@ -370,7 +372,7 @@ for small_runlist in range(0,len(big_runlist)):
         del analysis_result
     print ('=================================================================================')
 
-#output_filename = f'{smi_output}/skymaps_{source_name}_{input_epoch}_{onoff}_{bin_tag}_{sky_tag}.pkl'
+#output_filename = f'{smi_output}/skymaps_{source_name}_{input_epoch}_{onoff}_{cr_tag}_{bin_tag}_{sky_tag}.pkl'
 #with open(output_filename,"wb") as file:
 #    pickle.dump(all_skymaps, file)
 

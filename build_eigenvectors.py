@@ -54,6 +54,7 @@ smi_output = os.environ.get("SMI_OUTPUT")
 smi_dir = os.environ.get("SMI_DIR")
 sky_tag = os.environ.get("SKY_TAG")
 bin_tag = os.environ.get("BIN_TAG")
+cr_tag = os.environ.get("CR_TAG")
 
 source_name = sys.argv[1]
 onoff = sys.argv[2]
@@ -69,7 +70,7 @@ file_list = result.stdout.splitlines()
 list_filename = []
 total_matrix_fullspec = []
 for k in range(0,len(file_list)):
-    if f'big_off_matrix_{source_name}_{onoff}_{input_epoch}_{bin_tag}' in file_list[k]:
+    if f'big_off_matrix_{source_name}_{onoff}_{input_epoch}_{cr_tag}_{bin_tag}' in file_list[k]:
         input_filename = f'{smi_output}/{file_list[k]}'
         print (f'input_filename = {input_filename}')
         big_matrix_pkl = pickle.load(open(input_filename, "rb"))
@@ -79,126 +80,40 @@ print (f"len(total_matrix_fullspec) = {len(total_matrix_fullspec)}")
 
 list_filename.sort(key=sortFirst)
 
-big_elevation = 0.
 big_exposure = []
 big_matrix_fullspec = []
 
 print ('loading matrix pickle data... ')
-batch_id = 0
-added_matrices = 0
 for k in range(0,len(list_filename)):
-    if f'big_off_matrix_{source_name}_{onoff}_{input_epoch}_{bin_tag}' in list_filename[k][1]:
+    if f'big_off_matrix_{source_name}_{onoff}_{input_epoch}_{cr_tag}_{bin_tag}' in list_filename[k][1]:
         input_filename = f'{list_filename[k][1]}'
         print (f'input_filename = {input_filename}')
         big_matrix_pkl = pickle.load(open(input_filename, "rb"))
 
-        big_elevation += big_matrix_pkl[0] * np.sum(np.array(big_matrix_pkl[1]))
-        big_exposure += big_matrix_pkl[1]
-        big_matrix_fullspec += big_matrix_pkl[2]
-        added_matrices += len(big_matrix_pkl[2])
-        print (f"len(total_matrix_fullspec) = {len(total_matrix_fullspec)}, added_matrices = {added_matrices}")
+        onrun_elev = big_matrix_pkl[0]
+        list_offrun_expo = big_matrix_pkl[1]
+        list_offrun_matrix = big_matrix_pkl[2]
+        if len(list_offrun_matrix)==0:
+            continue
 
-    save_batch = False
-    if len(total_matrix_fullspec)-added_matrices==0:
-        save_batch = True
-    #if len(big_matrix_fullspec)>5*n_params:
-    #    if len(total_matrix_fullspec)-added_matrices==0:
-    #        save_batch = True
-    #    elif len(total_matrix_fullspec)-added_matrices<5*n_params:
-    #        save_batch = False
-    #    else:
-    #        save_batch = True
-    #else:
-    #    if len(total_matrix_fullspec)-added_matrices==0:
-    #        save_batch = True
+        #big_exposure += list_offrun_expo
+        #big_matrix_fullspec += list_offrun_matrix
 
-    if save_batch:
-        batch_id += 1
+        sum_offrun_expo = 0.
+        sum_offrun_matrix = np.zeros_like(list_offrun_matrix[0])
+        for offrun in range(0,len(list_offrun_expo)):
+            sum_offrun_expo += list_offrun_expo[offrun]
+            sum_offrun_matrix += list_offrun_matrix[offrun]
+        big_exposure += [sum_offrun_expo]
+        big_matrix_fullspec += [sum_offrun_matrix]
 
-        big_matrix_fullspec = np.array(big_matrix_fullspec)
-        
-        delete_entries = []
-        for entry in range(0,len(big_matrix_fullspec)):
-            norm = np.sum(big_matrix_fullspec[entry])
-            if norm<200.:
-                delete_entries += [entry]
-        
-        new_matrix_fullspec = []
-        for entry in range(0,len(big_matrix_fullspec)):
-            if entry in delete_entries: continue
-            norm = big_exposure[entry]
-            new_matrix_fullspec += [big_matrix_fullspec[entry]/norm]
-        new_matrix_fullspec = np.array(new_matrix_fullspec)
-        
-        
-        # Train a neural net to predict SR normalization
-        
-        list_sr_norm = []
-        list_sr_weight = []
-        list_cr_map_1d = []
-        for entry in range(0,len(big_matrix_fullspec)):
-            if entry in delete_entries: continue
-            norm = big_exposure[entry]
-            sr_norm, sr_weight, cr_map_1d = prepare_vector_for_neuralnet(big_matrix_fullspec[entry]/norm)
-            cr_norm = np.sum(cr_map_1d)
-            #list_sr_norm += [sr_norm/cr_norm]
-            #list_sr_weight += [[1. for logE in range(0,logE_nbins)]]
-            #list_cr_map_1d += [cr_map_1d/cr_norm]
-            list_sr_norm += [sr_norm]
-            list_sr_weight += [[1. for logE in range(0,logE_nbins)]]
-            list_cr_map_1d += [cr_map_1d]
-        list_sr_norm = np.array(list_sr_norm)
-        list_sr_weight = np.array(list_sr_weight)
-        list_cr_map_1d = np.array(list_cr_map_1d)
-        print (f"list_sr_norm.shape = {list_sr_norm.shape}")
-        print (f"list_sr_weight.shape = {list_sr_weight.shape}")
-        print (f"list_cr_map_1d.shape = {list_cr_map_1d.shape}")
-
-        big_elevation = big_elevation / np.sum(np.array(big_exposure))
-        print (f"big_elevation = {big_elevation}")
-        
-        model = []
-        model_err = []
-        for logE in range(0,logE_nbins):
-            A, A_err = weighted_least_square_solution(list_cr_map_1d,list_sr_norm.T[logE],list_sr_weight.T[logE],plot_tag=f'{source_name}_{onoff}_{input_epoch}_{bin_tag}_{sky_tag}_logE{logE}_batch{batch_id}')
-            model += [A]
-            model_err += [A_err]
-        output_filename = f'{smi_output}/model_least_square_{source_name}_{onoff}_{input_epoch}_{bin_tag}_{sky_tag}_batch{batch_id}.pkl'
-        with open(output_filename, "wb") as file:
-            pickle.dump([big_elevation,model,model_err], file)
-        
-        #output_filename = f'{smi_output}/sr_norm_model_{source_name}_{onoff}_{input_epoch}_{bin_tag}_{sky_tag}.pkl'
-        #make_neuralnet_model(list_cr_map_1d, list_sr_norm, output_filename)
-
-        big_elevation = 0.
-        big_exposure = []
-        big_matrix_fullspec = []
-
-    if len(total_matrix_fullspec)-added_matrices==0:
-        break
-
-        
-        
-print ('Computing SVD eigenvectors...')
-        
-big_exposure = []
-big_matrix_fullspec = []
-
-print ('loading matrix pickle data... ')
-for k in range(0,len(file_list)):
-    if f'big_off_matrix_{source_name}_{onoff}_{input_epoch}_{bin_tag}' in file_list[k]:
-        input_filename = f'{smi_output}/{file_list[k]}'
-        print (f'input_filename = {input_filename}')
-        big_matrix_pkl = pickle.load(open(input_filename, "rb"))
-        big_exposure += big_matrix_pkl[1]
-        big_matrix_fullspec += big_matrix_pkl[2]
 
 big_matrix_fullspec = np.array(big_matrix_fullspec)
 
 delete_entries = []
 for entry in range(0,len(big_matrix_fullspec)):
     norm = np.sum(big_matrix_fullspec[entry])
-    if norm<1000.:
+    if norm<200.:
         delete_entries += [entry]
 
 new_matrix_fullspec = []
@@ -209,11 +124,48 @@ for entry in range(0,len(big_matrix_fullspec)):
 new_matrix_fullspec = np.array(new_matrix_fullspec)
 
 
-big_xyoff_map_1d_fullspec = np.zeros_like(new_matrix_fullspec[0])
+# Train a neural net to predict SR normalization
+
+list_sr_norm = []
+list_sr_weight = []
+list_cr_map_1d = []
+for entry in range(0,len(big_matrix_fullspec)):
+    if entry in delete_entries: continue
+    norm = big_exposure[entry]
+    sr_norm, sr_weight, cr_map_1d = prepare_vector_for_neuralnet(big_matrix_fullspec[entry]/norm)
+    list_sr_norm += [sr_norm/norm]
+    list_sr_weight += [[1. for logE in range(0,logE_nbins)]]
+    list_cr_map_1d += [cr_map_1d/norm]
+list_sr_norm = np.array(list_sr_norm)
+list_sr_weight = np.array(list_sr_weight)
+list_cr_map_1d = np.array(list_cr_map_1d)
+print (f"list_sr_norm.shape = {list_sr_norm.shape}")
+print (f"list_sr_weight.shape = {list_sr_weight.shape}")
+print (f"list_cr_map_1d.shape = {list_cr_map_1d.shape}")
+
+
+model = []
+model_err = []
+for logE in range(0,logE_nbins):
+    A, A_err = weighted_least_square_solution(list_cr_map_1d,list_sr_norm.T[logE],list_sr_weight.T[logE],plot_tag=f'{source_name}_{onoff}_{input_epoch}_{cr_tag}_{bin_tag}_{sky_tag}_logE{logE}')
+    model += [A]
+    model_err += [A_err]
+output_filename = f'{smi_output}/model_least_square_{source_name}_{onoff}_{input_epoch}_{cr_tag}_{bin_tag}_{sky_tag}.pkl'
+with open(output_filename, "wb") as file:
+    pickle.dump([model,model_err], file)
+
+#output_filename = f'{smi_output}/sr_norm_model_{source_name}_{onoff}_{input_epoch}_{cr_tag}_{bin_tag}_{sky_tag}.pkl'
+#make_neuralnet_model(list_cr_map_1d, list_sr_norm, output_filename)
+        
+        
+print ('Computing SVD eigenvectors...')
+        
+
+avg_xyoff_map_1d_fullspec = np.zeros_like(new_matrix_fullspec[0])
 
 for entry in range(0,len(new_matrix_fullspec)):
     for pix in range(0,len(new_matrix_fullspec[entry])):
-        big_xyoff_map_1d_fullspec[pix] += new_matrix_fullspec[entry][pix]
+        avg_xyoff_map_1d_fullspec[pix] += new_matrix_fullspec[entry][pix]
 
 U_full, S_full, VT_full = np.linalg.svd(new_matrix_fullspec,full_matrices=False) # perform better for perturbation method
 print (f'new_matrix_fullspec.shape = {new_matrix_fullspec.shape}')
@@ -307,9 +259,9 @@ for rank in range(0,max_matrix_rank):
     fig.savefig(f'output_plots/fullspec_eigenmap_{source_name}_{input_epoch}_rank{rank}_tanspose',bbox_inches='tight')
     axbig.remove()
 
-output_filename = f'{smi_output}/model_eigenvectors_{source_name}_{onoff}_{input_epoch}_{bin_tag}_{sky_tag}.pkl'
+output_filename = f'{smi_output}/model_eigenvectors_{source_name}_{onoff}_{input_epoch}_{cr_tag}_{bin_tag}_{sky_tag}.pkl'
 with open(output_filename,"wb") as file:
-    pickle.dump([big_eigenvalues_fullspec,big_eigenvectors_fullspec,big_xyoff_map_1d_fullspec], file)
+    pickle.dump([big_eigenvalues_fullspec,big_eigenvectors_fullspec,avg_xyoff_map_1d_fullspec], file)
 
 
 print ('SVD eigenvectors saved.')

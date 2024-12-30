@@ -18,6 +18,7 @@ smi_output = os.environ.get("SMI_OUTPUT")
 smi_dir = os.environ.get("SMI_DIR")
 sky_tag = os.environ.get("SKY_TAG")
 bin_tag = os.environ.get("BIN_TAG")
+cr_tag = os.environ.get("CR_TAG")
 
 source_name = sys.argv[1]
 src_ra = float(sys.argv[2])
@@ -36,7 +37,7 @@ for entry in range(0,len(off_runlist)):
     print (f"processing batch {entry}/{len(off_runlist)}...")
     big_off_elevation, big_off_exposure, big_off_matrix_fullspec, big_mask_matrix_fullspec = build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,off_runlist[entry],max_runs=1e10,is_bkgd=True)
 
-    output_filename = f'{smi_output}/big_off_matrix_{source_name}_{onoff}_{input_epoch}_{bin_tag}_batch{entry}.pkl'
+    output_filename = f'{smi_output}/big_off_matrix_{source_name}_{onoff}_{input_epoch}_{cr_tag}_{bin_tag}_batch{entry}.pkl'
     with open(output_filename,"wb") as file:
         pickle.dump([big_off_elevation,big_off_exposure,big_off_matrix_fullspec], file)
 

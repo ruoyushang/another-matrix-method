@@ -77,7 +77,9 @@ for logE in range(0,logE_nbins):
 zoomin = 1.0
 #zoomin = 0.5
 
-ana_tag = 'nbin7'
+ana_tag = 'cr15'
+
+ana_tag += '_nbin7'
 
 #ana_tag += '_init'
 #ana_tag += '_fullspec1'
@@ -119,8 +121,8 @@ logE_max = logE_nbins
 fit_radial_profile = False
 radial_bin_scale = 0.1
 
-#include_syst_error = True
-include_syst_error = False
+include_syst_error = True
+#include_syst_error = False
 #normalize_map = True
 normalize_map = False
 
@@ -421,11 +423,6 @@ for epoch in input_epoch:
                 mimic_index = int(mode.strip('MIMIC'))
                 mimic_exposure[mimic_index-1] += exposure
 
-            is_good_run = True
-            if not is_good_run: 
-                print (f'bad fitting. reject the run.')
-                continue
-
             incl_sky_map = analysis_result[run][1] 
             data_sky_map = analysis_result[run][2] 
             bkgd_sky_map = analysis_result[run][3] 
@@ -433,6 +430,26 @@ for epoch in input_epoch:
             data_xyoff_map = analysis_result[run][5]
             fit_xyoff_map = analysis_result[run][6]
             ratio_xyoff_map = analysis_result[run][7]
+
+            print ("=========================================================================")
+            print (f"run = {run}")
+            sum_bkgd = 0.
+            sum_syst = 0.
+            for logE in range(0,logE_nbins):
+                data = np.sum(data_sky_map[logE].waxis[:,:,:])
+                bkgd = np.sum(bkgd_sky_map[logE].waxis[:,:,:])
+                syst = np.sum(syst_sky_map[logE].waxis[:,:,:])
+                sum_bkgd += bkgd
+                sum_syst += syst
+                print (f"logE = {logE}, data = {data}, bkgd = {bkgd:0.1f}, diff = {data-bkgd:0.1f}, syst = {syst:0.1f}")
+
+            if sum_bkgd==0.:
+                print (f'bad fitting. reject the run.')
+                continue
+            if sum_syst/sum_bkgd>0.1:
+                print (f'bad fitting. reject the run.')
+                continue
+
 
             #for logE in range(0,logE_nbins):
             #    correlation = 0.

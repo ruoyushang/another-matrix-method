@@ -22,6 +22,7 @@ from astropy.coordinates import SkyCoord
 from astropy.coordinates import ICRS, Galactic, FK4, FK5  # Low-level frames
 from astropy.table import Table
 
+cr_tag = os.environ.get("CR_TAG")
 bin_tag = os.environ.get("BIN_TAG")
 sky_tag = os.environ.get("SKY_TAG")
 smi_output = os.environ.get("SMI_OUTPUT")
@@ -49,6 +50,7 @@ gcut_start = 0
 gcut_end = gcut_bins
 gcut_weight = [1.] * gcut_bins
 gcut_weight[0] = 0.
+cr_gcut = 1.5
 
 #logE_bins = [-0.70,-0.60,-0.50,-0.40,-0.25,0.00,0.25,0.50,0.75,1.0,1.5] # logE TeV
 #logE_bins = [-0.90,-0.80,-0.70,-0.60,-0.50,-0.40,-0.25,0.00,0.25,0.50,0.75,1.00,1.25] # logE TeV
@@ -63,7 +65,7 @@ MSCL_cut = [0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70]
 str_flux_calibration = ['2.51e+03', '2.85e+03', '2.53e+03', '3.20e+03', '8.51e+03', '2.51e+04', '1.14e+05', '3.70e+05', '1.09e+06']
 
 skymap_size = 3.
-skymap_bins = 30
+skymap_bins = 31
 fine_skymap_bins = 120
 
 #doFluxCalibration = True
@@ -90,6 +92,8 @@ if 'fullspec' in sky_tag:
 if 'nbin' in bin_tag:
     xyoff_map_nbins = int(bin_tag.strip('nbin'))
 
+if 'cr' in cr_tag:
+    cr_gcut = float(cr_tag.strip('cr'))/10.
 
 #xoff_bins = [7,7,7,7,5,3,1,1,1]
 xoff_bins = [xyoff_map_nbins for logE in range(0,logE_nbins)]
@@ -275,7 +279,7 @@ def ReadOffRunListFromFile(smi_input,input_onlist_file, input_offlist_file, mimi
     #on_runlist_elev.sort(key=sortFirst)
     random.shuffle(on_runlist_elev)
 
-    runs_per_batch = 20
+    runs_per_batch = 1
     on_runlist_sorted = []
     small_runlist = []
     run_count = 0
@@ -291,15 +295,20 @@ def ReadOffRunListFromFile(smi_input,input_onlist_file, input_offlist_file, mimi
         if len(on_runlist_elev)-1-run<=runs_per_batch:
             runs_per_batch = 1e10
 
+    off_runs_per_batch = 1000
     off_runlist = [[] for i in range(0,len(on_runlist_sorted))]
+    off_run_count = [0 for i in range(0,len(on_runlist_sorted))]
     for line in offlist_file:
         line_split = line.split()
         on_runnumber = int(line_split[0])
         off_runnumber = int(line_split[1])
         for batch in range(0,len(on_runlist_sorted)):
+            if off_run_count[batch]==off_runs_per_batch:
+                continue
             for run in range(0,len(on_runlist_sorted[batch])):
                 if on_runnumber==on_runlist_sorted[batch][run]:
                     off_runlist[batch] += [off_runnumber]
+                    off_run_count[batch] += 1
 
     print (f'on_runlist = {on_runlist}')
     print (f'off_runlist = {off_runlist}')
@@ -648,9 +657,9 @@ def EventGammaCut(MSCL,MSCW):
     if gcut_bins==3:
         if abs(MSCL)<1. and abs(MSCW)<1.:
             GammaCut = 0.5
-        elif abs(MSCL)<1. and abs(MSCW)<2.:
+        elif abs(MSCL)<1. and abs(MSCW)<cr_gcut:
             GammaCut = 1.5
-        elif abs(MSCL)<2. and abs(MSCW)<1.:
+        elif abs(MSCL)<cr_gcut and abs(MSCW)<1.:
             GammaCut = 2.5
 
     if gcut_bins==4:
@@ -666,13 +675,13 @@ def EventGammaCut(MSCL,MSCW):
     if gcut_bins==5:
         if abs(MSCL)<1. and abs(MSCW)<1.:
             GammaCut = 0.5
-        elif abs(MSCL)<1. and abs(MSCW)<2.:
+        elif abs(MSCL)<1. and abs(MSCW)<1.5:
             GammaCut = 1.5
-        elif abs(MSCL)<1. and abs(MSCW)<3.:
+        elif abs(MSCL)<1. and abs(MSCW)<2.:
             GammaCut = 2.5
-        elif abs(MSCL)<1. and abs(MSCW)<4.:
+        elif abs(MSCL)<1. and abs(MSCW)<2.5:
             GammaCut = 3.5
-        elif abs(MSCL)<1. and abs(MSCW)<5.:
+        elif abs(MSCL)<1. and abs(MSCW)<3.:
             GammaCut = 4.5
 
 
@@ -890,7 +899,6 @@ def residual_correction_fullspec(
 
 def cosmic_ray_like_chi2_fullspec(
         try_params,
-        logE_peak,
         eigenvectors,
         sr_norm,
         sr_norm_err,
@@ -900,13 +908,21 @@ def cosmic_ray_like_chi2_fullspec(
         region_type,
     ):
 
+    sum_log_likelihood = 0.
+
     try_params = np.array(try_params)
-    #try_xyoff_map = eigenvectors.T @ try_params + init_xyoff_map
     try_xyoff_map = eigenvectors.T @ try_params
+    #try_xyoff_map = eigenvectors.T @ try_params + init_xyoff_map
 
     init_params = eigenvectors @ init_xyoff_map
 
-    sum_log_likelihood = 0.
+    #init_chi2 = 0.
+    #init_norm = np.sum(np.abs(init_params))
+    #try_norm = np.sum(np.abs(try_params))
+    #for entry in range(0,len(try_params)):
+    #    init_chi2 += pow(try_params[entry]-init_params[entry]/init_norm*try_norm,2) / abs(init_params[entry])
+    #sum_log_likelihood += init_chi2
+
     idx_1d = 0
     sum_weight = 0.
     for gcut in range(0,gcut_bins):
@@ -919,9 +935,6 @@ def cosmic_ray_like_chi2_fullspec(
                     init = init_xyoff_map[idx_1d-1]
                     mask = mask_xyoff_map[idx_1d-1]
                     weight = gcut_weight[gcut]
-
-                    #if logE<=logE_peak:
-                    #    weight = weight * 0.1
 
                     #if mask>0.:
                     #    weight = 0.
@@ -980,7 +993,6 @@ def cosmic_ray_like_chi2_fullspec(
                 if n_data_gcut==n_data_err_gcut:
                     weight_gut = 0.
             else:
-                #weight_gut = gcut_weight[gcut]
                 weight_gut = 0.
 
             #sum_log_likelihood += pow(n_expect_gcut-n_data_gcut,2)/pow(n_data_err_gcut,2) * weight_gut
@@ -3569,13 +3581,8 @@ def build_skymap(
         print (f"effective_matrix_rank_fullspec = {effective_matrix_rank_fullspec}")
 
         sr_norm_truth, sr_weight_truth, cr_map_1d = prepare_vector_for_neuralnet(data_xyoff_map_1d_fullspec)
-        cr_norm = np.sum(cr_map_1d)
-
-        avg_sr_norm, avg_sr_weight, avg_cr_map_1d = prepare_vector_for_neuralnet(avg_xyoff_map_1d_fullspec)
-        avg_cr_norm = np.sum(avg_cr_map_1d)
 
         init_xyoff_map_1d_fullspec = np.zeros_like(big_on_matrix_fullspec[0])
-        #init_xyoff_map_1d_fullspec += avg_xyoff_map_1d_fullspec/avg_cr_norm*cr_norm
         idx_1d = 0
         for gcut in range(0,gcut_bins):
             for logE in range(0,logE_nbins):
@@ -3595,11 +3602,9 @@ def build_skymap(
         ls_model = []
         ls_model_err = []
         for batch in range(0,len(nn_model)):
-            batch_elev = nn_model[batch][0]
-            delta_elev = max(1.,abs(big_on_elevation - batch_elev))
-            weight = pow(1./delta_elev,2)
-            A = nn_model[batch][1]
-            A_err = nn_model[batch][2]
+            weight = 1.
+            A = nn_model[batch][0]
+            A_err = nn_model[batch][1]
             total_weight += weight
             ls_model_weight += [weight]
             ls_model += [A]
@@ -3650,7 +3655,6 @@ def build_skymap(
             cosmic_ray_like_chi2_fullspec,
             x0=init_params,
             args=(
-                logE_peak,
                 effective_eigenvectors,
                 sr_norm_predict,
                 sr_norm_error,
@@ -3842,14 +3846,15 @@ def build_skymap(
 
             Xsky = RA
             Ysky = DEC
-            #print (f'RA = {RA:0.2f}, TelRAJ2000 + Xderot = {TelRAJ2000 + Xderot:0.2f}')
-            #print (f'DEC = {DEC:0.2f}, TelDecJ2000 + Yderot = {TelDecJ2000 + Yderot:0.2f}')
             if 'MIMIC' in onoff:
                 Xsky = TelRAJ2000 + Xderot
                 Ysky = TelDecJ2000 + Yderot
 
-            if onoff=='OFF':
-                found_gamma_source = CoincideWithBrightStars(Xsky, Ysky, gamma_source_coord)
+            #if onoff=='OFF':
+            #    found_gamma_source = CoincideWithBrightStars(Xsky, Ysky, gamma_source_coord)
+            #    if found_gamma_source: continue
+            if 'MIMIC' in onoff:
+                found_gamma_source = CoincideWithBrightStars(RA, DEC, gamma_source_coord)
                 if found_gamma_source: continue
 
             if coordinate_type == 'galactic':

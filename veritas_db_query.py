@@ -15,11 +15,11 @@ import numpy as np
 
 all_runs_info = []
 
-output_dir = 'output_vts_query_20241226'
+output_dir = 'output_vts_query_20241228'
 input_range_elev = 10.
 input_range_azim = 0.20
-input_range_nsb = 1.0
-input_range_runnum = 5000.
+input_range_nsb = 2.0
+input_range_runnum = 20000.
 find_imposter = False
 
 def ReadLhaasoListFromFile():
@@ -1019,7 +1019,6 @@ def list_for_eventdisplay(all_lists,obs_name):
 def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_range,list_on_run_ids,is_imposter,file_name):
 
     global all_runs_info
-    random.shuffle(all_runs_info)
 
     list_on_run_nmatch = []
     list_off_run_ids = []
@@ -1039,7 +1038,7 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
     require_nmatch = 5
     if not is_imposter:
         #require_nmatch = 3
-        require_nmatch = 10
+        require_nmatch = 5
 
     # setup database connection
     dbcnx=pymysql.connect(host='romulus.ucsc.edu', db='VERITAS', user='readonly', cursorclass=pymysql.cursors.DictCursor)
@@ -1082,6 +1081,7 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
         number_off_runs = 0
 
         print (f"finding match {on_run}/{len(list_on_run_ids)}...")
+        random.shuffle(all_runs_info)
 
         for run in range(0,len(all_runs_info)):
 
@@ -1089,8 +1089,8 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
 
             if all_runs_info[run][0]==list_on_run_ids[on_run]: continue
 
-            #if abs(all_runs_info[run][0]-list_on_run_ids[on_run])>40000: continue
-            if not 'ImposterPairList' in file_name:
+            #if not 'ImposterList' in file_name:
+            if file_name=='ImposterList':
                 already_used = False
                 for off_run in range(0,len(list_off_run_ids)):
                     if all_runs_info[run][0]==list_off_run_ids[off_run][1]: already_used = True
@@ -1121,8 +1121,8 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
             off_run_nsb = all_runs_info[run][5]
             
 
-            #delta_azim = math.cos(off_run_az*math.pi/180.)-math.cos(on_run_az*math.pi/180.)
-            delta_azim = 1. - math.cos((off_run_az-on_run_az)*math.pi/180.)
+            delta_azim = math.cos(off_run_az*math.pi/180.)-math.cos(on_run_az*math.pi/180.)
+            #delta_azim = 1. - math.cos((off_run_az-on_run_az)*math.pi/180.)
 
             #delta_elev = (1./math.sin(off_run_el*math.pi/180.)-1./math.sin(on_run_el*math.pi/180.));
             #delta_elev = 1. - math.cos((off_run_el-on_run_el)*math.pi/180.)
@@ -1157,16 +1157,16 @@ def find_off_runs_around_source(obs_name,obs_ra,obs_dec,epoch,obs_type,elev_rang
             if abs(delta_runnum)>1.*range_runnum: continue
             if abs(delta_azim)>1.*range_azim: continue
 
-            if first_key=='nsb':
-                if total_nsb_diff>0.:
-                    if delta_nsb>0.: continue
-                else:
-                    if delta_nsb<0.: continue
             if first_key=='elev':
                 if total_elev_diff>0.:
                     if delta_elev>0.: continue
                 else:
                     if delta_elev<0.: continue
+            if first_key=='nsb':
+                if total_nsb_diff>0.:
+                    if delta_nsb>0.: continue
+                else:
+                    if delta_nsb<0.: continue
             #if first_key=='azim':
             #    if total_azim_diff>0.:
             #        if delta_azim>0.: continue

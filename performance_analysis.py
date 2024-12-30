@@ -50,13 +50,13 @@ ana_tag = []
 #ana_tag += [['fullspec','b']]
 
 #ana_tag += [['init','r']]
-#ana_tag += [['nbin7_fullspec1','r']]
-#ana_tag += [['nbin7_fullspec2','w']]
-#ana_tag += [['nbin7_fullspec4','b']]
-#ana_tag += [['nbin7_fullspec8','b']]
-ana_tag += [['nbin7_fullspec16','b']]
-#ana_tag += [['nbin7_fullspec32','w']]
-#ana_tag += [['nbin7_fullspec64','w']]
+#ana_tag += [['cr15_nbin7_fullspec1','r']]
+#ana_tag += [['cr15_nbin7_fullspec2','w']]
+#ana_tag += [['cr15_nbin7_fullspec4','b']]
+#ana_tag += [['cr15_nbin7_fullspec8','b']]
+ana_tag += [['cr15_nbin7_fullspec16','b']]
+#ana_tag += [['cr15_nbin7_fullspec32','w']]
+#ana_tag += [['cr15_nbin7_fullspec64','w']]
 
 onoff = 'OFF'
 
@@ -110,6 +110,9 @@ input_sources += [ ['1ES1959_p650'          ,300.00 ,65.15 ] ]
 #input_sources += [ ['CrabNebula_1p0wobble' ,83.633  ,22.014 ] ]
 #input_sources += [ ['CrabNebula_1p5wobble' ,83.633  ,22.014 ] ]
 
+src_keys = []
+for src in input_sources:
+    src_keys += [src[0]]
 
 print (f"smi_output = {smi_output}")
 print (f"exposure_per_group = {exposure_per_group} hrs")
@@ -119,6 +122,7 @@ for ana in range(0,len(ana_tag)):
     group_data = []
     current_exposure = 0.
     total_exposure = 0.
+    expo_dict = dict.fromkeys(src_keys, 0.)  # Initializes all values to 0.
     
     run_data = []
     for epoch in input_epoch:
@@ -171,6 +175,8 @@ for ana in range(0,len(ana_tag)):
                     continue
                 if run_elev>max_elev:
                     continue
+                
+                expo_dict[source_name] += exposure
 
                 total_exposure += exposure
                 current_exposure += exposure
@@ -184,6 +190,7 @@ for ana in range(0,len(ana_tag)):
                     group_data += [run_data]
 
     analysis_data += [group_data]
+    print (f"expo_dict = {expo_dict}")
     print (f"Anaysis: {ana_tag[ana][0]}, total_exposure = {total_exposure:0.1f} hrs")
     
 grp_data_map = []
