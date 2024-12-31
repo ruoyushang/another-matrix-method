@@ -78,9 +78,8 @@ for file in file_list:
         path_to_leastsquare_model += [input_filename]
         print (f'path_to_leastsquare_model = {input_filename}')
 
-#if onoff=='ON' or 'MIMIC' in onoff:
-#    skymap_bins = fine_skymap_bins
-skymap_bins = fine_skymap_bins
+if onoff=='ON' or 'MIMIC' in onoff:
+    skymap_bins = fine_skymap_bins
 
 on_file = f'{smi_runlist}/RunList_{source_name}_{input_epoch}.txt'
 off_file = f'{smi_runlist}/PairList_{source_name}_{input_epoch}.txt'
@@ -98,6 +97,12 @@ if coordinate_type == 'galactic':
     xsky_end = src_gal_l-skymap_size
     ysky_start = src_gal_b-skymap_size
     ysky_end = src_gal_b+skymap_size
+
+if onoff=='OFF':
+    xsky_start = 2.0
+    xsky_end = -2.0
+    ysky_start = 2.0
+    ysky_end = -2.0
 
 print (f"xsky_start = {xsky_start}, xsky_end = {xsky_end}, ysky_start = {ysky_start}, ysky_end = {ysky_end}")
 

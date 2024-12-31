@@ -50,18 +50,16 @@ ana_tag = []
 #ana_tag += [['fullspec','b']]
 
 #ana_tag += [['init','r']]
-#ana_tag += [['cr15_nbin7_fullspec1','r']]
-#ana_tag += [['cr15_nbin7_fullspec2','w']]
-#ana_tag += [['cr15_nbin7_fullspec4','b']]
-#ana_tag += [['cr15_nbin7_fullspec8','b']]
 ana_tag += [['cr15_nbin7_fullspec16','b']]
-#ana_tag += [['cr15_nbin7_fullspec32','w']]
-#ana_tag += [['cr15_nbin7_fullspec64','w']]
+ana_tag += [['cr20_nbin7_fullspec16','b']]
 
 onoff = 'OFF'
 
-exposure_per_group = 2.
-#exposure_per_group = 4.
+#use_camera_frame = True
+use_camera_frame = False
+
+#exposure_per_group = 2.
+exposure_per_group = 4.
 #exposure_per_group = 10.
 #exposure_per_group = 20.
 #exposure_per_group = 50.
@@ -180,8 +178,10 @@ for ana in range(0,len(ana_tag)):
 
                 total_exposure += exposure
                 current_exposure += exposure
-                run_data += [[exposure,run_elev,run_nsb,data_xyoff_map,bkgd_xyoff_map]] # gamma-ray sources are not filtered in xyoff maps
-                #run_data += [[exposure,run_elev,run_nsb,data_sky_map,bkgd_sky_map]]
+                if use_camera_frame:
+                    run_data += [[exposure,run_elev,run_nsb,data_xyoff_map,bkgd_xyoff_map]]
+                else:
+                    run_data += [[exposure,run_elev,run_nsb,data_sky_map,bkgd_sky_map]]
 
                 #if current_exposure>exposure_per_group or run==len(analysis_result)-1:
                 if current_exposure>exposure_per_group:
@@ -190,14 +190,20 @@ for ana in range(0,len(ana_tag)):
                     group_data += [run_data]
 
     analysis_data += [group_data]
-    print (f"expo_dict = {expo_dict}")
+    for src in range(0,len(src_keys)):
+        src_name = src_keys[src]
+        print (f"{src_name}, {expo_dict[src_name]:0.1f} hrs")
     print (f"Anaysis: {ana_tag[ana][0]}, total_exposure = {total_exposure:0.1f} hrs")
     
 grp_data_map = []
 grp_bkgd_map = []
 for logE in range(0,logE_nbins):
-    grp_data_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
-    grp_bkgd_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+    if use_camera_frame:
+        grp_data_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
+        grp_bkgd_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
+    else:
+        grp_data_map += [MyArray3D(x_bins=skymap_bins,start_x=xoff_start,end_x=xoff_end,y_bins=skymap_bins,start_y=yoff_start,end_y=yoff_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
+        grp_bkgd_map += [MyArray3D(x_bins=skymap_bins,start_x=xoff_start,end_x=xoff_end,y_bins=skymap_bins,start_y=yoff_start,end_y=yoff_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
 
 list_elev = []
 list_nsb = []
@@ -275,7 +281,7 @@ for ana in range(0,len(analysis_data)):
                 for biny in range (0,nbins_y):
                     data = grp_data_map[logE].waxis[binx,biny,0]
                     #bkgd = grp_bkgd_map[logE].waxis[binx,biny,0]
-                    bkgd = grp_bkgd_map[logE].waxis[binx,biny,0] *grp_data_count[logE] / grp_bkgd_count[logE]
+                    bkgd = grp_bkgd_map[logE].waxis[binx,biny,0] * grp_data_count[logE] / grp_bkgd_count[logE]
                     sum_data += data
                     significance = significance_li_and_ma(data, bkgd, 0.)
                     correlation += 2.*(data*bkgd)

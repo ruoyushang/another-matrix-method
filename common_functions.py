@@ -65,15 +65,15 @@ MSCL_cut = [0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70]
 str_flux_calibration = ['2.51e+03', '2.85e+03', '2.53e+03', '3.20e+03', '8.51e+03', '2.51e+04', '1.14e+05', '3.70e+05', '1.09e+06']
 
 skymap_size = 3.
-skymap_bins = 31
+skymap_bins = 60
 fine_skymap_bins = 120
 
 #doFluxCalibration = True
 doFluxCalibration = False
 calibration_radius = 0.15 # need to be larger than the PSF and smaller than the integration radius
 
-#coordinate_type = 'galactic'
-coordinate_type = 'icrs'
+coordinate_type = 'galactic'
+#coordinate_type = 'icrs'
 
 use_poisson_likelihood = True
 use_fullspec = True
@@ -564,7 +564,7 @@ def GetGammaSources(tele_point_ra, tele_point_dec):
         star_ra = float(line_split[0])
         star_dec = float(line_split[1])
         distance = pow(pow(star_ra-tele_point_ra,2)+pow(star_dec-tele_point_dec,2),0.5)
-        if distance>2.: continue
+        if distance>3.: continue
         #print (f'{line_split}')
         bright_stars_coord += [[star_ra,star_dec]]
     #print (f'Found {len(bright_stars_coord)} Gamma-ray sources.')
@@ -993,7 +993,7 @@ def cosmic_ray_like_chi2_fullspec(
                 if n_data_gcut==n_data_err_gcut:
                     weight_gut = 0.
             else:
-                weight_gut = 0.
+                weight_gut = 1.
 
             #sum_log_likelihood += pow(n_expect_gcut-n_data_gcut,2)/pow(n_data_err_gcut,2) * weight_gut
             if n_data_gcut==0.:
@@ -1759,7 +1759,7 @@ def PlotCountProjection(fig,label_z,logE_min,logE_max,hist_map_data,hist_map_bkg
     lable_energy_range = f'E = {E_min:0.2f}-{E_max:0.2f} TeV'
     txt = axTemperature.text(xmax-0.14, ymax-0.21, lable_energy_range, fontdict=font)
 
-    fig.savefig(f'output_plots/{plotname}_count.png',bbox_inches='tight')
+    fig.savefig(f'output_plots/count_{plotname}.png',bbox_inches='tight')
 
 
     # Set up the geometry of the three plots
@@ -1835,7 +1835,7 @@ def PlotCountProjection(fig,label_z,logE_min,logE_max,hist_map_data,hist_map_bkg
     lable_energy_range = f'E = {E_min:0.2f}-{E_max:0.2f} TeV'
     txt = axTemperature.text(xmax-0.14, ymax-0.21, lable_energy_range, fontdict=font)
 
-    fig.savefig(f'output_plots/{plotname}_significance.png',bbox_inches='tight')
+    fig.savefig(f'output_plots/significance_{plotname}.png',bbox_inches='tight')
 
 
     fig.clf()
@@ -1911,11 +1911,11 @@ def PlotCountProjection(fig,label_z,logE_min,logE_max,hist_map_data,hist_map_bkg
     lable_energy_range = f'E = {E_min:0.2f}-{E_max:0.2f} TeV'
     txt = axTemperature.text(xmax-0.14, ymax-0.21, lable_energy_range, fontdict=font)
 
-    fig.savefig(f'output_plots/{plotname}_excess.png',bbox_inches='tight')
+    fig.savefig(f'output_plots/excess_{plotname}.png',bbox_inches='tight')
 
 
 
-def PlotSkyMap(fig,label_z,logE_min,logE_max,hist_map_input,plotname,roi_x=[],roi_y=[],roi_r=[],max_z=0.,colormap='coolwarm',layer=0,zoomin=1.0):
+def PlotSkyMap(fig,label_z,logE_min,logE_max,hist_map_input,plotname,roi_x=[],roi_y=[],roi_r=[],excl_x=[],excl_y=[],excl_r=[],max_z=0.,colormap='coolwarm',layer=0,zoomin=1.0):
 
     E_min = pow(10.,logE_bins[logE_min])
     E_max = pow(10.,logE_bins[logE_max])
@@ -2004,6 +2004,9 @@ def PlotSkyMap(fig,label_z,logE_min,logE_max,hist_map_input,plotname,roi_x=[],ro
     linestyles = ['-', '--', '-.', ':']  # List of linestyles
     for roi in range(0,len(roi_x)):
         mycircle = plt.Circle( (roi_x[roi], roi_y[roi]), roi_r[roi], fill = False, linestyle=linestyles[roi], color='white')
+        axbig.add_patch(mycircle)
+    for roi in range(0,len(excl_x)):
+        mycircle = plt.Circle( (excl_x[roi], excl_y[roi]), excl_r[roi], fill = False, linestyle='-', color='black')
         axbig.add_patch(mycircle)
 
     if not 'Gas' in plotname:
@@ -2662,17 +2665,51 @@ def DefineRegionOfMask(src_name,src_ra,src_dec):
     return region_name, region_x, region_y, region_r
 
 
+def DefineRegionOfExclusion(src_name,src_ra,src_dec):
+
+    gamma_source_coord = GetGammaSources(src_ra,src_dec)
+
+    excl_x = []
+    excl_y = []
+    excl_r = []
+
+    #if 'PSR_J2021_p4026' in src_name:
+
+    #    src_x = 305.21
+    #    src_y = 40.43
+    #    excl_x += [src_x]
+    #    excl_y += [src_y]
+    #    excl_r += [0.5]
+
+    for src in range(0,len(gamma_source_coord)):
+        src_x = gamma_source_coord[src][0]
+        src_y = gamma_source_coord[src][1]
+        excl_x += [src_x]
+        excl_y += [src_y]
+        excl_r += [0.3]
+
+    if coordinate_type == 'galactic':
+        for roi in range(0,len(excl_r)):
+            excl_x[roi], excl_y[roi] = ConvertRaDecToGalactic(excl_x[roi], excl_y[roi])
+
+
+    return excl_x, excl_y, excl_r
+
 def DefineRegionOfInterest(src_name,src_ra,src_dec):
 
     region_name = ('default','default region')
     region_x = []
     region_y = []
     region_r = []
-    excl_x = []
-    excl_y = []
-    excl_r = []
 
-    if 'Crab' in src_name:
+    if src_name == 'Validation':
+
+        region_name = ('center','center')
+        region_x += [0.]
+        region_y += [0.]
+        region_r += [2.]
+
+    elif 'Crab' in src_name:
 
         region_name = ('center','center')
         region_x += [src_ra]
@@ -2734,32 +2771,6 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
         #region_x += [src_x]
         #region_y += [src_y]
         #region_r += [1.0]
-        #excl_x += [src_x]
-        #excl_y += [src_y]
-        #excl_r += [0.5]
-
-        #region_name = ('SNR_no_hotspot','SNR shell excluding MAGIC J2019+408')
-        #src_x = 305.21
-        #src_y = 40.43
-        #region_x += [src_x]
-        #region_y += [src_y]
-        #region_r += [1.0]
-        #excl_x += [src_x]
-        #excl_y += [src_y]
-        #excl_r += [0.5]
-        #excl_x += [304.93]
-        #excl_y += [40.87]
-        #excl_r += [0.26]
-
-        #region_name = ('SNR_no_hotspot','SNR excluding MAGIC J2019+408')
-        #src_x = 305.21
-        #src_y = 40.43
-        #region_x += [src_x]
-        #region_y += [src_y]
-        #region_r += [1.0]
-        #excl_x += [304.93]
-        #excl_y += [40.87]
-        #excl_r += [0.26]
 
     elif 'PSR_J1907_p0602' in src_name:
 
@@ -2787,15 +2798,6 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
         #region_y += [src_y]
         #region_r += [0.46]
 
-        #region_name = ('J1907_p0602_outer','J1907+0602 (outer)')
-        #src_x = 286.98
-        #src_y = 6.04
-        #region_x += [src_x]
-        #region_y += [src_y]
-        #region_r += [1.5]
-        #excl_x += [src_x]
-        #excl_y += [src_y]
-        #excl_r += [0.5]
 
     elif 'PSR_J1856_p0245' in src_name:
 
@@ -2812,9 +2814,6 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
         #region_x += [src_x]
         #region_y += [src_y]
         #region_r += [0.15]
-        #excl_x += [284.6]
-        #excl_y += [2.1]
-        #excl_r += [0.2]
 
         #region_name = ('J1856_p0245_outer','J1856+0245 (outer)')
         #src_x = 284.21
@@ -2822,39 +2821,11 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
         #region_x += [src_x]
         #region_y += [src_y]
         #region_r += [1.0]
-        #excl_x += [src_x]
-        #excl_y += [src_y]
-        #excl_r += [0.2]
-        #excl_x += [284.6]
-        #excl_y += [2.1]
-        #excl_r += [0.2]
-
-        #region_name = ('J1857_p026_full','J1857+026')
-        #src_x = 284.3
-        #src_y = 2.7
-        #region_x += [src_x]
-        #region_y += [src_y]
-        #region_r += [1.0]
-
-        #region_name = ('all_regions','All regions')
-        ## Fermi
-        #region_x += [284.30]
-        #region_y += [2.72]
-        #region_r += [0.38]
-        ## VERITAS
-        #region_x += [284.339]
-        #region_y += [2.661]
-        #region_r += [0.239]
 
         region_name = ('0p4_deg','0.4 deg') # MAGIC ROI
         region_x += [284.3]
         region_y += [2.7]
         region_r += [0.4]
-
-        #region_name = ('1p0_deg','1.0 deg')
-        #region_x += [284.3]
-        #region_y += [2.7]
-        #region_r += [1.0]
 
         #region_name = ('J1858_p020','J1858+020')
         #region_x += [284.6]
@@ -2888,10 +2859,6 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
         #region_y += [5.00610516]
         #region_r += [0.2]
 
-        #region_x = [288.35,288.50,288.65,288.8]
-        #region_y = [4.93,4.92,4.93,4.94]
-        #region_r = [0.1,0.1,0.1,0.1]
-
     elif 'PSR_J2030_p4415' in src_name:
     
         region_name = ('1p5deg','1.5-deg diameter')
@@ -2907,14 +2874,12 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
         region_r += [3.0]
 
 
-    if coordinate_type == 'galactic':
-        for roi in range(0,len(region_r)):
-            region_x[roi], region_y[roi] = ConvertRaDecToGalactic(region_x[roi], region_y[roi])
-        for roi in range(0,len(excl_r)):
-            excl_x[roi], excl_y[roi] = ConvertRaDecToGalactic(excl_x[roi], excl_y[roi])
+    if not src_name == 'Validation':
+        if coordinate_type == 'galactic':
+            for roi in range(0,len(region_r)):
+                region_x[roi], region_y[roi] = ConvertRaDecToGalactic(region_x[roi], region_y[roi])
 
-
-    return region_name, region_x, region_y, region_r, excl_x, excl_y, excl_r
+    return region_name, region_x, region_y, region_r
 
 def SaveFITS(skymap_input,filename):
 
@@ -3464,17 +3429,6 @@ def build_skymap(
     # start memory profiling
     tracemalloc.start()
 
-    #xsky_start = src_ra+skymap_size
-    #xsky_end = src_ra-skymap_size
-    #ysky_start = src_dec-skymap_size
-    #ysky_end = src_dec+skymap_size
-
-    #if coordinate_type == 'galactic':
-    #    src_gal_l, src_gal_b = ConvertRaDecToGalactic(src_ra, src_dec)
-    #    xsky_start = src_gal_l+skymap_size
-    #    xsky_end = src_gal_l-skymap_size
-    #    ysky_start = src_gal_b-skymap_size
-    #    ysky_end = src_gal_b+skymap_size
 
     print ('loading neural net... ')
     nn_model = []
@@ -3850,42 +3804,57 @@ def build_skymap(
                 Xsky = TelRAJ2000 + Xderot
                 Ysky = TelDecJ2000 + Yderot
 
-            #if onoff=='OFF':
-            #    found_gamma_source = CoincideWithBrightStars(Xsky, Ysky, gamma_source_coord)
-            #    if found_gamma_source: continue
+            if onoff=='OFF':
+                found_gamma_source = CoincideWithBrightStars(Xsky, Ysky, gamma_source_coord)
+                if found_gamma_source: continue
             if 'MIMIC' in onoff:
                 found_gamma_source = CoincideWithBrightStars(RA, DEC, gamma_source_coord)
                 if found_gamma_source: continue
 
-            if coordinate_type == 'galactic':
+            if onoff=='OFF':
 
-                Gal_Xsky, Gal_Ysky = ConvertRaDecToGalactic(Xsky, Ysky)
-
-                incl_sky_map[logE].fill(Gal_Xsky,Gal_Ysky,0.5)
+                incl_sky_map[logE].fill(Xoff,Yoff,0.5)
                 if GammaCut>float(gcut_end): continue
 
                 sr_syst = syst_xyoff_map[logE].get_bin_content(Xoff,Yoff,0.5)
                 sr_model = ratio_xyoff_map[logE].get_bin_content(Xoff,Yoff,0.5)
                 cr_model = ratio_xyoff_map[logE].get_bin_content(Xoff,Yoff,GammaCut)
                 if GammaCut>1.:
-                    fit_sky_map[logE].fill(Gal_Xsky,Gal_Ysky,0.5,weight=sr_model)
-                    syst_sky_map[logE].fill(Gal_Xsky,Gal_Ysky,0.5,weight=sr_syst)
+                    fit_sky_map[logE].fill(Xoff,Yoff,0.5,weight=sr_model)
+                    syst_sky_map[logE].fill(Xoff,Yoff,0.5,weight=sr_syst)
                 else:
-                    data_sky_map[logE].fill(Gal_Xsky,Gal_Ysky,GammaCut)
+                    data_sky_map[logE].fill(Xoff,Yoff,GammaCut)
 
             else:
+                if coordinate_type == 'galactic':
 
-                incl_sky_map[logE].fill(Xsky,Ysky,0.5)
-                if GammaCut>float(gcut_end): continue
+                    Gal_Xsky, Gal_Ysky = ConvertRaDecToGalactic(Xsky, Ysky)
 
-                sr_syst = syst_xyoff_map[logE].get_bin_content(Xoff,Yoff,0.5)
-                sr_model = ratio_xyoff_map[logE].get_bin_content(Xoff,Yoff,0.5)
-                cr_model = ratio_xyoff_map[logE].get_bin_content(Xoff,Yoff,GammaCut)
-                if GammaCut>1.:
-                    fit_sky_map[logE].fill(Xsky,Ysky,0.5,weight=sr_model)
-                    syst_sky_map[logE].fill(Xsky,Ysky,0.5,weight=sr_syst)
+                    incl_sky_map[logE].fill(Gal_Xsky,Gal_Ysky,0.5)
+                    if GammaCut>float(gcut_end): continue
+
+                    sr_syst = syst_xyoff_map[logE].get_bin_content(Xoff,Yoff,0.5)
+                    sr_model = ratio_xyoff_map[logE].get_bin_content(Xoff,Yoff,0.5)
+                    cr_model = ratio_xyoff_map[logE].get_bin_content(Xoff,Yoff,GammaCut)
+                    if GammaCut>1.:
+                        fit_sky_map[logE].fill(Gal_Xsky,Gal_Ysky,0.5,weight=sr_model)
+                        syst_sky_map[logE].fill(Gal_Xsky,Gal_Ysky,0.5,weight=sr_syst)
+                    else:
+                        data_sky_map[logE].fill(Gal_Xsky,Gal_Ysky,GammaCut)
+
                 else:
-                    data_sky_map[logE].fill(Xsky,Ysky,GammaCut)
+
+                    incl_sky_map[logE].fill(Xsky,Ysky,0.5)
+                    if GammaCut>float(gcut_end): continue
+
+                    sr_syst = syst_xyoff_map[logE].get_bin_content(Xoff,Yoff,0.5)
+                    sr_model = ratio_xyoff_map[logE].get_bin_content(Xoff,Yoff,0.5)
+                    cr_model = ratio_xyoff_map[logE].get_bin_content(Xoff,Yoff,GammaCut)
+                    if GammaCut>1.:
+                        fit_sky_map[logE].fill(Xsky,Ysky,0.5,weight=sr_model)
+                        syst_sky_map[logE].fill(Xsky,Ysky,0.5,weight=sr_syst)
+                    else:
+                        data_sky_map[logE].fill(Xsky,Ysky,GammaCut)
     
         print(f'memory usage (current,peak) = {tracemalloc.get_traced_memory()}')
 
