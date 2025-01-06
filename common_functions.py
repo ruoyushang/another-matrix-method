@@ -2696,7 +2696,7 @@ def DefineRegionOfExclusion(src_name,src_ra,src_dec):
 
     return excl_x, excl_y, excl_r
 
-def DefineRegionOfInterest(src_name,src_ra,src_dec):
+def DefineRegionOfInterest(src_name,src_ra,src_dec,normalize_map=False):
 
     region_name = ('default','default region')
     region_x = []
@@ -2708,8 +2708,10 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
         region_name = ('center','center')
         region_x += [0.]
         region_y += [0.]
-        #region_r += [2.]
-        region_r += [0.]
+        if not normalize_map:
+            region_r += [2.]
+        else:
+            region_r += [0.]
 
     elif 'Crab' in src_name:
 
@@ -3398,7 +3400,7 @@ def GetSlicedDataCubeMapGALFA(map_file, sky_map, vel_low, vel_up):
             if pix_dec>=image_data_reduced_z.shape[0]: continue
             sky_map.waxis[idx_x,idx_y,0] += image_data_reduced_z[pix_dec,pix_ra]
 
-def compute_camera_frame_power_spectrum(skymap):
+def compute_camera_frame_power_spectrum(skymap,idx_z=0):
 
     nbins_x = len(skymap.xaxis)-1
     nbins_y = len(skymap.yaxis)-1
@@ -3407,7 +3409,7 @@ def compute_camera_frame_power_spectrum(skymap):
     for idx_x in range(0,nbins_x):
         data_y = []
         for idx_y in range(0,nbins_y):
-            data_y += [skymap.waxis[idx_x,idx_y,0]]
+            data_y += [skymap.waxis[idx_x,idx_y,idx_z]]
         data += [data_y]
     data = np.array(data)
 
@@ -3480,6 +3482,35 @@ def compute_camera_frame_power_spectrum(skymap):
 
     #return freqs, np.array(rv_power_spectrum), np.array(rh_power_spectrum)
 
+def plot_camera_frame_power_spectrum(fig,plotname,skymap,idx_z=0):
+
+    freqs_shifted, v_power_spectrum, h_power_spectrum = compute_camera_frame_power_spectrum(skymap,idx_z=idx_z)
+    fig.clf()
+    figsize_x = 6.4
+    figsize_y = 4.6
+    fig.set_figheight(figsize_y)
+    fig.set_figwidth(figsize_x)
+    axbig = fig.add_subplot()
+    label_x = 'wave number $k$'
+    label_y = 'power spectrum (vertical)'
+    axbig.set_xlabel(label_x)
+    axbig.set_ylabel(label_y)
+    axbig.plot(freqs_shifted,v_power_spectrum)
+    fig.savefig(f'output_plots/power_spectrum_v_{plotname}.png',bbox_inches='tight')
+    axbig.remove()
+    fig.clf()
+    figsize_x = 6.4
+    figsize_y = 4.6
+    fig.set_figheight(figsize_y)
+    fig.set_figwidth(figsize_x)
+    axbig = fig.add_subplot()
+    label_x = 'wave number $k$'
+    label_y = 'power spectrum (horizontal)'
+    axbig.set_xlabel(label_x)
+    axbig.set_ylabel(label_y)
+    axbig.plot(freqs_shifted,h_power_spectrum)
+    fig.savefig(f'output_plots/power_spectrum_h_{plotname}.png',bbox_inches='tight')
+    axbig.remove()
 
 def build_skymap(
         source_name,
