@@ -55,6 +55,7 @@ smi_dir = os.environ.get("SMI_DIR")
 sky_tag = os.environ.get("SKY_TAG")
 bin_tag = os.environ.get("BIN_TAG")
 cr_tag = os.environ.get("CR_TAG")
+ana_dir = os.environ.get("ANA_DIR")
 
 source_name = sys.argv[1]
 onoff = sys.argv[2]
@@ -63,7 +64,7 @@ input_epoch = sys.argv[3] # 'V4', 'V5' or 'V6'
 #print (f"line {cf.f_lineno}")
 
 # Run the 'ls' command and capture its output
-result = subprocess.run(['ls',f'{smi_output}'], capture_output=True, text=True)
+result = subprocess.run(['ls',f'{smi_output}/{ana_dir}'], capture_output=True, text=True)
 # Split the output into a list by newlines
 file_list = result.stdout.splitlines()
 
@@ -71,7 +72,7 @@ list_filename = []
 total_matrix_fullspec = []
 for k in range(0,len(file_list)):
     if f'big_off_matrix_{source_name}_{onoff}_{input_epoch}_{cr_tag}_{bin_tag}' in file_list[k]:
-        input_filename = f'{smi_output}/{file_list[k]}'
+        input_filename = f'{smi_output}/{ana_dir}/{file_list[k]}'
         print (f'input_filename = {input_filename}')
         big_matrix_pkl = pickle.load(open(input_filename, "rb"))
         list_filename += [(big_matrix_pkl[0],input_filename)]
@@ -150,11 +151,11 @@ for logE in range(0,logE_nbins):
     A, A_err = weighted_least_square_solution(list_cr_map_1d,list_sr_norm.T[logE],list_sr_weight.T[logE],plot_tag=f'{source_name}_{onoff}_{input_epoch}_{cr_tag}_{bin_tag}_{sky_tag}_logE{logE}')
     model += [A]
     model_err += [A_err]
-output_filename = f'{smi_output}/model_least_square_{source_name}_{onoff}_{input_epoch}_{cr_tag}_{bin_tag}_{sky_tag}.pkl'
+output_filename = f'{smi_output}/{ana_dir}/model_least_square_{source_name}_{onoff}_{input_epoch}_{cr_tag}_{bin_tag}_{sky_tag}.pkl'
 with open(output_filename, "wb") as file:
     pickle.dump([model,model_err], file)
 
-#output_filename = f'{smi_output}/sr_norm_model_{source_name}_{onoff}_{input_epoch}_{cr_tag}_{bin_tag}_{sky_tag}.pkl'
+#output_filename = f'{smi_output}/{ana_dir}/sr_norm_model_{source_name}_{onoff}_{input_epoch}_{cr_tag}_{bin_tag}_{sky_tag}.pkl'
 #make_neuralnet_model(list_cr_map_1d, list_sr_norm, output_filename)
         
         
@@ -259,7 +260,7 @@ for rank in range(0,max_matrix_rank):
     fig.savefig(f'output_plots/fullspec_eigenmap_{source_name}_{input_epoch}_rank{rank}_tanspose',bbox_inches='tight')
     axbig.remove()
 
-output_filename = f'{smi_output}/model_eigenvectors_{source_name}_{onoff}_{input_epoch}_{cr_tag}_{bin_tag}_{sky_tag}.pkl'
+output_filename = f'{smi_output}/{ana_dir}/model_eigenvectors_{source_name}_{onoff}_{input_epoch}_{cr_tag}_{bin_tag}_{sky_tag}.pkl'
 with open(output_filename,"wb") as file:
     pickle.dump([big_eigenvalues_fullspec,big_eigenvectors_fullspec,avg_xyoff_map_1d_fullspec], file)
 

@@ -8,6 +8,7 @@ import pickle
 import csv
 from scipy.optimize import least_squares, minimize
 from scipy.optimize import curve_fit
+import scipy.special as sp
 import matplotlib.pyplot as plt
 from matplotlib import ticker
 from matplotlib.ticker import MaxNLocator
@@ -2707,7 +2708,8 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec):
         region_name = ('center','center')
         region_x += [0.]
         region_y += [0.]
-        region_r += [2.]
+        #region_r += [2.]
+        region_r += [0.]
 
     elif 'Crab' in src_name:
 
@@ -3396,6 +3398,88 @@ def GetSlicedDataCubeMapGALFA(map_file, sky_map, vel_low, vel_up):
             if pix_dec>=image_data_reduced_z.shape[0]: continue
             sky_map.waxis[idx_x,idx_y,0] += image_data_reduced_z[pix_dec,pix_ra]
 
+def compute_camera_frame_power_spectrum(skymap):
+
+    nbins_x = len(skymap.xaxis)-1
+    nbins_y = len(skymap.yaxis)-1
+
+    data = []
+    for idx_x in range(0,nbins_x):
+        data_y = []
+        for idx_y in range(0,nbins_y):
+            data_y += [skymap.waxis[idx_x,idx_y,0]]
+        data += [data_y]
+    data = np.array(data)
+
+    rng = np.random.default_rng()
+    noise = np.zeros_like(data)
+    for idx_x in range(0,nbins_x):
+        for idx_y in range(0,nbins_y):
+            if data[idx_x][idx_y]==0.:
+                continue
+            noise[idx_x][idx_y] = rng.standard_normal()
+
+    # Compute the 2D Fourier Transform
+    # This function takes a 2D array as input and returns its 2D Fourier Transform, which is also a 2D array of complex numbers.
+    fourier_transform = np.fft.fft2(data)
+    fourier_transform_noise = np.fft.fft2(noise)
+
+    magnitude = np.abs(fourier_transform)
+    phase = np.angle(fourier_transform)
+
+    magnitude_noise = np.abs(fourier_transform_noise)
+
+    v_power_spectrum = [0.] * magnitude.shape[0]
+    h_power_spectrum = [0.] * magnitude.shape[1]
+    v_power_spectrum_noise = [0.] * magnitude.shape[0]
+    h_power_spectrum_noise = [0.] * magnitude.shape[1]
+    for idx_x in range(0,magnitude.shape[0]):
+        h_power_spectrum[idx_x] += np.sum(magnitude[idx_x,:])
+        h_power_spectrum_noise[idx_x] += np.sum(magnitude_noise[idx_x,:])
+    for idx_y in range(0,magnitude.shape[1]):
+        v_power_spectrum[idx_y] += np.sum(magnitude[:,idx_y])
+        v_power_spectrum_noise[idx_y] += np.sum(magnitude_noise[:,idx_y])
+
+    # Shift the zero-frequency component to the center
+    v_power_spectrum_shifted = np.fft.fftshift(v_power_spectrum)
+    h_power_spectrum_shifted = np.fft.fftshift(h_power_spectrum)
+    v_power_spectrum_noise_shifted = np.fft.fftshift(v_power_spectrum_noise)
+    h_power_spectrum_noise_shifted = np.fft.fftshift(h_power_spectrum_noise)
+
+    for idx_x in range(0,magnitude.shape[0]):
+        if v_power_spectrum_noise_shifted[idx_x]==0.:
+            v_power_spectrum_shifted[idx_x] = 0.
+        else:
+            v_power_spectrum_shifted[idx_x] = (v_power_spectrum_shifted[idx_x]-v_power_spectrum_noise_shifted[idx_x])/v_power_spectrum_noise_shifted[idx_x]
+    for idx_y in range(0,magnitude.shape[1]):
+        if h_power_spectrum_noise_shifted[idx_y]==0.:
+            h_power_spectrum_shifted[idx_y] = 0.
+        else:
+            h_power_spectrum_shifted[idx_y] = (h_power_spectrum_shifted[idx_y]-h_power_spectrum_noise_shifted[idx_y])/h_power_spectrum_noise_shifted[idx_y]
+
+    # Calculate the corresponding frequencies
+    freqs = np.fft.fftfreq(nbins_y, skymap.yaxis[1]-skymap.yaxis[0])
+    freqs_shifted = np.fft.fftshift(freqs)
+
+    return freqs_shifted, v_power_spectrum_shifted, h_power_spectrum_shifted
+
+    #v_size = magnitude.shape[0]//2+1
+    #h_size = magnitude.shape[1]//2+1
+    #rv_power_spectrum = [0.] * v_size
+    #rh_power_spectrum = [0.] * h_size
+    #rv_power_spectrum[0] = v_power_spectrum_shifted[v_size-1]
+    #rh_power_spectrum[0] = v_power_spectrum_shifted[h_size-1]
+    #for idx_x in range(1,v_size-1):
+    #    rv_power_spectrum[idx_x] += v_power_spectrum_shifted[v_size-1+idx_x]
+    #    rv_power_spectrum[idx_x] += v_power_spectrum_shifted[v_size-1-idx_x]
+    #for idx_y in range(1,h_size-1):
+    #    rh_power_spectrum[idx_y] += h_power_spectrum_shifted[h_size-1+idx_y]
+    #    rh_power_spectrum[idx_y] += h_power_spectrum_shifted[h_size-1-idx_y]
+
+    #freqs = np.fft.rfftfreq(nbins_y, skymap.yaxis[1]-skymap.yaxis[0])
+
+    #return freqs, np.array(rv_power_spectrum), np.array(rh_power_spectrum)
+
 
 def build_skymap(
         source_name,
@@ -3527,12 +3611,14 @@ def build_skymap(
             logE_peak = logE
     print (f'logE_peak = {logE_peak}')
 
+    effective_matrix_rank_fullspec = big_eigenvectors_fullspec.shape[0]
+    print (f"effective_matrix_rank_fullspec = {effective_matrix_rank_fullspec}")
+    truth_params = big_eigenvectors_fullspec @ data_xyoff_map_1d_fullspec
+    fit_params = [0.] * effective_matrix_rank_fullspec
+
     if not use_init:
         print ('===================================================================================')
         print ('fitting xyoff maps fullspec...')
-
-        effective_matrix_rank_fullspec = big_eigenvectors_fullspec.shape[0]
-        print (f"effective_matrix_rank_fullspec = {effective_matrix_rank_fullspec}")
 
         sr_norm_truth, sr_weight_truth, cr_map_1d = prepare_vector_for_neuralnet(data_xyoff_map_1d_fullspec)
 
@@ -3548,7 +3634,6 @@ def build_skymap(
 
         fit_params = [0.] * effective_matrix_rank_fullspec
         avg_params = big_eigenvectors_fullspec @ init_xyoff_map_1d_fullspec
-        truth_params = big_eigenvectors_fullspec @ data_xyoff_map_1d_fullspec
 
 
         total_weight = 0.

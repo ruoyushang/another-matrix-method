@@ -50,6 +50,7 @@ smi_dir = os.environ.get("SMI_DIR")
 sky_tag = os.environ.get("SKY_TAG")
 bin_tag = os.environ.get("BIN_TAG")
 cr_tag = os.environ.get("CR_TAG")
+ana_dir = os.environ.get("ANA_DIR")
 
 source_name = sys.argv[1]
 src_ra = float(sys.argv[2])
@@ -62,19 +63,19 @@ if os.path.exists(output_filename):
     print (f'{output_filename} exists, delete...')
     os.remove(output_filename)
 
-path_to_eigenvector = f'{smi_output}/model_eigenvectors_{source_name}_{onoff}_{input_epoch}_{cr_tag}_{bin_tag}_{sky_tag}.pkl'
+path_to_eigenvector = f'{smi_output}/{ana_dir}/model_eigenvectors_{source_name}_{onoff}_{input_epoch}_{cr_tag}_{bin_tag}_{sky_tag}.pkl'
 print (f'path_to_eigenvector = {path_to_eigenvector}')
-path_to_big_matrix = f'{smi_output}/big_off_matrix_{source_name}_{onoff}_{input_epoch}_{cr_tag}_{bin_tag}.pkl'
+path_to_big_matrix = f'{smi_output}/{ana_dir}/big_off_matrix_{source_name}_{onoff}_{input_epoch}_{cr_tag}_{bin_tag}.pkl'
 print (f'path_to_big_matrix = {path_to_big_matrix}')
 
 # Run the 'ls' command and capture its output
-result = subprocess.run(['ls',f'{smi_output}'], capture_output=True, text=True)
+result = subprocess.run(['ls',f'{smi_output}/{ana_dir}'], capture_output=True, text=True)
 # Split the output into a list by newlines
 file_list = result.stdout.splitlines()
 path_to_leastsquare_model = []
 for file in file_list:
     if f'model_least_square_{source_name}_{onoff}_{input_epoch}_{cr_tag}_{bin_tag}_{sky_tag}' in file:
-        input_filename = f'{smi_output}/{file}'
+        input_filename = f'{smi_output}/{ana_dir}/{file}'
         path_to_leastsquare_model += [input_filename]
         print (f'path_to_leastsquare_model = {input_filename}')
 

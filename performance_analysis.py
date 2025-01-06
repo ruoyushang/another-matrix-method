@@ -34,9 +34,8 @@ matrix_rank = common_functions.matrix_rank
 skymap_size = common_functions.skymap_size
 skymap_bins = common_functions.skymap_bins
 significance_li_and_ma = common_functions.significance_li_and_ma
+compute_camera_frame_power_spectrum = common_functions.compute_camera_frame_power_spectrum
 
-#use_abcd_correction = True
-use_abcd_correction = False
 
 smi_dir = os.environ.get("SMI_DIR")
 smi_input = os.environ.get("SMI_INPUT")
@@ -46,23 +45,36 @@ smi_input = os.environ.get("SMI_INPUT")
 smi_output = "/nevis/ged/data/rshang/smi_output/output_default"
 
 ana_tag = []
-#ana_tag += [['binspec','r']]
-#ana_tag += [['fullspec','b']]
 
 #ana_tag += [['init','r']]
-ana_tag += [['cr15_nbin7_fullspec16','b']]
-ana_tag += [['cr20_nbin7_fullspec16','b']]
+
+#ana_tag += [['cr15_nbin7_fullspec16','b']]
+#ana_tag += [['cr20_nbin7_fullspec16','b']]
+#ana_tag += [['cr25_nbin7_fullspec16','b']]
+
+ana_tag += [['cr20_nbin1_fullspec16','b']]
+#ana_tag += [['cr20_nbin3_fullspec16','b']]
+#ana_tag += [['cr20_nbin5_fullspec16','b']]
+#ana_tag += [['cr20_nbin7_fullspec16','b']]
+ana_tag += [['cr20_nbin9_fullspec16','b']]
+
+#ana_tag += [['cr20_nbin7_init','b']]
+#ana_tag += [['cr20_nbin7_fullspec16','b']]
+
+#ana_tag += [['cr20_nbin7_fullspec1','b']]
+#ana_tag += [['cr20_nbin7_fullspec2','b']]
+#ana_tag += [['cr20_nbin7_fullspec4','b']]
+#ana_tag += [['cr20_nbin7_fullspec8','b']]
+#ana_tag += [['cr20_nbin7_fullspec16','b']]
+#ana_tag += [['cr20_nbin7_fullspec32','b']]
 
 onoff = 'OFF'
 
-#use_camera_frame = True
-use_camera_frame = False
-
 #exposure_per_group = 2.
-exposure_per_group = 4.
+#exposure_per_group = 4.
 #exposure_per_group = 10.
 #exposure_per_group = 20.
-#exposure_per_group = 50.
+exposure_per_group = 50.
 #exposure_per_group = 100.
 cr_qual_cut = 1e10
 #cr_qual_cut = 230
@@ -77,6 +89,12 @@ max_elev = 90.
 #input_epoch = ['V6']
 input_epoch = ['V4','V5','V6']
 #input_epoch = ['V5','V6']
+
+#demo_energy = logE_bins
+demo_energy = [logE_bins[0], logE_bins[4], logE_bins[len(logE_bins)-1]] # log10(E/TeV)
+demoE_nbins = len(demo_energy) - 1 
+demoE_axis = MyArray1D(x_bins=demo_energy)
+
 
 input_sources = []
 input_sources += [ ['1ES0647'               ,102.694 ,25.050 ] ]
@@ -108,12 +126,12 @@ input_sources += [ ['1ES1959_p650'          ,300.00 ,65.15 ] ]
 #input_sources += [ ['CrabNebula_1p0wobble' ,83.633  ,22.014 ] ]
 #input_sources += [ ['CrabNebula_1p5wobble' ,83.633  ,22.014 ] ]
 
+
 src_keys = []
 for src in input_sources:
     src_keys += [src[0]]
 
 print (f"smi_output = {smi_output}")
-print (f"exposure_per_group = {exposure_per_group} hrs")
 analysis_data = []
 for ana in range(0,len(ana_tag)):
 
@@ -178,13 +196,10 @@ for ana in range(0,len(ana_tag)):
 
                 total_exposure += exposure
                 current_exposure += exposure
-                if use_camera_frame:
-                    run_data += [[exposure,run_elev,run_nsb,data_xyoff_map,bkgd_xyoff_map]]
-                else:
-                    run_data += [[exposure,run_elev,run_nsb,data_sky_map,bkgd_sky_map]]
+                run_data += [[exposure,run_elev,run_nsb,data_sky_map,bkgd_sky_map]]
 
-                #if current_exposure>exposure_per_group or run==len(analysis_result)-1:
-                if current_exposure>exposure_per_group:
+                if current_exposure>exposure_per_group or run==len(analysis_result)-1:
+                #if current_exposure>exposure_per_group:
                     current_exposure = 0.
                     run_data = []
                     group_data += [run_data]
@@ -195,40 +210,43 @@ for ana in range(0,len(ana_tag)):
         print (f"{src_name}, {expo_dict[src_name]:0.1f} hrs")
     print (f"Anaysis: {ana_tag[ana][0]}, total_exposure = {total_exposure:0.1f} hrs")
     
+print (f"exposure_per_group = {exposure_per_group} hrs")
+
 grp_data_map = []
 grp_bkgd_map = []
-for logE in range(0,logE_nbins):
-    if use_camera_frame:
-        grp_data_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
-        grp_bkgd_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
-    else:
-        grp_data_map += [MyArray3D(x_bins=skymap_bins,start_x=xoff_start,end_x=xoff_end,y_bins=skymap_bins,start_y=yoff_start,end_y=yoff_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
-        grp_bkgd_map += [MyArray3D(x_bins=skymap_bins,start_x=xoff_start,end_x=xoff_end,y_bins=skymap_bins,start_y=yoff_start,end_y=yoff_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
+grp_diff_map = []
+for demoE in range(0,demoE_nbins):
+    grp_data_map += [MyArray3D(x_bins=skymap_bins,start_x=xoff_start,end_x=xoff_end,y_bins=skymap_bins,start_y=yoff_start,end_y=yoff_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
+    grp_bkgd_map += [MyArray3D(x_bins=skymap_bins,start_x=xoff_start,end_x=xoff_end,y_bins=skymap_bins,start_y=yoff_start,end_y=yoff_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
+    grp_diff_map += [MyArray3D(x_bins=skymap_bins,start_x=xoff_start,end_x=xoff_end,y_bins=skymap_bins,start_y=yoff_start,end_y=yoff_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
 
 list_elev = []
 list_nsb = []
 list_data_count = []
 list_bkgd_count = []
 list_significance = []
-list_correlation = []
+list_freqs_shifted = []
+list_v_power_spectrum = []
+list_h_power_spectrum = []
 for ana in range(0,len(analysis_data)):
     ana_elev = []
     ana_nsb = []
     ana_data_count = []
     ana_bkgd_count = []
     ana_significance = []
-    ana_correlation = []
+    ana_freqs_shifted = []
+    ana_v_power_spectrum = []
+    ana_h_power_spectrum = []
     for grp  in range(0,len(analysis_data[ana])):
         grp_expo = 0.
         grp_elev = 0.
         grp_nsb = 0.
-        grp_data_count = np.zeros(len(logE_bins)-1)
-        grp_bkgd_count = np.zeros(len(logE_bins)-1)
-        grp_significance = [[] for i in range(0,len(logE_bins)-1)]
-        grp_correlation = [0. for i in range(0,len(logE_bins)-1)]
-        for logE in range(0,len(logE_bins)-1):
-            grp_data_map[logE].reset()
-            grp_bkgd_map[logE].reset()
+        grp_data_count = [0.] * demoE_nbins
+        grp_bkgd_count = [0.] * demoE_nbins
+        grp_significance = [[]] * demoE_nbins
+        for demoE in range(0,demoE_nbins):
+            grp_data_map[demoE].reset()
+            grp_bkgd_map[demoE].reset()
         for run in range(0,len(analysis_data[ana][grp])):
             run_data = analysis_data[ana][grp][run]
             exposure = run_data[0]
@@ -242,28 +260,13 @@ for ana in range(0,len(analysis_data)):
             for logE in range(0,len(data_map)):
                 data_count = np.sum(data_map[logE].waxis[:,:,0])
                 bkgd_count = np.sum(bkgd_map[logE].waxis[:,:,0])
-                grp_data_count[logE] += data_count
-                grp_bkgd_count[logE] += bkgd_count
-                grp_data_map[logE].add(data_map[logE])
-                grp_bkgd_map[logE].add(bkgd_map[logE])
+                demoE = demoE_axis.get_bin(logE_bins[logE])
+                grp_data_count[demoE] += data_count
+                grp_bkgd_count[demoE] += bkgd_count
+                grp_data_map[demoE].add(data_map[logE])
+                grp_bkgd_map[demoE].add(bkgd_map[logE])
         if grp_expo==0.: continue
 
-        if use_abcd_correction:
-            for logE in range(0,logE_nbins):
-                data_bkgd_diff = []
-                for gcut in range(0,gcut_bins):
-                    diff = np.sum(grp_data_map[logE].waxis[:,:,gcut]) - np.sum(grp_bkgd_map[logE].waxis[:,:,gcut])
-                    data_bkgd_diff += [diff]
-                #correction = data_bkgd_diff[0]
-                correction = 0.
-                if data_bkgd_diff[3]!=0.:
-                    correction = data_bkgd_diff[1]*data_bkgd_diff[2]/data_bkgd_diff[3]
-                if grp_bkgd_count[logE]!=0.:
-                    correction = correction/grp_bkgd_count[logE]
-                else:
-                    correction = 0.
-                grp_bkgd_map[logE].scale(1.+correction)
-                grp_bkgd_count[logE] = grp_bkgd_count[logE] * (1.+correction)
 
         grp_elev = grp_elev/grp_expo
         grp_nsb = grp_nsb/grp_expo
@@ -271,35 +274,56 @@ for ana in range(0,len(analysis_data)):
         ana_nsb += [grp_nsb]
         ana_data_count += [grp_data_count]
         ana_bkgd_count += [grp_bkgd_count]
-        for logE in range(0,len(data_map)):
-            nbins_x = len(grp_data_map[logE].xaxis)-1
-            nbins_y = len(grp_data_map[logE].yaxis)-1
-            correlation = 0.
-            correlation_norm = 0.
+
+        for demoE in range(0,demoE_nbins):
+            grp_bkgd_map[demoE].scale(grp_data_count[demoE] / grp_bkgd_count[demoE])
+
+        for demoE in range(0,demoE_nbins):
+            nbins_x = len(grp_data_map[demoE].xaxis)-1
+            nbins_y = len(grp_data_map[demoE].yaxis)-1
+            for binx in range (0,nbins_x):
+                for biny in range (0,nbins_y):
+                    data = grp_data_map[demoE].waxis[binx,biny,0]
+                    bkgd = grp_bkgd_map[demoE].waxis[binx,biny,0]
+                    significance = significance_li_and_ma(data, bkgd, 0.)
+                    grp_diff_map[demoE].waxis[binx,biny,0] = significance
+
+        grp_freqs_shifted = []
+        grp_v_power_spectrum = []
+        grp_h_power_spectrum = []
+        for demoE in range(0,demoE_nbins):
+            freqs_shifted, v_power_spectrum, h_power_spectrum = compute_camera_frame_power_spectrum(grp_diff_map[demoE])
+            grp_freqs_shifted += [freqs_shifted]
+            grp_v_power_spectrum += [v_power_spectrum]
+            grp_h_power_spectrum += [h_power_spectrum]
+        ana_freqs_shifted += [grp_freqs_shifted]
+        ana_v_power_spectrum += [grp_v_power_spectrum]
+        ana_h_power_spectrum += [grp_h_power_spectrum]
+
+        for demoE in range(0,demoE_nbins):
+            nbins_x = len(grp_data_map[demoE].xaxis)-1
+            nbins_y = len(grp_data_map[demoE].yaxis)-1
             sum_data = 0.
             for binx in range (0,nbins_x):
                 for biny in range (0,nbins_y):
-                    data = grp_data_map[logE].waxis[binx,biny,0]
-                    #bkgd = grp_bkgd_map[logE].waxis[binx,biny,0]
-                    bkgd = grp_bkgd_map[logE].waxis[binx,biny,0] * grp_data_count[logE] / grp_bkgd_count[logE]
+                    data = grp_data_map[demoE].waxis[binx,biny,0]
+                    bkgd = grp_bkgd_map[demoE].waxis[binx,biny,0]
                     sum_data += data
                     significance = significance_li_and_ma(data, bkgd, 0.)
-                    correlation += 2.*(data*bkgd)
-                    correlation_norm += (data*data)+(bkgd*bkgd)
                     if data>0.:
-                        grp_significance[logE] += [significance]
-            if sum_data>20.:
-                grp_correlation[logE] = 1. - correlation/correlation_norm
+                        grp_significance[demoE] += [significance]
         ana_significance += [grp_significance]
-        ana_correlation += [grp_correlation]
+
     list_elev += [ana_elev]
     list_nsb += [ana_nsb]
     list_data_count += [ana_data_count]
     list_bkgd_count += [ana_bkgd_count]
     list_significance += [ana_significance]
-    list_correlation += [ana_correlation]
+    list_freqs_shifted += [ana_freqs_shifted]
+    list_v_power_spectrum += [ana_v_power_spectrum]
+    list_h_power_spectrum += [ana_h_power_spectrum]
 
-for logE in range(0,logE_nbins):
+for demoE in range(0,demoE_nbins):
     fig, ax = plt.subplots()
     figsize_x = 6.4
     figsize_y = 4.6
@@ -315,19 +339,19 @@ for logE in range(0,logE_nbins):
         plot_error_significance = []
         for grp in range(0,len(list_elev[ana])):
             elev = list_elev[ana][grp]
-            data = list_data_count[ana][grp][logE]
-            bkgd = list_bkgd_count[ana][grp][logE]
+            data = list_data_count[ana][grp][demoE]
+            bkgd = list_bkgd_count[ana][grp][demoE]
             plot_elev += [elev]
             plot_error_significance += [abs(significance_li_and_ma(data,bkgd,0.))]
         ax.scatter(plot_elev,plot_error_significance,color=ana_tag[ana][1],alpha=0.3, label=f"{ana_tag[ana][0].strip('rank').strip('fullspec')} eigenvectors")
         #ax.scatter(plot_elev,plot_error_significance,alpha=0.3, label=f"{ana_tag[ana][0].strip('rank')} eigenvectors")
     ax.legend(loc='best')
-    fig.savefig(f'output_plots/fov_error_significance_vs_elev_logE{logE}.png',bbox_inches='tight')
+    fig.savefig(f'output_plots/fov_error_significance_vs_elev_demoE{demoE}.png',bbox_inches='tight')
     del fig
     del ax
     plt.close()
 
-for logE in range(0,logE_nbins):
+for demoE in range(0,demoE_nbins):
     fig, ax = plt.subplots()
     figsize_x = 6.4
     figsize_y = 4.6
@@ -343,19 +367,19 @@ for logE in range(0,logE_nbins):
         plot_error_significance = []
         for grp in range(0,len(list_nsb[ana])):
             nsb = list_nsb[ana][grp]
-            data = list_data_count[ana][grp][logE]
-            bkgd = list_bkgd_count[ana][grp][logE]
+            data = list_data_count[ana][grp][demoE]
+            bkgd = list_bkgd_count[ana][grp][demoE]
             plot_nsb += [nsb]
             plot_error_significance += [abs(significance_li_and_ma(data,bkgd,0.))]
         ax.scatter(plot_nsb,plot_error_significance,color=ana_tag[ana][1],alpha=0.3, label=f"{ana_tag[ana][0].strip('rank').strip('fullspec')} eigenvectors")
         #ax.scatter(plot_nsb,plot_error_significance,alpha=0.3, label=f"{ana_tag[ana][0].strip('rank')} eigenvectors")
     ax.legend(loc='best')
-    fig.savefig(f'output_plots/fov_error_significance_vs_nsb_logE{logE}.png',bbox_inches='tight')
+    fig.savefig(f'output_plots/fov_error_significance_vs_nsb_demoE{demoE}.png',bbox_inches='tight')
     del fig
     del ax
     plt.close()
 
-for logE in range(0,logE_nbins):
+for demoE in range(0,demoE_nbins):
     fig, ax = plt.subplots()
     figsize_x = 6.4
     figsize_y = 3.8
@@ -371,8 +395,8 @@ for logE in range(0,logE_nbins):
         plot_error_significance = []
         for grp in range(0,len(list_elev[ana])):
             elev = list_elev[ana][grp]
-            for pix in range(0,len(list_significance[ana][grp][logE])):
-                significance = list_significance[ana][grp][logE][pix]
+            for pix in range(0,len(list_significance[ana][grp][demoE])):
+                significance = list_significance[ana][grp][demoE][pix]
                 plot_elev += [elev]
                 plot_error_significance += [abs(significance)]
         kc = ana_tag[ana][0].strip('rank').strip('fullspec')
@@ -406,15 +430,15 @@ for logE in range(0,logE_nbins):
         ax.plot(elev_axis,significance_axis,color=ana_tag[ana][1],label='$k_{c}$='+f'{kc}')
 
     ax.legend(loc='best')
-    E_min = pow(10.,logE_bins[logE])
-    E_max = pow(10.,logE_bins[logE+1])
+    E_min = pow(10.,demo_energy[demoE])
+    E_max = pow(10.,demo_energy[demoE+1])
     ax.set_title(f'E = {E_min:0.2f} - {E_max:0.2f} TeV')
-    fig.savefig(f'output_plots/pix_error_significance_vs_elev_logE{logE}.png',bbox_inches='tight')
+    fig.savefig(f'output_plots/pix_error_significance_vs_elev_demoE{demoE}.png',bbox_inches='tight')
     del fig
     del ax
     plt.close()
 
-for logE in range(0,logE_nbins):
+for demoE in range(0,demoE_nbins):
     fig, ax = plt.subplots()
     figsize_x = 6.4
     figsize_y = 3.8
@@ -430,8 +454,8 @@ for logE in range(0,logE_nbins):
         plot_error_significance = []
         for grp in range(0,len(list_nsb[ana])):
             nsb = list_nsb[ana][grp]
-            for pix in range(0,len(list_significance[ana][grp][logE])):
-                significance = list_significance[ana][grp][logE][pix]
+            for pix in range(0,len(list_significance[ana][grp][demoE])):
+                significance = list_significance[ana][grp][demoE][pix]
                 plot_nsb += [nsb]
                 plot_error_significance += [abs(significance)]
         kc = ana_tag[ana][0].strip('rank').strip('fullspec')
@@ -466,15 +490,15 @@ for logE in range(0,logE_nbins):
         ax.plot(nsb_axis,significance_axis,color=ana_tag[ana][1],label='$k_{c}$='+f'{kc}')
 
     ax.legend(loc='best')
-    E_min = pow(10.,logE_bins[logE])
-    E_max = pow(10.,logE_bins[logE+1])
+    E_min = pow(10.,demo_energy[demoE])
+    E_max = pow(10.,demo_energy[demoE+1])
     ax.set_title(f'E = {E_min:0.2f} - {E_max:0.2f} TeV')
-    fig.savefig(f'output_plots/pix_error_significance_vs_nsb_logE{logE}.png',bbox_inches='tight')
+    fig.savefig(f'output_plots/pix_error_significance_vs_nsb_demoE{demoE}.png',bbox_inches='tight')
     del fig
     del ax
     plt.close()
 
-for logE in range(0,logE_nbins):
+for demoE in range(0,demoE_nbins):
 
     hist_range = 10.
     hist_bins = 40
@@ -492,8 +516,8 @@ for logE in range(0,logE_nbins):
         if ana_tag[ana][1]=='w': continue
         plot_error_significance = []
         for grp in range(0,len(list_elev[ana])):
-            for pix in range(0,len(list_significance[ana][grp][logE])):
-                significance = list_significance[ana][grp][logE][pix]
+            for pix in range(0,len(list_significance[ana][grp][demoE])):
+                significance = list_significance[ana][grp][demoE][pix]
                 if np.isnan(significance): continue
                 plot_error_significance += [(significance)]
         hist_significance, bin_edges = np.histogram(plot_error_significance,bins=hist_bins,range=(-hist_range,hist_range))
@@ -511,14 +535,16 @@ for logE in range(0,logE_nbins):
     ax.set_yscale('log')
     ax.legend(loc='best')
     ax.set_ylim(bottom=1e-3)
-    E_min = pow(10.,logE_bins[logE])
-    E_max = pow(10.,logE_bins[logE+1])
+    E_min = pow(10.,demo_energy[demoE])
+    E_max = pow(10.,demo_energy[demoE+1])
     ax.set_title(f'E = {E_min:0.2f} - {E_max:0.2f} TeV')
-    fig.savefig(f'output_plots/error_significance_distribution_logE{logE}.png',bbox_inches='tight')
+    fig.savefig(f'output_plots/error_significance_distribution_demoE{demoE}.png',bbox_inches='tight')
     del fig
     del ax
     plt.close()
 
+
+for demoE in range(0,demoE_nbins):
 
     hist_bins = 100
     fig, ax = plt.subplots()
@@ -526,36 +552,55 @@ for logE in range(0,logE_nbins):
     figsize_y = 3.8
     fig.set_figheight(figsize_y)
     fig.set_figwidth(figsize_x)
-    label_x = 'log10 (1 - normalized correlation)'
-    label_y = 'Entries'
+    label_x = 'wave number $k$'
+    label_y = 'intensity'
     ax.set_xlabel(label_x)
     ax.set_ylabel(label_y)
     for ana in range(0,len(ana_tag)):
         if ana_tag[ana][1]=='w': continue
-        plot_error_correlation = []
+        freqs_shifted = list_freqs_shifted[ana][0][demoE]
+        v_power_spectrum = np.zeros_like(list_v_power_spectrum[ana][0][demoE])
         for grp in range(0,len(list_elev[ana])):
-            correlation = list_correlation[ana][grp][logE]
-            if np.isnan(correlation): continue
-            if correlation==0.: continue
-            plot_error_correlation += [np.log10(correlation)]
-        hist_correlation, bin_edges = np.histogram(plot_error_correlation,bins=hist_bins,range=(-4.,0.))
-        mean = np.mean(np.array(plot_error_correlation))
-        rms = np.sqrt(np.mean(np.square(np.array(plot_error_correlation))))
+            v_power_spectrum += list_v_power_spectrum[ana][grp][demoE]
         kc = ana_tag[ana][0].strip('rank').strip('fullspec')
-        ax.hist(plot_error_correlation,bin_edges,histtype='step',density=True,facecolor=ana_tag[ana][1],label='$k_{c}$='+f'{kc}, $\\mu$={pow(10.,mean):0.3f}')
-
+        ax.plot(freqs_shifted,v_power_spectrum,label='$k_{c}$='+f'{kc}')
     ax.legend(loc='best')
-    ax.set_ylim(bottom=1e-3)
-    E_min = pow(10.,logE_bins[logE])
-    E_max = pow(10.,logE_bins[logE+1])
+    E_min = pow(10.,demo_energy[demoE])
+    E_max = pow(10.,demo_energy[demoE+1])
     ax.set_title(f'E = {E_min:0.2f} - {E_max:0.2f} TeV')
-    fig.savefig(f'output_plots/template_correlation_distribution_logE{logE}.png',bbox_inches='tight')
+    fig.savefig(f'output_plots/power_spectrum_v_demoE{demoE}.png',bbox_inches='tight')
     del fig
     del ax
     plt.close()
 
+    hist_bins = 100
+    fig, ax = plt.subplots()
+    figsize_x = 6.4
+    figsize_y = 3.8
+    fig.set_figheight(figsize_y)
+    fig.set_figwidth(figsize_x)
+    label_x = 'wave number $k$'
+    label_y = 'intensity'
+    ax.set_xlabel(label_x)
+    ax.set_ylabel(label_y)
+    for ana in range(0,len(ana_tag)):
+        if ana_tag[ana][1]=='w': continue
+        freqs_shifted = list_freqs_shifted[ana][0][demoE]
+        h_power_spectrum = np.zeros_like(list_h_power_spectrum[ana][0][demoE])
+        for grp in range(0,len(list_elev[ana])):
+            h_power_spectrum += list_h_power_spectrum[ana][grp][demoE]
+        kc = ana_tag[ana][0].strip('rank').strip('fullspec')
+        ax.plot(freqs_shifted,h_power_spectrum,label='$k_{c}$='+f'{kc}')
+    ax.legend(loc='best')
+    E_min = pow(10.,demo_energy[demoE])
+    E_max = pow(10.,demo_energy[demoE+1])
+    ax.set_title(f'E = {E_min:0.2f} - {E_max:0.2f} TeV')
+    fig.savefig(f'output_plots/power_spectrum_h_demoE{demoE}.png',bbox_inches='tight')
+    del fig
+    del ax
+    plt.close()
 
-for logE in range(0,logE_nbins):
+for demoE in range(0,demoE_nbins):
 
     ana_axis = []
     ana_axis_label = []
@@ -570,14 +615,22 @@ for logE in range(0,logE_nbins):
         ana_data = 0.
         ana_bkgd = 0.
         ana_diff= 0.
-        n_groups = float(len(list_elev[ana]))
-        for grp in range(0,len(list_elev[ana])):
-            data = list_data_count[ana][grp][logE]
-            bkgd = list_bkgd_count[ana][grp][logE]
-            ana_data += data/n_groups
-            ana_bkgd += bkgd/n_groups
-            ana_diff += pow(data-bkgd,2)/n_groups
-        ana_diff = pow(ana_diff,0.5)
+        n_groups = len(list_elev[ana])
+        sum_weight = 0.
+        for grp in range(0,n_groups):
+            data = list_data_count[ana][grp][demoE]
+            bkgd = list_bkgd_count[ana][grp][demoE]
+            if data==0.: 
+                continue
+            #weight = 1./data
+            weight = 1.
+            ana_data += data*weight
+            ana_bkgd += bkgd*weight
+            ana_diff += abs(data-bkgd)*weight
+            sum_weight += weight
+        ana_data = ana_data/sum_weight
+        ana_bkgd = ana_bkgd/sum_weight
+        ana_diff = ana_diff/sum_weight
         syst_err = 0.
         stat_err = 0.
         if ana_data>0.:
@@ -585,7 +638,7 @@ for logE in range(0,logE_nbins):
             stat_err = 1./pow(ana_data,0.5)
         syst_err_axis += [syst_err*100.]
         stat_err_axis += [pow(stat_err*stat_err+syst_err*syst_err/n_groups,0.5)*100.]
-        print (f"E = {pow(10.,logE_bins[logE]):0.3f} TeV, {ana_tag[ana][0]}, error = {syst_err*100.:0.2f} +/- {stat_err*100.:0.2f} +/- {syst_err/pow(n_groups,0.5)*100.:0.2f} % ({syst_err/stat_err:0.2f} sigma)")
+        print (f"E = {pow(10.,demo_energy[demoE]):0.3f} TeV, {ana_tag[ana][0]}, error = {syst_err*100.:0.2f} +/- {stat_err*100.:0.2f} +/- {syst_err/pow(n_groups,0.5)*100.:0.2f} % ({syst_err/stat_err:0.2f} sigma)")
 
     fig, ax = plt.subplots()
     figsize_x = 6.4
@@ -596,13 +649,13 @@ for logE in range(0,logE_nbins):
     label_y = '$\\epsilon$ (%)'
     ax.set_xlabel(label_x)
     ax.set_ylabel(label_y)
-    E_min = pow(10.,logE_bins[logE])
-    E_max = pow(10.,logE_bins[logE+1])
+    E_min = pow(10.,demo_energy[demoE])
+    E_max = pow(10.,demo_energy[demoE+1])
     ax.errorbar(ana_axis,syst_err_axis,yerr=stat_err_axis,color='k',marker='.',ls='solid')
     ax.set_xticks(np.arange(len(ana_axis_label)), labels=ana_axis_label)
     ax.set_title(f'E = {E_min:0.2f} - {E_max:0.2f} TeV')
     ax.set_yscale('log')
-    fig.savefig(f'output_plots/ana_syst_err_logE{logE}.png',bbox_inches='tight')
+    fig.savefig(f'output_plots/ana_syst_err_demoE{demoE}.png',bbox_inches='tight')
     del fig
     del ax
     plt.close()

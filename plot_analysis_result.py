@@ -50,6 +50,7 @@ diffusion_func = common_functions.diffusion_func
 significance_li_and_ma = common_functions.significance_li_and_ma
 coordinate_type = common_functions.coordinate_type
 ConvertRaDecToGalactic = common_functions.ConvertRaDecToGalactic
+compute_camera_frame_power_spectrum = common_functions.compute_camera_frame_power_spectrum
 
 
 fig, ax = plt.subplots()
@@ -66,6 +67,10 @@ smi_input = os.environ.get("SMI_INPUT")
 smi_output = "/nevis/ged/data/rshang/smi_output/output_default"
 #smi_output = "/nevis/ged/data/rshang/smi_output/output_detail"
 
+bin_tag = os.environ.get("BIN_TAG")
+cr_tag = os.environ.get("CR_TAG")
+sky_tag = os.environ.get("SKY_TAG")
+
 smooth_size = 0.06
 #smooth_size = 0.08
 #smooth_size = 0.2
@@ -78,17 +83,14 @@ for logE in range(0,logE_nbins):
 zoomin = 1.0
 #zoomin = 0.5
 
-#ana_tag = 'cr15'
-ana_tag = 'cr20'
-
-ana_tag += '_nbin7'
+ana_tag = f"{cr_tag}_{bin_tag}_{sky_tag}"
 
 #ana_tag += '_init'
 #ana_tag += '_fullspec1'
 #ana_tag += '_fullspec2'
 #ana_tag += '_fullspec4'
 #ana_tag += '_fullspec8'
-ana_tag += '_fullspec16'
+#ana_tag += '_fullspec16'
 #ana_tag += '_fullspec32'
 #ana_tag += '_fullspec64'
 
@@ -125,8 +127,8 @@ radial_bin_scale = 0.1
 
 include_syst_error = True
 #include_syst_error = False
-#normalize_map = True
-normalize_map = False
+normalize_map = True
+#normalize_map = False
 
 if 'Crab' in source_name:
     fit_radial_profile = False
@@ -947,7 +949,60 @@ for logE in range(plot_logE_min,plot_logE_max):
 fig.savefig(f'output_plots/xyoff_map_inclusive_err_{source_name}_transpose_{ana_tag}.png',bbox_inches='tight')
 axbig.remove()
 
-
+freqs_shifted, v_power_spectrum_LE, h_power_spectrum_LE = compute_camera_frame_power_spectrum(sum_significance_sky_map_LE)
+fig.clf()
+figsize_x = 6.4
+figsize_y = 4.6
+fig.set_figheight(figsize_y)
+fig.set_figwidth(figsize_x)
+axbig = fig.add_subplot()
+label_x = 'wave number $k$'
+label_y = 'power spectrum (vertical)'
+axbig.set_xlabel(label_x)
+axbig.set_ylabel(label_y)
+axbig.plot(freqs_shifted,v_power_spectrum_LE)
+fig.savefig(f'output_plots/power_spectrum_v_{source_name}_LE_{ana_tag}.png',bbox_inches='tight')
+axbig.remove()
+fig.clf()
+figsize_x = 6.4
+figsize_y = 4.6
+fig.set_figheight(figsize_y)
+fig.set_figwidth(figsize_x)
+axbig = fig.add_subplot()
+label_x = 'wave number $k$'
+label_y = 'power spectrum (horizontal)'
+axbig.set_xlabel(label_x)
+axbig.set_ylabel(label_y)
+axbig.plot(freqs_shifted,h_power_spectrum_LE)
+fig.savefig(f'output_plots/power_spectrum_h_{source_name}_LE_{ana_tag}.png',bbox_inches='tight')
+axbig.remove()
+freqs_shifted, v_power_spectrum_HE, h_power_spectrum_HE = compute_camera_frame_power_spectrum(sum_significance_sky_map_HE)
+fig.clf()
+figsize_x = 6.4
+figsize_y = 4.6
+fig.set_figheight(figsize_y)
+fig.set_figwidth(figsize_x)
+axbig = fig.add_subplot()
+label_x = 'wave number $k$'
+label_y = 'power spectrum (vertical)'
+axbig.set_xlabel(label_x)
+axbig.set_ylabel(label_y)
+axbig.plot(freqs_shifted,v_power_spectrum_HE)
+fig.savefig(f'output_plots/power_spectrum_v_{source_name}_HE_{ana_tag}.png',bbox_inches='tight')
+axbig.remove()
+fig.clf()
+figsize_x = 6.4
+figsize_y = 4.6
+fig.set_figheight(figsize_y)
+fig.set_figwidth(figsize_x)
+axbig = fig.add_subplot()
+label_x = 'wave number $k$'
+label_y = 'power spectrum (horizontal)'
+axbig.set_xlabel(label_x)
+axbig.set_ylabel(label_y)
+axbig.plot(freqs_shifted,h_power_spectrum_HE)
+fig.savefig(f'output_plots/power_spectrum_h_{source_name}_HE_{ana_tag}.png',bbox_inches='tight')
+axbig.remove()
 
 PlotSkyMap(fig,'significance',plot_logE_min,plot_logE_max,sum_significance_sky_map_allE,f'significance_sky_map_{source_name}_allE_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,excl_x=all_excl_x,excl_y=all_excl_y,excl_r=all_excl_r,max_z=3.,zoomin=zoomin)
 PlotSkyMap(fig,'excess count',plot_logE_min,plot_logE_max,sum_excess_sky_map_allE,f'excess_sky_map_{source_name}_allE_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,excl_x=all_excl_x,excl_y=all_excl_y,excl_r=all_excl_r,colormap='magma',zoomin=zoomin)
