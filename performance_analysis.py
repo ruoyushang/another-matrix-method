@@ -40,33 +40,37 @@ compute_camera_frame_power_spectrum = common_functions.compute_camera_frame_powe
 smi_dir = os.environ.get("SMI_DIR")
 smi_input = os.environ.get("SMI_INPUT")
 #smi_output = os.environ.get("SMI_OUTPUT")
-#smi_output = "/nevis/ged/data/rshang/smi_output/output_test"
-#smi_output = "/nevis/ged/data/rshang/smi_output/output_3tel"
 smi_output = "/nevis/ged/data/rshang/smi_output/output_default"
+#smi_output = "/nevis/ged/data/rshang/smi_output/output_default/backup_skymaps"
+#skymap_bins = 60
 
 ana_tag = []
 
-#ana_tag += [['init','r']]
+#ana_tag += [['cr20_nbin9_fullspec16_original','b']]
+#ana_tag += [['cr20_nbin9_fullspec16_free','b']]
+#ana_tag += [['cr20_nbin9_fullspec16_rescale','b']]
+
+#ana_tag += [['cr20_nbin9_fullspec8_free','b']]
+#ana_tag += [['cr20_nbin9_fullspec8_fft','b']]
 
 #ana_tag += [['cr15_nbin7_fullspec16','b']]
 #ana_tag += [['cr20_nbin7_fullspec16','b']]
 #ana_tag += [['cr25_nbin7_fullspec16','b']]
 
-ana_tag += [['cr20_nbin1_fullspec16','b']]
-#ana_tag += [['cr20_nbin3_fullspec16','b']]
-#ana_tag += [['cr20_nbin5_fullspec16','b']]
-#ana_tag += [['cr20_nbin7_fullspec16','b']]
-ana_tag += [['cr20_nbin9_fullspec16','b']]
+#ana_tag += [['cr20_nbin1_fullspec16_free','b']]
+#ana_tag += [['cr20_nbin3_fullspec16_free','b']]
+#ana_tag += [['cr20_nbin5_fullspec16_free','b']]
+#ana_tag += [['cr20_nbin7_fullspec16_free','b']]
+#ana_tag += [['cr20_nbin9_fullspec16_free','b']]
 
 #ana_tag += [['cr20_nbin7_init','b']]
-#ana_tag += [['cr20_nbin7_fullspec16','b']]
+#ana_tag += [['cr20_nbin7_fullspec16_free','b']]
 
-#ana_tag += [['cr20_nbin7_fullspec1','b']]
-#ana_tag += [['cr20_nbin7_fullspec2','b']]
-#ana_tag += [['cr20_nbin7_fullspec4','b']]
-#ana_tag += [['cr20_nbin7_fullspec8','b']]
-#ana_tag += [['cr20_nbin7_fullspec16','b']]
-#ana_tag += [['cr20_nbin7_fullspec32','b']]
+ana_tag += [['cr20_nbin9_fullspec1_free','b']]
+ana_tag += [['cr20_nbin9_fullspec2_free','b']]
+ana_tag += [['cr20_nbin9_fullspec4_free','b']]
+ana_tag += [['cr20_nbin9_fullspec8_free','b']]
+ana_tag += [['cr20_nbin9_fullspec16_free','b']]
 
 onoff = 'OFF'
 
@@ -76,6 +80,7 @@ onoff = 'OFF'
 #exposure_per_group = 20.
 exposure_per_group = 50.
 #exposure_per_group = 100.
+#exposure_per_group = 1000.
 cr_qual_cut = 1e10
 #cr_qual_cut = 230
 
@@ -196,7 +201,7 @@ for ana in range(0,len(ana_tag)):
 
                 total_exposure += exposure
                 current_exposure += exposure
-                run_data += [[exposure,run_elev,run_nsb,data_sky_map,bkgd_sky_map]]
+                run_data += [[source_name,exposure,run_elev,run_nsb,data_sky_map,bkgd_sky_map]]
 
                 if current_exposure>exposure_per_group or run==len(analysis_result)-1:
                 #if current_exposure>exposure_per_group:
@@ -220,6 +225,7 @@ for demoE in range(0,demoE_nbins):
     grp_bkgd_map += [MyArray3D(x_bins=skymap_bins,start_x=xoff_start,end_x=xoff_end,y_bins=skymap_bins,start_y=yoff_start,end_y=yoff_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
     grp_diff_map += [MyArray3D(x_bins=skymap_bins,start_x=xoff_start,end_x=xoff_end,y_bins=skymap_bins,start_y=yoff_start,end_y=yoff_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
 
+list_src_name = []
 list_elev = []
 list_nsb = []
 list_data_count = []
@@ -229,6 +235,7 @@ list_freqs_shifted = []
 list_v_power_spectrum = []
 list_h_power_spectrum = []
 for ana in range(0,len(analysis_data)):
+    ana_src_name = []
     ana_elev = []
     ana_nsb = []
     ana_data_count = []
@@ -238,6 +245,7 @@ for ana in range(0,len(analysis_data)):
     ana_v_power_spectrum = []
     ana_h_power_spectrum = []
     for grp  in range(0,len(analysis_data[ana])):
+        grp_src_name = 0.
         grp_expo = 0.
         grp_elev = 0.
         grp_nsb = 0.
@@ -249,11 +257,13 @@ for ana in range(0,len(analysis_data)):
             grp_bkgd_map[demoE].reset()
         for run in range(0,len(analysis_data[ana][grp])):
             run_data = analysis_data[ana][grp][run]
-            exposure = run_data[0]
-            run_elev = run_data[1]
-            run_nsb = run_data[2]
-            data_map = run_data[3]
-            bkgd_map = run_data[4]
+            src_name = run_data[0]
+            exposure = run_data[1]
+            run_elev = run_data[2]
+            run_nsb = run_data[3]
+            data_map = run_data[4]
+            bkgd_map = run_data[5]
+            grp_src_name = src_name
             grp_expo += exposure
             grp_elev += run_elev*exposure
             grp_nsb += run_nsb*exposure
@@ -270,6 +280,7 @@ for ana in range(0,len(analysis_data)):
 
         grp_elev = grp_elev/grp_expo
         grp_nsb = grp_nsb/grp_expo
+        ana_src_name += [grp_src_name]
         ana_elev += [grp_elev]
         ana_nsb += [grp_nsb]
         ana_data_count += [grp_data_count]
@@ -314,6 +325,7 @@ for ana in range(0,len(analysis_data)):
                         grp_significance[demoE] += [significance]
         ana_significance += [grp_significance]
 
+    list_src_name += [ana_src_name]
     list_elev += [ana_elev]
     list_nsb += [ana_nsb]
     list_data_count += [ana_data_count]
@@ -600,6 +612,32 @@ for demoE in range(0,demoE_nbins):
     del ax
     plt.close()
 
+
+for demoE in range(0,demoE_nbins):
+    for ana in range(0,len(ana_tag)):
+        print ("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+        print (f"E = {demoE}, {ana_tag[ana][0]}")
+        data_dict = dict.fromkeys(src_keys, 0.)  # Initializes all values to 0.
+        bkgd_dict = dict.fromkeys(src_keys, 0.)  # Initializes all values to 0.
+        n_groups = len(list_elev[ana])
+        for grp in range(0,n_groups):
+            source_name = list_src_name[ana][grp]
+            data = list_data_count[ana][grp][demoE]
+            bkgd = list_bkgd_count[ana][grp][demoE]
+            data_dict[source_name] += data
+            bkgd_dict[source_name] += bkgd
+        for src in range(0,len(src_keys)):
+            src_name = src_keys[src]
+            data = data_dict[src_name]
+            bkgd = bkgd_dict[src_name]
+            if data==0.:
+                syst = 0.
+            else:
+                syst = (data-bkgd)/data
+                stat = 1./pow(data,0.5)
+            print (f"{src_name}, {expo_dict[src_name]:0.1f} hrs, syst error = {syst*100.:0.2f} +/- {stat*100.:0.2f} %")
+
+
 for demoE in range(0,demoE_nbins):
 
     ana_axis = []
@@ -610,11 +648,12 @@ for demoE in range(0,demoE_nbins):
 
     syst_err_axis = []
     stat_err_axis = []
-    print ("====================================================================================================")
+    print ("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
     for ana in range(0,len(ana_tag)):
         ana_data = 0.
         ana_bkgd = 0.
         ana_diff= 0.
+        ana_stat= 0.
         n_groups = len(list_elev[ana])
         sum_weight = 0.
         for grp in range(0,n_groups):
@@ -622,20 +661,22 @@ for demoE in range(0,demoE_nbins):
             bkgd = list_bkgd_count[ana][grp][demoE]
             if data==0.: 
                 continue
-            #weight = 1./data
-            weight = 1.
+            weight = data
+            #weight = 1.
             ana_data += data*weight
             ana_bkgd += bkgd*weight
             ana_diff += abs(data-bkgd)*weight
+            ana_stat += pow(data,0.5)*weight
             sum_weight += weight
         ana_data = ana_data/sum_weight
         ana_bkgd = ana_bkgd/sum_weight
         ana_diff = ana_diff/sum_weight
+        ana_stat = ana_stat/sum_weight
         syst_err = 0.
         stat_err = 0.
         if ana_data>0.:
             syst_err = ana_diff/ana_data
-            stat_err = 1./pow(ana_data,0.5)
+            stat_err = ana_stat/ana_data
         syst_err_axis += [syst_err*100.]
         stat_err_axis += [pow(stat_err*stat_err+syst_err*syst_err/n_groups,0.5)*100.]
         print (f"E = {pow(10.,demo_energy[demoE]):0.3f} TeV, {ana_tag[ana][0]}, error = {syst_err*100.:0.2f} +/- {stat_err*100.:0.2f} +/- {syst_err/pow(n_groups,0.5)*100.:0.2f} % ({syst_err/stat_err:0.2f} sigma)")

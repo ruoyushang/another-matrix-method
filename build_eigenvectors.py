@@ -52,10 +52,12 @@ fig.set_figwidth(figsize_x)
 smi_input = os.environ.get("SMI_INPUT")
 smi_output = os.environ.get("SMI_OUTPUT")
 smi_dir = os.environ.get("SMI_DIR")
-sky_tag = os.environ.get("SKY_TAG")
+eigen_tag = os.environ.get("EIGEN_TAG")
 bin_tag = os.environ.get("BIN_TAG")
 cr_tag = os.environ.get("CR_TAG")
 ana_dir = os.environ.get("ANA_DIR")
+
+sky_tag = f"{cr_tag}_{bin_tag}_{eigen_tag}"
 
 source_name = sys.argv[1]
 onoff = sys.argv[2]
@@ -148,10 +150,10 @@ print (f"list_cr_map_1d.shape = {list_cr_map_1d.shape}")
 model = []
 model_err = []
 for logE in range(0,logE_nbins):
-    A, A_err = weighted_least_square_solution(list_cr_map_1d,list_sr_norm.T[logE],list_sr_weight.T[logE],plot_tag=f'{source_name}_{onoff}_{input_epoch}_{cr_tag}_{bin_tag}_{sky_tag}_logE{logE}')
+    A, A_err = weighted_least_square_solution(list_cr_map_1d,list_sr_norm.T[logE],list_sr_weight.T[logE],plot_tag=f'{source_name}_{onoff}_{input_epoch}_{sky_tag}_logE{logE}')
     model += [A]
     model_err += [A_err]
-output_filename = f'{smi_output}/{ana_dir}/model_least_square_{source_name}_{onoff}_{input_epoch}_{cr_tag}_{bin_tag}_{sky_tag}.pkl'
+output_filename = f'{smi_output}/{ana_dir}/model_least_square_{source_name}_{onoff}_{input_epoch}_{sky_tag}.pkl'
 with open(output_filename, "wb") as file:
     pickle.dump([model,model_err], file)
 
@@ -260,7 +262,7 @@ for rank in range(0,max_matrix_rank):
     fig.savefig(f'output_plots/fullspec_eigenmap_{source_name}_{input_epoch}_rank{rank}_tanspose',bbox_inches='tight')
     axbig.remove()
 
-output_filename = f'{smi_output}/{ana_dir}/model_eigenvectors_{source_name}_{onoff}_{input_epoch}_{cr_tag}_{bin_tag}_{sky_tag}.pkl'
+output_filename = f'{smi_output}/{ana_dir}/model_eigenvectors_{source_name}_{onoff}_{input_epoch}_{sky_tag}.pkl'
 with open(output_filename,"wb") as file:
     pickle.dump([big_eigenvalues_fullspec,big_eigenvectors_fullspec,avg_xyoff_map_1d_fullspec], file)
 

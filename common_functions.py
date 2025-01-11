@@ -25,6 +25,8 @@ from astropy.table import Table
 
 cr_tag = os.environ.get("CR_TAG")
 bin_tag = os.environ.get("BIN_TAG")
+norm_tag = os.environ.get("NORM_TAG")
+eigen_tag = os.environ.get("EIGEN_TAG")
 sky_tag = os.environ.get("SKY_TAG")
 smi_output = os.environ.get("SMI_OUTPUT")
 
@@ -66,7 +68,7 @@ MSCL_cut = [0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70]
 str_flux_calibration = ['2.51e+03', '2.85e+03', '2.53e+03', '3.20e+03', '8.51e+03', '2.51e+04', '1.14e+05', '3.70e+05', '1.09e+06']
 
 skymap_size = 3.
-skymap_bins = 60
+skymap_bins = 30
 fine_skymap_bins = 120
 
 #doFluxCalibration = True
@@ -82,19 +84,29 @@ matrix_rank = 1
 matrix_rank_fullspec = 16
 use_init = False
 xyoff_map_nbins = 7
+use_rescale = False
+constraint_gamma_like = True
+use_fft = False
 
-if sky_tag=='init':
+if eigen_tag=='init':
     matrix_rank_fullspec = 1
     use_init = True
 
-if 'fullspec' in sky_tag:
-    matrix_rank_fullspec = int(sky_tag.strip('fullspec'))
+if 'fullspec' in eigen_tag:
+    matrix_rank_fullspec = int(eigen_tag.strip('fullspec'))
 
 if 'nbin' in bin_tag:
     xyoff_map_nbins = int(bin_tag.strip('nbin'))
 
 if 'cr' in cr_tag:
     cr_gcut = float(cr_tag.strip('cr'))/10.
+
+if 'rescale' in norm_tag:
+    use_rescale = True
+elif 'original' in norm_tag:
+    constraint_gamma_like = False
+elif 'fft' in norm_tag:
+    use_fft = True
 
 #xoff_bins = [7,7,7,7,5,3,1,1,1]
 xoff_bins = [xyoff_map_nbins for logE in range(0,logE_nbins)]
@@ -909,48 +921,48 @@ def cosmic_ray_like_chi2_fullspec(
         region_type,
     ):
 
+    rng = np.random.default_rng()
+
     sum_log_likelihood = 0.
+    fft_log_likelihood = 0.
+    lsq_log_likelihood = 0.
 
     try_params = np.array(try_params)
     try_xyoff_map = eigenvectors.T @ try_params
-    #try_xyoff_map = eigenvectors.T @ try_params + init_xyoff_map
 
     init_params = eigenvectors @ init_xyoff_map
-
-    #init_chi2 = 0.
-    #init_norm = np.sum(np.abs(init_params))
-    #try_norm = np.sum(np.abs(try_params))
-    #for entry in range(0,len(try_params)):
-    #    init_chi2 += pow(try_params[entry]-init_params[entry]/init_norm*try_norm,2) / abs(init_params[entry])
-    #sum_log_likelihood += init_chi2
 
     idx_1d = 0
     sum_weight = 0.
     for gcut in range(0,gcut_bins):
+        weight = gcut_weight[gcut]
         for logE in range(0,logE_nbins):
+
+            #region_noise = []
+            #for idx_x in range(0,xoff_bins[logE]):
+            #    region_noise_x = []
+            #    for idx_y in range(0,yoff_bins[logE]):
+            #        region_noise_x += [rng.standard_normal()]
+            #    region_noise += [region_noise_x]
+            #fourier_transform_noise = np.fft.fft2(region_noise)
+            #magnitude_noise = np.abs(fourier_transform_noise)
+            freqs_x = np.fft.fftfreq(xoff_bins[logE], 1.)
+            freqs_y = np.fft.fftfreq(yoff_bins[logE], 1.)
+
+            region_data = []
             for idx_x in range(0,xoff_bins[logE]):
+                region_data_x = []
                 for idx_y in range(0,yoff_bins[logE]):
 
                     idx_1d += 1
                     data = data_xyoff_map[idx_1d-1]
                     init = init_xyoff_map[idx_1d-1]
                     mask = mask_xyoff_map[idx_1d-1]
-                    weight = gcut_weight[gcut]
-
-                    #if mask>0.:
-                    #    weight = 0.
 
                     n_expect = max(0.0001,try_xyoff_map[idx_1d-1])
                     n_data = data
                     if gcut==0:
                         n_data = max(0.0001,init)
-
-                    #if region_type==0:
-                    #    if gcut==0:
-                    #        n_data = max(0.0001,init) # blind signal region with init background model
-                    #        weight = regularization_scale
-                    #elif region_type==1:
-                    #    if gcut!=0: continue
 
                     sum_weight += weight
 
@@ -962,8 +974,20 @@ def cosmic_ray_like_chi2_fullspec(
                         else:
                             log_likelihood = -1. * (n_data*np.log(n_expect) - n_expect - (n_data*np.log(n_data)-n_data)) * weight
                             sum_log_likelihood += log_likelihood
+                        region_data_x += [log_likelihood]
                     else:
                         sum_log_likelihood += pow(n_expect-n_data,2) * weight
+                region_data += [region_data_x]
+
+            if use_fft:
+                fourier_transform = np.fft.fft2(region_data)
+                magnitude = np.abs(fourier_transform)
+                for idx_x in range(0,magnitude.shape[0]):
+                    for idx_y in range(0,magnitude.shape[1]):
+                        freq_weight = 1./(abs(freqs_x[idx_x]*freqs_y[idx_y])+1.)
+                        #reference = magnitude_noise[idx_x,idx_y]
+                        fft_data = magnitude[idx_x,idx_y]
+                        fft_log_likelihood += fft_data * freq_weight * weight
 
     idx_1d = 0
     for gcut in range(0,gcut_bins):
@@ -993,17 +1017,21 @@ def cosmic_ray_like_chi2_fullspec(
                 n_data_err_gcut = abs(sr_norm_err[logE])
                 if n_data_gcut==n_data_err_gcut:
                     weight_gut = 0.
+                if not constraint_gamma_like:
+                    weight_gut = 0.
             else:
                 weight_gut = 1.
 
-            #sum_log_likelihood += pow(n_expect_gcut-n_data_gcut,2)/pow(n_data_err_gcut,2) * weight_gut
             if n_data_gcut==0.:
-                sum_log_likelihood += n_expect_gcut*weight_gut
+                lsq_log_likelihood += n_expect_gcut*weight_gut
             else:
-                sum_log_likelihood += (-1.*(n_data_gcut*np.log(n_expect_gcut) - n_expect_gcut - (n_data_gcut*np.log(n_data_gcut)-n_data_gcut)))*weight_gut
+                lsq_log_likelihood += (-1.*(n_data_gcut*np.log(n_expect_gcut) - n_expect_gcut - (n_data_gcut*np.log(n_data_gcut)-n_data_gcut)))*weight_gut
 
 
-    return sum_log_likelihood
+    if use_fft:
+        return fft_log_likelihood + lsq_log_likelihood + sum_log_likelihood
+
+    return sum_log_likelihood + lsq_log_likelihood
     #return sum_log_likelihood / sum_weight
 
 
@@ -1641,8 +1669,8 @@ def PlotCountProjection(fig,label_z,logE_min,logE_max,hist_map_data,hist_map_bkg
     hist_map_excess.just_like(hist_map_data)
     make_significance_map(hist_map_data,hist_map_bkgd,hist_map_significance,hist_map_excess,syst_sky_map=hist_map_syst)
 
-    x_pix_size = 3*abs(hist_map_data.xaxis[1]-hist_map_data.xaxis[0])
-    y_pix_size = 3*abs(hist_map_data.yaxis[1]-hist_map_data.yaxis[0])
+    x_pix_size = max(0.1,abs(hist_map_data.xaxis[1]-hist_map_data.xaxis[0]))
+    y_pix_size = max(0.1,abs(hist_map_data.yaxis[1]-hist_map_data.yaxis[0]))
     x_proj_axis = MyArray1D(x_nbins=round(abs(xmax-xmin)/x_pix_size),start_x=xmin,end_x=xmax)
     y_proj_axis = MyArray1D(x_nbins=round(abs(ymax-ymin)/y_pix_size),start_x=ymin,end_x=ymax)
 
@@ -2516,11 +2544,28 @@ def PrintAndPlotInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,hist_d
     print ('new flux_calibration = %s'%(formatted_numbers))
 
     print ('===============================================================================================================')
-    print (f'RoI : {roi_name[0]}')
+    print (f'RoI info: {roi_name[0]}, roi_x = {roi_x[0]}, roi_y = {roi_y[0]}')
 
     min_energy = pow(10.,logE_bins[logE_min])
     mid_energy = pow(10.,logE_bins[logE_mid])
     max_energy = pow(10.,logE_bins[logE_max])
+
+    sum_data = 0.
+    sum_bkgd = 0.
+    sum_error = 0.
+    avg_energy = 0.
+    sum_flux = 0.
+    for binx in range(0,len(energy_axis)):
+        if energy_axis[binx]>min_energy and energy_axis[binx]<max_energy:
+            sum_data += data[binx]
+            sum_bkgd += bkgd[binx]
+            sum_error += bkgd_incl_err[binx]*bkgd_incl_err[binx]
+            avg_energy += flux[binx]*energy_axis[binx]
+            sum_flux += flux[binx]
+    sum_error = pow(sum_error,0.5)
+    significance = significance_li_and_ma(sum_data,sum_bkgd,sum_error)
+    avg_energy = avg_energy/sum_flux
+    print (f'E = {min_energy:0.2f}-{max_energy:0.2f} TeV, avg_E = {avg_energy:0.2f} TeV, data = {sum_data:0.1f}, bkgd = {sum_bkgd:0.1f} +/- {sum_error:0.1f}, significance = {significance:0.1f} sigma')
 
     sum_data = 0.
     sum_bkgd = 0.
@@ -2666,7 +2711,7 @@ def DefineRegionOfMask(src_name,src_ra,src_dec):
     return region_name, region_x, region_y, region_r
 
 
-def DefineRegionOfExclusion(src_name,src_ra,src_dec):
+def DefineRegionOfExclusion(src_name,src_ra,src_dec,coordinate_type='icrs'):
 
     gamma_source_coord = GetGammaSources(src_ra,src_dec)
 
@@ -2682,26 +2727,27 @@ def DefineRegionOfExclusion(src_name,src_ra,src_dec):
     #    excl_y += [src_y]
     #    excl_r += [0.5]
 
-    for src in range(0,len(gamma_source_coord)):
-        src_x = gamma_source_coord[src][0]
-        src_y = gamma_source_coord[src][1]
-        excl_x += [src_x]
-        excl_y += [src_y]
-        excl_r += [0.3]
-
-    if coordinate_type == 'galactic':
-        for roi in range(0,len(excl_r)):
-            excl_x[roi], excl_y[roi] = ConvertRaDecToGalactic(excl_x[roi], excl_y[roi])
-
+    if src_name == 'Validation':
+        for src in range(0,len(gamma_source_coord)):
+            src_x = gamma_source_coord[src][0]
+            src_y = gamma_source_coord[src][1]
+            if coordinate_type == 'galactic':
+                src_x, src_y = ConvertRaDecToGalactic(src_x, src_y)
+            excl_x += [src_x]
+            excl_y += [src_y]
+            excl_r += [0.3]
 
     return excl_x, excl_y, excl_r
 
-def DefineRegionOfInterest(src_name,src_ra,src_dec,normalize_map=False):
+def DefineRegionOfInterest(src_name,src_ra,src_dec,normalize_map=False,coordinate_type='icrs'):
 
     region_name = ('default','default region')
     region_x = []
     region_y = []
     region_r = []
+
+    src_x = src_ra
+    src_y = src_dec
 
     if src_name == 'Validation':
 
@@ -2716,25 +2762,27 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec,normalize_map=False):
     elif 'Crab' in src_name:
 
         region_name = ('center','center')
-        region_x += [src_ra]
-        region_y += [src_dec]
+        region_x += [src_x]
+        region_y += [src_y]
         region_r += [calibration_radius]
 
         #region_name = ('star','star')
-        #region_x += [84.4]
-        #region_y += [21.1]
+        #src_x = 84.4
+        #src_y = 21.1
+        #region_x += [src_x]
+        #region_y += [src_y]
         #region_r += [calibration_radius]
 
     elif 'Geminga' in src_name:
 
         region_name = ('1p5deg','1.5 deg')
-        region_x += [src_ra]
-        region_y += [src_dec]
+        region_x += [src_x]
+        region_y += [src_y]
         region_r += [1.5]
 
         #region_name = ('1p0deg','1.0 deg')
-        #region_x += [src_ra]
-        #region_y += [src_dec]
+        #region_x += [src_x]
+        #region_y += [src_y]
         #region_r += [1.0]
 
     elif 'SNR_G189_p03' in src_name:
@@ -2747,8 +2795,8 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec,normalize_map=False):
         region_r += [0.5]
 
         #region_name = ('HAWC','HAWC')
-        #src_x = 93.67
-        #src_y = 22.22
+        #src_x = 94.25
+        #src_y = 22.57
         #region_x += [src_x]
         #region_y += [src_y]
         #region_r += [1.05]
@@ -2827,8 +2875,10 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec,normalize_map=False):
         #region_r += [1.0]
 
         region_name = ('0p4_deg','0.4 deg') # MAGIC ROI
-        region_x += [284.3]
-        region_y += [2.7]
+        src_x = 284.3
+        src_y = 2.7
+        region_x += [src_x]
+        region_y += [src_y]
         region_r += [0.4]
 
         #region_name = ('J1858_p020','J1858+020')
@@ -2866,15 +2916,15 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec,normalize_map=False):
     elif 'PSR_J2030_p4415' in src_name:
     
         region_name = ('1p5deg','1.5-deg diameter')
-        region_x += [src_ra]
-        region_y += [src_dec]
+        region_x += [src_x]
+        region_y += [src_y]
         region_r += [1.5]
 
     else:
 
         region_name = ('default','default')
-        region_x += [src_ra]
-        region_y += [src_dec]
+        region_x += [src_x]
+        region_y += [src_y]
         region_r += [3.0]
 
 
@@ -3426,10 +3476,9 @@ def compute_camera_frame_power_spectrum(skymap,idx_z=0):
     fourier_transform = np.fft.fft2(data)
     fourier_transform_noise = np.fft.fft2(noise)
 
+    magnitude_noise = np.abs(fourier_transform_noise)
     magnitude = np.abs(fourier_transform)
     phase = np.angle(fourier_transform)
-
-    magnitude_noise = np.abs(fourier_transform_noise)
 
     v_power_spectrum = [0.] * magnitude.shape[0]
     h_power_spectrum = [0.] * magnitude.shape[1]
@@ -3443,17 +3492,17 @@ def compute_camera_frame_power_spectrum(skymap,idx_z=0):
         v_power_spectrum_noise[idx_y] += np.sum(magnitude_noise[:,idx_y])
 
     # Shift the zero-frequency component to the center
-    v_power_spectrum_shifted = np.fft.fftshift(v_power_spectrum)
-    h_power_spectrum_shifted = np.fft.fftshift(h_power_spectrum)
-    v_power_spectrum_noise_shifted = np.fft.fftshift(v_power_spectrum_noise)
-    h_power_spectrum_noise_shifted = np.fft.fftshift(h_power_spectrum_noise)
+    v_power_spectrum_shifted = np.abs(np.fft.fftshift(v_power_spectrum))
+    h_power_spectrum_shifted = np.abs(np.fft.fftshift(h_power_spectrum))
+    v_power_spectrum_noise_shifted = np.abs(np.fft.fftshift(v_power_spectrum_noise))
+    h_power_spectrum_noise_shifted = np.abs(np.fft.fftshift(h_power_spectrum_noise))
 
-    for idx_x in range(0,magnitude.shape[0]):
+    for idx_x in range(0,len(v_power_spectrum_noise_shifted)):
         if v_power_spectrum_noise_shifted[idx_x]==0.:
             v_power_spectrum_shifted[idx_x] = 0.
         else:
             v_power_spectrum_shifted[idx_x] = (v_power_spectrum_shifted[idx_x]-v_power_spectrum_noise_shifted[idx_x])/v_power_spectrum_noise_shifted[idx_x]
-    for idx_y in range(0,magnitude.shape[1]):
+    for idx_y in range(0,len(h_power_spectrum_noise_shifted)):
         if h_power_spectrum_noise_shifted[idx_y]==0.:
             h_power_spectrum_shifted[idx_y] = 0.
         else:
@@ -3752,14 +3801,15 @@ def build_skymap(
                         fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = max(0.0,fit_xyoff_map_1d_fullspec[idx_1d-1])
                         syst_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = max(0.0,fit_xyoff_map_1d_fullspec[idx_1d-1]) * sr_norm_error[logE]/sr_norm_predict[logE]
 
-        #for gcut in range(0,1):
-        #    for logE in range(0,logE_nbins):
-        #        rescale = sr_norm_predict[logE] / np.sum(fit_xyoff_map[logE].waxis[:,:,gcut])
-        #        if sr_norm_predict[logE]==sr_norm_error[logE]:
-        #            rescale = 1.
-        #        for idx_x in range(0,xoff_bins[logE]):
-        #            for idx_y in range(0,yoff_bins[logE]):
-        #                fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] * rescale
+        if use_rescale:
+            for gcut in range(0,1):
+                for logE in range(0,logE_nbins):
+                    rescale = sr_norm_predict[logE] / np.sum(fit_xyoff_map[logE].waxis[:,:,gcut])
+                    if sr_norm_predict[logE]==sr_norm_error[logE]:
+                        rescale = 1.
+                    for idx_x in range(0,xoff_bins[logE]):
+                        for idx_y in range(0,yoff_bins[logE]):
+                            fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] * rescale
 
 
     print ('===================================================================================')

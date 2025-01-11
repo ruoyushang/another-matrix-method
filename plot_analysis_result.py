@@ -67,8 +67,6 @@ smi_input = os.environ.get("SMI_INPUT")
 smi_output = "/nevis/ged/data/rshang/smi_output/output_default"
 #smi_output = "/nevis/ged/data/rshang/smi_output/output_detail"
 
-bin_tag = os.environ.get("BIN_TAG")
-cr_tag = os.environ.get("CR_TAG")
 sky_tag = os.environ.get("SKY_TAG")
 
 smooth_size = 0.06
@@ -83,7 +81,7 @@ for logE in range(0,logE_nbins):
 zoomin = 1.0
 #zoomin = 0.5
 
-ana_tag = f"{cr_tag}_{bin_tag}_{sky_tag}"
+ana_tag = sky_tag
 
 #ana_tag += '_init'
 #ana_tag += '_fullspec1'
@@ -119,14 +117,14 @@ input_epoch = ['V4','V5','V6']
 #input_epoch = ['V5','V6']
 
 logE_min = 0
-#logE_min = logE_axis.get_bin(np.log10(0.2))+1
-logE_mid = logE_axis.get_bin(np.log10(1.5))+1
+logE_mid = logE_axis.get_bin(np.log10(1.0))+1
+#logE_mid = logE_axis.get_bin(np.log10(1.5))+1
 logE_max = logE_nbins
 fit_radial_profile = False
 radial_bin_scale = 0.1
 
-include_syst_error = True
-#include_syst_error = False
+#include_syst_error = True
+include_syst_error = False
 #normalize_map = True
 normalize_map = False
 
@@ -179,8 +177,8 @@ if onoff=='ON':
 region_name = source_name
 if onoff=='OFF':
     region_name = 'Validation'
-all_roi_name, all_roi_x, all_roi_y, all_roi_r = DefineRegionOfInterest(region_name,src_ra,src_dec,normalize_map=normalize_map)
-all_excl_x, all_excl_y, all_excl_r = DefineRegionOfExclusion(region_name,src_ra,src_dec)
+all_roi_name, all_roi_x, all_roi_y, all_roi_r = DefineRegionOfInterest(region_name,src_ra,src_dec,normalize_map=normalize_map,coordinate_type=coordinate_type)
+all_excl_x, all_excl_y, all_excl_r = DefineRegionOfExclusion(region_name,src_ra,src_dec,coordinate_type=coordinate_type)
 print (f"all_roi_name = {all_roi_name}")
 print (f"all_roi_x = {all_roi_x}")
 print (f"all_roi_y = {all_roi_y}")
@@ -540,7 +538,8 @@ for epoch in input_epoch:
                     sum_data_sky_map[logE].add(data_sky_map[logE])
                     sum_bkgd_sky_map[logE].add(bkgd_sky_map[logE])
                     if include_syst_error:
-                        sum_syst_sky_map[logE].addSquare(syst_sky_map[logE])
+                        #sum_syst_sky_map[logE].addSquare(syst_sky_map[logE])
+                        sum_syst_sky_map[logE].add(syst_sky_map[logE])
                     sum_data_xyoff_map[logE].add(data_xyoff_map[logE])
                     sum_fit_xyoff_map[logE].add(fit_xyoff_map[logE])
                     sum_ratio_xyoff_map[logE].add(ratio_xyoff_map[logE])
@@ -583,7 +582,8 @@ for logE in range(0,logE_nbins):
     sum_incl_sky_map_smooth[logE].add(sum_incl_sky_map[logE])
     sum_data_sky_map_smooth[logE].add(sum_data_sky_map[logE])
     sum_bkgd_sky_map_smooth[logE].add(sum_bkgd_sky_map[logE])
-    sum_syst_sky_map_smooth[logE].addSquare(sum_syst_sky_map[logE])
+    #sum_syst_sky_map_smooth[logE].addSquare(sum_syst_sky_map[logE])
+    sum_syst_sky_map_smooth[logE].add(sum_syst_sky_map[logE])
     smooth_image(sum_incl_sky_map_smooth[logE].waxis[:,:,0],sum_incl_sky_map_smooth[logE].xaxis,sum_incl_sky_map_smooth[logE].yaxis,kernel_radius=norm_smooth_size[logE])
     smooth_image(sum_bkgd_sky_map_smooth[logE].waxis[:,:,0],sum_bkgd_sky_map_smooth[logE].xaxis,sum_bkgd_sky_map_smooth[logE].yaxis,kernel_radius=smooth_size)
     smooth_image(sum_syst_sky_map_smooth[logE].waxis[:,:,0],sum_syst_sky_map_smooth[logE].xaxis,sum_syst_sky_map_smooth[logE].yaxis,kernel_radius=smooth_size)
