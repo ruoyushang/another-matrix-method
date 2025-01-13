@@ -50,12 +50,16 @@ ana_tag = []
 #ana_tag += [['cr20_nbin9_fullspec16_free','b']]
 #ana_tag += [['cr20_nbin9_fullspec16_rescale','b']]
 
-#ana_tag += [['cr20_nbin9_fullspec8_free','b']]
-#ana_tag += [['cr20_nbin9_fullspec8_fft','b']]
+#ana_tag += [['cr20_nbin7_fullspec16_poisson','b']]
+#ana_tag += [['cr15_nbin9_fullspec16_poisson','b']]
+ana_tag += [['cr20_nbin9_fullspec16_poisson','b']]
+#ana_tag += [['wr05_nbin9_fullspec16_poisson','b']]
 
-#ana_tag += [['cr15_nbin7_fullspec16','b']]
-#ana_tag += [['cr20_nbin7_fullspec16','b']]
-#ana_tag += [['cr25_nbin7_fullspec16','b']]
+#ana_tag += [['cr20_nbin9_fullspec1_poisson','b']]
+#ana_tag += [['cr20_nbin9_fullspec16_poisson','b']]
+
+#ana_tag += [['cr15_nbin7_fullspec16_free','b']]
+#ana_tag += [['cr20_nbin9_fullspec16_free','b']]
 
 #ana_tag += [['cr20_nbin1_fullspec16_free','b']]
 #ana_tag += [['cr20_nbin3_fullspec16_free','b']]
@@ -66,11 +70,12 @@ ana_tag = []
 #ana_tag += [['cr20_nbin7_init','b']]
 #ana_tag += [['cr20_nbin7_fullspec16_free','b']]
 
-ana_tag += [['cr20_nbin9_fullspec1_free','b']]
-ana_tag += [['cr20_nbin9_fullspec2_free','b']]
-ana_tag += [['cr20_nbin9_fullspec4_free','b']]
-ana_tag += [['cr20_nbin9_fullspec8_free','b']]
-ana_tag += [['cr20_nbin9_fullspec16_free','b']]
+#ana_tag += [['cr20_nbin9_fullspec1_free','b']]
+#ana_tag += [['cr20_nbin9_fullspec2_free','b']]
+#ana_tag += [['cr20_nbin9_fullspec4_free','b']]
+#ana_tag += [['cr20_nbin9_fullspec8_free','b']]
+#ana_tag += [['cr20_nbin9_fullspec16_free','b']]
+#ana_tag += [['cr20_nbin9_fullspec32_free','b']]
 
 onoff = 'OFF'
 
@@ -138,13 +143,14 @@ for src in input_sources:
 
 print (f"smi_output = {smi_output}")
 analysis_data = []
+ana_expo_dict = []
 for ana in range(0,len(ana_tag)):
 
     group_data = []
     current_exposure = 0.
     total_exposure = 0.
     expo_dict = dict.fromkeys(src_keys, 0.)  # Initializes all values to 0.
-    
+
     run_data = []
     for epoch in input_epoch:
         for src in input_sources:
@@ -214,6 +220,9 @@ for ana in range(0,len(ana_tag)):
         src_name = src_keys[src]
         print (f"{src_name}, {expo_dict[src_name]:0.1f} hrs")
     print (f"Anaysis: {ana_tag[ana][0]}, total_exposure = {total_exposure:0.1f} hrs")
+
+    ana_expo_dict += [expo_dict]
+    
     
 print (f"exposure_per_group = {exposure_per_group} hrs")
 
@@ -613,25 +622,29 @@ for demoE in range(0,demoE_nbins):
     plt.close()
 
 
-for demoE in range(0,demoE_nbins):
-    for ana in range(0,len(ana_tag)):
-        print ("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
-        print (f"E = {demoE}, {ana_tag[ana][0]}")
-        data_dict = dict.fromkeys(src_keys, 0.)  # Initializes all values to 0.
-        bkgd_dict = dict.fromkeys(src_keys, 0.)  # Initializes all values to 0.
-        n_groups = len(list_elev[ana])
-        for grp in range(0,n_groups):
-            source_name = list_src_name[ana][grp]
-            data = list_data_count[ana][grp][demoE]
-            bkgd = list_bkgd_count[ana][grp][demoE]
-            data_dict[source_name] += data
-            bkgd_dict[source_name] += bkgd
-        for src in range(0,len(src_keys)):
-            src_name = src_keys[src]
+for src in range(0,len(src_keys)):
+    src_name = src_keys[src]
+    print ("++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++")
+    for demoE in range(0,demoE_nbins):
+        for ana in range(0,len(ana_tag)):
+            expo_dict = ana_expo_dict[ana]
+    
+            print (f"E = {demoE}, {ana_tag[ana][0]}")
+            data_dict = dict.fromkeys(src_keys, 0.)  # Initializes all values to 0.
+            bkgd_dict = dict.fromkeys(src_keys, 0.)  # Initializes all values to 0.
+            n_groups = len(list_elev[ana])
+            for grp in range(0,n_groups):
+                source_name = list_src_name[ana][grp]
+                data = list_data_count[ana][grp][demoE]
+                bkgd = list_bkgd_count[ana][grp][demoE]
+                data_dict[source_name] += data
+                bkgd_dict[source_name] += bkgd
+
             data = data_dict[src_name]
             bkgd = bkgd_dict[src_name]
             if data==0.:
                 syst = 0.
+                stat = 0.
             else:
                 syst = (data-bkgd)/data
                 stat = 1./pow(data,0.5)

@@ -150,7 +150,7 @@ print (f"list_cr_map_1d.shape = {list_cr_map_1d.shape}")
 model = []
 model_err = []
 for logE in range(0,logE_nbins):
-    A, A_err = weighted_least_square_solution(list_cr_map_1d,list_sr_norm.T[logE],list_sr_weight.T[logE],plot_tag=f'{source_name}_{onoff}_{input_epoch}_{sky_tag}_logE{logE}')
+    A, A_err = weighted_least_square_solution(list_cr_map_1d[:,:,logE],list_sr_norm.T[logE],list_sr_weight.T[logE],plot_tag=f'{source_name}_{onoff}_{input_epoch}_{sky_tag}_logE{logE}')
     model += [A]
     model_err += [A_err]
 output_filename = f'{smi_output}/{ana_dir}/model_least_square_{source_name}_{onoff}_{input_epoch}_{sky_tag}.pkl'

@@ -11,7 +11,6 @@ from common_functions import MyArray3D
 
 import common_functions
 
-use_fullspec = common_functions.use_fullspec
 logE_nbins = common_functions.logE_nbins
 logE_bins = common_functions.logE_bins
 gcut_bins = common_functions.gcut_bins
