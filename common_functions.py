@@ -61,7 +61,7 @@ MSCL_cut = [0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70]
 str_flux_calibration = ['2.51e+03', '2.85e+03', '2.53e+03', '3.20e+03', '8.51e+03', '2.51e+04', '1.14e+05', '3.70e+05', '1.09e+06']
 
 skymap_size = 3.
-skymap_bins = 30
+skymap_bins = 60
 fine_skymap_bins = 120
 
 #doFluxCalibration = True
@@ -71,15 +71,14 @@ calibration_radius = 0.15 # need to be larger than the PSF and smaller than the 
 coordinate_type = 'galactic'
 #coordinate_type = 'icrs'
 
+fov_mask_radius = 10.
 gcut_bins = 3
 cr_gcut = 1.5
-use_poisson_likelihood = True
 matrix_rank = 1
 matrix_rank_fullspec = 16
-use_init = False
 xyoff_map_nbins = 9
-use_rescale = False
-constraint_gamma_like = True
+use_poisson_likelihood = True
+use_init = False
 use_fft = False
 use_mono = False
 
@@ -100,28 +99,14 @@ elif 'wr' in cr_tag:
     gcut_bins = 5
     cr_gcut = float(cr_tag.strip('wr'))/10.
 
-if 'sqe' in norm_tag:
-    use_poisson_likelihood = False
-    constraint_gamma_like = False
-elif 'poisson' in norm_tag:
-    use_poisson_likelihood = True
-    constraint_gamma_like = False
-elif 'fft' in norm_tag:
-    use_fft = True
-    use_poisson_likelihood = True
-    constraint_gamma_like = False
-elif 'rescale' in norm_tag:
-    use_rescale = True
-elif 'original' in norm_tag:
-    constraint_gamma_like = False
-elif 'mono' in norm_tag:
-    use_mono = True
-    constraint_gamma_like = False
+if 'free' in norm_tag:
+    fov_mask_radius = 10.
+elif 'fov' in norm_tag:
+    fov_mask_radius = float(norm_tag.strip('fov'))/10.
 
 gcut_start = 0
 gcut_end = gcut_bins
 gcut_weight = [1.] * gcut_bins
-gcut_weight[0] = 0.
 
 
 #xoff_bins = [7,7,7,7,5,3,1,1,1]
@@ -136,14 +121,18 @@ def weighted_least_square_solution(mtx_input,vec_output,vec_weight,plot_tag=''):
 
     x = np.array(mtx_input)
     y = np.array(vec_output)
-    w = np.diag(np.array(vec_weight))
+    #w = np.diag(np.array(vec_weight))
+    print (f"x.shape = {x.shape}")
+    print (f"y.shape = {y.shape}")
+    #print (f"w.shape = {w.shape}")
 
     over_constrained = True
     if x.shape[0]<=x.shape[1]:
         over_constrained = False
         print ("system is not over-constrained.")
 
-    xTwx = x.T @ w @ x
+    #xTwx = x.T @ w @ x
+    xTwx = x.T @ x
     U, S, VT = np.linalg.svd(xTwx, full_matrices=False)
 
     fig, ax = plt.subplots()
@@ -169,16 +158,17 @@ def weighted_least_square_solution(mtx_input,vec_output,vec_weight,plot_tag=''):
 
     inv_xTwx = VT.T @ S_pseudo_inv @ U.T
 
-    A = inv_xTwx @ x.T @ w @ y
-    #A_err = np.diagonal(inv_xTwx)
+    #A = inv_xTwx @ x.T @ w @ y
+    A = inv_xTwx @ x.T @ y
     y_predict = x @ A
     y_err = np.sqrt(np.square(y - y_predict))
-    A_err = inv_xTwx @ x.T @ w @ y_err
+    #A_err = inv_xTwx @ x.T @ w @ y_err
+    A_err = inv_xTwx @ x.T @ y_err
 
     if over_constrained:
         return A, A_err
     else:
-        return A, A
+        return A, 2.*A
 
 def significance_li_and_ma(N_on, N_bkg, N_bkg_err):
 
@@ -824,7 +814,7 @@ def build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,runlist,max_run
             else:
                 found_roi = CoincideWithRegionOfInterest(Xsky, Ysky, roi_ra, roi_dec, roi_r)
                 if found_roi:
-                    xyoff_mask_map[logE].fill(Xoff,Yoff,GammaCut)
+                    xyoff_mask_map[logE].fill(Xoff,Yoff,0.5)
 
 
             xyoff_map[logE].fill(Xoff,Yoff,GammaCut)
@@ -859,26 +849,61 @@ def build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,runlist,max_run
 
     return big_elevation, big_exposure_time, big_matrix_fullspec, big_mask_matrix_fullspec
 
-def prepare_vector_for_neuralnet(xyoff_map_1d):
+def restore_neuralnet_vector(sr_map_1d,data_xyoff_map_1d):
 
-    cr_map_1d = [[0. for logE in range(0,logE_nbins)] for gcut in range(1,gcut_bins)]
-    sr_norm = [0. for logE in range(0,logE_nbins)]
+    all_nbins = 0
+    for gcut in range(0,gcut_bins):
+        for logE in range(0,logE_nbins):
+            for idx_x in range(0,xoff_bins[logE]):
+                for idx_y in range(0,yoff_bins[logE]):
+                    all_nbins += 1
+    xyoff_map_1d = [0. for entry in range(0,all_nbins)]
+
     idx_1d = 0
+    sr_idx_1d = 0
     for gcut in range(0,gcut_bins):
         for logE in range(0,logE_nbins):
             for idx_x in range(0,xoff_bins[logE]):
                 for idx_y in range(0,yoff_bins[logE]):
                     idx_1d += 1
                     if gcut==0:
-                        sr_norm[logE] += xyoff_map_1d[idx_1d-1]
+                        xyoff_map_1d[idx_1d-1] = sr_map_1d[sr_idx_1d]
+                        sr_idx_1d += 1
                     else:
-                        cr_map_1d[gcut-1][logE] += xyoff_map_1d[idx_1d-1]
+                        xyoff_map_1d[idx_1d-1] = data_xyoff_map_1d[idx_1d-1]
 
-    sr_weight = [0. for logE in range(0,logE_nbins)]
+    return xyoff_map_1d
+
+def prepare_vector_for_neuralnet(xyoff_map_1d):
+
+    sr_nbins = 0
+    cr_nbins = 0
     for logE in range(0,logE_nbins):
-        sr_weight[logE] = 1./max(1.,sr_norm[logE])
+        sr_nbins += 1*xoff_bins[logE]*yoff_bins[logE]
+        cr_nbins += (gcut_bins-1)*xoff_bins[logE]*yoff_bins[logE]
 
-    return np.array(sr_norm), np.array(sr_weight), np.array(cr_map_1d)
+    #sr_map_1d = [0. for entry in range(0,sr_nbins)]
+    sr_map_1d = [0. for logE in range(0,logE_nbins)]
+    #cr_map_1d = [0. for entry in range(0,cr_nbins)]
+    cr_map_1d = [0. for entry in range(0,logE_nbins*(gcut_bins-1))]
+    idx_1d = 0
+    sr_idx_1d = 0
+    cr_idx_1d = 0
+    for gcut in range(0,gcut_bins):
+        for logE in range(0,logE_nbins):
+            for idx_x in range(0,xoff_bins[logE]):
+                for idx_y in range(0,yoff_bins[logE]):
+                    idx_1d += 1
+                    if gcut==0:
+                        sr_map_1d[logE] += xyoff_map_1d[idx_1d-1]
+                        #sr_map_1d[sr_idx_1d] = xyoff_map_1d[idx_1d-1]
+                        #sr_idx_1d += 1
+                    else:
+                        cr_map_1d[logE+(gcut-1)*logE_nbins] += xyoff_map_1d[idx_1d-1]
+                        #cr_map_1d[cr_idx_1d] = xyoff_map_1d[idx_1d-1]
+                        #cr_idx_1d += 1
+
+    return np.array(sr_map_1d), np.array(cr_map_1d)
 
 def residual_correction_fullspec(
         logE,
@@ -919,10 +944,9 @@ def residual_correction_fullspec(
 def cosmic_ray_like_chi2_fullspec(
         try_params,
         eigenvectors,
-        sr_norm,
-        sr_norm_err,
         data_xyoff_map,
         init_xyoff_map,
+        syst_xyoff_map,
         mask_xyoff_map,
         logE_input,
     ):
@@ -931,7 +955,6 @@ def cosmic_ray_like_chi2_fullspec(
 
     sum_log_likelihood = 0.
     fft_log_likelihood = 0.
-    lsq_log_likelihood = 0.
 
     try_params = np.array(try_params)
     try_xyoff_map = eigenvectors.T @ try_params
@@ -952,8 +975,8 @@ def cosmic_ray_like_chi2_fullspec(
             #    region_noise += [region_noise_x]
             #fourier_transform_noise = np.fft.fft2(region_noise)
             #magnitude_noise = np.abs(fourier_transform_noise)
-            freqs_x = np.fft.fftfreq(xoff_bins[logE], 1.)
-            freqs_y = np.fft.fftfreq(yoff_bins[logE], 1.)
+            #freqs_x = np.fft.fftfreq(xoff_bins[logE], 1.)
+            #freqs_y = np.fft.fftfreq(yoff_bins[logE], 1.)
 
             if not logE_input==-1:
                 if not logE_input==logE:
@@ -968,11 +991,18 @@ def cosmic_ray_like_chi2_fullspec(
                     data = data_xyoff_map[idx_1d-1]
                     init = init_xyoff_map[idx_1d-1]
                     mask = mask_xyoff_map[idx_1d-1]
+                    syst = syst_xyoff_map[idx_1d-1]
 
                     n_expect = max(0.0001,try_xyoff_map[idx_1d-1])
                     n_data = data
+
                     if gcut==0:
-                        n_data = max(0.0001,init)
+                        #n_data = max(0.0001,init)
+                        #if syst>=init:
+                        #    weight = 0.
+                        weight = float(gcut_bins) - 1 
+                        if mask>0.:
+                            weight = 0.
 
                     sum_weight += weight
 
@@ -1000,59 +1030,11 @@ def cosmic_ray_like_chi2_fullspec(
             #            fft_data = magnitude[idx_x,idx_y]
             #            fft_log_likelihood += fft_data * freq_weight * weight
 
-    idx_1d = 0
-    #for gcut in range(0,gcut_bins):
-    for gcut in range(0,1):
-        for logE in range(0,logE_nbins):
-
-            weight_gut = 1.
-            n_expect_gcut = 0.
-            n_data_gcut = 0.
-
-            for idx_x in range(0,xoff_bins[logE]):
-                for idx_y in range(0,yoff_bins[logE]):
-
-                    idx_1d += 1
-                    data = data_xyoff_map[idx_1d-1]
-                    init = init_xyoff_map[idx_1d-1]
-
-                    n_expect = max(0.0001,try_xyoff_map[idx_1d-1])
-                    n_expect_gcut += n_expect
-                    n_data = data
-                    if gcut==0:
-                        n_data = max(0.0001,init)
-                    n_data_gcut += n_data
-
-            if gcut==0:
-                weight_gut = 1.
-                n_data_gcut = abs(sr_norm[logE])
-                n_data_err_gcut = abs(sr_norm_err[logE])
-                if n_data_gcut==n_data_err_gcut:
-                    weight_gut = 0.
-                if not constraint_gamma_like:
-                    weight_gut = 0.
-            else:
-                weight_gut = 1.
-
-            if not logE_input==-1:
-                if not logE_input==logE:
-                    weight_gut = 0.
-
-            if use_poisson_likelihood:
-                if n_data_gcut==0.:
-                    lsq_log_likelihood += n_expect_gcut*weight_gut
-                else:
-                    lsq_log_likelihood += (-1.*(n_data_gcut*np.log(n_expect_gcut) - n_expect_gcut - (n_data_gcut*np.log(n_data_gcut)-n_data_gcut)))*weight_gut
-            else:
-                lsq_log_likelihood += pow(n_data_gcut-n_expect_gcut,2) * weight_gut
-
 
     #if use_fft:
     #    return fft_log_likelihood
 
-    #return sum_log_likelihood
-
-    return sum_log_likelihood + lsq_log_likelihood
+    return sum_log_likelihood
 
 
 
@@ -1631,6 +1613,10 @@ def PlotCountProjection(fig,label_z,logE_min,logE_max,hist_map_data,hist_map_bkg
     # Plot the temperature data
     cax = (axTemperature.imshow(hist_map_data.waxis[:,:,layer].T,extent=(xmax,xmin,ymin,ymax),aspect='auto',origin='lower',cmap=colormap))
 
+    for roi in range(0,len(roi_x)):
+        mycircle = plt.Circle( (roi_x[roi], roi_y[roi]), roi_r[roi], fill = False, color='black')
+        axTemperature.add_patch(mycircle)
+
     #Plot the axes labels
     axTemperature.set_xlabel(label_x)
     axTemperature.set_ylabel(label_y)
@@ -1674,6 +1660,10 @@ def PlotCountProjection(fig,label_z,logE_min,logE_max,hist_map_data,hist_map_bkg
 
     # Plot the temperature data
     cax = axTemperature.imshow(hist_map_significance.waxis[:,:,layer].T,extent=(xmax,xmin,ymin,ymax),vmin=-3.,vmax=3.,aspect='auto',origin='lower',cmap='coolwarm')
+
+    for roi in range(0,len(roi_x)):
+        mycircle = plt.Circle( (roi_x[roi], roi_y[roi]), roi_r[roi], fill = False, color='black')
+        axTemperature.add_patch(mycircle)
 
     divider = make_axes_locatable(axTemperature)
     cax_app = divider.append_axes("bottom", size="5%", pad=0.7)
@@ -1744,9 +1734,9 @@ def PlotCountProjection(fig,label_z,logE_min,logE_max,hist_map_data,hist_map_bkg
     # Plot the temperature data
     cax = axTemperature.imshow(hist_map_excess.waxis[:,:,layer].T,extent=(xmax,xmin,ymin,ymax),aspect='auto',origin='lower',cmap=colormap)
 
-    #for roi in range(0,len(roi_x)):
-    #    mycircle = plt.Circle( (roi_x[roi], roi_y[roi]), roi_r[roi], fill = False, color='white')
-    #    axTemperature.add_patch(mycircle)
+    for roi in range(0,len(roi_x)):
+        mycircle = plt.Circle( (roi_x[roi], roi_y[roi]), roi_r[roi], fill = False, color='black')
+        axTemperature.add_patch(mycircle)
 
     divider = make_axes_locatable(axTemperature)
     cax_app = divider.append_axes("bottom", size="5%", pad=0.7)
@@ -2001,8 +1991,8 @@ def GetRadialProfile(hist_flux_skymap,hist_error_skymap,hist_syst_skymap,roi_x,r
                 if use_excl:
                     for roi in range(0,len(excl_roi_x)):
                         excl_distance = pow(pow(bin_ra-excl_roi_x[roi],2) + pow(bin_dec-excl_roi_y[roi],2),0.5)
-                        if excl_distance<excl_roi_r[roi]: 
-                            keep_event = False
+                        #if excl_distance<excl_roi_r[roi]: 
+                        #    keep_event = False
                 if keep_event:
                     pixel_array[br] += 1.*pix_size
                     brightness_array[br] += hist_flux_skymap.waxis[bx,by,0]
@@ -2405,7 +2395,7 @@ def PrintAndPlotInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,hist_d
     print ('new flux_calibration = %s'%(formatted_numbers))
 
     print ('===============================================================================================================')
-    print (f'RoI info: {roi_name[0]}, roi_x = {roi_x[0]}, roi_y = {roi_y[0]}')
+    print (f'RoI info: {roi_name[0]}, roi_x = {roi_x[0]}, roi_y = {roi_y[0]}, roi_r = {roi_r[0]}')
 
     min_energy = pow(10.,logE_bins[logE_min])
     mid_energy = pow(10.,logE_bins[logE_mid])
@@ -2556,11 +2546,11 @@ def PrintAndPlotInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,hist_d
     fig.savefig(f'output_plots/{source_name}_roi_energy_flux_{roi_name[0]}.png',bbox_inches='tight')
     axbig.remove()
 
-def DefineRegionOfMask(src_name,src_ra,src_dec):
+def DefineRegionOfMask(src_name,src_ra,src_dec,coordinate_type='icrs'):
 
     region_x = [src_ra]
     region_y = [src_dec]
-    region_r = [0.]
+    region_r = [fov_mask_radius]
     region_name = ['center']
 
     if 'Crab' in src_name:
@@ -2569,38 +2559,60 @@ def DefineRegionOfMask(src_name,src_ra,src_dec):
         region_r = [0.3]
         region_name = ['center']
 
-    return region_name, region_x, region_y, region_r
+    else:
 
-
-def DefineRegionOfExclusion(src_name,src_ra,src_dec,coordinate_type='icrs'):
-
-    gamma_source_coord = GetGammaSources(src_ra,src_dec)
-
-    excl_x = []
-    excl_y = []
-    excl_r = []
-
-    #if 'PSR_J2021_p4026' in src_name:
-
-    #    src_x = 305.21
-    #    src_y = 40.43
-    #    excl_x += [src_x]
-    #    excl_y += [src_y]
-    #    excl_r += [0.5]
-
-    if src_name == 'Validation':
+        gamma_source_coord = GetGammaSources(src_ra,src_dec)
         for src in range(0,len(gamma_source_coord)):
             src_x = gamma_source_coord[src][0]
             src_y = gamma_source_coord[src][1]
-            if coordinate_type == 'galactic':
-                src_x, src_y = ConvertRaDecToGalactic(src_x, src_y)
-            excl_x += [src_x]
-            excl_y += [src_y]
-            excl_r += [0.3]
+            region_x += [src_x]
+            region_y += [src_y]
+            region_r += [0.3]
+            region_name += ['TeVCat']
 
-    return excl_x, excl_y, excl_r
+    if coordinate_type == 'galactic':
+        for roi in range(0,len(region_r)):
+            src_x = region_x[roi]
+            src_y = region_y[roi]
+            src_x, src_y = ConvertRaDecToGalactic(src_x, src_y)
+            region_x[roi] = src_x
+            region_y[roi] = src_y
+    elif coordinate_type == 'relative':
+        for roi in range(0,len(region_r)):
+            src_x = region_x[roi]
+            src_y = region_y[roi]
+            region_x[roi] = src_x - src_ra
+            region_y[roi] = src_y - src_dec
 
-def DefineRegionOfInterest(src_name,src_ra,src_dec,normalize_map=False,coordinate_type='icrs'):
+    return region_name, region_x, region_y, region_r
+
+def DefineRegionOfExclusion(src_name,src_ra,src_dec,coordinate_type='icrs'):
+
+    region_x = [src_ra]
+    region_y = [src_dec]
+    region_r = [0.]
+    region_name = ['center']
+
+
+    if coordinate_type == 'galactic':
+        for roi in range(0,len(region_r)):
+            src_x = region_x[roi]
+            src_y = region_y[roi]
+            src_x, src_y = ConvertRaDecToGalactic(src_x, src_y)
+            region_x[roi] = src_x
+            region_y[roi] = src_y
+    elif coordinate_type == 'relative':
+        for roi in range(0,len(region_r)):
+            src_x = region_x[roi]
+            src_y = region_y[roi]
+            region_x[roi] = src_x - src_ra
+            region_y[roi] = src_y - src_dec
+
+    return region_name, region_x, region_y, region_r
+
+
+
+def DefineRegionOfInterest(src_name,src_ra,src_dec,coordinate_type='icrs'):
 
     region_name = ('default','default region')
     region_x = []
@@ -2610,15 +2622,12 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec,normalize_map=False,coordinat
     src_x = src_ra
     src_y = src_dec
 
-    if src_name == 'Validation':
+    if coordinate_type == 'relative':
 
         region_name = ('center','center')
         region_x += [0.]
         region_y += [0.]
-        if not normalize_map:
-            region_r += [2.]
-        else:
-            region_r += [0.]
+        region_r += [3.]
 
     elif 'Crab' in src_name:
 
@@ -2789,10 +2798,9 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec,normalize_map=False,coordinat
         region_r += [3.0]
 
 
-    if not src_name == 'Validation':
-        if coordinate_type == 'galactic':
-            for roi in range(0,len(region_r)):
-                region_x[roi], region_y[roi] = ConvertRaDecToGalactic(region_x[roi], region_y[roi])
+    if coordinate_type == 'galactic':
+        for roi in range(0,len(region_r)):
+            region_x[roi], region_y[roi] = ConvertRaDecToGalactic(region_x[roi], region_y[roi])
 
     return region_name, region_x, region_y, region_r
 
@@ -3561,7 +3569,7 @@ def build_skymap(
         print ('===================================================================================')
         print ('fitting xyoff maps fullspec...')
 
-        sr_norm_truth, sr_weight_truth, cr_map_1d = prepare_vector_for_neuralnet(data_xyoff_map_1d_fullspec)
+        sr_map_1d_truth, cr_map_1d = prepare_vector_for_neuralnet(data_xyoff_map_1d_fullspec)
 
         init_xyoff_map_1d_fullspec = np.zeros_like(big_on_matrix_fullspec[0])
         idx_1d = 0
@@ -3590,35 +3598,39 @@ def build_skymap(
             ls_model += [A]
             ls_model_err += [A_err]
         ls_model_weight = np.array(ls_model_weight) / total_weight
+        print (f"len(ls_model) = {len(ls_model)}")
 
-        sr_norm_predict = []
-        sr_norm_error = []
+        sr_map_1d = np.zeros_like(sr_map_1d_truth)
+        sr_map_1d_err = np.zeros_like(sr_map_1d_truth)
+        for batch in range(0,len(ls_model)):
+            print (f"cr_map_1d.shape = {cr_map_1d.shape}")
+            print (f"ls_model[batch].shape = {ls_model[batch].shape}")
+            sr_map_1d += cr_map_1d @ ls_model[batch] * ls_model_weight[batch]
+            sr_map_1d_err += cr_map_1d @ ls_model_err[batch] * ls_model_weight[batch]
+        #lsq_xyoff_map_1d_fullspec = restore_neuralnet_vector(sr_map_1d,data_xyoff_map_1d_fullspec)
+        #lsq_err_xyoff_map_1d_fullspec = restore_neuralnet_vector(sr_map_1d_err,data_xyoff_map_1d_fullspec)
+        lsq_xyoff_map_1d_fullspec = np.zeros_like(init_xyoff_map_1d_fullspec)
+        lsq_err_xyoff_map_1d_fullspec = np.zeros_like(init_xyoff_map_1d_fullspec)
+
+
+        idx_1d = 0
+        for gcut in range(0,gcut_bins):
+            for logE in range(0,logE_nbins):
+                for idx_x in range(0,xoff_bins[logE]):
+                    for idx_y in range(0,yoff_bins[logE]):
+                        idx_1d += 1
+                        prediction = max(0.0,init_xyoff_map_1d_fullspec[idx_1d-1])
+                        lsq_xyoff_map_1d_fullspec[idx_1d-1] = prediction
+                        lsq_err_xyoff_map_1d_fullspec[idx_1d-1] = prediction * sr_map_1d_err[logE]/sr_map_1d[logE]
+                        fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = prediction
+                        syst_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = prediction * sr_map_1d_err[logE]/sr_map_1d[logE]
+
         for logE in range(0,logE_nbins):
-            input_vector = cr_map_1d.T[logE]
-            prediction = 0.
-            error = 0.
-            for batch in range(0,len(ls_model)):
-                prediction += input_vector @ ls_model[batch][logE] * ls_model_weight[batch]
-                error += input_vector @ ls_model_err[batch][logE] * ls_model_weight[batch]
-            sr_norm_predict += [prediction]
-            sr_norm_error += [error]
-            print (f"sr_norm_truth = {sr_norm_truth[logE]:0.1f}, sr_norm_predict = {sr_norm_predict[logE]:0.1f}+/-{sr_norm_error[logE]:0.1f}")
+            truth = sr_map_1d_truth[logE]
+            prediction = sr_map_1d[logE]
+            error = sr_map_1d_err[logE]
+            print (f"truth = {truth:0.1f}, prediction = {prediction:0.1f}+/-{error:0.1f}")
 
-        #with torch.no_grad():
-        #    cr_map_1d = cr_map_1d/cr_norm
-        #    torch_cr_map_1d = torch.from_numpy(cr_map_1d.astype(np.float32))
-        #    sr_norm_predict = nn_model(torch_cr_map_1d)
-        #    sr_norm_predict = sr_norm_predict*cr_norm
-        #    for logE in range(0,logE_nbins):
-        #        print (f"sr_norm_truth = {sr_norm_truth[logE]:0.1f}, sr_norm_predict = {sr_norm_predict[logE]:0.1f}")
-
-        #event_density = np.sum(data_xyoff_map_1d_fullspec)/float(len(data_xyoff_map_1d_fullspec))
-        #print (f'event_density = {event_density}')
-        #if event_density<5.:
-        #    effective_matrix_rank_fullspec = 2
-        #if event_density<1.:
-        #    effective_matrix_rank_fullspec = 1
-        #print (f"effective_matrix_rank_fullspec = {effective_matrix_rank_fullspec}")
 
         fit_params = [0.] * effective_matrix_rank_fullspec
         for entry in range(0,len(fit_params)):
@@ -3638,10 +3650,9 @@ def build_skymap(
                 x0=init_params,
                 args=(
                     effective_eigenvectors,
-                    sr_norm_predict,
-                    sr_norm_error,
                     data_xyoff_map_1d_fullspec,
-                    init_xyoff_map_1d_fullspec,
+                    lsq_xyoff_map_1d_fullspec,
+                    lsq_err_xyoff_map_1d_fullspec,
                     mask_xyoff_map_1d_fullspec,
                     -1,
                 ),
@@ -3662,7 +3673,6 @@ def build_skymap(
                             idx_1d += 1
                             prediction = max(0.0,fit_xyoff_map_1d_fullspec[idx_1d-1])
                             fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = prediction
-                            syst_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = prediction * sr_norm_error[logE]/sr_norm_predict[logE]
 
         else:
 
@@ -3675,10 +3685,9 @@ def build_skymap(
                     x0=init_params,
                     args=(
                         effective_eigenvectors,
-                        sr_norm_predict,
-                        sr_norm_error,
                         data_xyoff_map_1d_fullspec,
-                        init_xyoff_map_1d_fullspec,
+                        lsq_xyoff_map_1d_fullspec,
+                        lsq_err_xyoff_map_1d_fullspec,
                         mask_xyoff_map_1d_fullspec,
                         logE_input,
                     ),
@@ -3701,17 +3710,6 @@ def build_skymap(
                                     continue
                                 prediction = max(0.0,fit_xyoff_map_1d_fullspec[idx_1d-1])
                                 fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = prediction
-                                syst_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = prediction * sr_norm_error[logE]/sr_norm_predict[logE]
-
-        if use_rescale:
-            for gcut in range(0,1):
-                for logE in range(0,logE_nbins):
-                    rescale = sr_norm_predict[logE] / np.sum(fit_xyoff_map[logE].waxis[:,:,gcut])
-                    if sr_norm_predict[logE]==sr_norm_error[logE]:
-                        rescale = 1.
-                    for idx_x in range(0,xoff_bins[logE]):
-                        for idx_y in range(0,yoff_bins[logE]):
-                            fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] * rescale
 
 
     print ('===================================================================================')
@@ -3881,17 +3879,20 @@ def build_skymap(
 
             if onoff=='OFF':
 
-                incl_sky_map[logE].fill(Xoff,Yoff,0.5)
+                Xsky_rel = RA - src_ra
+                Ysky_rel = DEC - src_dec
+
+                incl_sky_map[logE].fill(Xsky_rel,Ysky_rel,0.5)
                 if GammaCut>float(gcut_end): continue
 
                 sr_syst = syst_xyoff_map[logE].get_bin_content(Xoff,Yoff,0.5)
                 sr_model = ratio_xyoff_map[logE].get_bin_content(Xoff,Yoff,0.5)
                 cr_model = ratio_xyoff_map[logE].get_bin_content(Xoff,Yoff,GammaCut)
                 if GammaCut>1.:
-                    fit_sky_map[logE].fill(Xoff,Yoff,0.5,weight=sr_model)
-                    syst_sky_map[logE].fill(Xoff,Yoff,0.5,weight=sr_syst)
+                    fit_sky_map[logE].fill(Xsky_rel,Ysky_rel,0.5,weight=sr_model)
+                    syst_sky_map[logE].fill(Xsky_rel,Ysky_rel,0.5,weight=sr_syst)
                 else:
-                    data_sky_map[logE].fill(Xoff,Yoff,GammaCut)
+                    data_sky_map[logE].fill(Xsky_rel,Ysky_rel,GammaCut)
 
             else:
                 if coordinate_type == 'galactic':

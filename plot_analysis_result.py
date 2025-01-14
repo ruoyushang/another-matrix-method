@@ -123,10 +123,8 @@ logE_max = logE_nbins
 fit_radial_profile = False
 radial_bin_scale = 0.1
 
-include_syst_error = True
-#include_syst_error = False
-#normalize_map = True
-normalize_map = False
+#include_syst_error = True
+include_syst_error = False
 
 if 'Crab' in source_name:
     fit_radial_profile = False
@@ -162,10 +160,11 @@ if coordinate_type == 'galactic':
     ysky_end = src_gal_b+skymap_size
 
 if onoff=='OFF':
-    xsky_start = 2.0
-    xsky_end = -2.0
-    ysky_start = 2.0
-    ysky_end = -2.0
+    coordinate_type = 'relative'
+    xsky_start = skymap_size
+    xsky_end = -skymap_size
+    ysky_start = skymap_size
+    ysky_end = -skymap_size
 
 print (f"xsky_start = {xsky_start}, xsky_end = {xsky_end}, ysky_start = {ysky_start}, ysky_end = {ysky_end}")
 
@@ -177,8 +176,8 @@ if onoff=='ON':
 region_name = source_name
 if onoff=='OFF':
     region_name = 'Validation'
-all_roi_name, all_roi_x, all_roi_y, all_roi_r = DefineRegionOfInterest(region_name,src_ra,src_dec,normalize_map=normalize_map,coordinate_type=coordinate_type)
-all_excl_x, all_excl_y, all_excl_r = DefineRegionOfExclusion(region_name,src_ra,src_dec,coordinate_type=coordinate_type)
+all_roi_name, all_roi_x, all_roi_y, all_roi_r = DefineRegionOfInterest(region_name,src_ra,src_dec,coordinate_type=coordinate_type)
+all_excl_name, all_excl_x, all_excl_y, all_excl_r = DefineRegionOfExclusion(region_name,src_ra,src_dec,coordinate_type=coordinate_type)
 print (f"all_roi_name = {all_roi_name}")
 print (f"all_roi_x = {all_roi_x}")
 print (f"all_roi_y = {all_roi_y}")
@@ -459,9 +458,6 @@ for epoch in input_epoch:
             if sum_bkgd==0.:
                 print (f'bad fitting. reject the run.')
                 continue
-            if sum_syst/sum_bkgd>0.1:
-                print (f'bad fitting. reject the run.')
-                continue
 
 
             #for logE in range(0,logE_nbins):
@@ -477,32 +473,6 @@ for epoch in input_epoch:
             #    if correlation_norm>0.:
             #        data_sky_map[logE].scale(correlation/correlation_norm)
             #        bkgd_sky_map[logE].scale(correlation/correlation_norm)
-
-            if normalize_map:
-                for logE in range(0,logE_nbins):
-                    data_norm, data_stat_err = GetRegionIntegral(
-                            data_sky_map[logE],
-                            [all_roi_x[0]],
-                            [all_roi_y[0]],
-                            [100.],
-                            all_roi_x,
-                            all_roi_y,
-                            all_roi_r,
-                        )
-                    bkgd_norm, bkgd_stat_err = GetRegionIntegral(
-                            bkgd_sky_map[logE],
-                            [all_roi_x[0]],
-                            [all_roi_y[0]],
-                            [100.],
-                            all_roi_x,
-                            all_roi_y,
-                            all_roi_r,
-                        )
-                    #data_norm = np.sum(data_xyoff_map[logE].waxis[:,:,0])
-                    #bkgd_norm = np.sum(fit_xyoff_map[logE].waxis[:,:,0])
-                    if bkgd_norm>0.:
-                        fit_xyoff_map[logE].scale(data_norm/bkgd_norm)
-                        bkgd_sky_map[logE].scale(data_norm/bkgd_norm)
 
             if not 'MIMIC' in mode:
                 good_exposure += exposure
@@ -744,7 +714,7 @@ PrintAndPlotInformationRoI(fig,plot_logE_min,plot_logE_mid,plot_logE_max,source_
 
     
 for logE in range(plot_logE_min,plot_logE_max):
-    on_radial_axis, on_profile_axis, on_profile_err_axis, on_profile_syst_axis = GetRadialProfile(sum_flux_sky_map[logE],sum_flux_err_sky_map[logE],sum_flux_syst_sky_map[logE],all_roi_x,all_roi_y,2.0,all_excl_x,all_excl_y,all_excl_r)
+    on_radial_axis, on_profile_axis, on_profile_err_axis, on_profile_syst_axis = GetRadialProfile(sum_flux_sky_map[logE],sum_flux_err_sky_map[logE],sum_flux_syst_sky_map[logE],all_roi_x,all_roi_y,2.5,all_excl_x,all_excl_y,all_excl_r)
     baseline_yaxis = [0. for i in range(0,len(on_radial_axis))]
     fig.clf()
     figsize_x = 7
@@ -762,7 +732,7 @@ for logE in range(plot_logE_min,plot_logE_max):
     fig.savefig(f'output_plots/surface_brightness_{source_name}_logE{logE}_{all_roi_name[0]}_{ana_tag}.png',bbox_inches='tight')
     axbig.remove()
 
-on_radial_axis, on_profile_axis, on_profile_err_axis, on_profile_syst_axis = GetRadialProfile(sum_flux_sky_map_allE,sum_flux_err_sky_map_allE,sum_flux_syst_sky_map_allE,all_roi_x,all_roi_y,2.0,all_excl_x,all_excl_y,all_excl_r)
+on_radial_axis, on_profile_axis, on_profile_err_axis, on_profile_syst_axis = GetRadialProfile(sum_flux_sky_map_allE,sum_flux_err_sky_map_allE,sum_flux_syst_sky_map_allE,all_roi_x,all_roi_y,2.5,all_excl_x,all_excl_y,all_excl_r)
 baseline_yaxis = [0. for i in range(0,len(on_radial_axis))]
 fig.clf()
 figsize_x = 7
@@ -793,7 +763,7 @@ for entry in range(0,len(on_radial_axis)):
     txtfile.write(output_string)
 txtfile.close()
 
-on_radial_axis, on_profile_axis, on_profile_err_axis, on_profile_syst_axis = GetRadialProfile(sum_flux_sky_map_LE,sum_flux_err_sky_map_LE,sum_flux_syst_sky_map_LE,all_roi_x,all_roi_y,2.0,all_excl_x,all_excl_y,all_excl_r)
+on_radial_axis, on_profile_axis, on_profile_err_axis, on_profile_syst_axis = GetRadialProfile(sum_flux_sky_map_LE,sum_flux_err_sky_map_LE,sum_flux_syst_sky_map_LE,all_roi_x,all_roi_y,2.5,all_excl_x,all_excl_y,all_excl_r)
 baseline_yaxis = [0. for i in range(0,len(on_radial_axis))]
 fig.clf()
 figsize_x = 7
@@ -824,7 +794,7 @@ for entry in range(0,len(on_radial_axis)):
     txtfile.write(output_string)
 txtfile.close()
 
-on_radial_axis, on_profile_axis, on_profile_err_axis, on_profile_syst_axis = GetRadialProfile(sum_flux_sky_map_HE,sum_flux_err_sky_map_HE,sum_flux_syst_sky_map_HE,all_roi_x,all_roi_y,2.0,all_excl_x,all_excl_y,all_excl_r)
+on_radial_axis, on_profile_axis, on_profile_err_axis, on_profile_syst_axis = GetRadialProfile(sum_flux_sky_map_HE,sum_flux_err_sky_map_HE,sum_flux_syst_sky_map_HE,all_roi_x,all_roi_y,2.5,all_excl_x,all_excl_y,all_excl_r)
 baseline_yaxis = [0. for i in range(0,len(on_radial_axis))]
 fig.clf()
 figsize_x = 7
@@ -975,22 +945,22 @@ print (f'total_exposure = {total_exposure}')
 print (f'good_exposure = {good_exposure}')
 print (f'mimic_exposure = {mimic_exposure}')
 
-label_x = 'Cam X [deg]'
-label_y = 'Cam Y [deg]'
+label_x = 'X [deg]'
+label_y = 'Y [deg]'
 if onoff=='ON':
     label_x = 'RA [deg]'
     label_y = 'Dec [deg]'
     if coordinate_type == 'galactic':
         label_x = 'Gal. l [deg]'
         label_y = 'Gal. b [deg]'
-PlotCountProjection(fig,'count',plot_logE_min,plot_logE_max,sum_data_sky_map_allE,sum_bkgd_sky_map_allE,label_x,label_y,f'projection_sky_map_{source_name}_allE_{ana_tag}',hist_map_syst=sum_syst_sky_map_allE,roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
-PlotCountProjection(fig,'count',plot_logE_min,plot_logE_mid,sum_data_sky_map_LE,sum_bkgd_sky_map_LE,label_x,label_y,f'projection_sky_map_{source_name}_LE_{ana_tag}',hist_map_syst=sum_syst_sky_map_LE,roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
-PlotCountProjection(fig,'count',plot_logE_mid,plot_logE_max,sum_data_sky_map_HE,sum_bkgd_sky_map_HE,label_x,label_y,f'projection_sky_map_{source_name}_HE_{ana_tag}',hist_map_syst=sum_syst_sky_map_HE,roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
+PlotCountProjection(fig,'count',plot_logE_min,plot_logE_max,sum_data_sky_map_allE,sum_bkgd_sky_map_allE,label_x,label_y,f'projection_sky_map_{source_name}_allE_{ana_tag}',hist_map_syst=sum_syst_sky_map_allE,roi_x=all_excl_x,roi_y=all_excl_y,roi_r=all_excl_r,colormap='magma')
+PlotCountProjection(fig,'count',plot_logE_min,plot_logE_mid,sum_data_sky_map_LE,sum_bkgd_sky_map_LE,label_x,label_y,f'projection_sky_map_{source_name}_LE_{ana_tag}',hist_map_syst=sum_syst_sky_map_LE,roi_x=all_excl_x,roi_y=all_excl_y,roi_r=all_excl_r,colormap='magma')
+PlotCountProjection(fig,'count',plot_logE_mid,plot_logE_max,sum_data_sky_map_HE,sum_bkgd_sky_map_HE,label_x,label_y,f'projection_sky_map_{source_name}_HE_{ana_tag}',hist_map_syst=sum_syst_sky_map_HE,roi_x=all_excl_x,roi_y=all_excl_y,roi_r=all_excl_r,colormap='magma')
 
 for mimic in range(0,n_mimic):
-    PlotCountProjection(fig,'count',plot_logE_min,plot_logE_max,sum_mimic_data_sky_map_allE[mimic],sum_mimic_bkgd_sky_map_allE[mimic],label_x,label_y,f'projection_sky_map_{source_name}_allE_mimic{mimic}_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
-    PlotCountProjection(fig,'count',plot_logE_min,plot_logE_mid,sum_mimic_data_sky_map_LE[mimic],sum_mimic_bkgd_sky_map_LE[mimic],label_x,label_y,f'projection_sky_map_{source_name}_LE_mimic{mimic}_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
-    PlotCountProjection(fig,'count',plot_logE_mid,plot_logE_max,sum_mimic_data_sky_map_HE[mimic],sum_mimic_bkgd_sky_map_HE[mimic],label_x,label_y,f'projection_sky_map_{source_name}_HE_mimic{mimic}_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,colormap='magma')
+    PlotCountProjection(fig,'count',plot_logE_min,plot_logE_max,sum_mimic_data_sky_map_allE[mimic],sum_mimic_bkgd_sky_map_allE[mimic],label_x,label_y,f'projection_sky_map_{source_name}_allE_mimic{mimic}_{ana_tag}',roi_x=all_excl_x,roi_y=all_excl_y,roi_r=all_excl_r,colormap='magma')
+    PlotCountProjection(fig,'count',plot_logE_min,plot_logE_mid,sum_mimic_data_sky_map_LE[mimic],sum_mimic_bkgd_sky_map_LE[mimic],label_x,label_y,f'projection_sky_map_{source_name}_LE_mimic{mimic}_{ana_tag}',roi_x=all_excl_x,roi_y=all_excl_y,roi_r=all_excl_r,colormap='magma')
+    PlotCountProjection(fig,'count',plot_logE_mid,plot_logE_max,sum_mimic_data_sky_map_HE[mimic],sum_mimic_bkgd_sky_map_HE[mimic],label_x,label_y,f'projection_sky_map_{source_name}_HE_mimic{mimic}_{ana_tag}',roi_x=all_excl_x,roi_y=all_excl_y,roi_r=all_excl_r,colormap='magma')
 
 
 if 'PSR_J2021_p4026' in source_name:

@@ -101,10 +101,10 @@ if coordinate_type == 'galactic':
     ysky_end = src_gal_b+skymap_size
 
 if onoff=='OFF':
-    xsky_start = 2.0
-    xsky_end = -2.0
-    ysky_start = 2.0
-    ysky_end = -2.0
+    xsky_start = skymap_size
+    xsky_end = -skymap_size
+    ysky_start = skymap_size
+    ysky_end = -skymap_size
 
 print (f"xsky_start = {xsky_start}, xsky_end = {xsky_end}, ysky_start = {ysky_start}, ysky_end = {ysky_end}")
 

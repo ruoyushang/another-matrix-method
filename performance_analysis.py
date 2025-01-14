@@ -46,19 +46,8 @@ smi_output = "/nevis/ged/data/rshang/smi_output/output_default"
 
 ana_tag = []
 
-#ana_tag += [['cr20_nbin9_fullspec16_original','b']]
-#ana_tag += [['cr20_nbin9_fullspec16_free','b']]
-#ana_tag += [['cr20_nbin9_fullspec16_rescale','b']]
-
-#ana_tag += [['cr20_nbin7_fullspec16_poisson','b']]
-#ana_tag += [['cr15_nbin9_fullspec16_poisson','b']]
-ana_tag += [['cr20_nbin9_fullspec16_poisson','b']]
-#ana_tag += [['wr05_nbin9_fullspec16_poisson','b']]
-
-#ana_tag += [['cr20_nbin9_fullspec1_poisson','b']]
-#ana_tag += [['cr20_nbin9_fullspec16_poisson','b']]
-
-#ana_tag += [['cr15_nbin7_fullspec16_free','b']]
+#ana_tag += [['cr20_nbin9_fullspec16_fov10','b']]
+#ana_tag += [['cr20_nbin9_fullspec16_fov15','b']]
 #ana_tag += [['cr20_nbin9_fullspec16_free','b']]
 
 #ana_tag += [['cr20_nbin1_fullspec16_free','b']]
@@ -70,20 +59,19 @@ ana_tag += [['cr20_nbin9_fullspec16_poisson','b']]
 #ana_tag += [['cr20_nbin7_init','b']]
 #ana_tag += [['cr20_nbin7_fullspec16_free','b']]
 
-#ana_tag += [['cr20_nbin9_fullspec1_free','b']]
-#ana_tag += [['cr20_nbin9_fullspec2_free','b']]
+ana_tag += [['cr20_nbin9_fullspec1_free','b']]
+ana_tag += [['cr20_nbin9_fullspec2_free','b']]
 #ana_tag += [['cr20_nbin9_fullspec4_free','b']]
 #ana_tag += [['cr20_nbin9_fullspec8_free','b']]
-#ana_tag += [['cr20_nbin9_fullspec16_free','b']]
-#ana_tag += [['cr20_nbin9_fullspec32_free','b']]
+ana_tag += [['cr20_nbin9_fullspec16_free','b']]
 
 onoff = 'OFF'
 
 #exposure_per_group = 2.
 #exposure_per_group = 4.
-#exposure_per_group = 10.
+exposure_per_group = 10.
 #exposure_per_group = 20.
-exposure_per_group = 50.
+#exposure_per_group = 50.
 #exposure_per_group = 100.
 #exposure_per_group = 1000.
 cr_qual_cut = 1e10

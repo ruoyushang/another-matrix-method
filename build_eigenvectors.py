@@ -129,30 +129,25 @@ new_matrix_fullspec = np.array(new_matrix_fullspec)
 
 # Train a neural net to predict SR normalization
 
-list_sr_norm = []
+list_sr_map_1d = []
 list_sr_weight = []
 list_cr_map_1d = []
 for entry in range(0,len(big_matrix_fullspec)):
     if entry in delete_entries: continue
     norm = big_exposure[entry]
-    sr_norm, sr_weight, cr_map_1d = prepare_vector_for_neuralnet(big_matrix_fullspec[entry]/norm)
-    list_sr_norm += [sr_norm/norm]
-    list_sr_weight += [[1. for logE in range(0,logE_nbins)]]
+    sr_map_1d, cr_map_1d = prepare_vector_for_neuralnet(big_matrix_fullspec[entry]/norm)
+    list_sr_map_1d += [sr_map_1d/norm]
+    list_sr_weight += [np.ones_like(sr_map_1d)]
     list_cr_map_1d += [cr_map_1d/norm]
-list_sr_norm = np.array(list_sr_norm)
+list_sr_map_1d = np.array(list_sr_map_1d)
 list_sr_weight = np.array(list_sr_weight)
 list_cr_map_1d = np.array(list_cr_map_1d)
-print (f"list_sr_norm.shape = {list_sr_norm.shape}")
+print (f"list_sr_map_1d.shape = {list_sr_map_1d.shape}")
 print (f"list_sr_weight.shape = {list_sr_weight.shape}")
 print (f"list_cr_map_1d.shape = {list_cr_map_1d.shape}")
 
 
-model = []
-model_err = []
-for logE in range(0,logE_nbins):
-    A, A_err = weighted_least_square_solution(list_cr_map_1d[:,:,logE],list_sr_norm.T[logE],list_sr_weight.T[logE],plot_tag=f'{source_name}_{onoff}_{input_epoch}_{sky_tag}_logE{logE}')
-    model += [A]
-    model_err += [A_err]
+model, model_err = weighted_least_square_solution(list_cr_map_1d,list_sr_map_1d,list_sr_weight,plot_tag=f'{source_name}_{onoff}_{input_epoch}_{sky_tag}')
 output_filename = f'{smi_output}/{ana_dir}/model_least_square_{source_name}_{onoff}_{input_epoch}_{sky_tag}.pkl'
 with open(output_filename, "wb") as file:
     pickle.dump([model,model_err], file)
