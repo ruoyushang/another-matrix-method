@@ -820,14 +820,15 @@ def build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,runlist,max_run
             xyoff_map[logE].fill(Xoff,Yoff,GammaCut)
 
 
-        for logE in range(0,logE_nbins):
-            for gcut in range(0,gcut_bins):
-                for idx_x in range(0,xoff_bins[logE]):
-                    for idx_y in range(0,yoff_bins[logE]):
-                        if xyoff_mask_map[logE].waxis[idx_x,idx_y,gcut]>0.:
-                            bin_coord = xyoff_mask_map[logE].get_bin_center(idx_x,idx_y,gcut)
-                            bin_idx = xyoff_mask_map[logE].get_bin(-1.*bin_coord[0],-1.*bin_coord[1],bin_coord[2])
-                            xyoff_map[logE].waxis[idx_x,idx_y,gcut] = xyoff_map[logE].waxis[bin_idx[0],bin_idx[1],bin_idx[2]]
+        if is_bkgd:
+            for logE in range(0,logE_nbins):
+                for gcut in range(0,1):
+                    for idx_x in range(0,xoff_bins[logE]):
+                        for idx_y in range(0,yoff_bins[logE]):
+                            if xyoff_mask_map[logE].waxis[idx_x,idx_y,gcut]>0.:
+                                bin_coord = xyoff_mask_map[logE].get_bin_center(idx_x,idx_y,gcut)
+                                bin_idx = xyoff_mask_map[logE].get_bin(-1.*bin_coord[0],-1.*bin_coord[1],bin_coord[2])
+                                xyoff_map[logE].waxis[idx_x,idx_y,gcut] = xyoff_map[logE].waxis[bin_idx[0],bin_idx[1],bin_idx[2]]
     
         xyoff_map_1d = []
         xyoff_mask_map_1d = []
@@ -2546,7 +2547,7 @@ def PrintAndPlotInformationRoI(fig,logE_min,logE_mid,logE_max,source_name,hist_d
     fig.savefig(f'output_plots/{source_name}_roi_energy_flux_{roi_name[0]}.png',bbox_inches='tight')
     axbig.remove()
 
-def DefineRegionOfMask(src_name,src_ra,src_dec,coordinate_type='icrs'):
+def DefineRegionOfMask(src_name,src_ra,src_dec):
 
     region_x = [src_ra]
     region_y = [src_dec]
@@ -2569,20 +2570,6 @@ def DefineRegionOfMask(src_name,src_ra,src_dec,coordinate_type='icrs'):
             region_y += [src_y]
             region_r += [0.3]
             region_name += ['TeVCat']
-
-    if coordinate_type == 'galactic':
-        for roi in range(0,len(region_r)):
-            src_x = region_x[roi]
-            src_y = region_y[roi]
-            src_x, src_y = ConvertRaDecToGalactic(src_x, src_y)
-            region_x[roi] = src_x
-            region_y[roi] = src_y
-    elif coordinate_type == 'relative':
-        for roi in range(0,len(region_r)):
-            src_x = region_x[roi]
-            src_y = region_y[roi]
-            region_x[roi] = src_x - src_ra
-            region_y[roi] = src_y - src_dec
 
     return region_name, region_x, region_y, region_r
 
