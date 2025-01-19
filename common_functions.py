@@ -61,7 +61,9 @@ MSCL_cut = [0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70]
 str_flux_calibration = ['2.51e+03', '2.85e+03', '2.53e+03', '3.20e+03', '8.51e+03', '2.51e+04', '1.14e+05', '3.70e+05', '1.09e+06']
 
 skymap_size = 3.
-skymap_bins = 60
+skymap_bins = 20
+#fine_skymap_bins = 20
+#skymap_bins = 60
 fine_skymap_bins = 120
 
 #doFluxCalibration = True
@@ -81,6 +83,7 @@ use_poisson_likelihood = True
 use_init = False
 use_fft = False
 use_mono = False
+use_constraint = True
 
 if eigen_tag=='init':
     matrix_rank_fullspec = 1
@@ -88,6 +91,9 @@ if eigen_tag=='init':
 
 if 'fullspec' in eigen_tag:
     matrix_rank_fullspec = int(eigen_tag.strip('fullspec'))
+elif 'monospec' in eigen_tag:
+    matrix_rank_fullspec = int(eigen_tag.strip('monospec'))
+    use_mono = True
 
 if 'nbin' in bin_tag:
     xyoff_map_nbins = int(bin_tag.strip('nbin'))
@@ -101,8 +107,18 @@ elif 'wr' in cr_tag:
 
 if 'free' in norm_tag:
     fov_mask_radius = 10.
+    use_constraint = False
+elif 'constraint' in norm_tag:
+    fov_mask_radius = 10.
+    use_constraint = True
+elif 'fft' in norm_tag:
+    fov_mask_radius = 10.
+    use_constraint = False
+    use_fft = True
 elif 'fov' in norm_tag:
     fov_mask_radius = float(norm_tag.strip('fov'))/10.
+    use_constraint = False
+    use_fft = True
 
 gcut_start = 0
 gcut_end = gcut_bins
@@ -956,6 +972,7 @@ def cosmic_ray_like_chi2_fullspec(
 
     sum_log_likelihood = 0.
     fft_log_likelihood = 0.
+    lsq_log_likelihood = 0.
 
     try_params = np.array(try_params)
     try_xyoff_map = eigenvectors.T @ try_params
@@ -965,7 +982,6 @@ def cosmic_ray_like_chi2_fullspec(
     idx_1d = 0
     sum_weight = 0.
     for gcut in range(0,gcut_bins):
-        weight = gcut_weight[gcut]
         for logE in range(0,logE_nbins):
 
             #region_noise = []
@@ -978,10 +994,6 @@ def cosmic_ray_like_chi2_fullspec(
             #magnitude_noise = np.abs(fourier_transform_noise)
             #freqs_x = np.fft.fftfreq(xoff_bins[logE], 1.)
             #freqs_y = np.fft.fftfreq(yoff_bins[logE], 1.)
-
-            if not logE_input==-1:
-                if not logE_input==logE:
-                    weight = 0.
 
             region_data = []
             for idx_x in range(0,xoff_bins[logE]):
@@ -997,45 +1009,91 @@ def cosmic_ray_like_chi2_fullspec(
                     n_expect = max(0.0001,try_xyoff_map[idx_1d-1])
                     n_data = data
 
-                    if gcut==0:
-                        #n_data = max(0.0001,init)
-                        #if syst>=init:
-                        #    weight = 0.
-                        weight = float(gcut_bins) - 1 
-                        if mask>0.:
+                    weight = gcut_weight[gcut]
+
+                    if not logE_input==-1:
+                        if not logE_input==logE:
                             weight = 0.
+
+                    if gcut==0:
+                        #weight = float(gcut_bins)
+                        if mask>0.:
+                            if use_constraint:
+                                n_data = max(0.0001,init)
+                            else:
+                                weight = 0.
 
                     sum_weight += weight
 
                     if use_poisson_likelihood:
-                        log_likelihood = 0.
-                        if n_data==0.:
-                            log_likelihood = (n_expect)
-                            sum_log_likelihood += log_likelihood * weight
-                        else:
-                            log_likelihood = -1. * (n_data*np.log(n_expect) - n_expect - (n_data*np.log(n_data)-n_data))
-                            sum_log_likelihood += log_likelihood * weight
+                        log_likelihood = significance_li_and_ma(n_data, n_expect, 0.)
+                        sum_log_likelihood += pow(log_likelihood,2) * weight
+                        #log_likelihood = 0.
+                        #if n_data==0.:
+                        #    log_likelihood = (n_expect)
+                        #    sum_log_likelihood += log_likelihood * weight
+                        #else:
+                        #    log_likelihood = -1. * (n_data*np.log(n_expect) - n_expect - (n_data*np.log(n_data)-n_data))
+                        #    sum_log_likelihood += log_likelihood * weight
                         region_data_x += [log_likelihood]
                     else:
                         sum_log_likelihood += pow(n_expect-n_data,2) * weight
                         region_data_x += [pow(n_expect-n_data,2)]
                 region_data += [region_data_x]
 
-            #if use_fft:
-            #    fourier_transform = np.fft.fft2(region_data)
-            #    magnitude = np.abs(fourier_transform)
-            #    for idx_x in range(0,magnitude.shape[0]):
-            #        for idx_y in range(0,magnitude.shape[1]):
-            #            freq_weight = 1./(abs(freqs_x[idx_x]*freqs_y[idx_y])+1.)
-            #            #reference = magnitude_noise[idx_x,idx_y]
-            #            fft_data = magnitude[idx_x,idx_y]
-            #            fft_log_likelihood += fft_data * freq_weight * weight
+            if use_fft:
+                weight = gcut_weight[gcut]
+                if gcut==0:
+                    weight = 0.
+                fourier_transform = np.fft.fft2(region_data)
+                magnitude = np.abs(fourier_transform)
+                for idx_x in range(0,magnitude.shape[0]):
+                    for idx_y in range(0,magnitude.shape[1]):
+                        freq_weight = 1.
+                        #freq_weight = 1./(abs(freqs_x[idx_x]*freqs_y[idx_y])+1.)
+                        #reference = magnitude_noise[idx_x,idx_y]
+                        fft_data = pow(magnitude[idx_x,idx_y],2)
+                        fft_log_likelihood += fft_data * freq_weight * weight
+
+    idx_1d = 0
+    for gcut in range(0,gcut_bins):
+        for logE in range(0,logE_nbins):
+
+            weight_gcut = 1.
+            n_expect_gcut = 0.
+            n_data_gcut = 0.
+
+            for idx_x in range(0,xoff_bins[logE]):
+                for idx_y in range(0,yoff_bins[logE]):
+
+                    idx_1d += 1
+                    data = data_xyoff_map[idx_1d-1]
+                    init = init_xyoff_map[idx_1d-1]
+
+                    n_expect = max(0.0001,try_xyoff_map[idx_1d-1])
+                    n_expect_gcut += n_expect
+                    n_data = data
+                    if gcut==0:
+                        n_data = max(0.0001,init)
+                    n_data_gcut += n_data
+
+            if gcut==0:
+                weight_gcut = 0.
+            else:
+                weight_gcut = 1.
+
+            log_likelihood = significance_li_and_ma(n_data_gcut, n_expect_gcut, 0.)
+            lsq_log_likelihood += pow(log_likelihood,2) * weight_gcut
+            #if n_data_gcut==0.:
+            #    lsq_log_likelihood += n_expect_gcut*weight_gcut
+            #else:
+            #    lsq_log_likelihood += (-1.*(n_data_gcut*np.log(n_expect_gcut) - n_expect_gcut - (n_data_gcut*np.log(n_data_gcut)-n_data_gcut)))*weight_gcut
 
 
-    #if use_fft:
-    #    return fft_log_likelihood
+    if use_fft:
+        return fft_log_likelihood + lsq_log_likelihood
 
-    return sum_log_likelihood
+    return sum_log_likelihood + lsq_log_likelihood
 
 
 
@@ -3488,11 +3546,11 @@ def build_skymap(
             if run>=len(mimic_runlist): continue
             if mimic_index>=len(mimic_runlist[run]): continue
             new_mimic_runlist += [mimic_runlist[run][mimic_index]]
-        big_on_elevation, big_on_exposure, big_on_matrix_fullspec, big_mask_matrix_fullspec = build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,new_mimic_runlist,max_runs=1e10,is_bkgd=True)
+        big_on_elevation, big_on_exposure, big_on_matrix_fullspec, big_mask_matrix_fullspec = build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,new_mimic_runlist,max_runs=1e10,is_bkgd=False)
     elif 'ON' in onoff:
         big_on_elevation, big_on_exposure, big_on_matrix_fullspec, big_mask_matrix_fullspec = build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,runlist,max_runs=1e10,is_bkgd=False)
     else:
-        big_on_elevation, big_on_exposure, big_on_matrix_fullspec, big_mask_matrix_fullspec = build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,runlist,max_runs=1e10,is_bkgd=True)
+        big_on_elevation, big_on_exposure, big_on_matrix_fullspec, big_mask_matrix_fullspec = build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,runlist,max_runs=1e10,is_bkgd=False)
 
     if len(big_on_matrix_fullspec)==0:
         print (f'No data. Break.')
@@ -3558,20 +3616,6 @@ def build_skymap(
 
         sr_map_1d_truth, cr_map_1d = prepare_vector_for_neuralnet(data_xyoff_map_1d_fullspec)
 
-        init_xyoff_map_1d_fullspec = np.zeros_like(big_on_matrix_fullspec[0])
-        idx_1d = 0
-        for gcut in range(0,gcut_bins):
-            for logE in range(0,logE_nbins):
-                for idx_x in range(0,xoff_bins[logE]):
-                    for idx_y in range(0,yoff_bins[logE]):
-                        idx_1d += 1
-                        init_xyoff_map_1d_fullspec[idx_1d-1] = init_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
-
-
-        fit_params = [0.] * effective_matrix_rank_fullspec
-        avg_params = big_eigenvectors_fullspec @ init_xyoff_map_1d_fullspec
-
-
         total_weight = 0.
         ls_model_weight = []
         ls_model = []
@@ -3596,6 +3640,23 @@ def build_skymap(
             sr_map_1d_err += cr_map_1d @ ls_model_err[batch] * ls_model_weight[batch]
         #lsq_xyoff_map_1d_fullspec = restore_neuralnet_vector(sr_map_1d,data_xyoff_map_1d_fullspec)
         #lsq_err_xyoff_map_1d_fullspec = restore_neuralnet_vector(sr_map_1d_err,data_xyoff_map_1d_fullspec)
+
+        init_xyoff_map_1d_fullspec = np.zeros_like(big_on_matrix_fullspec[0])
+        idx_1d = 0
+        for gcut in range(0,gcut_bins):
+            for logE in range(0,logE_nbins):
+                norm_init = np.sum(init_xyoff_map[logE].waxis[:,:,gcut])
+                rescale = 1.
+                #if gcut==0 and sr_map_1d_err[logE]/sr_map_1d[logE]<1.:
+                #    rescale = sr_map_1d[logE]/norm_init
+                for idx_x in range(0,xoff_bins[logE]):
+                    for idx_y in range(0,yoff_bins[logE]):
+                        idx_1d += 1
+                        init_xyoff_map_1d_fullspec[idx_1d-1] = init_xyoff_map[logE].waxis[idx_x,idx_y,gcut] * rescale
+
+        fit_params = [0.] * effective_matrix_rank_fullspec
+        avg_params = big_eigenvectors_fullspec @ init_xyoff_map_1d_fullspec
+
         lsq_xyoff_map_1d_fullspec = np.zeros_like(init_xyoff_map_1d_fullspec)
         lsq_err_xyoff_map_1d_fullspec = np.zeros_like(init_xyoff_map_1d_fullspec)
 
@@ -3611,11 +3672,13 @@ def build_skymap(
                         lsq_err_xyoff_map_1d_fullspec[idx_1d-1] = prediction * sr_map_1d_err[logE]/sr_map_1d[logE]
                         fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = prediction
                         syst_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = prediction * sr_map_1d_err[logE]/sr_map_1d[logE]
+                        #fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = lsq_xyoff_map_1d_fullspec[idx_1d-1]
+                        #syst_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = lsq_err_xyoff_map_1d_fullspec[idx_1d-1]
 
         for logE in range(0,logE_nbins):
-            truth = sr_map_1d_truth[logE]
-            prediction = sr_map_1d[logE]
-            error = sr_map_1d_err[logE]
+            truth = np.sum(data_xyoff_map[logE].waxis[:,:,0])
+            prediction = np.sum(fit_xyoff_map[logE].waxis[:,:,0])
+            error = np.sum(syst_xyoff_map[logE].waxis[:,:,0])
             print (f"truth = {truth:0.1f}, prediction = {prediction:0.1f}+/-{error:0.1f}")
 
 

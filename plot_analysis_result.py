@@ -923,7 +923,9 @@ for logE in range(plot_logE_min,plot_logE_max):
         xmax = sum_data_xyoff_map[logE].xaxis.max()
         ymin = sum_data_xyoff_map[logE].yaxis.min()
         ymax = sum_data_xyoff_map[logE].yaxis.max()
-        im = axbig.imshow(sum_err_xyoff_map[logE].waxis[:,:,gcut].T,origin='lower',extent=(xmin,xmax,ymin,ymax),aspect='auto',vmin=-max_z,vmax=max_z,cmap='coolwarm')
+        im = axbig.imshow(sum_err_xyoff_map[logE].waxis[:,:,gcut].T,origin='lower',extent=(xmin,xmax,ymin,ymax),aspect='auto',vmin=-5.,vmax=5.,cmap='coolwarm')
+ins_ax = fig.add_axes([0.905, 0.125, .010, 0.75])  # [lower left x, lower left y, width, height] w.r.t. fig
+cb = fig.colorbar(im,cax=ins_ax)
 fig.savefig(f'output_plots/xyoff_map_inclusive_err_{source_name}_transpose_{ana_tag}.png',bbox_inches='tight')
 axbig.remove()
 
