@@ -11,6 +11,7 @@ from common_functions import MyArray3D
 
 import common_functions
 
+logE_threshold = common_functions.logE_threshold
 logE_axis = common_functions.logE_axis
 logE_nbins = common_functions.logE_nbins
 logE_bins = common_functions.logE_bins
@@ -62,10 +63,8 @@ fig.set_figwidth(figsize_x)
 smi_dir = os.environ.get("SMI_DIR")
 smi_input = os.environ.get("SMI_INPUT")
 #smi_output = os.environ.get("SMI_OUTPUT")
-#smi_output = "/nevis/ged/data/rshang/smi_output/output_test"
-#smi_output = "/nevis/ged/data/rshang/smi_output/output_3tel"
-smi_output = "/nevis/ged/data/rshang/smi_output/output_default"
-#smi_output = "/nevis/ged/data/rshang/smi_output/output_detail"
+#smi_output = "/nevis/ged/data/rshang/smi_output/output_default"
+smi_output = "/nevis/ged/data/rshang/smi_output/output_multivar"
 
 sky_tag = os.environ.get("SKY_TAG")
 
@@ -117,14 +116,13 @@ input_epoch = ['V4','V5','V6']
 #input_epoch = ['V5','V6']
 
 logE_min = 0
-logE_mid = logE_axis.get_bin(np.log10(1.0))+1
-#logE_mid = logE_axis.get_bin(np.log10(1.5))+1
+logE_mid = logE_axis.get_bin(np.log10(1.7))+1
 logE_max = logE_nbins
 fit_radial_profile = False
 radial_bin_scale = 0.1
 
-include_syst_error = True
-#include_syst_error = False
+#include_syst_error = True
+include_syst_error = False
 
 if 'Crab' in source_name:
     fit_radial_profile = False
@@ -189,8 +187,6 @@ mimic_exposure = [0.] * n_mimic
 list_run_nsb = []
 list_run_elev = []
 list_run_azim = []
-list_truth_params = []
-list_fit_params = []
 sum_incl_sky_map = []
 sum_data_sky_map = []
 sum_bkgd_sky_map = []
@@ -385,13 +381,11 @@ for mimic in range(1,n_mimic+1):
 
 sum_data_xyoff_map = []
 sum_fit_xyoff_map = []
-sum_ratio_xyoff_map = []
 sum_err_xyoff_map = []
 sum_init_err_xyoff_map = []
 for logE in range(0,logE_nbins):
     sum_data_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
     sum_fit_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
-    sum_ratio_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=1,start_z=gcut_start,end_z=gcut_end)]
     sum_err_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
     sum_init_err_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
 
@@ -419,9 +413,7 @@ for epoch in input_epoch:
             exposure = run_info[0]
             run_elev = run_info[1]
             run_azim = run_info[2]
-            truth_params = run_info[3]
-            fit_params = run_info[4]
-            run_nsb = run_info[5]
+            run_nsb = run_info[3]
 
             if run_azim>270.:
                 run_azim = run_azim-360.
@@ -441,7 +433,6 @@ for epoch in input_epoch:
             syst_sky_map = analysis_result[run][4] 
             data_xyoff_map = analysis_result[run][5]
             fit_xyoff_map = analysis_result[run][6]
-            ratio_xyoff_map = analysis_result[run][7]
 
             print ("=========================================================================")
             print (f"run = {run}")
@@ -479,8 +470,6 @@ for epoch in input_epoch:
                 list_run_nsb += [run_nsb]
                 list_run_elev += [run_elev]
                 list_run_azim += [run_azim]
-                list_truth_params += [truth_params]
-                list_fit_params += [fit_params]
                 n_groups += 1.
 
             logE_peak = 0
@@ -492,7 +481,7 @@ for epoch in input_epoch:
                     logE_peak = logE
 
             for logE in range(0,logE_nbins):
-                #if logE<logE_peak: continue
+                if logE<logE_peak+logE_threshold: continue
                 if logE<logE_min: continue
                 if logE>logE_max: continue
 
@@ -512,7 +501,6 @@ for epoch in input_epoch:
                         #sum_syst_sky_map[logE].add(syst_sky_map[logE])
                     sum_data_xyoff_map[logE].add(data_xyoff_map[logE])
                     sum_fit_xyoff_map[logE].add(fit_xyoff_map[logE])
-                    sum_ratio_xyoff_map[logE].add(ratio_xyoff_map[logE])
 
     
 for logE in range(0,logE_nbins):
@@ -539,10 +527,10 @@ for logE in range(0,logE_nbins):
                 significance = significance_li_and_ma(data, model, 0.)
                 sum_err_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = significance
 
+
 for logE in range(0,logE_nbins):
     sum_data_xyoff_map[logE].scale(1./good_exposure)
     sum_fit_xyoff_map[logE].scale(1./good_exposure)
-    sum_ratio_xyoff_map[logE].scale(1./n_groups)
 
 for logE in range(0,logE_nbins):
     sum_incl_sky_map_smooth[logE].reset()
@@ -928,6 +916,7 @@ ins_ax = fig.add_axes([0.905, 0.125, .010, 0.75])  # [lower left x, lower left y
 cb = fig.colorbar(im,cax=ins_ax)
 fig.savefig(f'output_plots/xyoff_map_inclusive_err_{source_name}_transpose_{ana_tag}.png',bbox_inches='tight')
 axbig.remove()
+
 
 plot_camera_frame_power_spectrum(fig,f"{source_name}_LE_{ana_tag}",sum_significance_sky_map_LE,idx_z=0)
 plot_camera_frame_power_spectrum(fig,f"{source_name}_HE_{ana_tag}",sum_significance_sky_map_HE,idx_z=0)

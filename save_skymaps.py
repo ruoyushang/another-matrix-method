@@ -20,6 +20,8 @@ xoff_start = common_functions.xoff_start
 xoff_end = common_functions.xoff_end
 yoff_start = common_functions.yoff_start
 yoff_end = common_functions.yoff_end
+xvar_bins = common_functions.xvar_bins
+yvar_bins = common_functions.yvar_bins
 gcut_start = common_functions.gcut_start
 gcut_end = common_functions.gcut_end
 ReadRunListFromFile = common_functions.ReadRunListFromFile
@@ -69,16 +71,8 @@ print (f'path_to_eigenvector = {path_to_eigenvector}')
 path_to_big_matrix = f'{smi_output}/{ana_dir}/big_off_matrix_{source_name}_{onoff}_{input_epoch}_{cr_tag}_{bin_tag}.pkl'
 print (f'path_to_big_matrix = {path_to_big_matrix}')
 
-# Run the 'ls' command and capture its output
-result = subprocess.run(['ls',f'{smi_output}/{ana_dir}'], capture_output=True, text=True)
-# Split the output into a list by newlines
-file_list = result.stdout.splitlines()
-path_to_leastsquare_model = []
-for file in file_list:
-    if f'model_least_square_{source_name}_{onoff}_{input_epoch}_{cr_tag}_{bin_tag}_{eigen_tag}' in file:
-        input_filename = f'{smi_output}/{ana_dir}/{file}'
-        path_to_leastsquare_model += [input_filename]
-        print (f'path_to_leastsquare_model = {input_filename}')
+path_to_leastsquare_model = f'{smi_output}/{ana_dir}/model_least_square_{source_name}_{onoff}_{input_epoch}_{cr_tag}_{bin_tag}_{eigen_tag}.pkl'
+print (f'path_to_leastsquare_model = {path_to_leastsquare_model}')
 
 if onoff=='ON' or 'MIMIC' in onoff:
     skymap_bins = fine_skymap_bins
@@ -153,9 +147,9 @@ for run in range(0,total_runs):
 
     total_exposure += (time_end-time_start)/3600.
 
-#min_exposure = 0.1 # hours
+min_exposure = 0.1 # hours
 #min_exposure = 2.0 # hours
-min_exposure = 5.0 # hours
+#min_exposure = 5.0 # hours
 #min_exposure = 10.0 # hours
 run_exposure = 0.
 for run in range(0,total_runs):
@@ -226,11 +220,9 @@ for logE in range(0,logE_nbins):
 
 data_xyoff_map = []
 fit_xyoff_map = []
-ratio_xyoff_map = []
 for logE in range(0,logE_nbins):
     data_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
     fit_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
-    ratio_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
 
 run_incl_sky_map = []
 run_data_sky_map = []
@@ -245,14 +237,20 @@ for logE in range(0,logE_nbins):
 run_data_xyoff_map = []
 run_fit_xyoff_map = []
 run_init_xyoff_map = []
-run_ratio_xyoff_map = []
 run_syst_xyoff_map = []
 for logE in range(0,logE_nbins):
     run_data_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
     run_fit_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
     run_init_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
-    run_ratio_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
     run_syst_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+
+run_data_xyvar_map = []
+run_fit_xyvar_map = []
+run_init_xyvar_map = []
+for logE in range(0,logE_nbins):
+    run_data_xyvar_map += [MyArray3D(x_bins=xvar_bins[logE],start_x=-1.,end_x=1.,y_bins=yvar_bins[logE],start_y=-1.,end_y=1.,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+    run_fit_xyvar_map += [MyArray3D(x_bins=xvar_bins[logE],start_x=-1.,end_x=1.,y_bins=yvar_bins[logE],start_y=-1.,end_y=1.,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+    run_init_xyvar_map += [MyArray3D(x_bins=xvar_bins[logE],start_x=-1.,end_x=1.,y_bins=yvar_bins[logE],start_y=-1.,end_y=1.,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
 
 
 run_list_count = 0
@@ -267,7 +265,6 @@ for small_runlist in range(0,len(big_runlist)):
     for logE in range(0,logE_nbins):
         data_xyoff_map[logE].reset()
         fit_xyoff_map[logE].reset()
-        ratio_xyoff_map[logE].reset()
 
     run_list_count += 1
     print (f'analyzing {run_list_count}/{len(big_runlist)} lists...')
@@ -293,7 +290,9 @@ for small_runlist in range(0,len(big_runlist)):
             run_data_xyoff_map, 
             run_fit_xyoff_map, 
             run_init_xyoff_map, 
-            run_ratio_xyoff_map,
+            run_data_xyvar_map, 
+            run_fit_xyvar_map, 
+            run_init_xyvar_map, 
             run_syst_xyoff_map,
             total_data_xyoff_map,
             total_fit_xyoff_map,
@@ -302,9 +301,7 @@ for small_runlist in range(0,len(big_runlist)):
     run_exposure_hours = run_info[0]
     run_elev = run_info[1]
     run_azim = run_info[2]
-    truth_params = run_info[3]
-    fit_params = run_info[4]
-    run_nsb = run_info[5]
+    run_nsb = run_info[3]
     if run_exposure_hours==0.: continue
 
     run_data_xyoff_sum_sr = 0.
@@ -322,7 +319,6 @@ for small_runlist in range(0,len(big_runlist)):
     for logE in range(0,logE_nbins):
         data_xyoff_map[logE].add(run_data_xyoff_map[logE])
         fit_xyoff_map[logE].add(run_fit_xyoff_map[logE])
-        ratio_xyoff_map[logE].add(run_ratio_xyoff_map[logE])
         total_data_xyoff_map[logE].add(run_data_xyoff_map[logE])
         total_fit_xyoff_map[logE].add(run_fit_xyoff_map[logE])
 
@@ -367,18 +363,19 @@ for small_runlist in range(0,len(big_runlist)):
     if not os.path.exists(output_filename):
         print (f'{output_filename} does not exist, create new...')
         analysis_result = []
-        analysis_result += [[[run_exposure_hours, run_elev, run_azim, truth_params, fit_params, run_nsb], incl_sky_map, data_sky_map, bkgd_sky_map, syst_sky_map, data_xyoff_map, fit_xyoff_map, ratio_xyoff_map]]
+        analysis_result += [[[run_exposure_hours, run_elev, run_azim, run_nsb], incl_sky_map, data_sky_map, bkgd_sky_map, syst_sky_map, data_xyoff_map, fit_xyoff_map]]
         with open(output_filename,"wb") as file:
             pickle.dump(analysis_result, file)
         del analysis_result
     else:
         analysis_result = pickle.load(open(output_filename, "rb"))
-        analysis_result += [[[run_exposure_hours, run_elev, run_azim, truth_params, fit_params, run_nsb], incl_sky_map, data_sky_map, bkgd_sky_map, syst_sky_map, data_xyoff_map, fit_xyoff_map, ratio_xyoff_map]]
+        analysis_result += [[[run_exposure_hours, run_elev, run_azim, run_nsb], incl_sky_map, data_sky_map, bkgd_sky_map, syst_sky_map, data_xyoff_map, fit_xyoff_map]]
         with open(output_filename,"wb") as file:
             pickle.dump(analysis_result, file)
         del analysis_result
     print ('=================================================================================')
 
+print ("skymap job completed.")
 
 #exit()
 

@@ -37,6 +37,8 @@ min_NImages = 3
 max_Roff = 1.7
 max_EmissionHeight_cut = 20.
 min_EmissionHeight_cut = 6.
+max_MeanPedvar_cut = 11.
+min_MeanPedvar_cut = 3.
 max_Rcore = 400.
 min_Rcore = 0.
 min_Energy_cut = 0.02
@@ -48,37 +50,44 @@ xoff_end = 2.
 yoff_start = -2.
 yoff_end = 2.
 
-#logE_bins = [-0.70,-0.60,-0.50,-0.40,-0.25,0.00,0.25,0.50,0.75,1.0,1.5] # logE TeV
-#logE_bins = [-0.90,-0.80,-0.70,-0.60,-0.50,-0.40,-0.25,0.00,0.25,0.50,0.75,1.00,1.25] # logE TeV
-logE_bins = [-0.60,-0.50,-0.40,-0.25,0.00,0.25,0.50,0.75,1.00,1.25] # logE TeV
+logE_bins = [-1.00,-0.90,-0.80,-0.70,-0.60,-0.50,-0.40,-0.25,0.00,0.25,0.50,0.75,1.00,1.25] # logE TeV
+#logE_bins = [-0.60,-0.50,-0.40,-0.25,0.00,0.25,0.50,0.75,1.00,1.25] # logE TeV
+#logE_bins = [-0.40,-0.25,0.00,0.25,0.50,0.75,1.00,1.25] # logE TeV
 logE_nbins = len(logE_bins)-1
 
-#MSCW_cut = [0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60]
-#MSCL_cut = [0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70]
-#str_flux_calibration = ['0.00e+00', '6.90e+02', '1.42e+03', '2.51e+03', '2.85e+03', '2.53e+03', '3.20e+03', '8.51e+03', '2.51e+04', '1.14e+05', '3.70e+05', '1.09e+06']
-MSCW_cut = [0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60]
-MSCL_cut = [0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70]
-str_flux_calibration = ['2.51e+03', '2.85e+03', '2.53e+03', '3.20e+03', '8.51e+03', '2.51e+04', '1.14e+05', '3.70e+05', '1.09e+06']
+MSCW_cut = [0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60]
+MSCL_cut = [0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70]
+str_flux_calibration = ['1.80e+02', '3.40e+02', '6.90e+02', '1.42e+03', '2.51e+03', '2.85e+03', '2.53e+03', '3.20e+03', '8.51e+03', '2.51e+04', '1.14e+05', '3.70e+05', '1.09e+06']
+#MSCW_cut = [0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60]
+#MSCL_cut = [0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70]
+#str_flux_calibration = ['2.51e+03', '2.85e+03', '2.53e+03', '3.20e+03', '8.51e+03', '2.51e+04', '1.14e+05', '3.70e+05', '1.09e+06']
+#MSCW_cut = [0.60,0.60,0.60,0.60,0.60,0.60,0.60]
+#MSCL_cut = [0.70,0.70,0.70,0.70,0.70,0.70,0.70]
+#str_flux_calibration = ['2.53e+03', '3.20e+03', '8.51e+03', '2.51e+04', '1.14e+05', '3.70e+05', '1.09e+06']
 
 skymap_size = 3.
 skymap_bins = 20
-#fine_skymap_bins = 20
+fine_skymap_bins = 20
 #skymap_bins = 60
-fine_skymap_bins = 120
+#fine_skymap_bins = 120
 
 #doFluxCalibration = True
 doFluxCalibration = False
 calibration_radius = 0.15 # need to be larger than the PSF and smaller than the integration radius
 
-coordinate_type = 'galactic'
-#coordinate_type = 'icrs'
+#coordinate_type = 'galactic'
+coordinate_type = 'icrs'
 
+#logE_threshold = -99
+logE_threshold = 1
+#logE_threshold = 2
 fov_mask_radius = 10.
 gcut_bins = 3
 cr_gcut = 1.5
 matrix_rank = 1
 matrix_rank_fullspec = 16
 xyoff_map_nbins = 9
+xyvar_map_nbins = 7
 use_poisson_likelihood = True
 use_init = False
 use_fft = False
@@ -111,23 +120,19 @@ if 'free' in norm_tag:
 elif 'constraint' in norm_tag:
     fov_mask_radius = 10.
     use_constraint = True
-elif 'fft' in norm_tag:
-    fov_mask_radius = 10.
-    use_constraint = False
-    use_fft = True
 elif 'fov' in norm_tag:
     fov_mask_radius = float(norm_tag.strip('fov'))/10.
     use_constraint = False
-    use_fft = True
 
 gcut_start = 0
 gcut_end = gcut_bins
 gcut_weight = [1.] * gcut_bins
 
 
-#xoff_bins = [7,7,7,7,5,3,1,1,1]
 xoff_bins = [xyoff_map_nbins for logE in range(0,logE_nbins)]
 yoff_bins = [xyoff_map_nbins for logE in range(0,logE_nbins)]
+xvar_bins = [xyvar_map_nbins for logE in range(0,logE_nbins)]
+yvar_bins = [xyvar_map_nbins for logE in range(0,logE_nbins)]
 
 smi_aux = os.environ.get("SMI_AUX")
 smi_dir = os.environ.get("SMI_DIR")
@@ -168,9 +173,9 @@ def weighted_least_square_solution(mtx_input,vec_output,vec_weight,plot_tag=''):
     plt.close()
 
     S_pseudo_inv = np.diag(1 / S)
-    #for entry in range(0,len(S)):
-    #    if S[entry]/S[0]<pow(10.,-3.0):
-    #        S_pseudo_inv[entry][entry] = 0.
+    for entry in range(0,len(S)):
+        if S[entry]/S[0]<pow(10.,-4.0):
+            S_pseudo_inv[entry][entry] = 0.
 
     inv_xTwx = VT.T @ S_pseudo_inv @ U.T
 
@@ -206,9 +211,11 @@ def significance_li_and_ma(N_on, N_bkg, N_bkg_err):
 
     chi_square_stat = 2 * (on_nlogn + bkg_nlogn)
     chi_square = chi_square_stat
+
     if N_bkg_err>0.:
         chi_square_syst = pow((N_on-N_bkg)/N_bkg_err,2)
         chi_square = 1. / (1./chi_square_stat + 1./chi_square_syst)
+
     S = sign * pow(chi_square,0.5)
 
     return S
@@ -266,8 +273,8 @@ def ReadRunListFromFile(smi_input,input_on_file,input_off_file,input_mimic_file)
 
         all_runlist += [(onrun_elev,int(on_line),paired_off_runs,paired_mimic_runs)]
 
-    #all_runlist.sort(key=sortFirst,reverse=True)
-    #all_runlist.sort(key=sortFirst)
+    #all_runlist.sort(key=sortFirst,reverse=True) # from high-elev to low-elev
+    #all_runlist.sort(key=sortFirst) # from low-elev to high-elev
     random.shuffle(all_runlist)
 
     for run in range(0,len(all_runlist)):
@@ -712,6 +719,139 @@ def EventGammaCut(MSCL,MSCW):
 
     return GammaCut
 
+def convert_multivar_map3d_to_vector1d(xyoff_map, xyvar_map):
+
+    xyoff_map_1d = []
+    for gcut in range(0,gcut_bins):
+        for logE in range(0,logE_nbins):
+            for idx_x in range(0,xoff_bins[logE]):
+                for idx_y in range(0,yoff_bins[logE]):
+                    xyoff_map_1d += [xyoff_map[logE].waxis[idx_x,idx_y,gcut]]
+    for gcut in range(0,gcut_bins):
+        for logE in range(0,logE_nbins):
+            for idx_x in range(0,xvar_bins[logE]):
+                for idx_y in range(0,yvar_bins[logE]):
+                    xyoff_map_1d += [xyvar_map[logE].waxis[idx_x,idx_y,gcut]]
+
+    return xyoff_map_1d
+
+def convert_multivar_vector1d_to_map3d(multivar_map_1d):
+
+    xyoff_map = []
+    xyvar_map = []
+    for logE in range(0,logE_nbins):
+        xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+        xyvar_map += [MyArray3D(x_bins=xvar_bins[logE],start_x=-1.,end_x=1.,y_bins=yvar_bins[logE],start_y=-1.,end_y=1.,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+
+    idx_1d = 0
+    for gcut in range(0,gcut_bins):
+        for logE in range(0,logE_nbins):
+            for idx_x in range(0,xoff_bins[logE]):
+                for idx_y in range(0,yoff_bins[logE]):
+                    idx_1d += 1
+                    xyoff_map[logE].waxis[idx_x,idx_y,gcut] = multivar_map_1d[idx_1d-1]
+    for gcut in range(0,gcut_bins):
+        for logE in range(0,logE_nbins):
+            for idx_x in range(0,xvar_bins[logE]):
+                for idx_y in range(0,yvar_bins[logE]):
+                    idx_1d += 1
+                    xyvar_map[logE].waxis[idx_x,idx_y,gcut] = multivar_map_1d[idx_1d-1]
+
+    return xyoff_map, xyvar_map
+
+def convert_xyvar_vector1d_to_map3d(xyvar_map_1d,logE):
+
+    xyvar_map = MyArray3D(x_bins=xvar_bins[logE],start_x=-1.,end_x=1.,y_bins=yvar_bins[logE],start_y=-1.,end_y=1.,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)
+
+    idx_1d = 0
+    for gcut in range(0,gcut_bins):
+        for idx_x in range(0,xvar_bins[logE]):
+            for idx_y in range(0,yvar_bins[logE]):
+                idx_1d += 1
+                xyvar_map.waxis[idx_x,idx_y,gcut] = xyvar_map_1d[idx_1d-1]
+
+    return xyvar_map
+
+def convert_multivar_to_xyvar_vector1d(multivar_map_1d):
+
+    xyoff_map, xyvar_map =  convert_multivar_vector1d_to_map3d(multivar_map_1d)
+
+    xyvar_map_1d = []
+    for gcut in range(0,gcut_bins):
+        for logE in range(0,logE_nbins):
+            for idx_x in range(0,xvar_bins[logE]):
+                for idx_y in range(0,yvar_bins[logE]):
+                    xyvar_map_1d += [xyvar_map[logE].waxis[idx_x,idx_y,gcut]]
+
+    return np.array(xyvar_map_1d)
+
+def find_index_for_xyvar_vector1d():
+
+    idx_1d = 0
+    idx_1d_output = []
+    for gcut in range(0,gcut_bins):
+        idx_1d_logE = []
+        for logE in range(0,logE_nbins):
+            idx_1d_x = []
+            for idx_x in range(0,xvar_bins[logE]):
+                idx_1d_y = []
+                for idx_y in range(0,yvar_bins[logE]):
+                    idx_1d_y += [idx_1d]
+                    idx_1d += 1
+                idx_1d_x += [idx_1d_y]
+            idx_1d_logE += [idx_1d_x]
+        idx_1d_output += [idx_1d_logE]
+
+    return idx_1d_output
+
+def convert_multivar_to_xyoff_vector1d(multivar_map_1d):
+
+    xyoff_map, xyvar_map =  convert_multivar_vector1d_to_map3d(multivar_map_1d)
+
+    xyoff_map_1d = []
+    for gcut in range(0,gcut_bins):
+        for logE in range(0,logE_nbins):
+            for idx_x in range(0,xoff_bins[logE]):
+                for idx_y in range(0,yoff_bins[logE]):
+                    xyoff_map_1d += [xyoff_map[logE].waxis[idx_x,idx_y,gcut]]
+
+    return np.array(xyoff_map_1d)
+
+def find_index_for_xyoff_vector1d():
+
+    idx_1d = 0
+    idx_1d_output = []
+    for gcut in range(0,gcut_bins):
+        idx_1d_logE = []
+        for logE in range(0,logE_nbins):
+            idx_1d_x = []
+            for idx_x in range(0,xoff_bins[logE]):
+                idx_1d_y = []
+                for idx_y in range(0,yoff_bins[logE]):
+                    idx_1d_y += [idx_1d]
+                    idx_1d += 1
+                idx_1d_x += [idx_1d_y]
+            idx_1d_logE += [idx_1d_x]
+        idx_1d_output += [idx_1d_logE]
+
+    return idx_1d_output
+
+def convert_xyoff_vector1d_to_map3d(xyoff_map_1d):
+
+    xyoff_map = []
+    for logE in range(0,logE_nbins):
+        xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+
+    xyoff_idx_1d = find_index_for_xyoff_vector1d()
+    for gcut in range(0,gcut_bins):
+        for logE in range(0,logE_nbins):
+            for idx_x in range(0,xoff_bins[logE]):
+                for idx_y in range(0,yoff_bins[logE]):
+                    idx_1d = xyoff_idx_1d[gcut][logE][idx_x][idx_y]
+                    xyoff_map[logE].waxis[idx_x,idx_y,gcut] = xyoff_map_1d[idx_1d]
+
+    return xyoff_map
+
 def build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,runlist,max_runs=1e10,is_bkgd=True,specific_run=0):
 
     big_matrix_fullspec = []
@@ -738,9 +878,13 @@ def build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,runlist,max_run
                 continue
         run_count += 1
     
+        xyvar_map = []
+        xyvar_mask_map = []
         xyoff_map = []
         xyoff_mask_map = []
         for logE in range(0,logE_nbins):
+            xyvar_map += [MyArray3D(x_bins=xvar_bins[logE],start_x=-1.,end_x=1.,y_bins=yvar_bins[logE],start_y=-1.,end_y=1.,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+            xyvar_mask_map += [MyArray3D(x_bins=xvar_bins[logE],start_x=-1.,end_x=1.,y_bins=yvar_bins[logE],start_y=-1.,end_y=1.,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
             xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
             xyoff_mask_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
     
@@ -807,6 +951,8 @@ def build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,runlist,max_run
             if NImages<min_NImages: continue
             if EmissionHeight>max_EmissionHeight_cut: continue
             if EmissionHeight<min_EmissionHeight_cut: continue
+            if MeanPedvar>max_MeanPedvar_cut: continue
+            if MeanPedvar<min_MeanPedvar_cut: continue
             if Roff>max_Roff: continue
             if Rcore>max_Rcore: continue
             if Rcore<min_Rcore: continue
@@ -830,10 +976,21 @@ def build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,runlist,max_run
             else:
                 found_roi = CoincideWithRegionOfInterest(Xsky, Ysky, roi_ra, roi_dec, roi_r)
                 if found_roi:
-                    xyoff_mask_map[logE].fill(Xoff,Yoff,0.5)
+                    xyoff_mask_map[logE].fill(Xoff,Yoff,GammaCut)
 
 
             xyoff_map[logE].fill(Xoff,Yoff,GammaCut)
+
+            #mean_EmissionHeight = (max_EmissionHeight_cut+min_EmissionHeight_cut)/2.
+            #range_EmissionHeight = (max_EmissionHeight_cut-min_EmissionHeight_cut)/2.
+            #var_1 = (EmissionHeight-mean_EmissionHeight)/range_EmissionHeight
+            mean_Rcore = (max_Rcore+min_Rcore)/2.
+            range_Rcore = (max_Rcore-min_Rcore)/2.
+            var_1 = (Rcore-mean_Rcore)/range_Rcore
+            mean_MeanPedvar = (max_MeanPedvar_cut+min_MeanPedvar_cut)/2.
+            range_MeanPedvar = (max_MeanPedvar_cut-min_MeanPedvar_cut)/2.
+            var_2 = (MeanPedvar-mean_MeanPedvar)/range_MeanPedvar
+            xyvar_map[logE].fill(var_1,var_2,GammaCut)
 
 
         if is_bkgd:
@@ -846,17 +1003,10 @@ def build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,runlist,max_run
                                 bin_idx = xyoff_mask_map[logE].get_bin(-1.*bin_coord[0],-1.*bin_coord[1],bin_coord[2])
                                 xyoff_map[logE].waxis[idx_x,idx_y,gcut] = xyoff_map[logE].waxis[bin_idx[0],bin_idx[1],bin_idx[2]]
     
-        xyoff_map_1d = []
-        xyoff_mask_map_1d = []
-        for gcut in range(0,gcut_bins):
-            for logE in range(0,logE_nbins):
-                for idx_x in range(0,xoff_bins[logE]):
-                    for idx_y in range(0,yoff_bins[logE]):
-                        xyoff_map_1d += [xyoff_map[logE].waxis[idx_x,idx_y,gcut]]
-                        xyoff_mask_map_1d += [xyoff_mask_map[logE].waxis[idx_x,idx_y,gcut]]
+        xyoff_map_1d = convert_multivar_map3d_to_vector1d(xyoff_map, xyvar_map)
+        xyoff_mask_map_1d = convert_multivar_map3d_to_vector1d(xyoff_mask_map, xyvar_mask_map)
         big_matrix_fullspec += [xyoff_map_1d]
         big_mask_matrix_fullspec += [xyoff_mask_map_1d]
-
 
         InputFile.Close()
         if run_count==max_runs: break
@@ -866,59 +1016,35 @@ def build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,runlist,max_run
 
     return big_elevation, big_exposure_time, big_matrix_fullspec, big_mask_matrix_fullspec
 
-def restore_neuralnet_vector(sr_map_1d,data_xyoff_map_1d):
+def prepare_vector_for_least_square(multivar_map_1d):
 
-    all_nbins = 0
-    for gcut in range(0,gcut_bins):
-        for logE in range(0,logE_nbins):
-            for idx_x in range(0,xoff_bins[logE]):
-                for idx_y in range(0,yoff_bins[logE]):
-                    all_nbins += 1
-    xyoff_map_1d = [0. for entry in range(0,all_nbins)]
+    xyoff_map, xyvar_map =  convert_multivar_vector1d_to_map3d(multivar_map_1d)
 
-    idx_1d = 0
-    sr_idx_1d = 0
-    for gcut in range(0,gcut_bins):
-        for logE in range(0,logE_nbins):
-            for idx_x in range(0,xoff_bins[logE]):
-                for idx_y in range(0,yoff_bins[logE]):
-                    idx_1d += 1
-                    if gcut==0:
-                        xyoff_map_1d[idx_1d-1] = sr_map_1d[sr_idx_1d]
-                        sr_idx_1d += 1
-                    else:
-                        xyoff_map_1d[idx_1d-1] = data_xyoff_map_1d[idx_1d-1]
-
-    return xyoff_map_1d
-
-def prepare_vector_for_neuralnet(xyoff_map_1d):
-
-    sr_nbins = 0
-    cr_nbins = 0
-    for logE in range(0,logE_nbins):
-        sr_nbins += 1*xoff_bins[logE]*yoff_bins[logE]
-        cr_nbins += (gcut_bins-1)*xoff_bins[logE]*yoff_bins[logE]
-
-    #sr_map_1d = [0. for entry in range(0,sr_nbins)]
     sr_map_1d = [0. for logE in range(0,logE_nbins)]
-    #cr_map_1d = [0. for entry in range(0,cr_nbins)]
-    cr_map_1d = [0. for entry in range(0,logE_nbins*(gcut_bins-1))]
-    idx_1d = 0
-    sr_idx_1d = 0
-    cr_idx_1d = 0
     for gcut in range(0,gcut_bins):
         for logE in range(0,logE_nbins):
             for idx_x in range(0,xoff_bins[logE]):
                 for idx_y in range(0,yoff_bins[logE]):
-                    idx_1d += 1
                     if gcut==0:
-                        sr_map_1d[logE] += xyoff_map_1d[idx_1d-1]
-                        #sr_map_1d[sr_idx_1d] = xyoff_map_1d[idx_1d-1]
-                        #sr_idx_1d += 1
-                    else:
-                        cr_map_1d[logE+(gcut-1)*logE_nbins] += xyoff_map_1d[idx_1d-1]
-                        #cr_map_1d[cr_idx_1d] = xyoff_map_1d[idx_1d-1]
-                        #cr_idx_1d += 1
+                        sr_map_1d[logE] += xyoff_map[logE].waxis[idx_x,idx_y,gcut]
+
+    ##cr_nbins = (gcut_bins-1)*(xvar_bins[0]+yvar_bins[0])
+    #cr_nbins = (gcut_bins-1)*(yvar_bins[0])
+    #cr_map_1d = [[0. for entry in range(0,cr_nbins)] for entry_logE in range(0,logE_nbins)]
+    #for logE in range(0,logE_nbins):
+    #    cr_idx_1d = 0
+    #    for gcut in range(1,gcut_bins):
+    #        #for idx_x in range(0,xvar_bins[logE]):
+    #        #    cr_map_1d[logE][cr_idx_1d] += np.sum(xyvar_map[logE].waxis[idx_x,:,gcut])
+    #        #    cr_idx_1d += 1
+    #        for idx_y in range(0,yvar_bins[logE]):
+    #            cr_map_1d[logE][cr_idx_1d] += np.sum(xyvar_map[logE].waxis[:,idx_y,gcut])
+    #            cr_idx_1d += 1
+
+    cr_map_1d = []
+    for logE in range(0,logE_nbins):
+        for gcut in range(1,gcut_bins):
+            cr_map_1d += [np.sum(xyoff_map[logE].waxis[:,:,gcut])]
 
     return np.array(sr_map_1d), np.array(cr_map_1d)
 
@@ -962,66 +1088,88 @@ def cosmic_ray_like_chi2_fullspec(
         try_params,
         eigenvectors,
         data_xyoff_map,
+        mask_xyoff_map,
         init_xyoff_map,
         syst_xyoff_map,
-        mask_xyoff_map,
-        logE_input,
     ):
 
     rng = np.random.default_rng()
 
     sum_log_likelihood = 0.
-    fft_log_likelihood = 0.
     lsq_log_likelihood = 0.
 
     try_params = np.array(try_params)
     try_xyoff_map = eigenvectors.T @ try_params
 
-    init_params = eigenvectors @ init_xyoff_map
+    xyoff_idx_1d = find_index_for_xyoff_vector1d()
 
-    idx_1d = 0
+    for logE in range(0,logE_nbins):
+        for gcut in range(0,gcut_bins):
+
+            weight_gcut = gcut_weight[gcut]
+            n_expect_gcut = 0.
+            n_syst_gcut = 0.
+            n_data_gcut = 0.
+
+            for idx_x in range(0,xoff_bins[logE]):
+                for idx_y in range(0,yoff_bins[logE]):
+
+                    idx_1d = xyoff_idx_1d[gcut][logE][idx_x][idx_y]
+                    data = data_xyoff_map[idx_1d]
+                    init = init_xyoff_map[idx_1d]
+                    syst = syst_xyoff_map[idx_1d]
+
+                    n_expect = max(0.0001,try_xyoff_map[idx_1d])
+                    n_expect_gcut += n_expect
+
+                    n_data = data
+                    if gcut==0:
+                        n_data = init
+                    n_data_gcut += n_data
+                   
+                    n_syst = syst
+                    if not gcut==0:
+                        n_syst = 0.
+                    n_syst_gcut += syst
+
+            if not use_constraint:
+                if gcut==0:
+                    weight_gcut = 0.
+                else:
+                    weight_gcut = 1.
+            else:
+                if gcut==0:
+                    weight_gcut = 3.
+                else:
+                    weight_gcut = 1.
+
+            log_likelihood = significance_li_and_ma(n_data_gcut, n_expect_gcut, n_syst_gcut)
+            lsq_log_likelihood += pow(log_likelihood,2) * weight_gcut
+            #if n_data_gcut==0.:
+            #    lsq_log_likelihood += n_expect_gcut*weight_gcut
+            #else:
+            #    lsq_log_likelihood += (-1.*(n_data_gcut*np.log(n_expect_gcut) - n_expect_gcut - (n_data_gcut*np.log(n_data_gcut)-n_data_gcut)))*weight_gcut
+
+
     sum_weight = 0.
     for gcut in range(0,gcut_bins):
         for logE in range(0,logE_nbins):
-
-            #region_noise = []
-            #for idx_x in range(0,xoff_bins[logE]):
-            #    region_noise_x = []
-            #    for idx_y in range(0,yoff_bins[logE]):
-            #        region_noise_x += [rng.standard_normal()]
-            #    region_noise += [region_noise_x]
-            #fourier_transform_noise = np.fft.fft2(region_noise)
-            #magnitude_noise = np.abs(fourier_transform_noise)
-            #freqs_x = np.fft.fftfreq(xoff_bins[logE], 1.)
-            #freqs_y = np.fft.fftfreq(yoff_bins[logE], 1.)
-
-            region_data = []
             for idx_x in range(0,xoff_bins[logE]):
-                region_data_x = []
                 for idx_y in range(0,yoff_bins[logE]):
 
-                    idx_1d += 1
-                    data = data_xyoff_map[idx_1d-1]
-                    init = init_xyoff_map[idx_1d-1]
-                    mask = mask_xyoff_map[idx_1d-1]
-                    syst = syst_xyoff_map[idx_1d-1]
+                    idx_1d = xyoff_idx_1d[gcut][logE][idx_x][idx_y]
+                    data = data_xyoff_map[idx_1d]
+                    init = init_xyoff_map[idx_1d]
+                    mask = mask_xyoff_map[idx_1d]
 
-                    n_expect = max(0.0001,try_xyoff_map[idx_1d-1])
+                    n_expect = max(0.0001,try_xyoff_map[idx_1d])
                     n_data = data
 
                     weight = gcut_weight[gcut]
 
-                    if not logE_input==-1:
-                        if not logE_input==logE:
-                            weight = 0.
-
                     if gcut==0:
-                        #weight = float(gcut_bins)
                         if mask>0.:
-                            if use_constraint:
-                                n_data = max(0.0001,init)
-                            else:
-                                weight = 0.
+                            weight = 0.
 
                     sum_weight += weight
 
@@ -1035,65 +1183,12 @@ def cosmic_ray_like_chi2_fullspec(
                         #else:
                         #    log_likelihood = -1. * (n_data*np.log(n_expect) - n_expect - (n_data*np.log(n_data)-n_data))
                         #    sum_log_likelihood += log_likelihood * weight
-                        region_data_x += [log_likelihood]
                     else:
                         sum_log_likelihood += pow(n_expect-n_data,2) * weight
-                        region_data_x += [pow(n_expect-n_data,2)]
-                region_data += [region_data_x]
 
-            if use_fft:
-                weight = gcut_weight[gcut]
-                if gcut==0:
-                    weight = 0.
-                fourier_transform = np.fft.fft2(region_data)
-                magnitude = np.abs(fourier_transform)
-                for idx_x in range(0,magnitude.shape[0]):
-                    for idx_y in range(0,magnitude.shape[1]):
-                        freq_weight = 1.
-                        #freq_weight = 1./(abs(freqs_x[idx_x]*freqs_y[idx_y])+1.)
-                        #reference = magnitude_noise[idx_x,idx_y]
-                        fft_data = pow(magnitude[idx_x,idx_y],2)
-                        fft_log_likelihood += fft_data * freq_weight * weight
-
-    idx_1d = 0
-    for gcut in range(0,gcut_bins):
-        for logE in range(0,logE_nbins):
-
-            weight_gcut = 1.
-            n_expect_gcut = 0.
-            n_data_gcut = 0.
-
-            for idx_x in range(0,xoff_bins[logE]):
-                for idx_y in range(0,yoff_bins[logE]):
-
-                    idx_1d += 1
-                    data = data_xyoff_map[idx_1d-1]
-                    init = init_xyoff_map[idx_1d-1]
-
-                    n_expect = max(0.0001,try_xyoff_map[idx_1d-1])
-                    n_expect_gcut += n_expect
-                    n_data = data
-                    if gcut==0:
-                        n_data = max(0.0001,init)
-                    n_data_gcut += n_data
-
-            if gcut==0:
-                weight_gcut = 0.
-            else:
-                weight_gcut = 1.
-
-            log_likelihood = significance_li_and_ma(n_data_gcut, n_expect_gcut, 0.)
-            lsq_log_likelihood += pow(log_likelihood,2) * weight_gcut
-            #if n_data_gcut==0.:
-            #    lsq_log_likelihood += n_expect_gcut*weight_gcut
-            #else:
-            #    lsq_log_likelihood += (-1.*(n_data_gcut*np.log(n_expect_gcut) - n_expect_gcut - (n_data_gcut*np.log(n_data_gcut)-n_data_gcut)))*weight_gcut
-
-
-    if use_fft:
-        return fft_log_likelihood + lsq_log_likelihood
 
     return sum_log_likelihood + lsq_log_likelihood
+    #return sum_log_likelihood
 
 
 
@@ -3494,7 +3589,9 @@ def build_skymap(
         data_xyoff_map, 
         fit_xyoff_map, 
         init_xyoff_map, 
-        ratio_xyoff_map, 
+        data_xyvar_map, 
+        fit_xyvar_map, 
+        init_xyvar_map, 
         syst_xyoff_map,
         total_data_sky_map,
         total_bkgd_sky_map,
@@ -3509,17 +3606,17 @@ def build_skymap(
 
 
     print ('loading neural net... ')
-    nn_model = []
-    for batch in range(0,len(neuralnet_path)):
-        input_filename = neuralnet_path[batch]
-        nn_model += [pickle.load(open(input_filename, "rb"))]
+    nn_model = pickle.load(open(neuralnet_path, "rb"))
 
     print ('loading svd pickle data... ')
     input_filename = eigenvector_path
     eigen_stuff = pickle.load(open(input_filename, "rb"))
-    big_eigenvalues_fullspec = eigen_stuff[0]
-    big_eigenvectors_fullspec = eigen_stuff[1]
-    avg_xyoff_map_1d_fullspec = eigen_stuff[2]
+    big_xyoff_eigenvalues_fullspec = eigen_stuff[0][0]
+    big_xyoff_eigenvectors_fullspec = eigen_stuff[0][1]
+    avg_xyoff_map_1d_fullspec = eigen_stuff[0][2]
+    big_xyvar_eigenvalues_fullspec = eigen_stuff[1][0]
+    big_xyvar_eigenvectors_fullspec = eigen_stuff[1][1]
+    avg_xyvar_map_1d_fullspec = eigen_stuff[1][2]
 
 
     exposure_hours = 0.
@@ -3551,11 +3648,16 @@ def build_skymap(
         big_on_elevation, big_on_exposure, big_on_matrix_fullspec, big_mask_matrix_fullspec = build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,runlist,max_runs=1e10,is_bkgd=False)
     else:
         big_on_elevation, big_on_exposure, big_on_matrix_fullspec, big_mask_matrix_fullspec = build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,runlist,max_runs=1e10,is_bkgd=False)
+    #big_off_elevation, big_off_exposure, big_off_matrix_fullspec, big_off_mask_matrix_fullspec = build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,off_runlist,max_runs=1e10,is_bkgd=True)
 
     if len(big_on_matrix_fullspec)==0:
         print (f'No data. Break.')
         return [exposure_hours,avg_tel_elev,avg_tel_azim,truth_params,fit_params,avg_MeanPedvar]
 
+    ratio_xyoff_map = []
+    for logE in range(0,logE_nbins):
+        ratio_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+    
     for logE in range(0,logE_nbins):
         incl_sky_map[logE].reset()
         data_sky_map[logE].reset()
@@ -3564,27 +3666,59 @@ def build_skymap(
         data_xyoff_map[logE].reset()
         fit_xyoff_map[logE].reset()
         init_xyoff_map[logE].reset()
-        ratio_xyoff_map[logE].reset()
+        data_xyvar_map[logE].reset()
+        fit_xyvar_map[logE].reset()
+        init_xyvar_map[logE].reset()
         syst_xyoff_map[logE].reset()
+        ratio_xyoff_map[logE].reset()
 
     print ('===================================================================================')
     print ('fitting xyoff maps...')
 
-    data_xyoff_map_1d_fullspec = np.zeros_like(big_on_matrix_fullspec[0])
-    mask_xyoff_map_1d_fullspec = np.zeros_like(big_mask_matrix_fullspec[0])
+    data_multivar_map_1d_fullspec = np.zeros_like(big_on_matrix_fullspec[0])
+    mask_multivar_map_1d_fullspec = np.zeros_like(big_mask_matrix_fullspec[0])
     for entry in range(0,len(big_on_matrix_fullspec)):
-        data_xyoff_map_1d_fullspec += np.array(big_on_matrix_fullspec[entry])
-        mask_xyoff_map_1d_fullspec += np.array(big_mask_matrix_fullspec[entry])
+        data_multivar_map_1d_fullspec += np.array(big_on_matrix_fullspec[entry])
+        mask_multivar_map_1d_fullspec += np.array(big_mask_matrix_fullspec[entry])
 
-    idx_1d = 0
-    for gcut in range(0,gcut_bins):
-        for logE in range(0,logE_nbins):
+    data_xyoff_map_1d_fullspec = convert_multivar_to_xyoff_vector1d(data_multivar_map_1d_fullspec)
+    mask_xyoff_map_1d_fullspec = convert_multivar_to_xyoff_vector1d(mask_multivar_map_1d_fullspec)
+    data_xyvar_map_1d_fullspec = convert_multivar_to_xyvar_vector1d(data_multivar_map_1d_fullspec)
+    mask_xyvar_map_1d_fullspec = convert_multivar_to_xyvar_vector1d(mask_multivar_map_1d_fullspec)
+
+    #off_data_multivar_map_1d_fullspec = np.zeros_like(big_off_matrix_fullspec[0])
+    #off_mask_multivar_map_1d_fullspec = np.zeros_like(big_off_mask_matrix_fullspec[0])
+    #for entry in range(0,len(big_off_matrix_fullspec)):
+    #    off_data_multivar_map_1d_fullspec += np.array(big_off_matrix_fullspec[entry])
+    #    off_mask_multivar_map_1d_fullspec += np.array(big_off_mask_matrix_fullspec[entry])
+
+    #off_data_xyoff_map_1d_fullspec = convert_multivar_to_xyoff_vector1d(off_data_multivar_map_1d_fullspec)
+    #off_mask_xyoff_map_1d_fullspec = convert_multivar_to_xyoff_vector1d(off_mask_multivar_map_1d_fullspec)
+    #off_data_xyvar_map_1d_fullspec = convert_multivar_to_xyvar_vector1d(off_data_multivar_map_1d_fullspec)
+    #off_mask_xyvar_map_1d_fullspec = convert_multivar_to_xyvar_vector1d(off_mask_multivar_map_1d_fullspec)
+
+    xyoff_idx_1d = find_index_for_xyoff_vector1d()
+    xyvar_idx_1d = find_index_for_xyvar_vector1d()
+    for logE in range(0,logE_nbins):
+        for gcut in range(0,gcut_bins):
             for idx_x in range(0,xoff_bins[logE]):
                 for idx_y in range(0,yoff_bins[logE]):
-                    idx_1d += 1
-                    data_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = data_xyoff_map_1d_fullspec[idx_1d-1]
-                    init_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = avg_xyoff_map_1d_fullspec[idx_1d-1]
-                    fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = avg_xyoff_map_1d_fullspec[idx_1d-1]
+                    idx_1d = xyoff_idx_1d[gcut][logE][idx_x][idx_y]
+                    data_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = data_xyoff_map_1d_fullspec[idx_1d]
+                    #init_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = off_data_xyoff_map_1d_fullspec[idx_1d]
+                    #fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = off_data_xyoff_map_1d_fullspec[idx_1d]
+                    init_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = avg_xyoff_map_1d_fullspec[idx_1d]
+                    fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = avg_xyoff_map_1d_fullspec[idx_1d]
+
+    for logE in range(0,logE_nbins):
+        for gcut in range(0,gcut_bins):
+            for idx_x in range(0,xoff_bins[logE]):
+                for idx_y in range(0,yoff_bins[logE]):
+                    idx_1d = xyvar_idx_1d[gcut][logE][idx_x][idx_y]
+                    data_xyvar_map[logE].waxis[idx_x,idx_y,gcut] = data_xyvar_map_1d_fullspec[idx_1d]
+                    init_xyvar_map[logE].waxis[idx_x,idx_y,gcut] = avg_xyvar_map_1d_fullspec[idx_1d]
+                    fit_xyvar_map[logE].waxis[idx_x,idx_y,gcut] = avg_xyvar_map_1d_fullspec[idx_1d]
+
 
     for logE in range(0,logE_nbins):
         norm_cr_data = np.sum(data_xyoff_map[logE].waxis[:,:,:]) - np.sum(data_xyoff_map[logE].waxis[:,:,0])
@@ -3605,161 +3739,123 @@ def build_skymap(
             logE_peak = logE
     print (f'logE_peak = {logE_peak}')
 
-    effective_matrix_rank_fullspec = big_eigenvectors_fullspec.shape[0]
-    print (f"effective_matrix_rank_fullspec = {effective_matrix_rank_fullspec}")
-    truth_params = big_eigenvectors_fullspec @ data_xyoff_map_1d_fullspec
-    fit_params = [0.] * effective_matrix_rank_fullspec
-
     if not use_init:
+
         print ('===================================================================================')
         print ('fitting xyoff maps fullspec...')
 
-        sr_map_1d_truth, cr_map_1d = prepare_vector_for_neuralnet(data_xyoff_map_1d_fullspec)
+        sr_map_1d_truth, cr_map_1d = prepare_vector_for_least_square(data_multivar_map_1d_fullspec)
 
-        total_weight = 0.
-        ls_model_weight = []
-        ls_model = []
-        ls_model_err = []
-        for batch in range(0,len(nn_model)):
-            weight = 1.
-            A = nn_model[batch][0]
-            A_err = nn_model[batch][1]
-            total_weight += weight
-            ls_model_weight += [weight]
-            ls_model += [A]
-            ls_model_err += [A_err]
-        ls_model_weight = np.array(ls_model_weight) / total_weight
-        print (f"len(ls_model) = {len(ls_model)}")
+        ls_model = nn_model[0]
+        ls_model_err = nn_model[1]
 
         sr_map_1d = np.zeros_like(sr_map_1d_truth)
         sr_map_1d_err = np.zeros_like(sr_map_1d_truth)
-        for batch in range(0,len(ls_model)):
-            print (f"cr_map_1d.shape = {cr_map_1d.shape}")
-            print (f"ls_model[batch].shape = {ls_model[batch].shape}")
-            sr_map_1d += cr_map_1d @ ls_model[batch] * ls_model_weight[batch]
-            sr_map_1d_err += cr_map_1d @ ls_model_err[batch] * ls_model_weight[batch]
-        #lsq_xyoff_map_1d_fullspec = restore_neuralnet_vector(sr_map_1d,data_xyoff_map_1d_fullspec)
-        #lsq_err_xyoff_map_1d_fullspec = restore_neuralnet_vector(sr_map_1d_err,data_xyoff_map_1d_fullspec)
+        for logE in range(0,logE_nbins):
+            sr_map_1d[logE] = cr_map_1d @ ls_model[logE]
+            sr_map_1d_err[logE] = cr_map_1d @ ls_model_err[logE]
 
-        init_xyoff_map_1d_fullspec = np.zeros_like(big_on_matrix_fullspec[0])
-        idx_1d = 0
-        for gcut in range(0,gcut_bins):
-            for logE in range(0,logE_nbins):
+        xyoff_idx_1d = find_index_for_xyoff_vector1d()
+        init_xyoff_map_1d_fullspec = np.zeros_like(data_xyoff_map_1d_fullspec)
+        syst_xyoff_map_1d_fullspec = np.zeros_like(data_xyoff_map_1d_fullspec)
+        for logE in range(0,logE_nbins):
+            for gcut in range(0,gcut_bins):
                 norm_init = np.sum(init_xyoff_map[logE].waxis[:,:,gcut])
                 rescale = 1.
-                #if gcut==0 and sr_map_1d_err[logE]/sr_map_1d[logE]<1.:
-                #    rescale = sr_map_1d[logE]/norm_init
+                if sr_map_1d_err[logE]/sr_map_1d[logE]<1. and norm_init>0.:
+                    rescale = sr_map_1d[logE]/norm_init
                 for idx_x in range(0,xoff_bins[logE]):
                     for idx_y in range(0,yoff_bins[logE]):
-                        idx_1d += 1
-                        init_xyoff_map_1d_fullspec[idx_1d-1] = init_xyoff_map[logE].waxis[idx_x,idx_y,gcut] * rescale
+                        idx_1d = xyoff_idx_1d[gcut][logE][idx_x][idx_y]
+                        prediction = init_xyoff_map[logE].waxis[idx_x,idx_y,gcut] * rescale
+                        init_xyoff_map_1d_fullspec[idx_1d] = prediction
+                        rel_syst = 1.
+                        if abs(sr_map_1d[logE])>0. and use_constraint:
+                            rel_syst = sr_map_1d_err[logE]/abs(sr_map_1d[logE])
+                        syst_xyoff_map_1d_fullspec[idx_1d] = prediction * rel_syst
 
-        fit_params = [0.] * effective_matrix_rank_fullspec
-        avg_params = big_eigenvectors_fullspec @ init_xyoff_map_1d_fullspec
-
-        lsq_xyoff_map_1d_fullspec = np.zeros_like(init_xyoff_map_1d_fullspec)
-        lsq_err_xyoff_map_1d_fullspec = np.zeros_like(init_xyoff_map_1d_fullspec)
-
-
-        idx_1d = 0
-        for gcut in range(0,gcut_bins):
-            for logE in range(0,logE_nbins):
+        init_xyvar_map_1d_fullspec = np.zeros_like(data_xyvar_map_1d_fullspec)
+        syst_xyvar_map_1d_fullspec = np.zeros_like(data_xyvar_map_1d_fullspec)
+        for logE in range(0,logE_nbins):
+            for gcut in range(0,gcut_bins):
+                norm_init = np.sum(init_xyvar_map[logE].waxis[:,:,gcut])
+                rescale = 1.
+                if sr_map_1d_err[logE]/sr_map_1d[logE]<1. and norm_init>0.:
+                    rescale = sr_map_1d[logE]/norm_init
                 for idx_x in range(0,xoff_bins[logE]):
                     for idx_y in range(0,yoff_bins[logE]):
-                        idx_1d += 1
-                        prediction = max(0.0,init_xyoff_map_1d_fullspec[idx_1d-1])
-                        lsq_xyoff_map_1d_fullspec[idx_1d-1] = prediction
-                        lsq_err_xyoff_map_1d_fullspec[idx_1d-1] = prediction * sr_map_1d_err[logE]/sr_map_1d[logE]
+                        idx_1d = xyvar_idx_1d[gcut][logE][idx_x][idx_y]
+                        prediction = init_xyvar_map[logE].waxis[idx_x,idx_y,gcut] * rescale
+                        init_xyvar_map_1d_fullspec[idx_1d] = prediction
+                        syst_xyvar_map_1d_fullspec[idx_1d] = 2.*prediction
+
+        for logE in range(0,logE_nbins):
+            for gcut in range(0,gcut_bins):
+                for idx_x in range(0,xoff_bins[logE]):
+                    for idx_y in range(0,yoff_bins[logE]):
+                        idx_1d = xyoff_idx_1d[gcut][logE][idx_x][idx_y]
+                        prediction = max(0.0,init_xyoff_map_1d_fullspec[idx_1d])
+                        syst_error = abs(syst_xyoff_map_1d_fullspec[idx_1d])
                         fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = prediction
-                        syst_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = prediction * sr_map_1d_err[logE]/sr_map_1d[logE]
-                        #fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = lsq_xyoff_map_1d_fullspec[idx_1d-1]
-                        #syst_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = lsq_err_xyoff_map_1d_fullspec[idx_1d-1]
+                        syst_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = syst_error
 
         for logE in range(0,logE_nbins):
             truth = np.sum(data_xyoff_map[logE].waxis[:,:,0])
-            prediction = np.sum(fit_xyoff_map[logE].waxis[:,:,0])
-            error = np.sum(syst_xyoff_map[logE].waxis[:,:,0])
+            prediction = sr_map_1d[logE]
+            error = sr_map_1d_err[logE]
             print (f"truth = {truth:0.1f}, prediction = {prediction:0.1f}+/-{error:0.1f}")
 
+        fit_params_fullspec = []
+        truth_params_fullspec = []
 
-        fit_params = [0.] * effective_matrix_rank_fullspec
-        for entry in range(0,len(fit_params)):
-            fit_params[entry] = avg_params[entry]
+        effective_matrix_rank_fullspec = big_xyoff_eigenvectors_fullspec.shape[0]
 
-        effective_eigenvectors = []
-        for entry in range(0,len(fit_params)):
-            effective_eigenvectors += [big_eigenvectors_fullspec[entry]]
-        effective_eigenvectors = np.array(effective_eigenvectors)
+        truth_params = big_xyoff_eigenvectors_fullspec @ data_xyoff_map_1d_fullspec
+        avg_params = big_xyoff_eigenvectors_fullspec @ init_xyoff_map_1d_fullspec
+        fit_params = big_xyoff_eigenvectors_fullspec @ init_xyoff_map_1d_fullspec
 
-        if not use_mono:
+        init_params = fit_params
+        stepsize = [1e-4] * effective_matrix_rank_fullspec
+        solution = minimize(
+            cosmic_ray_like_chi2_fullspec,
+            x0=init_params,
+            args=(
+                big_xyoff_eigenvectors_fullspec,
+                data_xyoff_map_1d_fullspec,
+                mask_xyoff_map_1d_fullspec,
+                init_xyoff_map_1d_fullspec,
+                syst_xyoff_map_1d_fullspec,
+            ),
+            method='L-BFGS-B',
+            jac=None,
+            options={'eps':stepsize,'ftol':0.0001},
+        )
+        print (f"solution['fun'] = {solution['fun']}")
+        fit_params = solution['x']
 
-            init_params = fit_params
-            stepsize = [1e-4] * effective_matrix_rank_fullspec
-            solution = minimize(
-                cosmic_ray_like_chi2_fullspec,
-                x0=init_params,
-                args=(
-                    effective_eigenvectors,
-                    data_xyoff_map_1d_fullspec,
-                    lsq_xyoff_map_1d_fullspec,
-                    lsq_err_xyoff_map_1d_fullspec,
-                    mask_xyoff_map_1d_fullspec,
-                    -1,
-                ),
-                method='L-BFGS-B',
-                jac=None,
-                options={'eps':stepsize,'ftol':0.0001},
-            )
-            print (f"solution['fun'] = {solution['fun']}")
-            fit_params = solution['x']
+        #print ("***************************************************************************************")
+        #print ("fit xyoff maps...")
+        #print (f"effective_matrix_rank_fullspec = {effective_matrix_rank_fullspec}")
+        for entry in range(0,len(truth_params)):
+            print (f"truth_params = {truth_params[entry]:0.1f}, init_params = {init_params[entry]:0.1f}, fit_params = {fit_params[entry]:0.1f}")
+            if np.isnan(fit_params[entry]):
+                print ("Soluiton is nan!!!")
+                exit()
 
-            fit_xyoff_map_1d_fullspec = effective_eigenvectors.T @ fit_params
+        fit_xyoff_map_1d_fullspec = big_xyoff_eigenvectors_fullspec.T @ fit_params
 
-            idx_1d = 0
+        xyoff_idx_1d = find_index_for_xyoff_vector1d()
+        for logE in range(0,logE_nbins):
             for gcut in range(0,gcut_bins):
-                for logE in range(0,logE_nbins):
-                    for idx_x in range(0,xoff_bins[logE]):
-                        for idx_y in range(0,yoff_bins[logE]):
-                            idx_1d += 1
-                            prediction = max(0.0,fit_xyoff_map_1d_fullspec[idx_1d-1])
-                            fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = prediction
+                for idx_x in range(0,xoff_bins[logE]):
+                    for idx_y in range(0,yoff_bins[logE]):
+                        idx_1d = xyoff_idx_1d[gcut][logE][idx_x][idx_y]
+                        prediction = max(0.0,fit_xyoff_map_1d_fullspec[idx_1d])
+                        fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = prediction
 
-        else:
+        truth_params_fullspec += [truth_params]
+        fit_params_fullspec += [fit_params]
 
-            for logE_input in range(0,logE_nbins):
-
-                init_params = fit_params
-                stepsize = [1e-4] * effective_matrix_rank_fullspec
-                solution = minimize(
-                    cosmic_ray_like_chi2_fullspec,
-                    x0=init_params,
-                    args=(
-                        effective_eigenvectors,
-                        data_xyoff_map_1d_fullspec,
-                        lsq_xyoff_map_1d_fullspec,
-                        lsq_err_xyoff_map_1d_fullspec,
-                        mask_xyoff_map_1d_fullspec,
-                        logE_input,
-                    ),
-                    method='L-BFGS-B',
-                    jac=None,
-                    options={'eps':stepsize,'ftol':0.0001},
-                )
-                print (f"solution['fun'] = {solution['fun']}")
-                fit_params = solution['x']
-
-                fit_xyoff_map_1d_fullspec = effective_eigenvectors.T @ fit_params
-
-                idx_1d = 0
-                for gcut in range(0,gcut_bins):
-                    for logE in range(0,logE_nbins):
-                        for idx_x in range(0,xoff_bins[logE]):
-                            for idx_y in range(0,yoff_bins[logE]):
-                                idx_1d += 1
-                                if not logE_input==logE:
-                                    continue
-                                prediction = max(0.0,fit_xyoff_map_1d_fullspec[idx_1d-1])
-                                fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = prediction
 
 
     print ('===================================================================================')
@@ -3767,7 +3863,6 @@ def build_skymap(
         print (f'E = {pow(10.,logE_bins[logE]):0.3f}')
         for gcut in range(0,gcut_bins):
             if gcut!=0: continue
-            print (f'gcut = {gcut}')
             sum_data_xyoff_map = np.sum(data_xyoff_map[logE].waxis[:,:,gcut])
             sum_init_xyoff_map = np.sum(init_xyoff_map[logE].waxis[:,:,gcut])
             sum_fit_xyoff_map = np.sum(fit_xyoff_map[logE].waxis[:,:,gcut])
@@ -3907,6 +4002,8 @@ def build_skymap(
             if NImages<min_NImages: continue
             if EmissionHeight>max_EmissionHeight_cut: continue
             if EmissionHeight<min_EmissionHeight_cut: continue
+            if MeanPedvar>max_MeanPedvar_cut: continue
+            if MeanPedvar<min_MeanPedvar_cut: continue
             if Roff>max_Roff: continue
             if Rcore>max_Rcore: continue
             if Rcore<min_Rcore: continue
@@ -3992,5 +4089,5 @@ def build_skymap(
     del big_mask_matrix_fullspec
     del big_off_mask_matrix_fullspec
 
-    return [exposure_hours,avg_tel_elev,avg_tel_azim,truth_params,fit_params,avg_MeanPedvar]
+    return [exposure_hours,avg_tel_elev,avg_tel_azim,avg_MeanPedvar]
 
