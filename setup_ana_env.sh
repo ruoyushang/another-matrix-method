@@ -32,11 +32,8 @@ export SMI_OUTPUT=/nevis/ged/data/rshang/smi_output/output_multivar
 echo "SMI_RUNLIST="$SMI_RUNLIST
 echo "SMI_OUTPUT="$SMI_OUTPUT
 
-#export CR_TAG="cr15"
-export CR_TAG="cr20"
-#export CR_TAG="cr25"
-#export CR_TAG="cr30"
-#export CR_TAG="wr05"
+#export CR_TAG="cr20"
+export CR_TAG="wr20"
 
 #export NORM_TAG="fov10"
 #export NORM_TAG="fov15"

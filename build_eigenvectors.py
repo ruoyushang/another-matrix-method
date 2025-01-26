@@ -103,16 +103,16 @@ for k in range(0,len(list_filename)):
         if len(list_offrun_matrix)==0:
             continue
 
-        #big_exposure += list_offrun_expo
-        #big_matrix_fullspec += list_offrun_matrix
+        big_exposure += list_offrun_expo
+        big_matrix_fullspec += list_offrun_matrix
 
-        sum_offrun_expo = 0.
-        sum_offrun_matrix = np.zeros_like(list_offrun_matrix[0])
-        for offrun in range(0,len(list_offrun_expo)):
-            sum_offrun_expo += list_offrun_expo[offrun]
-            sum_offrun_matrix += list_offrun_matrix[offrun]
-        big_exposure += [sum_offrun_expo]
-        big_matrix_fullspec += [sum_offrun_matrix]
+        #sum_offrun_expo = 0.
+        #sum_offrun_matrix = np.zeros_like(list_offrun_matrix[0])
+        #for offrun in range(0,len(list_offrun_expo)):
+        #    sum_offrun_expo += list_offrun_expo[offrun]
+        #    sum_offrun_matrix += list_offrun_matrix[offrun]
+        #big_exposure += [sum_offrun_expo]
+        #big_matrix_fullspec += [sum_offrun_matrix]
 
 
 big_matrix_fullspec = np.array(big_matrix_fullspec)

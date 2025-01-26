@@ -128,7 +128,6 @@ if 'Crab' in source_name:
     fit_radial_profile = False
 if 'SNR_G189_p03' in source_name:
     fit_radial_profile = False
-    #radial_bin_scale = 0.3
 if 'PSR_J1856_p0245' in source_name:
     fit_radial_profile = False
 if 'PSR_J1907_p0602' in source_name:
