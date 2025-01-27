@@ -32,6 +32,8 @@ fine_skymap_bins = common_functions.fine_skymap_bins
 coordinate_type = common_functions.coordinate_type
 ConvertRaDecToGalactic = common_functions.ConvertRaDecToGalactic
 build_skymap = common_functions.build_skymap
+Normalized_MSCL_cut = common_functions.Normalized_MSCL_cut
+Normalized_MSCW_cut = common_functions.Normalized_MSCW_cut
 
 #import pytorch_functions
 #build_skymap = pytorch_functions.build_skymap
@@ -244,13 +246,13 @@ for logE in range(0,logE_nbins):
     run_init_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
     run_syst_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
 
+data_xyvar_map = []
 run_data_xyvar_map = []
-run_fit_xyvar_map = []
-run_init_xyvar_map = []
 for logE in range(0,logE_nbins):
-    run_data_xyvar_map += [MyArray3D(x_bins=xvar_bins[logE],start_x=-1.,end_x=1.,y_bins=yvar_bins[logE],start_y=-1.,end_y=1.,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
-    run_fit_xyvar_map += [MyArray3D(x_bins=xvar_bins[logE],start_x=-1.,end_x=1.,y_bins=yvar_bins[logE],start_y=-1.,end_y=1.,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
-    run_init_xyvar_map += [MyArray3D(x_bins=xvar_bins[logE],start_x=-1.,end_x=1.,y_bins=yvar_bins[logE],start_y=-1.,end_y=1.,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+    end_x = Normalized_MSCL_cut[len(Normalized_MSCL_cut)-1]
+    end_y = Normalized_MSCW_cut[len(Normalized_MSCW_cut)-1]
+    data_xyvar_map += [MyArray3D(x_bins=xvar_bins[logE],start_x=-1.,end_x=end_x,y_bins=yvar_bins[logE],start_y=-1.,end_y=end_y,z_bins=1,start_z=0.,end_z=1.)]
+    run_data_xyvar_map += [MyArray3D(x_bins=xvar_bins[logE],start_x=-1.,end_x=end_x,y_bins=yvar_bins[logE],start_y=-1.,end_y=end_y,z_bins=1,start_z=0.,end_z=1.)]
 
 
 run_list_count = 0
@@ -263,6 +265,7 @@ for small_runlist in range(0,len(big_runlist)):
         syst_sky_map[logE].reset()
 
     for logE in range(0,logE_nbins):
+        data_xyvar_map[logE].reset()
         data_xyoff_map[logE].reset()
         fit_xyoff_map[logE].reset()
 
@@ -291,8 +294,6 @@ for small_runlist in range(0,len(big_runlist)):
             run_fit_xyoff_map, 
             run_init_xyoff_map, 
             run_data_xyvar_map, 
-            run_fit_xyvar_map, 
-            run_init_xyvar_map, 
             run_syst_xyoff_map,
             total_data_xyoff_map,
             total_fit_xyoff_map,
@@ -317,6 +318,7 @@ for small_runlist in range(0,len(big_runlist)):
     print (f'run_fit_xyoff_sum_sr = {run_fit_xyoff_sum_sr:0.1f}, run_fit_sky_sum_sr = {run_fit_sky_sum_sr:0.1f}')
 
     for logE in range(0,logE_nbins):
+        data_xyvar_map[logE].add(run_data_xyvar_map[logE])
         data_xyoff_map[logE].add(run_data_xyoff_map[logE])
         fit_xyoff_map[logE].add(run_fit_xyoff_map[logE])
         total_data_xyoff_map[logE].add(run_data_xyoff_map[logE])
@@ -363,13 +365,13 @@ for small_runlist in range(0,len(big_runlist)):
     if not os.path.exists(output_filename):
         print (f'{output_filename} does not exist, create new...')
         analysis_result = []
-        analysis_result += [[[run_exposure_hours, run_elev, run_azim, run_nsb], incl_sky_map, data_sky_map, bkgd_sky_map, syst_sky_map, data_xyoff_map, fit_xyoff_map]]
+        analysis_result += [[[run_exposure_hours, run_elev, run_azim, run_nsb], incl_sky_map, data_sky_map, bkgd_sky_map, syst_sky_map, data_xyoff_map, fit_xyoff_map, data_xyvar_map]]
         with open(output_filename,"wb") as file:
             pickle.dump(analysis_result, file)
         del analysis_result
     else:
         analysis_result = pickle.load(open(output_filename, "rb"))
-        analysis_result += [[[run_exposure_hours, run_elev, run_azim, run_nsb], incl_sky_map, data_sky_map, bkgd_sky_map, syst_sky_map, data_xyoff_map, fit_xyoff_map]]
+        analysis_result += [[[run_exposure_hours, run_elev, run_azim, run_nsb], incl_sky_map, data_sky_map, bkgd_sky_map, syst_sky_map, data_xyoff_map, fit_xyoff_map, data_xyvar_map]]
         with open(output_filename,"wb") as file:
             pickle.dump(analysis_result, file)
         del analysis_result

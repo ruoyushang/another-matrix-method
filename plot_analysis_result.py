@@ -16,6 +16,8 @@ logE_axis = common_functions.logE_axis
 logE_nbins = common_functions.logE_nbins
 logE_bins = common_functions.logE_bins
 gcut_bins = common_functions.gcut_bins
+xvar_bins = common_functions.xvar_bins
+yvar_bins = common_functions.yvar_bins
 xoff_bins = common_functions.xoff_bins
 yoff_bins = common_functions.yoff_bins
 xoff_start = common_functions.xoff_start
@@ -52,6 +54,8 @@ significance_li_and_ma = common_functions.significance_li_and_ma
 coordinate_type = common_functions.coordinate_type
 ConvertRaDecToGalactic = common_functions.ConvertRaDecToGalactic
 plot_camera_frame_power_spectrum = common_functions.plot_camera_frame_power_spectrum
+Normalized_MSCL_cut = common_functions.Normalized_MSCL_cut
+Normalized_MSCW_cut = common_functions.Normalized_MSCW_cut
 
 
 fig, ax = plt.subplots()
@@ -388,6 +392,12 @@ for logE in range(0,logE_nbins):
     sum_err_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
     sum_init_err_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
 
+sum_data_xyvar_map = []
+for logE in range(0,logE_nbins):
+    end_x = Normalized_MSCL_cut[len(Normalized_MSCL_cut)-1]
+    end_y = Normalized_MSCW_cut[len(Normalized_MSCW_cut)-1]
+    sum_data_xyvar_map += [MyArray3D(x_bins=xvar_bins[logE],start_x=-1.,end_x=end_x,y_bins=yvar_bins[logE],start_y=-1.,end_y=end_y,z_bins=1,start_z=0.,end_z=1.)]
+
 n_groups = 0.
 for epoch in input_epoch:
 
@@ -432,6 +442,7 @@ for epoch in input_epoch:
             syst_sky_map = analysis_result[run][4] 
             data_xyoff_map = analysis_result[run][5]
             fit_xyoff_map = analysis_result[run][6]
+            data_xyvar_map = analysis_result[run][7]
 
             print ("=========================================================================")
             print (f"run = {run}")
@@ -448,21 +459,6 @@ for epoch in input_epoch:
             if sum_bkgd==0.:
                 print (f'bad fitting. reject the run.')
                 continue
-
-
-            #for logE in range(0,logE_nbins):
-            #    correlation = 0.
-            #    correlation_norm = 0.
-            #    for gcut in range(1,gcut_bins):
-            #        for idx_x in range(0,xoff_bins[logE]):
-            #            for idx_y in range(0,yoff_bins[logE]):
-            #                data = data_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
-            #                bkgd = fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
-            #                correlation += 2.*data*bkgd
-            #                correlation_norm += (data*data) + (bkgd*bkgd)
-            #    if correlation_norm>0.:
-            #        data_sky_map[logE].scale(correlation/correlation_norm)
-            #        bkgd_sky_map[logE].scale(correlation/correlation_norm)
 
             if not 'MIMIC' in mode:
                 good_exposure += exposure
@@ -498,6 +494,7 @@ for epoch in input_epoch:
                     if include_syst_error:
                         sum_syst_sky_map[logE].addSquare(syst_sky_map[logE])
                         #sum_syst_sky_map[logE].add(syst_sky_map[logE])
+                    sum_data_xyvar_map[logE].add(data_xyvar_map[logE])
                     sum_data_xyoff_map[logE].add(data_xyoff_map[logE])
                     sum_fit_xyoff_map[logE].add(fit_xyoff_map[logE])
 
@@ -528,6 +525,7 @@ for logE in range(0,logE_nbins):
 
 
 for logE in range(0,logE_nbins):
+    sum_data_xyvar_map[logE].scale(1./good_exposure)
     sum_data_xyoff_map[logE].scale(1./good_exposure)
     sum_fit_xyoff_map[logE].scale(1./good_exposure)
 
@@ -852,6 +850,25 @@ max_z = 3.
 for logE in range(plot_logE_min,plot_logE_max):
 
     PlotSkyMap(fig,'significance',logE,logE+1,sum_significance_sky_map[logE],f'significance_sky_map_{source_name}_logE{logE}_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,excl_x=all_excl_x,excl_y=all_excl_y,excl_r=all_excl_r,max_z=max_z,zoomin=zoomin)
+
+
+for logE in range(plot_logE_min,plot_logE_max):
+    fig.clf()
+    figsize_y = 5
+    figsize_x = 5
+    fig.set_figheight(figsize_y)
+    fig.set_figwidth(figsize_x)
+    axbig = fig.add_subplot()
+    axbig.set_xlabel('MSCL')
+    axbig.set_ylabel('MSCW')
+    xmin = sum_data_xyvar_map[logE].xaxis.min()
+    xmax = sum_data_xyvar_map[logE].xaxis.max()
+    ymin = sum_data_xyvar_map[logE].yaxis.min()
+    ymax = sum_data_xyvar_map[logE].yaxis.max()
+    im = axbig.imshow(sum_data_xyvar_map[logE].waxis[:,:,0].T,origin='lower',extent=(xmin,xmax,ymin,ymax),aspect='auto')
+    fig.savefig(f'output_plots/xyvar_map_inclusive_data_{source_name}_transpose_{ana_tag}_logE{logE}.png',bbox_inches='tight')
+    axbig.remove()
+
 
 fig.clf()
 figsize_y = 2.*gcut_bins

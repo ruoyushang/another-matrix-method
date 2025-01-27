@@ -37,7 +37,6 @@ convert_multivar_to_xyoff_vector1d = common_functions.convert_multivar_to_xyoff_
 convert_multivar_to_xyvar_vector1d = common_functions.convert_multivar_to_xyvar_vector1d
 weighted_least_square_solution = common_functions.weighted_least_square_solution
 convert_xyoff_vector1d_to_map3d = common_functions.convert_xyoff_vector1d_to_map3d
-convert_xyvar_vector1d_to_map3d = common_functions.convert_xyvar_vector1d_to_map3d
 sortFirst = common_functions.sortFirst
 
 n_params = logE_nbins * gcut_bins
@@ -264,41 +263,6 @@ axbig.plot(rank_index,S_full)
 fig.savefig(f'{smi_dir}/output_plots/xyoff_signularvalue_{source_name}_{input_epoch}.png',bbox_inches='tight')
 axbig.remove()
     
-print (f'new_xyvar_matrix_fullspec.shape = {new_xyvar_matrix_fullspec.shape}')
-U_full, S_full, VT_full = np.linalg.svd(new_xyvar_matrix_fullspec,full_matrices=False) # perform better for perturbation method
-effective_matrix_rank_fullspec = min(matrix_rank_fullspec,int(0.5*(len(S_full)-1)))
-#elbow_rank = find_elbow_rank(S_full)
-#effective_matrix_rank_fullspec = min(effective_matrix_rank_fullspec,elbow_rank)
-print (f'effective_matrix_rank_fullspec = {effective_matrix_rank_fullspec}')
-U_eco = U_full[:, :effective_matrix_rank_fullspec]
-VT_eco = VT_full[:effective_matrix_rank_fullspec, :]
-S_eco = S_full[:effective_matrix_rank_fullspec]
-big_xyvar_eigenvalues_fullspec = S_eco
-big_xyvar_eigenvectors_fullspec = VT_eco
-
-rank_index = []
-for entry in range(0,len(S_full)):
-    rank_index += [entry+1]
-plot_max_rank = min(int(0.5*len(S_full)),300)
-
-fig.clf()
-figsize_x = 6.4
-figsize_y = 4.8
-fig.set_figheight(figsize_y)
-fig.set_figwidth(figsize_x)
-axbig = fig.add_subplot()
-label_x = '$k$'
-label_y = '$\\sigma_{k}$'
-axbig.set_xlabel(label_x)
-axbig.set_ylabel(label_y)
-axbig.set_xlim(1,plot_max_rank)
-axbig.set_ylim(S_full[plot_max_rank-1],2.*S_full[0])
-axbig.set_xscale('log')
-axbig.set_yscale('log')
-axbig.plot(rank_index,S_full)
-fig.savefig(f'{smi_dir}/output_plots/xyvar_signularvalue_{source_name}_{input_epoch}.png',bbox_inches='tight')
-axbig.remove()
-    
 
 max_matrix_rank = min(matrix_rank_fullspec,big_xyoff_eigenvectors_fullspec.shape[0])
 for rank in range(0,max_matrix_rank):
@@ -344,7 +308,6 @@ output_filename = f'{smi_output}/{ana_dir}/model_eigenvectors_{source_name}_{ono
 with open(output_filename,"wb") as file:
     models = []
     models += [[big_xyoff_eigenvalues_fullspec,big_xyoff_eigenvectors_fullspec,avg_xyoff_map_1d_fullspec]]
-    models += [[big_xyvar_eigenvalues_fullspec,big_xyvar_eigenvectors_fullspec,avg_xyvar_map_1d_fullspec]]
     pickle.dump(models, file)
 
 

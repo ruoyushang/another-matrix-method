@@ -18,8 +18,8 @@ job_dir = f'{smi_dir}/run/{sky_tag}'
 print (f'job_dir = {job_dir}')
 subprocess.run(['mkdir',f'{job_dir}'], capture_output=True, text=True)
 
-is_training = True
-#is_training = False
+#is_training = True
+is_training = False
 print (f"is_training = {is_training}")
 
 training_mode = 'off'

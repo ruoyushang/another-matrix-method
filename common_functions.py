@@ -50,20 +50,24 @@ xoff_end = 2.
 yoff_start = -2.
 yoff_end = 2.
 
-logE_bins = [-1.00,-0.90,-0.80,-0.70,-0.60,-0.50,-0.40,-0.25,0.00,0.25,0.50,0.75,1.00,1.25] # logE TeV
+#logE_bins = [-1.00,-0.90,-0.80,-0.70,-0.60,-0.50,-0.40,-0.25,0.00,0.25,0.50,0.75,1.00,1.25] # logE TeV
+logE_bins = [-0.90,-0.80,-0.70,-0.60,-0.50,-0.40,-0.25,0.00,0.25,0.50,0.75,1.00,1.25] # logE TeV
+#logE_bins = [-0.80,-0.70,-0.60,-0.50,-0.40,-0.25,0.00,0.25,0.50,0.75,1.00,1.25] # logE TeV
 #logE_bins = [-0.60,-0.50,-0.40,-0.25,0.00,0.25,0.50,0.75,1.00,1.25] # logE TeV
-#logE_bins = [-0.40,-0.25,0.00,0.25,0.50,0.75,1.00,1.25] # logE TeV
 logE_nbins = len(logE_bins)-1
 
-MSCW_cut = [0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60]
-MSCL_cut = [0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70]
-str_flux_calibration = ['1.80e+02', '3.40e+02', '6.90e+02', '1.42e+03', '2.51e+03', '2.85e+03', '2.53e+03', '3.20e+03', '8.51e+03', '2.51e+04', '1.14e+05', '3.70e+05', '1.09e+06']
+#MSCW_cut = [0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60]
+#MSCL_cut = [0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70]
+#str_flux_calibration = ['1.80e+02', '3.40e+02', '6.90e+02', '1.42e+03', '2.51e+03', '2.85e+03', '2.53e+03', '3.20e+03', '8.51e+03', '2.51e+04', '1.14e+05', '3.70e+05', '1.09e+06']
+MSCW_cut = [0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60]
+MSCL_cut = [0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70]
+str_flux_calibration = ['3.40e+02', '6.90e+02', '1.42e+03', '2.51e+03', '2.85e+03', '2.53e+03', '3.20e+03', '8.51e+03', '2.51e+04', '1.14e+05', '3.70e+05', '1.09e+06']
+#MSCW_cut = [0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60]
+#MSCL_cut = [0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70]
+#str_flux_calibration = ['6.90e+02', '1.42e+03', '2.51e+03', '2.85e+03', '2.53e+03', '3.20e+03', '8.51e+03', '2.51e+04', '1.14e+05', '3.70e+05', '1.09e+06']
 #MSCW_cut = [0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60]
 #MSCL_cut = [0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70]
 #str_flux_calibration = ['2.51e+03', '2.85e+03', '2.53e+03', '3.20e+03', '8.51e+03', '2.51e+04', '1.14e+05', '3.70e+05', '1.09e+06']
-#MSCW_cut = [0.60,0.60,0.60,0.60,0.60,0.60,0.60]
-#MSCL_cut = [0.70,0.70,0.70,0.70,0.70,0.70,0.70]
-#str_flux_calibration = ['2.53e+03', '3.20e+03', '8.51e+03', '2.51e+04', '1.14e+05', '3.70e+05', '1.09e+06']
 
 skymap_size = 3.
 skymap_bins = 20
@@ -79,16 +83,15 @@ calibration_radius = 0.15 # need to be larger than the PSF and smaller than the 
 coordinate_type = 'icrs'
 
 #logE_threshold = -99
-#logE_threshold = 0
-logE_threshold = 1
+logE_threshold = 0
+#logE_threshold = 1
 #logE_threshold = 2
 fov_mask_radius = 10.
 gcut_bins = 3
-cr_gcut = 1.5
 matrix_rank = 1
 matrix_rank_fullspec = 16
 xyoff_map_nbins = 9
-xyvar_map_nbins = 7
+xyvar_map_nbins = 20
 use_poisson_likelihood = True
 use_init = False
 use_fft = False
@@ -108,11 +111,7 @@ if 'nbin' in bin_tag:
     xyoff_map_nbins = int(bin_tag.strip('nbin'))
 
 if 'cr' in cr_tag:
-    gcut_bins = 3
-    cr_gcut = float(cr_tag.strip('cr'))/10.
-elif 'wr' in cr_tag:
-    gcut_bins = 6
-    cr_gcut = float(cr_tag.strip('wr'))/10.
+    gcut_bins = int(cr_tag.strip('cr'))
 
 if 'free' in norm_tag:
     fov_mask_radius = 10.
@@ -123,6 +122,14 @@ gcut_start = 0
 gcut_end = gcut_bins
 gcut_weight = [1.] * gcut_bins
 
+Normalized_MSCL_cut = []
+Normalized_MSCW_cut = []
+if gcut_bins==6:
+    Normalized_MSCL_cut += [1.]
+    Normalized_MSCL_cut += [3.]
+    Normalized_MSCW_cut += [1.]
+    Normalized_MSCW_cut += [3.]
+    Normalized_MSCW_cut += [5.]
 
 xoff_bins = [xyoff_map_nbins for logE in range(0,logE_nbins)]
 yoff_bins = [xyoff_map_nbins for logE in range(0,logE_nbins)]
@@ -691,26 +698,18 @@ def EventGammaCut(MSCL,MSCW):
 
     GammaCut = 1e10
 
-    if gcut_bins==3:
-        if abs(MSCL)<1. and abs(MSCW)<1.:
-            GammaCut = 0.5
-        elif abs(MSCL)<1. and abs(MSCW)<cr_gcut:
-            GammaCut = 1.5
-        elif abs(MSCL)<cr_gcut and abs(MSCW)<1.:
-            GammaCut = 2.5
-
     if gcut_bins==6:
-        if abs(MSCL)<1. and abs(MSCW)<1.:
+        if abs(MSCL)<Normalized_MSCL_cut[0] and abs(MSCW)<Normalized_MSCW_cut[0]:
             GammaCut = 0.5
-        elif abs(MSCL)<1. and abs(MSCW)<(cr_gcut-1.)+1.:
+        elif abs(MSCL)<Normalized_MSCL_cut[0] and abs(MSCW)<Normalized_MSCW_cut[1]:
             GammaCut = 1.5
-        elif abs(MSCL)<1. and abs(MSCW)<(cr_gcut-1.)+2.:
+        elif abs(MSCL)<Normalized_MSCL_cut[0] and abs(MSCW)<Normalized_MSCW_cut[2]:
             GammaCut = 2.5
-        elif abs(MSCL)<(cr_gcut-1.)+1. and abs(MSCW)<1.:
+        elif abs(MSCL)<Normalized_MSCL_cut[1] and abs(MSCW)<Normalized_MSCW_cut[0]:
             GammaCut = 3.5
-        elif abs(MSCL)<(cr_gcut-1.)+1. and abs(MSCW)<(cr_gcut-1.)+1.:
+        elif abs(MSCL)<Normalized_MSCL_cut[1] and abs(MSCW)<Normalized_MSCW_cut[1]:
             GammaCut = 4.5
-        elif abs(MSCL)<(cr_gcut-1.)+1. and abs(MSCW)<(cr_gcut-1.)+2.:
+        elif abs(MSCL)<Normalized_MSCL_cut[1] and abs(MSCW)<Normalized_MSCW_cut[2]:
             GammaCut = 5.5
 
 
@@ -724,11 +723,10 @@ def convert_multivar_map3d_to_vector1d(xyoff_map, xyvar_map):
             for idx_x in range(0,xoff_bins[logE]):
                 for idx_y in range(0,yoff_bins[logE]):
                     xyoff_map_1d += [xyoff_map[logE].waxis[idx_x,idx_y,gcut]]
-    for gcut in range(0,gcut_bins):
-        for logE in range(0,logE_nbins):
-            for idx_x in range(0,xvar_bins[logE]):
-                for idx_y in range(0,yvar_bins[logE]):
-                    xyoff_map_1d += [xyvar_map[logE].waxis[idx_x,idx_y,gcut]]
+    for logE in range(0,logE_nbins):
+        for idx_x in range(0,xvar_bins[logE]):
+            for idx_y in range(0,yvar_bins[logE]):
+                xyoff_map_1d += [xyvar_map[logE].waxis[idx_x,idx_y,0]]
 
     return xyoff_map_1d
 
@@ -738,7 +736,9 @@ def convert_multivar_vector1d_to_map3d(multivar_map_1d):
     xyvar_map = []
     for logE in range(0,logE_nbins):
         xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
-        xyvar_map += [MyArray3D(x_bins=xvar_bins[logE],start_x=-1.,end_x=1.,y_bins=yvar_bins[logE],start_y=-1.,end_y=1.,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+        end_x = Normalized_MSCL_cut[len(Normalized_MSCL_cut)-1]
+        end_y = Normalized_MSCW_cut[len(Normalized_MSCW_cut)-1]
+        xyvar_map += [MyArray3D(x_bins=xvar_bins[logE],start_x=-1.,end_x=end_x,y_bins=yvar_bins[logE],start_y=-1.,end_y=end_y,z_bins=1,start_z=0.,end_z=1.)]
 
     idx_1d = 0
     for gcut in range(0,gcut_bins):
@@ -747,38 +747,23 @@ def convert_multivar_vector1d_to_map3d(multivar_map_1d):
                 for idx_y in range(0,yoff_bins[logE]):
                     idx_1d += 1
                     xyoff_map[logE].waxis[idx_x,idx_y,gcut] = multivar_map_1d[idx_1d-1]
-    for gcut in range(0,gcut_bins):
-        for logE in range(0,logE_nbins):
-            for idx_x in range(0,xvar_bins[logE]):
-                for idx_y in range(0,yvar_bins[logE]):
-                    idx_1d += 1
-                    xyvar_map[logE].waxis[idx_x,idx_y,gcut] = multivar_map_1d[idx_1d-1]
-
-    return xyoff_map, xyvar_map
-
-def convert_xyvar_vector1d_to_map3d(xyvar_map_1d,logE):
-
-    xyvar_map = MyArray3D(x_bins=xvar_bins[logE],start_x=-1.,end_x=1.,y_bins=yvar_bins[logE],start_y=-1.,end_y=1.,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)
-
-    idx_1d = 0
-    for gcut in range(0,gcut_bins):
+    for logE in range(0,logE_nbins):
         for idx_x in range(0,xvar_bins[logE]):
             for idx_y in range(0,yvar_bins[logE]):
                 idx_1d += 1
-                xyvar_map.waxis[idx_x,idx_y,gcut] = xyvar_map_1d[idx_1d-1]
+                xyvar_map[logE].waxis[idx_x,idx_y,0] = multivar_map_1d[idx_1d-1]
 
-    return xyvar_map
+    return xyoff_map, xyvar_map
 
 def convert_multivar_to_xyvar_vector1d(multivar_map_1d):
 
     xyoff_map, xyvar_map =  convert_multivar_vector1d_to_map3d(multivar_map_1d)
 
     xyvar_map_1d = []
-    for gcut in range(0,gcut_bins):
-        for logE in range(0,logE_nbins):
-            for idx_x in range(0,xvar_bins[logE]):
-                for idx_y in range(0,yvar_bins[logE]):
-                    xyvar_map_1d += [xyvar_map[logE].waxis[idx_x,idx_y,gcut]]
+    for logE in range(0,logE_nbins):
+        for idx_x in range(0,xvar_bins[logE]):
+            for idx_y in range(0,yvar_bins[logE]):
+                xyvar_map_1d += [xyvar_map[logE].waxis[idx_x,idx_y,0]]
 
     return np.array(xyvar_map_1d)
 
@@ -786,18 +771,15 @@ def find_index_for_xyvar_vector1d():
 
     idx_1d = 0
     idx_1d_output = []
-    for gcut in range(0,gcut_bins):
-        idx_1d_logE = []
-        for logE in range(0,logE_nbins):
-            idx_1d_x = []
-            for idx_x in range(0,xvar_bins[logE]):
-                idx_1d_y = []
-                for idx_y in range(0,yvar_bins[logE]):
-                    idx_1d_y += [idx_1d]
-                    idx_1d += 1
-                idx_1d_x += [idx_1d_y]
-            idx_1d_logE += [idx_1d_x]
-        idx_1d_output += [idx_1d_logE]
+    for logE in range(0,logE_nbins):
+        idx_1d_x = []
+        for idx_x in range(0,xvar_bins[logE]):
+            idx_1d_y = []
+            for idx_y in range(0,yvar_bins[logE]):
+                idx_1d_y += [idx_1d]
+                idx_1d += 1
+            idx_1d_x += [idx_1d_y]
+        idx_1d_output += [idx_1d_x]
 
     return idx_1d_output
 
@@ -880,8 +862,10 @@ def build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,runlist,max_run
         xyoff_map = []
         xyoff_mask_map = []
         for logE in range(0,logE_nbins):
-            xyvar_map += [MyArray3D(x_bins=xvar_bins[logE],start_x=-1.,end_x=1.,y_bins=yvar_bins[logE],start_y=-1.,end_y=1.,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
-            xyvar_mask_map += [MyArray3D(x_bins=xvar_bins[logE],start_x=-1.,end_x=1.,y_bins=yvar_bins[logE],start_y=-1.,end_y=1.,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+            end_x = Normalized_MSCL_cut[len(Normalized_MSCL_cut)-1]
+            end_y = Normalized_MSCW_cut[len(Normalized_MSCW_cut)-1]
+            xyvar_map += [MyArray3D(x_bins=xvar_bins[logE],start_x=-1.,end_x=end_x,y_bins=yvar_bins[logE],start_y=-1.,end_y=end_y,z_bins=1,start_z=0.,end_z=1.)]
+            xyvar_mask_map += [MyArray3D(x_bins=xvar_bins[logE],start_x=-1.,end_x=end_x,y_bins=yvar_bins[logE],start_y=-1.,end_y=end_y,z_bins=1,start_z=0.,end_z=1.)]
             xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
             xyoff_mask_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
     
@@ -978,17 +962,9 @@ def build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,runlist,max_run
 
             xyoff_map[logE].fill(Xoff,Yoff,GammaCut)
 
-            #mean_EmissionHeight = (max_EmissionHeight_cut+min_EmissionHeight_cut)/2.
-            #range_EmissionHeight = (max_EmissionHeight_cut-min_EmissionHeight_cut)/2.
-            #var_1 = (EmissionHeight-mean_EmissionHeight)/range_EmissionHeight
-            mean_Rcore = (max_Rcore+min_Rcore)/2.
-            range_Rcore = (max_Rcore-min_Rcore)/2.
-            var_1 = (Rcore-mean_Rcore)/range_Rcore
-            mean_MeanPedvar = (max_MeanPedvar_cut+min_MeanPedvar_cut)/2.
-            range_MeanPedvar = (max_MeanPedvar_cut-min_MeanPedvar_cut)/2.
-            var_2 = (MeanPedvar-mean_MeanPedvar)/range_MeanPedvar
-            xyvar_map[logE].fill(var_1,var_2,GammaCut)
-            xyvar_mask_map[logE].fill(var_1,var_2,GammaCut)
+            xyvar_map[logE].fill(MSCL,MSCW,0.5)
+            if GammaCut<1.:
+                xyvar_mask_map[logE].fill(MSCL,MSCW,0.5)
 
 
         if is_bkgd:
@@ -1025,19 +1001,6 @@ def prepare_vector_for_least_square(multivar_map_1d):
                 for idx_y in range(0,yoff_bins[logE]):
                     if gcut==0:
                         sr_map_1d[logE] += xyoff_map[logE].waxis[idx_x,idx_y,gcut]
-
-    ##cr_nbins = (gcut_bins-1)*(xvar_bins[0]+yvar_bins[0])
-    #cr_nbins = (gcut_bins-1)*(yvar_bins[0])
-    #cr_map_1d = [[0. for entry in range(0,cr_nbins)] for entry_logE in range(0,logE_nbins)]
-    #for logE in range(0,logE_nbins):
-    #    cr_idx_1d = 0
-    #    for gcut in range(1,gcut_bins):
-    #        #for idx_x in range(0,xvar_bins[logE]):
-    #        #    cr_map_1d[logE][cr_idx_1d] += np.sum(xyvar_map[logE].waxis[idx_x,:,gcut])
-    #        #    cr_idx_1d += 1
-    #        for idx_y in range(0,yvar_bins[logE]):
-    #            cr_map_1d[logE][cr_idx_1d] += np.sum(xyvar_map[logE].waxis[:,idx_y,gcut])
-    #            cr_idx_1d += 1
 
     cr_map_1d = []
     for logE in range(0,logE_nbins):
@@ -3585,8 +3548,6 @@ def build_skymap(
         fit_xyoff_map, 
         init_xyoff_map, 
         data_xyvar_map, 
-        fit_xyvar_map, 
-        init_xyvar_map, 
         syst_xyoff_map,
         total_data_sky_map,
         total_bkgd_sky_map,
@@ -3609,9 +3570,6 @@ def build_skymap(
     big_xyoff_eigenvalues_fullspec = eigen_stuff[0][0]
     big_xyoff_eigenvectors_fullspec = eigen_stuff[0][1]
     avg_xyoff_map_1d_fullspec = eigen_stuff[0][2]
-    big_xyvar_eigenvalues_fullspec = eigen_stuff[1][0]
-    big_xyvar_eigenvectors_fullspec = eigen_stuff[1][1]
-    avg_xyvar_map_1d_fullspec = eigen_stuff[1][2]
 
 
     exposure_hours = 0.
@@ -3662,8 +3620,6 @@ def build_skymap(
         fit_xyoff_map[logE].reset()
         init_xyoff_map[logE].reset()
         data_xyvar_map[logE].reset()
-        fit_xyvar_map[logE].reset()
-        init_xyvar_map[logE].reset()
         syst_xyoff_map[logE].reset()
         ratio_xyoff_map[logE].reset()
 
@@ -3706,13 +3662,10 @@ def build_skymap(
                     fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = avg_xyoff_map_1d_fullspec[idx_1d]
 
     for logE in range(0,logE_nbins):
-        for gcut in range(0,gcut_bins):
-            for idx_x in range(0,xoff_bins[logE]):
-                for idx_y in range(0,yoff_bins[logE]):
-                    idx_1d = xyvar_idx_1d[gcut][logE][idx_x][idx_y]
-                    data_xyvar_map[logE].waxis[idx_x,idx_y,gcut] = data_xyvar_map_1d_fullspec[idx_1d]
-                    init_xyvar_map[logE].waxis[idx_x,idx_y,gcut] = avg_xyvar_map_1d_fullspec[idx_1d]
-                    fit_xyvar_map[logE].waxis[idx_x,idx_y,gcut] = avg_xyvar_map_1d_fullspec[idx_1d]
+        for idx_x in range(0,xvar_bins[logE]):
+            for idx_y in range(0,yvar_bins[logE]):
+                idx_1d = xyvar_idx_1d[logE][idx_x][idx_y]
+                data_xyvar_map[logE].waxis[idx_x,idx_y,0] = data_xyvar_map_1d_fullspec[idx_1d]
 
     sr_map_1d_truth, cr_map_1d = prepare_vector_for_least_square(data_multivar_map_1d_fullspec)
     ls_model = nn_model[0]
@@ -3771,18 +3724,6 @@ def build_skymap(
                             rel_syst = sr_map_1d_err[logE]/abs(sr_map_1d[logE])
                         syst_xyoff_map_1d_fullspec[idx_1d] = prediction * rel_syst
 
-        init_xyvar_map_1d_fullspec = np.zeros_like(data_xyvar_map_1d_fullspec)
-        syst_xyvar_map_1d_fullspec = np.zeros_like(data_xyvar_map_1d_fullspec)
-        for logE in range(0,logE_nbins):
-            for gcut in range(0,gcut_bins):
-                norm_init = np.sum(init_xyvar_map[logE].waxis[:,:,gcut])
-                for idx_x in range(0,xoff_bins[logE]):
-                    for idx_y in range(0,yoff_bins[logE]):
-                        idx_1d = xyvar_idx_1d[gcut][logE][idx_x][idx_y]
-                        prediction = init_xyvar_map[logE].waxis[idx_x,idx_y,gcut]
-                        init_xyvar_map_1d_fullspec[idx_1d] = prediction
-                        syst_xyvar_map_1d_fullspec[idx_1d] = 2.*prediction
-
         for logE in range(0,logE_nbins):
             for gcut in range(0,gcut_bins):
                 for idx_x in range(0,xoff_bins[logE]):
@@ -3798,65 +3739,6 @@ def build_skymap(
             prediction = sr_map_1d[logE]
             error = sr_map_1d_err[logE]
             print (f"truth = {truth:0.1f}, prediction = {prediction:0.1f}+/-{error:0.1f}")
-
-
-        #xyvar_effective_matrix_rank_fullspec = big_xyvar_eigenvectors_fullspec.shape[0]
-
-        #xyvar_truth_params = big_xyvar_eigenvectors_fullspec @ data_xyvar_map_1d_fullspec
-        #xyvar_avg_params = big_xyvar_eigenvectors_fullspec @ init_xyvar_map_1d_fullspec
-        #xyvar_fit_params = big_xyvar_eigenvectors_fullspec @ init_xyvar_map_1d_fullspec
-
-        #init_params = xyvar_fit_params
-        #stepsize = [1e-4] * xyvar_effective_matrix_rank_fullspec
-        #solution = minimize(
-        #    cosmic_ray_like_chi2_fullspec,
-        #    x0=init_params,
-        #    args=(
-        #        big_xyvar_eigenvectors_fullspec,
-        #        data_xyvar_map_1d_fullspec,
-        #        mask_xyvar_map_1d_fullspec,
-        #        init_xyvar_map_1d_fullspec,
-        #        syst_xyvar_map_1d_fullspec,
-        #        False,
-        #    ),
-        #    method='L-BFGS-B',
-        #    jac=None,
-        #    options={'eps':stepsize,'ftol':0.0001},
-        #)
-        #print (f"solution['fun'] = {solution['fun']}")
-        #fit_params = solution['x']
-
-        ##print ("***************************************************************************************")
-        ##print ("fit xyvar maps...")
-        ##for entry in range(0,len(truth_params)):
-        ##    print (f"truth_params = {truth_params[entry]:0.1f}, init_params = {init_params[entry]:0.1f}, fit_params = {fit_params[entry]:0.1f}")
-        ##    if np.isnan(fit_params[entry]):
-        ##        print ("Soluiton is nan!!!")
-        ##        exit()
-
-        #fit_xyvar_map_1d_fullspec = big_xyvar_eigenvectors_fullspec.T @ fit_params
-
-        #xyvar_idx_1d = find_index_for_xyvar_vector1d()
-        #for logE in range(0,logE_nbins):
-        #    for gcut in range(0,gcut_bins):
-        #        for idx_x in range(0,xvar_bins[logE]):
-        #            for idx_y in range(0,yvar_bins[logE]):
-        #                idx_1d = xyvar_idx_1d[gcut][logE][idx_x][idx_y]
-        #                prediction = max(0.0,fit_xyvar_map_1d_fullspec[idx_1d])
-        #                fit_xyvar_map[logE].waxis[idx_x,idx_y,gcut] = prediction
-
-        #for logE in range(0,logE_nbins):
-        #    for gcut in range(0,gcut_bins):
-        #        norm_init = np.sum(init_xyoff_map[logE].waxis[:,:,gcut])
-        #        norm_fit = np.sum(fit_xyvar_map[logE].waxis[:,:,gcut])
-        #        rescale = 1.
-        #        if norm_init>0.:
-        #            rescale = norm_fit/norm_init
-        #        for idx_x in range(0,xoff_bins[logE]):
-        #            for idx_y in range(0,yoff_bins[logE]):
-        #                idx_1d = xyoff_idx_1d[gcut][logE][idx_x][idx_y]
-        #                prediction = init_xyoff_map[logE].waxis[idx_x,idx_y,gcut] * rescale
-        #                init_xyoff_map_1d_fullspec[idx_1d] = prediction
 
 
         xyoff_effective_matrix_rank_fullspec = big_xyoff_eigenvectors_fullspec.shape[0]
