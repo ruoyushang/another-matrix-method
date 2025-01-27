@@ -60,7 +60,7 @@ ana_tag = []
 #ana_tag += [['cr20_nbin7_init','b']]
 #ana_tag += [['cr20_nbin7_fullspec4_free','b']]
 ana_tag += [['cr20_nbin7_fullspec16_constraint','b']]
-ana_tag += [['wr20_nbin7_fullspec16_constraint','b']]
+ana_tag += [['wr20_nbin7_fullspec32_free','b']]
 
 #ana_tag += [['cr20_nbin7_fullspec1_free','b']]
 #ana_tag += [['cr20_nbin7_fullspec2_free','b']]

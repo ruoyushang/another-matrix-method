@@ -1,12 +1,22 @@
 
 import os
 import sys
+import subprocess
 
-SMI_DIR = os.environ['SMI_DIR']
-#SMI_OUTPUT = os.environ['SMI_OUTPUT']
+smi_runlist = os.environ.get("SMI_RUNLIST")
+smi_input = os.environ.get("SMI_INPUT")
+smi_output = os.environ.get("SMI_OUTPUT")
+smi_dir = os.environ.get("SMI_DIR")
+sky_tag = os.environ.get("SKY_TAG")
+eigen_tag = os.environ.get("EIGEN_TAG")
+norm_tag = os.environ.get("NORM_TAG")
+bin_tag = os.environ.get("BIN_TAG")
+cr_tag = os.environ.get("CR_TAG")
+ana_dir = os.environ.get("ANA_DIR")
 
-print (f'SMI_DIR = {SMI_DIR}')
-#print (f'SMI_OUTPUT = {SMI_OUTPUT}')
+job_dir = f'{smi_dir}/run/{sky_tag}'
+print (f'job_dir = {job_dir}')
+subprocess.run(['mkdir',f'{job_dir}'], capture_output=True, text=True)
 
 is_training = True
 #is_training = False
@@ -120,8 +130,8 @@ for s in range(0,len(input_params)):
     src_ra = input_params[s][1]
     src_dec = input_params[s][2]
     onoff = input_params[s][3]
-    file = open("run/save_mtx_%s_%s.sh"%(source,onoff),"w") 
-    file.write('cd %s\n'%(SMI_DIR))
+    file = open("%s/save_mtx_%s_%s.sh"%(job_dir,source,onoff),"w") 
+    file.write('cd %s\n'%(smi_dir))
     file.write(f'conda init\n')
     file.write(f'conda activate /nevis/ged/data/rshang/my_conda_envs/root_env\n')
     file.write(f'python3 save_big_matrices.py "{source}" {src_ra} {src_dec} "{onoff}" "V6"\n')
@@ -134,7 +144,7 @@ for s in range(0,len(input_params)):
             file.write(f'python3 save_big_matrices.py "{source}" {src_ra} {src_dec} "MIMIC{mimic}" "V4"\n')
     file.close() 
 
-qfile = open(f"run/sub_condor_save_mtx_{training_mode}.submit","w") 
+qfile = open(f"{job_dir}/sub_condor_save_mtx_{training_mode}.submit","w") 
 for s in range(0,len(input_params)):
     source = input_params[s][0]
     onoff = input_params[s][3]
@@ -154,8 +164,8 @@ qfile.close()
 for s in range(0,len(input_params)):
     source = input_params[s][0]
     onoff = input_params[s][3]
-    file = open("run/eigenvtr_%s_%s.sh"%(source,onoff),"w") 
-    file.write('cd %s\n'%(SMI_DIR))
+    file = open("%s/eigenvtr_%s_%s.sh"%(job_dir,source,onoff),"w") 
+    file.write('cd %s\n'%(smi_dir))
     file.write(f'conda init\n')
     file.write(f'conda activate /nevis/ged/data/rshang/my_conda_envs/root_env\n')
     file.write('export MKL_NUM_THREADS=1\n')
@@ -173,7 +183,7 @@ for s in range(0,len(input_params)):
             file.write(f'python3 build_eigenvectors.py "{source}" "MIMIC{mimic}" "V4"\n')
     file.close() 
 
-qfile = open(f"run/sub_condor_eigenvtr_{training_mode}.submit","w") 
+qfile = open(f"{job_dir}/sub_condor_eigenvtr_{training_mode}.submit","w") 
 for s in range(0,len(input_params)):
     source = input_params[s][0]
     onoff = input_params[s][3]
@@ -196,8 +206,8 @@ for s in range(0,len(input_params)):
     src_ra = input_params[s][1]
     src_dec = input_params[s][2]
     onoff = input_params[s][3]
-    file = open("run/skymap_%s_%s.sh"%(source,onoff),"w") 
-    file.write('cd %s\n'%(SMI_DIR))
+    file = open("%s/skymap_%s_%s.sh"%(job_dir,source,onoff),"w") 
+    file.write('cd %s\n'%(smi_dir))
     file.write(f'conda init\n')
     file.write(f'conda activate /nevis/ged/data/rshang/my_conda_envs/root_env\n')
     file.write(f'python3 build_eigenvectors.py "{source}" "{onoff}" "V6"\n')
@@ -218,7 +228,7 @@ for s in range(0,len(input_params)):
             file.write(f'python3 save_skymaps.py "{source}" {src_ra} {src_dec} "MIMIC{mimic}" "V4"\n')
     file.close() 
 
-qfile = open(f"run/sub_condor_skymap_{training_mode}.submit","w") 
+qfile = open(f"{job_dir}/sub_condor_skymap_{training_mode}.submit","w") 
 for s in range(0,len(input_params)):
     source = input_params[s][0]
     onoff = input_params[s][3]
@@ -241,8 +251,8 @@ for s in range(0,len(input_params)):
     src_ra = input_params[s][1]
     src_dec = input_params[s][2]
     onoff = input_params[s][3]
-    file = open("run/plot_%s_%s.sh"%(source,onoff),"w") 
-    file.write('cd %s\n'%(SMI_DIR))
+    file = open("%s/plot_%s_%s.sh"%(job_dir,source,onoff),"w") 
+    file.write('cd %s\n'%(smi_dir))
     #file.write('sh clean_plots.sh\n')
     file.write(f'python3 plot_analysis_result.py "{source}" {src_ra} {src_dec} "{onoff}" \n')
     file.close() 

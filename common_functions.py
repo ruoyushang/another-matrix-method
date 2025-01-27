@@ -93,7 +93,6 @@ use_poisson_likelihood = True
 use_init = False
 use_fft = False
 use_mono = False
-use_constraint = True
 
 if eigen_tag=='init':
     matrix_rank_fullspec = 1
@@ -117,13 +116,8 @@ elif 'wr' in cr_tag:
 
 if 'free' in norm_tag:
     fov_mask_radius = 10.
-    use_constraint = False
-elif 'constraint' in norm_tag:
-    fov_mask_radius = 10.
-    use_constraint = True
 elif 'fov' in norm_tag:
     fov_mask_radius = float(norm_tag.strip('fov'))/10.
-    use_constraint = False
 
 gcut_start = 0
 gcut_end = gcut_bins
@@ -1138,16 +1132,10 @@ def cosmic_ray_like_chi2_fullspec(
                             n_syst = 0.
                         n_syst_gcut += syst
 
-                if not use_constraint:
-                    if gcut==0:
-                        weight_gcut = 0.
-                    else:
-                        weight_gcut = 1.
+                if gcut==0:
+                    weight_gcut = 0.
                 else:
-                    if gcut==0:
-                        weight_gcut = 5.
-                    else:
-                        weight_gcut = 0.
+                    weight_gcut = 1.
 
                 log_likelihood = significance_li_and_ma(n_data_gcut, n_expect_gcut, n_syst_gcut)
                 lsq_log_likelihood += pow(log_likelihood,2) * weight_gcut
@@ -3659,7 +3647,7 @@ def build_skymap(
 
     if len(big_on_matrix_fullspec)==0:
         print (f'No data. Break.')
-        return [exposure_hours,avg_tel_elev,avg_tel_azim,truth_params,fit_params,avg_MeanPedvar]
+        return [exposure_hours,avg_tel_elev,avg_tel_azim,avg_MeanPedvar]
 
     ratio_xyoff_map = []
     for logE in range(0,logE_nbins):
@@ -3744,8 +3732,8 @@ def build_skymap(
         norm_data = norm_cr_data
         norm_init = norm_cr_init
         if abs(norm_sr_data_err)<abs(norm_sr_data):
-            norm_data = norm_sr_data
-            norm_init = norm_sr_init
+            norm_data = norm_sr_data + norm_cr_data
+            norm_init = norm_sr_init + norm_cr_init
         if norm_init==0.: continue
         for gcut in range(0,gcut_bins):
             for idx_x in range(0,xoff_bins[logE]):
@@ -3779,7 +3767,7 @@ def build_skymap(
                         prediction = init_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
                         init_xyoff_map_1d_fullspec[idx_1d] = prediction
                         rel_syst = 1.
-                        if abs(sr_map_1d[logE])>0. and use_constraint:
+                        if abs(sr_map_1d[logE])>0.:
                             rel_syst = sr_map_1d_err[logE]/abs(sr_map_1d[logE])
                         syst_xyoff_map_1d_fullspec[idx_1d] = prediction * rel_syst
 
