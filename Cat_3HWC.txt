@@ -1,0 +1,1295 @@
+# 3HWC.yaml source catalog.
+# Last updated: 2020-07-15.
+# The values correspond to tables 1 and 2 of the 3HWC catalog:
+#https://arxiv.org/abs/2007.08582
+# Angles are in degrees.
+# Fluxes are reported at 7 TeV and are in TeV-1 cm-2 s-1.
+# Only detector systematics were considered for the systematic uncertainties.
+   - name: 3HWC J0534+220
+     RA: 83.6279
+     Dec: 22.0243
+     l: 184.54655248643084
+     b: -5.78316902993781
+     position uncertainty: 0.05725810686362343
+     search radius: 0.0
+     TS: 35736.499681
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 2.34204e-13
+          flux statistical uncertainty up: 1.40459e-15
+          flux statistical uncertainty down: -1.40228e-15
+          index: -2.57949
+          index statistical uncertainty up: 0.00465904
+          index statistical uncertainty down: -0.00465478
+          flux systematic uncertainty up: 5.524898950351944e-14
+          flux systematic uncertainty down: -3.402997237965378e-14
+          index systematic uncertainty up: 0.06690214196869962
+          index systematic uncertainty down: -0.018368070121817157
+   - name: 3HWC J0540+228
+     RA: 85.166
+     Dec: 22.8719
+     l: 184.58335953841944
+     b: -4.128534019025944
+     position uncertainty: 0.1117493194053931
+     search radius: 0.0
+     TS: 28.83797401
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 4.7558e-15
+          flux statistical uncertainty up: 7.22962e-16
+          flux statistical uncertainty down: -7.59367e-16
+          index: -2.8396
+          index statistical uncertainty up: 0.1431
+          index statistical uncertainty down: -0.142449
+          flux systematic uncertainty up: 1.1274867328709466e-15
+          flux systematic uncertainty down: -8.119131807650368e-16
+          index systematic uncertainty up: 0.14373974711262028
+          index systematic uncertainty down: -0.033824130439672674
+   - name: 3HWC J0543+231
+     RA: 85.7812
+     Dec: 23.115
+     l: 184.67383703425813
+     b: -3.51888872684935
+     position uncertainty: 0.10371238951246735
+     search radius: 0.0
+     TS: 34.22881829159999
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 4.2138e-15
+          flux statistical uncertainty up: 8.71736e-16
+          flux statistical uncertainty down: -9.33293e-16
+          index: -2.13144
+          index statistical uncertainty up: 0.148996
+          index statistical uncertainty down: -0.162878
+          flux systematic uncertainty up: 1.8639602695068373e-15
+          flux systematic uncertainty down: -5.978910986124481e-16
+          index systematic uncertainty up: 0.15678008578898003
+          index systematic uncertainty down: -0.014443029460608407
+   - name: 3HWC J0617+224
+     RA: 94.3945
+     Dec: 22.4676
+     l: 189.18378884411936
+     b: 3.0491674265685167
+     position uncertainty: 0.14179577157414483
+     search radius: 0.0
+     TS: 32.32616107209999
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 4.50239e-15
+          flux statistical uncertainty up: 7.89759e-16
+          flux statistical uncertainty down: -7.8931e-16
+          index: -3.04754
+          index statistical uncertainty up: 0.111311
+          index statistical uncertainty down: -0.109698
+          flux systematic uncertainty up: 1.2303814744708244e-15
+          flux systematic uncertainty down: -7.742744326277344e-16
+          index systematic uncertainty up: 0.05715960636673388
+          index systematic uncertainty down: -0.02309992640680947
+   - name: 3HWC J0621+382
+     RA: 95.3174
+     Dec: 38.2059
+     l: 175.4442539498823
+     b: 10.966142286770406
+     position uncertainty: 0.3006685543268377
+     search radius: 0.5
+     TS: 27.9577620001
+     flux measurements:
+        - assumed radius: 0.5
+          flux: 8.9463e-15
+          flux statistical uncertainty up: 1.44571e-15
+          flux statistical uncertainty down: -1.51397e-15
+          index: -2.41278
+          index statistical uncertainty up: 0.124872
+          index statistical uncertainty down: -0.129419
+          flux systematic uncertainty up: 2.5685575624852173e-15
+          flux systematic uncertainty down: -1.1970289967665775e-15
+          index systematic uncertainty up: 0.08123247318652783
+          index systematic uncertainty down: -0.01364870689845784
+   - name: 3HWC J0630+186
+     RA: 97.6904
+     Dec: 18.6818
+     l: 193.979055562971
+     b: 4.019631841846343
+     position uncertainty: 0.10067860619376424
+     search radius: 0.0
+     TS: 38.8819590916
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 5.14521e-15
+          flux statistical uncertainty up: 8.35303e-16
+          flux statistical uncertainty down: -9.00608e-16
+          index: -2.2131
+          index statistical uncertainty up: 0.133398
+          index statistical uncertainty down: -0.143305
+          flux systematic uncertainty up: 2.145520543024699e-15
+          flux systematic uncertainty down: -8.487239841320613e-16
+          index systematic uncertainty up: 0.1427596809326783
+          index systematic uncertainty down: -0.022115114740827987
+   - name: 3HWC J0631+107
+     RA: 97.7783
+     Dec: 10.731
+     l: 201.07907821840138
+     b: 0.42732642347516486
+     position uncertainty: 0.08944771216746701
+     search radius: 0.0
+     TS: 26.4723627169
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 3.99907e-15
+          flux statistical uncertainty up: 8.71908e-16
+          flux statistical uncertainty down: -9.63045e-16
+          index: -2.23357
+          index statistical uncertainty up: 0.169151
+          index statistical uncertainty down: -0.192158
+          flux systematic uncertainty up: 1.3993164479305608e-15
+          flux systematic uncertainty down: -6.417987233151834e-16
+          index systematic uncertainty up: 0.1010792278363861
+          index systematic uncertainty down: -0.007647260947554654
+   - name: 3HWC J0631+169
+     RA: 97.9541
+     Dec: 16.9578
+     l: 195.62946566174335
+     b: 3.451365473553972
+     position uncertainty: 0.1722645141400539
+     search radius: 0.0
+     TS: 39.090630062500004
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 5.87718e-15
+          flux statistical uncertainty up: 6.97804e-16
+          flux statistical uncertainty down: -6.96159e-16
+          index: -2.50732
+          index statistical uncertainty up: 0.13069
+          index statistical uncertainty down: -0.136125
+          flux systematic uncertainty up: 1.9535381805902846e-15
+          flux systematic uncertainty down: -9.052946419392971e-16
+          index systematic uncertainty up: 0.13362854859647302
+          index systematic uncertainty down: -0.02700590120695849
+   - name: 3HWC J0633+191
+     RA: 98.4375
+     Dec: 19.1155
+     l: 193.91599771000259
+     b: 4.846518989078212
+     position uncertainty: 0.2819246030540692
+     search radius: 0.0
+     TS: 27.512647562500003
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 4.81684e-15
+          flux statistical uncertainty up: 6.66805e-16
+          flux statistical uncertainty down: -6.61631e-16
+          index: -2.63937
+          index statistical uncertainty up: 0.144903
+          index statistical uncertainty down: -0.149044
+          flux systematic uncertainty up: 1.2944428711441838e-15
+          flux systematic uncertainty down: -7.009894615156498e-16
+          index systematic uncertainty up: 0.0954024873889564
+          index systematic uncertainty down: -0.019758307113718204
+   - name: 3HWC J0634+067
+     RA: 98.6572
+     Dec: 6.72981
+     l: 205.02943787433315
+     b: -0.6492596234276837
+     position uncertainty: 0.2191839948225168
+     search radius: 0.5
+     TS: 36.2147593369
+     flux measurements:
+        - assumed radius: 0.5
+          flux: 8.98151e-15
+          flux statistical uncertainty up: 1.33991e-15
+          flux statistical uncertainty down: -1.38586e-15
+          index: -2.265
+          index statistical uncertainty up: 0.0951234
+          index statistical uncertainty down: -0.101621
+          flux systematic uncertainty up: 2.7296877999143064e-15
+          flux systematic uncertainty down: -1.231697573351916e-15
+          index systematic uncertainty up: 0.08550442386216031
+          index systematic uncertainty down: -0.009371888817095704
+   - name: 3HWC J0634+165
+     RA: 98.5254
+     Dec: 16.5293
+     l: 196.26225792781753
+     b: 3.741289785562531
+     position uncertainty: 0.10904315512097477
+     search radius: 0.0
+     TS: 29.963143299600002
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 5.007e-15
+          flux statistical uncertainty up: 6.94874e-16
+          flux statistical uncertainty down: -7.67906e-16
+          index: -2.51958
+          index statistical uncertainty up: 0.194556
+          index statistical uncertainty down: -0.223853
+          flux systematic uncertainty up: 1.6445167382851406e-15
+          flux systematic uncertainty down: -8.093663554287394e-16
+          index systematic uncertainty up: 0.1278526855408209
+          index systematic uncertainty down: -0.0276144636015258
+   - name: 3HWC J0634+180
+     RA: 98.7451
+     Dec: 18.053
+     l: 194.99853022250207
+     b: 4.622867895676509
+     position uncertainty: 0.09291951333101421
+     search radius: 0.0
+     TS: 60.0336734596
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 7.29972e-15
+          flux statistical uncertainty up: 7.10606e-16
+          flux statistical uncertainty down: -7.10434e-16
+          index: -2.47255
+          index statistical uncertainty up: 0.10209
+          index statistical uncertainty down: -0.105496
+          flux systematic uncertainty up: 2.2165527452068456e-15
+          flux systematic uncertainty down: -1.0677444171635824e-15
+          index systematic uncertainty up: 0.11440262322167277
+          index systematic uncertainty down: -0.015206281596761363
+   - name: 3HWC J0659+147
+     RA: 104.854
+     Dec: 14.7474
+     l: 200.6046777537886
+     b: 8.396874179679566
+     position uncertainty: 0.12180069728677574
+     search radius: 0.0
+     TS: 28.836255603599998
+   - name: 3HWC J0702+147
+     RA: 105.557
+     Dec: 14.7474
+     l: 200.90503638695603
+     b: 9.008458135230764
+     position uncertainty: 0.19415810466368053
+     search radius: 0.0
+     TS: 28.947950908899998
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 3.5983e-15
+          flux statistical uncertainty up: 1.08336e-15
+          flux statistical uncertainty down: -1.26305e-15
+          index: -1.99337
+          index statistical uncertainty up: 0.192236
+          index statistical uncertainty down: -0.244103
+          flux systematic uncertainty up: 1.923080390155336e-15
+          flux systematic uncertainty down: -5.090392576216496e-16
+          index systematic uncertainty up: 0.18305236873638092
+          index systematic uncertainty down: -0.017382916901371972
+   - name: 3HWC J1104+381
+     RA: 166.113
+     Dec: 38.1585
+     l: 179.94535262389425
+     b: 65.04672823773043
+     position uncertainty: 0.057285122044096796
+     search radius: 0.0
+     TS: 3025.28600676
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 6.94382e-14
+          flux statistical uncertainty up: 1.33933e-15
+          flux statistical uncertainty down: -1.33052e-15
+          index: -3.03623
+          index statistical uncertainty up: 0.0117891
+          index statistical uncertainty down: -0.0118083
+          flux systematic uncertainty up: 1.655937414585467e-14
+          flux systematic uncertainty down: -1.1417705568212902e-14
+          index systematic uncertainty up: 0.060214226724254506
+          index systematic uncertainty down: -0.02446517116228735
+   - name: 3HWC J1654+397
+     RA: 253.521
+     Dec: 39.7413
+     l: 63.580758539696895
+     b: 38.816517824165665
+     position uncertainty: 0.08552101007156451
+     search radius: 0.0
+     TS: 227.78959329000003
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 2.00005e-14
+          flux statistical uncertainty up: 1.04346e-15
+          flux statistical uncertainty down: -1.03931e-15
+          index: -2.90711
+          index statistical uncertainty up: 0.0397035
+          index statistical uncertainty down: -0.0397157
+          flux systematic uncertainty up: 5.260758975898817e-15
+          flux systematic uncertainty down: -3.2381461799152928e-15
+          index systematic uncertainty up: 0.06424778206288533
+          index systematic uncertainty down: -0.023990500203205305
+   - name: 3HWC J1739+099
+     RA: 264.99
+     Dec: 9.93472
+     l: 33.8929338579342
+     b: 20.344658199902295
+     position uncertainty: 0.06389566126716556
+     search radius: 0.0
+     TS: 28.210545049599997
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 3.27683e-15
+          flux statistical uncertainty up: 8.11231e-16
+          flux statistical uncertainty down: -7.8521e-16
+          index: -1.98266
+          index statistical uncertainty up: 0.132323
+          index statistical uncertainty down: -0.141275
+          flux systematic uncertainty up: 1.421128506219265e-15
+          flux systematic uncertainty down: -5.590265876405166e-16
+          index systematic uncertainty up: 0.12118924828548085
+          index systematic uncertainty down: -0.022670796192458882
+   - name: 3HWC J1743+149
+     RA: 265.825
+     Dec: 14.9403
+     l: 39.13370185966307
+     b: 21.682571413299353
+     position uncertainty: 0.10003791209140449
+     search radius: 0.0
+     TS: 25.897717440400005
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 4.03814e-15
+          flux statistical uncertainty up: 7.19547e-16
+          flux statistical uncertainty down: -7.51117e-16
+          index: -2.3704
+          index statistical uncertainty up: 0.148981
+          index statistical uncertainty down: -0.159415
+          flux systematic uncertainty up: 1.3028754032508254e-15
+          flux systematic uncertainty down: -6.16294463625952e-16
+          index systematic uncertainty up: 0.07749076654673133
+          index systematic uncertainty down: -0.016554703259194926
+   - name: 3HWC J1757-240
+     RA: 269.297
+     Dec: -24.092
+     l: 5.485670335334923
+     b: 0.25169776035413155
+     position uncertainty: 0.47976472068964265
+     search radius: 1.0
+     TS: 28.6193970841
+     flux measurements:
+        - assumed radius: 1.0
+          flux: 7.2015e-14
+          flux statistical uncertainty up: 1.09432e-14
+          flux statistical uncertainty down: -1.12686e-14
+          index: -2.80227
+          index statistical uncertainty up: 0.106043
+          index statistical uncertainty down: -0.108764
+          flux systematic uncertainty up: 1.7580059549387206e-14
+          flux systematic uncertainty down: -9.163494956074347e-15
+          index systematic uncertainty up: 0.06660888679448092
+          index systematic uncertainty down: -0.033384035106619456
+   - name: 3HWC J1803-211
+     RA: 270.967
+     Dec: -21.1818
+     l: 8.77704605857123
+     b: 0.35832673679393207
+     position uncertainty: 0.2725539674766247
+     search radius: 0.0
+     TS: 38.415451920399995
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 2.79263e-14
+          flux statistical uncertainty up: 5.41273e-15
+          flux statistical uncertainty down: -5.66352e-15
+          index: -2.58935
+          index statistical uncertainty up: 0.13271
+          index statistical uncertainty down: -0.137288
+          flux systematic uncertainty up: 1.032490942850832e-14
+          flux systematic uncertainty down: -4.410240752714075e-15
+          index systematic uncertainty up: 0.08554497647436715
+          index systematic uncertainty down: -0.03668065021233956
+   - name: 3HWC J1809-190
+     RA: 272.461
+     Dec: -19.0366
+     l: 11.33393817750925
+     b: 0.17889446010177934
+     position uncertainty: 0.08146166277578235
+     search radius: 0.0
+     TS: 264.82354755999995
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 6.80233e-14
+          flux statistical uncertainty up: 4.40177e-15
+          flux statistical uncertainty down: -4.45658e-15
+          index: -2.58931
+          index statistical uncertainty up: 0.0471956
+          index statistical uncertainty down: -0.0476004
+          flux systematic uncertainty up: 2.451105815441064e-14
+          flux systematic uncertainty down: -9.706132543855969e-15
+          index systematic uncertainty up: 0.09337142282304609
+          index systematic uncertainty down: -0.025986663887462885
+   - name: 3HWC J1813-125
+     RA: 273.34
+     Dec: -12.521
+     l: 17.455980062208344
+     b: 2.569547306878516
+     position uncertainty: 0.14139771426911998
+     search radius: 0.0
+     TS: 51.884793672099995
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 1.98524e-14
+          flux statistical uncertainty up: 1.984e-15
+          flux statistical uncertainty down: -1.97436e-15
+          index: -2.808
+          index statistical uncertainty up: 0.100179
+          index statistical uncertainty down: -0.0995795
+          flux systematic uncertainty up: 5.853394033174259e-15
+          flux systematic uncertainty down: -3.075874730479118e-15
+          index systematic uncertainty up: 0.0927352888602825
+          index systematic uncertainty down: -0.029794677377007896
+   - name: 3HWC J1813-174
+     RA: 273.428
+     Dec: -17.4654
+     l: 13.153160416368372
+     b: 0.1296433616891893
+     position uncertainty: 0.06376531043243577
+     search radius: 0.0
+     TS: 415.996816
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 7.40318e-14
+          flux statistical uncertainty up: 3.9699e-15
+          flux statistical uncertainty down: -4.01262e-15
+          index: -2.54238
+          index statistical uncertainty up: 0.0395909
+          index statistical uncertainty down: -0.039891
+          flux systematic uncertainty up: 2.670650196922839e-14
+          flux systematic uncertainty down: -1.0736515771534083e-14
+          index systematic uncertainty up: 0.08834667792282835
+          index systematic uncertainty down: -0.022970912041101254
+   - name: 3HWC J1819-150
+     RA: 274.79
+     Dec: -15.0948
+     l: 15.86023092193062
+     b: 0.10740389309406256
+     position uncertainty: 0.14186413297585432
+     search radius: 0.0
+     TS: 93.8094913809
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 3.39129e-14
+          flux statistical uncertainty up: 2.54073e-15
+          flux statistical uncertainty down: -2.51939e-15
+          index: -2.89561
+          index statistical uncertainty up: 0.0753496
+          index statistical uncertainty down: -0.0745325
+          flux systematic uncertainty up: 1.0321546057354973e-14
+          flux systematic uncertainty down: -5.422553078956444e-15
+          index systematic uncertainty up: 0.1005643092752098
+          index systematic uncertainty down: -0.0326699097029667
+   - name: 3HWC J1825-134
+     RA: 276.46
+     Dec: -13.4014
+     l: 18.11538855267712
+     b: -0.5264015036122983
+     position uncertainty: 0.05743602897162013
+     search radius: 0.0
+     TS: 2212.479369
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 1.254e-13
+          flux statistical uncertainty up: 3.39361e-15
+          flux statistical uncertainty down: -3.41121e-15
+          index: -2.35473
+          index statistical uncertainty up: 0.0193223
+          index statistical uncertainty down: -0.0194172
+          flux systematic uncertainty up: 5.3123748041718605e-14
+          flux systematic uncertainty down: -1.8277488312128664e-14
+          index systematic uncertainty up: 0.11097995629842339
+          index systematic uncertainty down: -0.015231621712739623
+   - name: 3HWC J1831-095
+     RA: 277.866
+     Dec: -9.59407
+     l: 22.126976599872663
+     b: 0.022106274469584682
+     position uncertainty: 0.1416896446961859
+     search radius: 0.0
+     TS: 237.69313928999998
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 3.3815e-14
+          flux statistical uncertainty up: 1.84267e-15
+          flux statistical uncertainty down: -1.87182e-15
+          index: -2.60749
+          index statistical uncertainty up: 0.0572916
+          index statistical uncertainty down: -0.0574461
+          flux systematic uncertainty up: 1.2190682767589354e-14
+          flux systematic uncertainty down: -5.253296436524404e-15
+          index systematic uncertainty up: 0.1243791919896574
+          index systematic uncertainty down: -0.026083736312115805
+   - name: 3HWC J1837-066
+     RA: 279.404
+     Dec: -6.61714
+     l: 25.47056243522451
+     b: 0.04239008017571728
+     position uncertainty: 0.0574854835556638
+     search radius: 0.0
+     TS: 1542.7062952899998
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 8.19072e-14
+          flux statistical uncertainty up: 1.72882e-15
+          flux statistical uncertainty down: -1.72434e-15
+          index: -2.72943
+          index statistical uncertainty up: 0.0219511
+          index statistical uncertainty down: -0.0218924
+          flux systematic uncertainty up: 2.5211833674653655e-14
+          flux systematic uncertainty down: -1.3232796405839542e-14
+          index systematic uncertainty up: 0.10866534636212255
+          index systematic uncertainty down: -0.031144058823473788
+   - name: 3HWC J1843-034
+     RA: 280.986
+     Dec: -3.4712
+     l: 28.988815917718807
+     b: 0.0821744771217642
+     position uncertainty: 0.05792782201553183
+     search radius: 0.0
+     TS: 876.56260624
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 4.72494e-14
+          flux statistical uncertainty up: 1.56695e-15
+          flux statistical uncertainty down: -1.58572e-15
+          index: -2.35659
+          index statistical uncertainty up: 0.0311909
+          index statistical uncertainty down: -0.031196
+          flux systematic uncertainty up: 1.962643501590648e-14
+          flux systematic uncertainty down: -7.246738194774257e-15
+          index systematic uncertainty up: 0.1430049604034766
+          index systematic uncertainty down: -0.01828350622829281
+   - name: 3HWC J1844-001
+     RA: 281.074
+     Dec: -0.18651
+     l: 31.951535395510483
+     b: 1.503915724843245
+     position uncertainty: 0.15212509111086284
+     search radius: 0.0
+     TS: 33.178406404899995
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 7.4341e-15
+          flux statistical uncertainty up: 9.62453e-16
+          flux statistical uncertainty down: -9.5998e-16
+          index: -2.76466
+          index statistical uncertainty up: 0.122399
+          index statistical uncertainty down: -0.124353
+          flux systematic uncertainty up: 2.3753945510588344e-15
+          flux systematic uncertainty down: -1.260868728060142e-15
+          index systematic uncertainty up: 0.1237148952228467
+          index systematic uncertainty down: -0.025832318904813946
+   - name: 3HWC J1847-017
+     RA: 281.953
+     Dec: -1.75346
+     l: 30.9580914865657
+     b: 0.006918527635089001
+     position uncertainty: 0.08662755723896945
+     search radius: 0.0
+     TS: 338.12957689
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 2.77392e-14
+          flux statistical uncertainty up: 1.31406e-15
+          flux statistical uncertainty down: -1.33231e-15
+          index: -2.86872
+          index statistical uncertainty up: 0.0443712
+          index statistical uncertainty down: -0.0443531
+          flux systematic uncertainty up: 8.407503360475092e-15
+          flux systematic uncertainty down: -5.134439757792468e-15
+          index systematic uncertainty up: 0.1040902257659188
+          index systematic uncertainty down: -0.03919586585342919
+   - name: 3HWC J1849+001
+     RA: 282.349
+     Dec: 0.149208
+     l: 32.83194845097951
+     b: 0.5223552763604106
+     position uncertainty: 0.058926550434770936
+     search radius: 0.0
+     TS: 427.53005824
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 2.3544e-14
+          flux statistical uncertainty up: 1.40465e-15
+          flux statistical uncertainty down: -1.42481e-15
+          index: -2.17163
+          index statistical uncertainty up: 0.0433589
+          index statistical uncertainty down: -0.0438878
+          flux systematic uncertainty up: 1.1600516313940514e-14
+          flux systematic uncertainty down: -3.89334737982626e-15
+          index systematic uncertainty up: 0.1643964844514625
+          index systematic uncertainty down: -0.014866875932757222
+   - name: 3HWC J1852+013
+     RA: 283.052
+     Dec: 1.34299
+     l: 34.21496880868591
+     b: 0.44103499623067083
+     position uncertainty: 0.08948224341106666
+     search radius: 0.0
+     TS: 126.66827208999999
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 1.45411e-14
+          flux statistical uncertainty up: 1.03708e-15
+          flux statistical uncertainty down: -1.05523e-15
+          index: -2.78695
+          index statistical uncertainty up: 0.077652
+          index statistical uncertainty down: -0.078276
+          flux systematic uncertainty up: 4.37554036001269e-15
+          flux systematic uncertainty down: -2.6444673910071216e-15
+          index systematic uncertainty up: 0.1258856024333204
+          index systematic uncertainty down: -0.03889027513402286
+   - name: 3HWC J1857+027
+     RA: 284.326
+     Dec: 2.79876
+     l: 36.091238677695856
+     b: -0.027806201113628713
+     position uncertainty: 0.05860113040282032
+     search radius: 0.0
+     TS: 763.5274240000001
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 3.59053e-14
+          flux statistical uncertainty up: 1.23992e-15
+          flux statistical uncertainty down: -1.24296e-15
+          index: -2.82619
+          index statistical uncertainty up: 0.0296623
+          index statistical uncertainty down: -0.0297514
+          flux systematic uncertainty up: 1.0210501624352251e-14
+          flux systematic uncertainty down: -6.4691452496369274e-15
+          index systematic uncertainty up: 0.09928240478554096
+          index systematic uncertainty down: -0.03496268010321853
+   - name: 3HWC J1857+051
+     RA: 284.326
+     Dec: 5.19207
+     l: 38.220797236539056
+     b: 1.0646322701284838
+     position uncertainty: 0.10845523320613847
+     search radius: 0.0
+     TS: 35.316277562500005
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 5.89303e-15
+          flux statistical uncertainty up: 9.97251e-16
+          flux statistical uncertainty down: -1.02891e-15
+          index: -3.03382
+          index statistical uncertainty up: 0.124472
+          index statistical uncertainty down: -0.123016
+          flux systematic uncertainty up: 1.7579700629444742e-15
+          flux systematic uncertainty down: -1.1939495934540122e-15
+          index systematic uncertainty up: 0.09053031646912549
+          index systematic uncertainty down: -0.04006194952819951
+   - name: 3HWC J1907+085
+     RA: 286.787
+     Dec: 8.57411
+     l: 42.346401007042765
+     b: 0.4414079384381208
+     position uncertainty: 0.08902620881011057
+     search radius: 0.0
+     TS: 75.45754075689999
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 8.35587e-15
+          flux statistical uncertainty up: 9.43263e-16
+          flux statistical uncertainty down: -9.70496e-16
+          index: -2.94932
+          index statistical uncertainty up: 0.0905403
+          index statistical uncertainty down: -0.090738
+          flux systematic uncertainty up: 2.4641288428304628e-15
+          flux systematic uncertainty down: -1.5806044978010797e-15
+          index systematic uncertainty up: 0.08522843128909467
+          index systematic uncertainty down: -0.0402095983566119
+   - name: 3HWC J1908+063
+     RA: 287.051
+     Dec: 6.39188
+     l: 40.52949688877524
+     b: -0.7953831135183328
+     position uncertainty: 0.057893237302876294
+     search radius: 0.0
+     TS: 1320.87906721
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 4.4726e-14
+          flux statistical uncertainty up: 1.36428e-15
+          flux statistical uncertainty down: -1.38013e-15
+          index: -2.12311
+          index statistical uncertainty up: 0.0254432
+          index statistical uncertainty down: -0.0254258
+          flux systematic uncertainty up: 2.073591394416943e-14
+          flux systematic uncertainty down: -7.0580848592235025e-15
+          index systematic uncertainty up: 0.17602940265762423
+          index systematic uncertainty down: -0.0208142499264328
+   - name: 3HWC J1912+103
+     RA: 288.062
+     Dec: 10.3516
+     l: 44.503681679361534
+     b: 0.14596168168264448
+     position uncertainty: 0.08517765461886542
+     search radius: 0.0
+     TS: 198.24921601
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 1.45222e-14
+          flux statistical uncertainty up: 9.33106e-16
+          flux statistical uncertainty down: -9.38372e-16
+          index: -2.84838
+          index statistical uncertainty up: 0.0512751
+          index statistical uncertainty down: -0.0514716
+          flux systematic uncertainty up: 4.3671953893087974e-15
+          flux systematic uncertainty down: -2.6425424477953043e-15
+          index systematic uncertainty up: 0.08572808816251497
+          index systematic uncertainty down: -0.03313958056463619
+   - name: 3HWC J1913+048
+     RA: 288.325
+     Dec: 4.85506
+     l: 39.750428447541815
+     b: -2.6291914639453644
+     position uncertainty: 0.1318318961520588
+     search radius: 0.0
+     TS: 44.67919806249999
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 6.83878e-15
+          flux statistical uncertainty up: 9.35494e-16
+          flux statistical uncertainty down: -9.91148e-16
+          index: -2.37239
+          index statistical uncertainty up: 0.12721
+          index statistical uncertainty down: -0.131861
+          flux systematic uncertainty up: 2.8066146188573882e-15
+          flux systematic uncertainty down: -1.0972184996544673e-15
+          index systematic uncertainty up: 0.1425651058288805
+          index systematic uncertainty down: -0.031596866933289926
+   - name: 3HWC J1914+118
+     RA: 288.677
+     Dec: 11.8722
+     l: 46.13071403719902
+     b: 0.3168058468799077
+     position uncertainty: 0.09082719771823568
+     search radius: 0.0
+     TS: 102.93117025000001
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 9.52354e-15
+          flux statistical uncertainty up: 9.48871e-16
+          flux statistical uncertainty down: -9.97053e-16
+          index: -2.87525
+          index statistical uncertainty up: 0.0955514
+          index statistical uncertainty down: -0.0983253
+          flux systematic uncertainty up: 2.9477068068273006e-15
+          flux systematic uncertainty down: -1.8682370040805857e-15
+          index systematic uncertainty up: 0.09731879880064298
+          index systematic uncertainty down: -0.05118664767300138
+   - name: 3HWC J1915+164
+     RA: 288.765
+     Dec: 16.4126
+     l: 50.19272129603271
+     b: 2.3498521018568352
+     position uncertainty: 0.10395433328365784
+     search radius: 0.0
+     TS: 27.4721691321
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 4.64785e-15
+          flux statistical uncertainty up: 6.62093e-16
+          flux statistical uncertainty down: -6.53902e-16
+          index: -2.60106
+          index statistical uncertainty up: 0.132831
+          index statistical uncertainty down: -0.134736
+          flux systematic uncertainty up: 1.396719878402609e-15
+          flux systematic uncertainty down: -6.836255960136368e-16
+          index systematic uncertainty up: 0.0709628163195349
+          index systematic uncertainty down: -0.014852336516521458
+   - name: 3HWC J1918+159
+     RA: 289.688
+     Dec: 15.9077
+     l: 50.158718577176735
+     b: 1.3301968998485607
+     position uncertainty: 0.11423285327402243
+     search radius: 0.0
+     TS: 31.5556321536
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 5.05052e-15
+          flux statistical uncertainty up: 6.94949e-16
+          flux statistical uncertainty down: -7.23213e-16
+          index: -2.49227
+          index statistical uncertainty up: 0.152796
+          index statistical uncertainty down: -0.168665
+          flux systematic uncertainty up: 1.7585465848546632e-15
+          flux systematic uncertainty down: -8.046566337289466e-16
+          index systematic uncertainty up: 0.13326897613473276
+          index systematic uncertainty down: -0.02420862449624078
+   - name: 3HWC J1920+147
+     RA: 290.171
+     Dec: 14.7859
+     l: 49.386036873612994
+     b: 0.3929209865143418
+     position uncertainty: 0.10174172472981383
+     search radius: 0.0
+     TS: 55.4019705625
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 5.9869e-15
+          flux statistical uncertainty up: 9.30667e-16
+          flux statistical uncertainty down: -9.79615e-16
+          index: -2.97544
+          index statistical uncertainty up: 0.125215
+          index statistical uncertainty down: -0.126236
+          flux systematic uncertainty up: 2.0005112750244618e-15
+          flux systematic uncertainty down: -1.3389793066362159e-15
+          index systematic uncertainty up: 0.11127872213500692
+          index systematic uncertainty down: -0.04579404983182837
+   - name: 3HWC J1922+140
+     RA: 290.698
+     Dec: 14.0926
+     l: 49.014674901987476
+     b: -0.3837475287545433
+     position uncertainty: 0.06217476721218437
+     search radius: 0.0
+     TS: 176.58423225
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 1.29663e-14
+          flux statistical uncertainty up: 7.69855e-16
+          flux statistical uncertainty down: -7.6593e-16
+          index: -2.62464
+          index statistical uncertainty up: 0.061202
+          index statistical uncertainty down: -0.0617501
+          flux systematic uncertainty up: 3.7366937975836335e-15
+          flux systematic uncertainty down: -2.0437832754233012e-15
+          index systematic uncertainty up: 0.08972870945243822
+          index systematic uncertainty down: -0.023105482033491127
+   - name: 3HWC J1923+169
+     RA: 290.786
+     Dec: 16.9578
+     l: 51.58074547802973
+     b: 0.8938453420867261
+     position uncertainty: 0.10384083264696438
+     search radius: 0.0
+     TS: 46.1284114041
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 5.16891e-15
+          flux statistical uncertainty up: 8.23596e-16
+          flux statistical uncertainty down: -8.38254e-16
+          index: -3.06638
+          index statistical uncertainty up: 0.104929
+          index statistical uncertainty down: -0.101391
+          flux systematic uncertainty up: 1.42564988099498e-15
+          flux systematic uncertainty down: -9.19531123171478e-16
+          index systematic uncertainty up: 0.07325324907469942
+          index systematic uncertainty down: -0.025834531155026097
+   - name: 3HWC J1928+178
+     RA: 292.104
+     Dec: 17.8177
+     l: 52.9348626827506
+     b: 0.1953246088657993
+     position uncertainty: 0.0841863281991327
+     search radius: 0.0
+     TS: 216.70195264000003
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 1.36465e-14
+          flux statistical uncertainty up: 8.63169e-16
+          flux statistical uncertainty down: -9.00386e-16
+          index: -2.30466
+          index statistical uncertainty up: 0.0703717
+          index statistical uncertainty down: -0.0715551
+          flux systematic uncertainty up: 5.34102366054486e-15
+          flux systematic uncertainty down: -2.1411660217040618e-15
+          index systematic uncertainty up: 0.16953167196721664
+          index systematic uncertainty down: -0.02269682356630576
+   - name: 3HWC J1930+188
+     RA: 292.544
+     Dec: 18.8394
+     l: 54.03181866269674
+     b: 0.3179297228507438
+     position uncertainty: 0.08739810379632207
+     search radius: 0.0
+     TS: 115.61840675999998
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 1.01857e-14
+          flux statistical uncertainty up: 7.80664e-16
+          flux statistical uncertainty down: -7.82636e-16
+          index: -2.76059
+          index statistical uncertainty up: 0.0652029
+          index statistical uncertainty down: -0.066216
+          flux systematic uncertainty up: 2.9476951869045085e-15
+          flux systematic uncertainty down: -1.701105761879608e-15
+          index systematic uncertainty up: 0.08531788675301301
+          index systematic uncertainty down: -0.027235487878868616
+   - name: 3HWC J1935+213
+     RA: 293.95
+     Dec: 21.3819
+     l: 56.89572472298774
+     b: 0.3912969268360396
+     position uncertainty: 0.12441025280973232
+     search radius: 0.0
+     TS: 26.214707200899998
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 4.44106e-15
+          flux statistical uncertainty up: 6.70906e-16
+          flux statistical uncertainty down: -6.88821e-16
+          index: -2.73471
+          index statistical uncertainty up: 0.159898
+          index statistical uncertainty down: -0.156797
+          flux systematic uncertainty up: 1.2957453051182558e-15
+          flux systematic uncertainty down: -6.910287859677045e-16
+          index systematic uncertainty up: 0.07520420799396772
+          index systematic uncertainty down: -0.026185610552362744
+   - name: 3HWC J1936+223
+     RA: 294.082
+     Dec: 22.3063
+     l: 57.76267485813427
+     b: 0.7348066115485584
+     position uncertainty: 0.10775372999834885
+     search radius: 0.0
+     TS: 28.2241437696
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 4.11868e-15
+          flux statistical uncertainty up: 9.09942e-16
+          flux statistical uncertainty down: -1.21437e-15
+          index: -2.91277
+          index statistical uncertainty up: 0.269779
+          index statistical uncertainty down: -0.30006
+          flux systematic uncertainty up: 1.4520820507202747e-15
+          flux systematic uncertainty down: -1.1547909550321222e-15
+          index systematic uncertainty up: 0.19745069941633542
+          index systematic uncertainty down: -0.10564338739362733
+   - name: 3HWC J1937+193
+     RA: 294.39
+     Dec: 19.313
+     l: 55.29146050312156
+     b: -0.9787543872734171
+     position uncertainty: 0.1266006360939512
+     search radius: 0.0
+     TS: 25.228620296099997
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 4.18783e-15
+          flux statistical uncertainty up: 7.33524e-16
+          flux statistical uncertainty down: -7.80514e-16
+          index: -2.89869
+          index statistical uncertainty up: 0.155725
+          index statistical uncertainty down: -0.15881
+          flux systematic uncertainty up: 1.2307953625964797e-15
+          flux systematic uncertainty down: -7.976667732762852e-16
+          index systematic uncertainty up: 0.08763824564652091
+          index systematic uncertainty down: -0.035519253933606686
+   - name: 3HWC J1940+237
+     RA: 295.049
+     Dec: 23.7655
+     l: 59.47087193160663
+     b: 0.6747502788786671
+     position uncertainty: 0.3581703832503557
+     search radius: 0.0
+     TS: 27.227941441600002
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 4.00789e-15
+          flux statistical uncertainty up: 7.99117e-16
+          flux statistical uncertainty down: -7.96778e-16
+          index: -3.14054
+          index statistical uncertainty up: 0.118363
+          index statistical uncertainty down: -0.114078
+          flux systematic uncertainty up: 1.134252432010177e-15
+          flux systematic uncertainty down: -7.55887768601265e-16
+          index systematic uncertainty up: 0.06756799020246201
+          index systematic uncertainty down: -0.03476597618361942
+   - name: 3HWC J1950+242
+     RA: 297.686
+     Dec: 24.2556
+     l: 61.102249389228916
+     b: -1.1640752078120828
+     position uncertainty: 0.10919867595264064
+     search radius: 0.0
+     TS: 25.100801404899997
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 4.26146e-15
+          flux statistical uncertainty up: 6.77604e-16
+          flux statistical uncertainty down: -7.24199e-16
+          index: -2.4904
+          index statistical uncertainty up: 0.179036
+          index statistical uncertainty down: -0.193258
+          flux systematic uncertainty up: 1.5060769320044717e-15
+          flux systematic uncertainty down: -6.785321407391098e-16
+          index systematic uncertainty up: 0.14927877980476628
+          index systematic uncertainty down: -0.018352743664095686
+   - name: 3HWC J1951+266
+     RA: 297.905
+     Dec: 26.6101
+     l: 63.22817150116562
+     b: -0.13260413433413729
+     position uncertainty: 0.6100974995861171
+     search radius: 0.5
+     TS: 35.6018668929
+     flux measurements:
+        - assumed radius: 0.5
+          flux: 8.45752e-15
+          flux statistical uncertainty up: 1.17807e-15
+          flux statistical uncertainty down: -1.26617e-15
+          index: -2.36102
+          index statistical uncertainty up: 0.124637
+          index statistical uncertainty down: -0.129284
+          flux systematic uncertainty up: 2.580223869338474e-15
+          flux systematic uncertainty down: -1.2957719495744608e-15
+          index systematic uncertainty up: 0.1106912769824252
+          index systematic uncertainty down: -0.015677997321086636
+   - name: 3HWC J1951+293
+     RA: 297.993
+     Dec: 29.3988
+     l: 65.66456632148567
+     b: 1.2266905821325733
+     position uncertainty: 0.13774125354996847
+     search radius: 0.0
+     TS: 68.74847476090001
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 7.85466e-15
+          flux statistical uncertainty up: 7.72758e-16
+          flux statistical uncertainty down: -7.81147e-16
+          index: -2.46867
+          index statistical uncertainty up: 0.0932646
+          index statistical uncertainty down: -0.0961381
+          flux systematic uncertainty up: 2.726923588158642e-15
+          flux systematic uncertainty down: -1.238331283807366e-15
+          index systematic uncertainty up: 0.10478249901581867
+          index systematic uncertainty down: -0.020351267773777625
+   - name: 3HWC J1954+286
+     RA: 298.696
+     Dec: 28.631
+     l: 65.32195948919086
+     b: 0.3046874216205936
+     position uncertainty: 0.14230363407868024
+     search radius: 0.0
+     TS: 48.34977156
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 6.41974e-15
+          flux statistical uncertainty up: 7.66391e-16
+          flux statistical uncertainty down: -7.96147e-16
+          index: -2.4189
+          index statistical uncertainty up: 0.120165
+          index statistical uncertainty down: -0.124669
+          flux systematic uncertainty up: 2.439186983848512e-15
+          flux systematic uncertainty down: -9.919318481508696e-16
+          index systematic uncertainty up: 0.14934561024683685
+          index systematic uncertainty down: -0.01792304940572297
+   - name: 3HWC J1957+291
+     RA: 299.355
+     Dec: 29.1849
+     l: 66.09481522397733
+     b: 0.09901782162167358
+     position uncertainty: 0.09790138082471027
+     search radius: 0.0
+     TS: 41.0224878144
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 6.2472e-15
+          flux statistical uncertainty up: 7.36739e-16
+          flux statistical uncertainty down: -7.39339e-16
+          index: -2.53562
+          index statistical uncertainty up: 0.129279
+          index statistical uncertainty down: -0.135591
+          flux systematic uncertainty up: 2.0825351183833615e-15
+          flux systematic uncertainty down: -9.910830089351748e-16
+          index systematic uncertainty up: 0.11196606852077973
+          index systematic uncertainty down: -0.02175727694358896
+   - name: 3HWC J2005+311
+     RA: 301.465
+     Dec: 31.1699
+     l: 68.74421481094123
+     b: -0.39832435910498265
+     position uncertainty: 0.12066169033429422
+     search radius: 0.0
+     TS: 33.08665441000001
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 5.59681e-15
+          flux statistical uncertainty up: 7.3335e-16
+          flux statistical uncertainty down: -7.30673e-16
+          index: -2.57508
+          index statistical uncertainty up: 0.126571
+          index statistical uncertainty down: -0.129898
+          flux systematic uncertainty up: 1.7670449395702985e-15
+          flux systematic uncertainty down: -8.91907473150102e-16
+          index systematic uncertainty up: 0.10511231849788134
+          index systematic uncertainty down: -0.01770829466662408
+   - name: 3HWC J2006+340
+     RA: 301.729
+     Dec: 34.0036
+     l: 71.25236731397277
+     b: 0.93917696407282
+     position uncertainty: 0.13740978868026751
+     search radius: 0.0
+     TS: 67.43053879210001
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 8.47941e-15
+          flux statistical uncertainty up: 8.2542e-16
+          flux statistical uncertainty down: -8.52145e-16
+          index: -2.55548
+          index statistical uncertainty up: 0.12372
+          index statistical uncertainty down: -0.126662
+          flux systematic uncertainty up: 3.1000205900737184e-15
+          flux systematic uncertainty down: -1.4832415135712044e-15
+          index systematic uncertainty up: 0.15272450949340108
+          index systematic uncertainty down: -0.029654711261451056
+   - name: 3HWC J2010+345
+     RA: 302.695
+     Dec: 34.5453
+     l: 72.14074721389515
+     b: 0.5629440730923078
+     position uncertainty: 0.16505498551049516
+     search radius: 0.0
+     TS: 27.576361742399996
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 5.39509e-15
+          flux statistical uncertainty up: 8.51855e-16
+          flux statistical uncertainty down: -8.68263e-16
+          index: -2.91346
+          index statistical uncertainty up: 0.125708
+          index statistical uncertainty down: -0.12501
+          flux systematic uncertainty up: 1.5440134170663805e-15
+          flux systematic uncertainty down: -9.398862942297858e-16
+          index systematic uncertainty up: 0.09818474321400424
+          index systematic uncertainty down: -0.02812909703492119
+   - name: 3HWC J2019+367
+     RA: 304.937
+     Dec: 36.7953
+     l: 75.0235007842706
+     b: 0.30050410855262505
+     position uncertainty: 0.060771691239490215
+     search radius: 0.0
+     TS: 1227.45823201
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 3.47255e-14
+          flux statistical uncertainty up: 1.33199e-15
+          flux statistical uncertainty down: -1.3335e-15
+          index: -2.04431
+          index statistical uncertainty up: 0.0243816
+          index statistical uncertainty down: -0.0245201
+          flux systematic uncertainty up: 1.7776450524007874e-14
+          flux systematic uncertainty down: -5.698060548335727e-15
+          index systematic uncertainty up: 0.15502754884213324
+          index systematic uncertainty down: -0.017061480006142094
+   - name: 3HWC J2020+403
+     RA: 305.156
+     Dec: 40.3749
+     l: 78.07198896706655
+     b: 2.185908259900182
+     position uncertainty: 0.08837891300947304
+     search radius: 0.0
+     TS: 93.94164852249999
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 1.14202e-14
+          flux statistical uncertainty up: 1.19421e-15
+          flux statistical uncertainty down: -1.20646e-15
+          index: -3.11105
+          index statistical uncertainty up: 0.0748173
+          index statistical uncertainty down: -0.0746828
+          flux systematic uncertainty up: 3.367377124766395e-15
+          flux systematic uncertainty down: -2.1896922090787097e-15
+          index systematic uncertainty up: 0.08133180558674423
+          index systematic uncertainty down: -0.03622964255964993
+   - name: 3HWC J2022+431
+     RA: 305.522
+     Dec: 43.158
+     l: 80.52161686776422
+     b: 3.5404178358254796
+     position uncertainty: 0.09548525770138865
+     search radius: 0.0
+     TS: 28.9513944225
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 5.95278e-15
+          flux statistical uncertainty up: 1.10381e-15
+          flux statistical uncertainty down: -1.10641e-15
+          index: -2.33613
+          index statistical uncertainty up: 0.115477
+          index statistical uncertainty down: -0.120899
+          flux systematic uncertainty up: 2.197317769914948e-15
+          flux systematic uncertainty down: -8.618791885084588e-16
+          index systematic uncertainty up: 0.09665495693444826
+          index systematic uncertainty down: -0.01668836121373176
+   - name: 3HWC J2023+324
+     RA: 305.815
+     Dec: 32.4429
+     l: 71.85383970744738
+     b: -2.7695393221447073
+     position uncertainty: 0.7316724149761062
+     search radius: 1.0
+     TS: 30.700021377599995
+     flux measurements:
+        - assumed radius: 1.0
+          flux: 1.37889e-14
+          flux statistical uncertainty up: 1.89294e-15
+          flux statistical uncertainty down: -1.99846e-15
+          index: -2.6957
+          index statistical uncertainty up: 0.127163
+          index statistical uncertainty down: -0.122088
+          flux systematic uncertainty up: 3.1507998940110448e-15
+          flux systematic uncertainty down: -2.135001110561772e-15
+          index systematic uncertainty up: 0.060326580377143744
+          index systematic uncertainty down: -0.026424259686886227
+   - name: 3HWC J2031+415
+     RA: 307.925
+     Dec: 41.5107
+     l: 80.20977503863281
+     b: 1.138121516886047
+     position uncertainty: 0.058001280538630746
+     search radius: 0.0
+     TS: 556.85144529
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 3.0712e-14
+          flux statistical uncertainty up: 1.3453e-15
+          flux statistical uncertainty down: -1.36347e-15
+          index: -2.36229
+          index statistical uncertainty up: 0.0382498
+          index statistical uncertainty down: -0.038503
+          flux systematic uncertainty up: 1.3114706785894984e-14
+          flux systematic uncertainty down: -4.8646235342521645e-15
+          index systematic uncertainty up: 0.13614011164972678
+          index systematic uncertainty down: -0.01878640465868831
+   - name: 3HWC J2043+443
+     RA: 310.888
+     Dec: 44.3007
+     l: 83.7444197246352
+     b: 1.0978559054454118
+     position uncertainty: 0.24110961619549764
+     search radius: 0.5
+     TS: 28.5980022441
+     flux measurements:
+        - assumed radius: 0.5
+          flux: 9.67314e-15
+          flux statistical uncertainty up: 2.05703e-15
+          flux statistical uncertainty down: -2.18971e-15
+          index: -2.33434
+          index statistical uncertainty up: 0.139762
+          index statistical uncertainty down: -0.149655
+          flux systematic uncertainty up: 3.918199722818633e-15
+          flux systematic uncertainty down: -1.4864170514011195e-15
+          index systematic uncertainty up: 0.11163772167148497
+          index systematic uncertainty down: -0.015255038511914629
+   - name: 3HWC J2227+610
+     RA: 336.962
+     Dec: 61.0482
+     l: 106.42174578621707
+     b: 2.86628030851553
+     position uncertainty: 0.194069828418056
+     search radius: 0.0
+     TS: 52.5026320569
+     flux measurements:
+        - assumed radius: 0.0
+          flux: 3.08059e-14
+          flux statistical uncertainty up: 5.87416e-15
+          flux statistical uncertainty down: -5.81739e-15
+          index: -2.42778
+          index statistical uncertainty up: 0.0971515
+          index statistical uncertainty down: -0.102271
+          flux systematic uncertainty up: 1.3102543159558756e-14
+          flux systematic uncertainty down: -4.1126982648986096e-15
+          index systematic uncertainty up: 0.10307948874533707
+          index systematic uncertainty down: -0.021669616978617516
