@@ -125,8 +125,8 @@ logE_max = logE_nbins
 fit_radial_profile = False
 radial_bin_scale = 0.1
 
-include_syst_error = True
-#include_syst_error = False
+#include_syst_error = True
+include_syst_error = False
 
 if 'Crab' in source_name:
     fit_radial_profile = False

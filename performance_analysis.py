@@ -57,10 +57,8 @@ ana_tag = []
 #ana_tag += [['cr20_nbin7_fullspec16_free','b']]
 #ana_tag += [['cr20_nbin9_fullspec16_free','b']]
 
-#ana_tag += [['cr20_nbin7_init','b']]
-#ana_tag += [['cr20_nbin7_fullspec4_free','b']]
-ana_tag += [['cr20_nbin7_fullspec16_constraint','b']]
-ana_tag += [['wr20_nbin7_fullspec32_free','b']]
+#ana_tag += [['cr6_nbin7_fullspec32_free','b']]
+ana_tag += [['cr8_nbin7_fullspec32_free','b']]
 
 #ana_tag += [['cr20_nbin7_fullspec1_free','b']]
 #ana_tag += [['cr20_nbin7_fullspec2_free','b']]
@@ -73,8 +71,8 @@ ana_tag += [['wr20_nbin7_fullspec32_free','b']]
 onoff = 'OFF'
 
 #exposure_per_group = 2.
-exposure_per_group = 5.
-#exposure_per_group = 10.
+#exposure_per_group = 5.
+exposure_per_group = 10.
 #exposure_per_group = 20.
 #exposure_per_group = 50.
 #exposure_per_group = 100.
@@ -94,10 +92,13 @@ input_epoch = ['V4','V5','V6']
 #input_epoch = ['V5','V6']
 
 #demo_energy = logE_bins
+#logE_low = 0
+#logE_mid = logE_axis.get_bin(np.log10(0.3))+1
+#logE_hig = logE_axis.get_bin(np.log10(1.7))+1
+#demo_energy = [logE_bins[logE_low], logE_bins[logE_mid], logE_bins[logE_hig], logE_bins[len(logE_bins)-1]] # log10(E/TeV)
 logE_low = 0
-logE_mid = logE_axis.get_bin(np.log10(0.3))+1
-logE_hig = logE_axis.get_bin(np.log10(1.7))+1
-demo_energy = [logE_bins[logE_low], logE_bins[logE_mid], logE_bins[logE_hig], logE_bins[len(logE_bins)-1]] # log10(E/TeV)
+logE_hig = logE_axis.get_bin(np.log10(1.0))+1
+demo_energy = [logE_bins[logE_low], logE_bins[logE_hig], logE_bins[len(logE_bins)-1]] # log10(E/TeV)
 demoE_nbins = len(demo_energy) - 1 
 demoE_axis = MyArray1D(x_bins=demo_energy)
 

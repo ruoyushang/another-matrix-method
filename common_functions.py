@@ -130,6 +130,19 @@ if gcut_bins==6:
     Normalized_MSCW_cut += [1.]
     Normalized_MSCW_cut += [3.]
     Normalized_MSCW_cut += [5.]
+elif gcut_bins==8:
+    #Normalized_MSCL_cut += [1.]
+    #Normalized_MSCL_cut += [2.]
+    #Normalized_MSCW_cut += [1.]
+    #Normalized_MSCW_cut += [2.]
+    #Normalized_MSCW_cut += [3.]
+    #Normalized_MSCW_cut += [4.]
+    Normalized_MSCL_cut += [1.]
+    Normalized_MSCL_cut += [3.]
+    Normalized_MSCW_cut += [1.]
+    Normalized_MSCW_cut += [3.]
+    Normalized_MSCW_cut += [5.]
+    Normalized_MSCW_cut += [7.]
 
 xoff_bins = [xyoff_map_nbins for logE in range(0,logE_nbins)]
 yoff_bins = [xyoff_map_nbins for logE in range(0,logE_nbins)]
@@ -711,6 +724,23 @@ def EventGammaCut(MSCL,MSCW):
             GammaCut = 4.5
         elif abs(MSCL)<Normalized_MSCL_cut[1] and abs(MSCW)<Normalized_MSCW_cut[2]:
             GammaCut = 5.5
+    elif gcut_bins==8:
+        if abs(MSCL)<Normalized_MSCL_cut[0] and abs(MSCW)<Normalized_MSCW_cut[0]:
+            GammaCut = 0.5
+        elif abs(MSCL)<Normalized_MSCL_cut[0] and abs(MSCW)<Normalized_MSCW_cut[1]:
+            GammaCut = 1.5
+        elif abs(MSCL)<Normalized_MSCL_cut[0] and abs(MSCW)<Normalized_MSCW_cut[2]:
+            GammaCut = 2.5
+        elif abs(MSCL)<Normalized_MSCL_cut[0] and abs(MSCW)<Normalized_MSCW_cut[3]:
+            GammaCut = 3.5
+        elif abs(MSCL)<Normalized_MSCL_cut[1] and abs(MSCW)<Normalized_MSCW_cut[0]:
+            GammaCut = 4.5
+        elif abs(MSCL)<Normalized_MSCL_cut[1] and abs(MSCW)<Normalized_MSCW_cut[1]:
+            GammaCut = 5.5
+        elif abs(MSCL)<Normalized_MSCL_cut[1] and abs(MSCW)<Normalized_MSCW_cut[2]:
+            GammaCut = 6.5
+        elif abs(MSCL)<Normalized_MSCL_cut[1] and abs(MSCW)<Normalized_MSCW_cut[3]:
+            GammaCut = 7.5
 
 
     return GammaCut
@@ -1065,6 +1095,10 @@ def cosmic_ray_like_chi2_fullspec(
 
     xyoff_idx_1d = find_index_for_xyoff_vector1d()
 
+    #for entry in range(0,len(try_params)-1):
+    #    if abs(try_params[entry+1])>abs(try_params[entry]):
+    #        lsq_log_likelihood += (abs(try_params[entry+1])-abs(try_params[entry]))/abs(try_params[entry])
+
     if norm_constraint:
         for logE in range(0,logE_nbins):
             for gcut in range(0,gcut_bins):
@@ -1090,17 +1124,18 @@ def cosmic_ray_like_chi2_fullspec(
                             n_data = init
                         n_data_gcut += n_data
                        
-                        n_syst = syst
-                        if not gcut==0:
-                            n_syst = 0.
-                        n_syst_gcut += syst
+                        n_syst = 0.
+                        if gcut==0:
+                            n_syst = syst
+                        n_syst_gcut += n_syst
 
-                if gcut==0:
+                if gcut==0 or n_data_gcut==0.:
                     weight_gcut = 0.
                 else:
                     weight_gcut = 1.
 
-                log_likelihood = significance_li_and_ma(n_data_gcut, n_expect_gcut, n_syst_gcut)
+                #log_likelihood = significance_li_and_ma(n_data_gcut, n_expect_gcut, n_syst_gcut)
+                log_likelihood = significance_li_and_ma(n_data_gcut, n_expect_gcut, 0.)
                 lsq_log_likelihood += pow(log_likelihood,2) * weight_gcut
                 #if n_data_gcut==0.:
                 #    lsq_log_likelihood += n_expect_gcut*weight_gcut
@@ -1655,8 +1690,8 @@ def PlotCountProjection(fig,label_z,logE_min,logE_max,hist_map_data,hist_map_bkg
     y_bkgd_array = []
     y_syst_array = []
     y_error_array = []
-    for br in range(0,len(y_proj_axis_inv.xaxis)-1):
-        y_axis_array += [0.5*(y_proj_axis_inv.xaxis[br]+y_proj_axis_inv.xaxis[br+1])]
+    for br in range(0,len(y_proj_axis.xaxis)-1):
+        y_axis_array += [0.5*(y_proj_axis.xaxis[br]+y_proj_axis.xaxis[br+1])]
         y_count_array += [0.]
         y_bkgd_array += [0.]
         y_syst_array += [0.]
@@ -3685,8 +3720,10 @@ def build_skymap(
         norm_data = norm_cr_data
         norm_init = norm_cr_init
         if abs(norm_sr_data_err)<abs(norm_sr_data):
-            norm_data = norm_sr_data + norm_cr_data
-            norm_init = norm_sr_init + norm_cr_init
+            #norm_data = norm_sr_data + norm_cr_data
+            #norm_init = norm_sr_init + norm_cr_init
+            norm_data = norm_sr_data 
+            norm_init = norm_sr_init 
         if norm_init==0.: continue
         for gcut in range(0,gcut_bins):
             for idx_x in range(0,xoff_bins[logE]):
@@ -3804,9 +3841,9 @@ def build_skymap(
         for idx_x in range(0,xoff_bins[logE]):
             for idx_y in range(0,yoff_bins[logE]):
                 sum_xyoff_map_cr = 0.
-                for gcut in range(1,gcut_bins):
-                    data = data_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
-                    sum_xyoff_map_cr += data
+                for gcut in range(1,3):
+                    model = fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
+                    sum_xyoff_map_cr += model
                 for gcut in range(0,gcut_bins):
                     model = fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
                     model_err = syst_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
@@ -3818,6 +3855,7 @@ def build_skymap(
                     ratio_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = ratio
                     syst_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = ratio_syst
 
+
     for logE in range(0,logE_nbins):
 
         if xoff_bins[logE]==1: continue
@@ -3826,7 +3864,7 @@ def build_skymap(
         sum_xyoff_map_sr = 0.
         sum_xyoff_map_sr = np.sum(fit_xyoff_map[logE].waxis[:,:,0])
         sum_xyoff_map_cr = 0.
-        for gcut in range(1,gcut_bins):
+        for gcut in range(1,3):
             sum_xyoff_map_cr += np.sum(data_xyoff_map[logE].waxis[:,:,gcut])
         avg_ratio = 0.
         if sum_xyoff_map_cr>0.:
@@ -3965,11 +4003,10 @@ def build_skymap(
 
                 sr_syst = syst_xyoff_map[logE].get_bin_content(Xoff,Yoff,0.5)
                 sr_model = ratio_xyoff_map[logE].get_bin_content(Xoff,Yoff,0.5)
-                cr_model = ratio_xyoff_map[logE].get_bin_content(Xoff,Yoff,GammaCut)
-                if GammaCut>1.:
+                if GammaCut>1. and GammaCut<3.:
                     fit_sky_map[logE].fill(Xsky_rel,Ysky_rel,0.5,weight=sr_model)
                     syst_sky_map[logE].fill(Xsky_rel,Ysky_rel,0.5,weight=sr_syst)
-                else:
+                elif GammaCut<1.:
                     data_sky_map[logE].fill(Xsky_rel,Ysky_rel,GammaCut)
 
             else:
@@ -3982,11 +4019,10 @@ def build_skymap(
 
                     sr_syst = syst_xyoff_map[logE].get_bin_content(Xoff,Yoff,0.5)
                     sr_model = ratio_xyoff_map[logE].get_bin_content(Xoff,Yoff,0.5)
-                    cr_model = ratio_xyoff_map[logE].get_bin_content(Xoff,Yoff,GammaCut)
-                    if GammaCut>1.:
+                    if GammaCut>1. and GammaCut<3.:
                         fit_sky_map[logE].fill(Gal_Xsky,Gal_Ysky,0.5,weight=sr_model)
                         syst_sky_map[logE].fill(Gal_Xsky,Gal_Ysky,0.5,weight=sr_syst)
-                    else:
+                    elif GammaCut<1.:
                         data_sky_map[logE].fill(Gal_Xsky,Gal_Ysky,GammaCut)
 
                 else:
@@ -3996,11 +4032,10 @@ def build_skymap(
 
                     sr_syst = syst_xyoff_map[logE].get_bin_content(Xoff,Yoff,0.5)
                     sr_model = ratio_xyoff_map[logE].get_bin_content(Xoff,Yoff,0.5)
-                    cr_model = ratio_xyoff_map[logE].get_bin_content(Xoff,Yoff,GammaCut)
-                    if GammaCut>1.:
+                    if GammaCut>1. and GammaCut<3.:
                         fit_sky_map[logE].fill(Xsky,Ysky,0.5,weight=sr_model)
                         syst_sky_map[logE].fill(Xsky,Ysky,0.5,weight=sr_syst)
-                    else:
+                    elif GammaCut<1.:
                         data_sky_map[logE].fill(Xsky,Ysky,GammaCut)
     
         print(f'memory usage (current,peak) = {tracemalloc.get_traced_memory()}')
