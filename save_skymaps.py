@@ -359,7 +359,6 @@ for small_runlist in range(0,len(big_runlist)):
         print (f'On data,  data_sum = {data_sum}, bkgd_sum = {bkgd_sum:0.1f}, error = {error:0.1f} +/- {stat_error:0.1f} +/- {syst_error:0.1f} %')
     print (f'total_data_sum = {total_data_sum:0.1f}, total_bkgd_sum = {total_bkgd_sum:0.1f}')
 
-
     output_filename = f'{smi_output}/skymaps_{source_name}_{input_epoch}_{onoff}_{sky_tag}.pkl'
     print (f'reading {output_filename}...')
     if not os.path.exists(output_filename):
@@ -375,6 +374,8 @@ for small_runlist in range(0,len(big_runlist)):
         with open(output_filename,"wb") as file:
             pickle.dump(analysis_result, file)
         del analysis_result
+
+
     print ('=================================================================================')
 
 print ("skymap job completed.")

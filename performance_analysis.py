@@ -58,6 +58,8 @@ ana_tag = []
 #ana_tag += [['cr20_nbin9_fullspec16_free','b']]
 
 #ana_tag += [['cr6_nbin7_fullspec32_free','b']]
+ana_tag += [['cr8_nbin7_fullspec8_free','b']]
+ana_tag += [['cr8_nbin7_fullspec16_free','b']]
 ana_tag += [['cr8_nbin7_fullspec32_free','b']]
 
 #ana_tag += [['cr20_nbin7_fullspec1_free','b']]
@@ -70,9 +72,9 @@ ana_tag += [['cr8_nbin7_fullspec32_free','b']]
 
 onoff = 'OFF'
 
-#exposure_per_group = 2.
+exposure_per_group = 2.
 #exposure_per_group = 5.
-exposure_per_group = 10.
+#exposure_per_group = 10.
 #exposure_per_group = 20.
 #exposure_per_group = 50.
 #exposure_per_group = 100.
