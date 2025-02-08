@@ -83,8 +83,8 @@ calibration_radius = 0.15 # need to be larger than the PSF and smaller than the 
 coordinate_type = 'icrs'
 
 #logE_threshold = -99
-logE_threshold = 0
-#logE_threshold = 1
+#logE_threshold = 0
+logE_threshold = 1
 #logE_threshold = 2
 fov_mask_radius = 10.
 gcut_bins = 3
@@ -3804,13 +3804,24 @@ def build_skymap(
         print (f"solution['fun'] = {solution['fun']}")
         fit_params = solution['x']
 
-        #print ("***************************************************************************************")
-        #print ("fit xyoff maps...")
+        print ("***************************************************************************************")
         for entry in range(0,len(fit_params)):
-            #print (f"truth_params = {truth_params[entry]:0.1f}, init_params = {init_params[entry]:0.1f}, fit_params = {fit_params[entry]:0.1f}")
+            print (f"init_params = {init_params[entry]:0.1f}, fit_params = {fit_params[entry]:0.1f}")
             if np.isnan(fit_params[entry]):
                 print ("Soluiton is nan!!!")
-                exit()
+                #exit()
+                for logE in range(0,logE_nbins):
+                    incl_sky_map[logE].reset()
+                    data_sky_map[logE].reset()
+                    fit_sky_map[logE].reset()
+                    syst_sky_map[logE].reset()
+                    data_xyoff_map[logE].reset()
+                    fit_xyoff_map[logE].reset()
+                    init_xyoff_map[logE].reset()
+                    data_xyvar_map[logE].reset()
+                    syst_xyoff_map[logE].reset()
+                    ratio_xyoff_map[logE].reset()
+                return [exposure_hours,avg_tel_elev,avg_tel_azim,avg_MeanPedvar]
 
         fit_xyoff_map_1d_fullspec = big_xyoff_eigenvectors_fullspec.T @ fit_params
 

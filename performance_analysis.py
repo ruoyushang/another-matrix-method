@@ -51,30 +51,24 @@ ana_tag = []
 #ana_tag += [['cr20_nbin9_fullspec16_fov15','b']]
 #ana_tag += [['cr20_nbin9_fullspec16_free','b']]
 
-#ana_tag += [['cr20_nbin1_fullspec16_free','b']]
-#ana_tag += [['cr20_nbin3_fullspec16_free','b']]
-#ana_tag += [['cr20_nbin5_fullspec16_free','b']]
-#ana_tag += [['cr20_nbin7_fullspec16_free','b']]
-#ana_tag += [['cr20_nbin9_fullspec16_free','b']]
+#ana_tag += [['cr8_nbin7_fullspec1_free','$k_{c}$=1']]
+#ana_tag += [['cr8_nbin7_fullspec2_free','$k_{c}$=2']]
+#ana_tag += [['cr8_nbin7_fullspec4_free','$k_{c}$=4']]
+#ana_tag += [['cr8_nbin7_fullspec8_free','$k_{c}$=8']]
+#ana_tag += [['cr8_nbin7_fullspec16_free','$k_{c}$=16']]
+#ana_tag += [['cr8_nbin7_fullspec32_free','$k_{c}$=32']]
 
-#ana_tag += [['cr6_nbin7_fullspec32_free','b']]
-ana_tag += [['cr8_nbin7_fullspec8_free','b']]
-ana_tag += [['cr8_nbin7_fullspec16_free','b']]
-ana_tag += [['cr8_nbin7_fullspec32_free','b']]
-
-#ana_tag += [['cr20_nbin7_fullspec1_free','b']]
-#ana_tag += [['cr20_nbin7_fullspec2_free','b']]
-#ana_tag += [['cr20_nbin7_fullspec4_free','b']]
-#ana_tag += [['cr20_nbin7_fullspec8_free','b']]
-#ana_tag += [['cr20_nbin7_fullspec16_free','b']]
-#ana_tag += [['cr20_nbin7_fullspec32_free','b']]
+ana_tag += [['cr8_nbin1_fullspec32_free','$1\times1$ bins']]
+ana_tag += [['cr8_nbin3_fullspec32_free','$3\times3$ bins']]
+ana_tag += [['cr8_nbin5_fullspec32_free','$5\times5$ bins']]
+ana_tag += [['cr8_nbin7_fullspec32_free','$7\times7$ bins']]
 
 
 onoff = 'OFF'
 
-exposure_per_group = 2.
+#exposure_per_group = 2.
 #exposure_per_group = 5.
-#exposure_per_group = 10.
+exposure_per_group = 10.
 #exposure_per_group = 20.
 #exposure_per_group = 50.
 #exposure_per_group = 100.
@@ -352,7 +346,6 @@ for demoE in range(0,demoE_nbins):
     ax.set_xlabel(label_x)
     ax.set_ylabel(label_y)
     for ana in range(0,len(ana_tag)):
-        if ana_tag[ana][1]=='w': continue
         plot_elev = []
         plot_error_significance = []
         for grp in range(0,len(list_elev[ana])):
@@ -361,7 +354,7 @@ for demoE in range(0,demoE_nbins):
             bkgd = list_bkgd_count[ana][grp][demoE]
             plot_elev += [elev]
             plot_error_significance += [abs(significance_li_and_ma(data,bkgd,0.))]
-        ax.scatter(plot_elev,plot_error_significance,color=ana_tag[ana][1],alpha=0.3, label=f"{ana_tag[ana][0].strip('rank').strip('fullspec')} eigenvectors")
+        ax.scatter(plot_elev,plot_error_significance,alpha=0.3, label=f"{ana_tag[ana][1]}")
         #ax.scatter(plot_elev,plot_error_significance,alpha=0.3, label=f"{ana_tag[ana][0].strip('rank')} eigenvectors")
     ax.legend(loc='best')
     fig.savefig(f'output_plots/fov_error_significance_vs_elev_demoE{demoE}.png',bbox_inches='tight')
@@ -380,7 +373,6 @@ for demoE in range(0,demoE_nbins):
     ax.set_xlabel(label_x)
     ax.set_ylabel(label_y)
     for ana in range(0,len(ana_tag)):
-        if ana_tag[ana][1]=='w': continue
         plot_nsb = []
         plot_error_significance = []
         for grp in range(0,len(list_nsb[ana])):
@@ -389,7 +381,7 @@ for demoE in range(0,demoE_nbins):
             bkgd = list_bkgd_count[ana][grp][demoE]
             plot_nsb += [nsb]
             plot_error_significance += [abs(significance_li_and_ma(data,bkgd,0.))]
-        ax.scatter(plot_nsb,plot_error_significance,color=ana_tag[ana][1],alpha=0.3, label=f"{ana_tag[ana][0].strip('rank').strip('fullspec')} eigenvectors")
+        ax.scatter(plot_nsb,plot_error_significance,alpha=0.3, label=f"{ana_tag[ana][1]}")
         #ax.scatter(plot_nsb,plot_error_significance,alpha=0.3, label=f"{ana_tag[ana][0].strip('rank')} eigenvectors")
     ax.legend(loc='best')
     fig.savefig(f'output_plots/fov_error_significance_vs_nsb_demoE{demoE}.png',bbox_inches='tight')
@@ -408,7 +400,6 @@ for demoE in range(0,demoE_nbins):
     ax.set_xlabel(label_x)
     ax.set_ylabel(label_y)
     for ana in range(0,len(ana_tag)):
-        if ana_tag[ana][1]=='w': continue
         plot_elev = []
         plot_error_significance = []
         for grp in range(0,len(list_elev[ana])):
@@ -417,13 +408,7 @@ for demoE in range(0,demoE_nbins):
                 significance = list_significance[ana][grp][demoE][pix]
                 plot_elev += [elev]
                 plot_error_significance += [abs(significance)]
-        kc = ana_tag[ana][0].strip('rank').strip('fullspec')
-        scatter_color = 'k'
-        if ana_tag[ana][1]=='b':
-            scatter_color = 'skyblue'
-        if ana_tag[ana][1]=='r':
-            scatter_color = 'salmon'
-        ax.scatter(plot_elev,plot_error_significance,color=scatter_color,alpha=0.05)
+        ax.scatter(plot_elev,plot_error_significance,alpha=0.05)
 
         n_bins = 10
         elev_min = np.min(plot_elev)
@@ -445,7 +430,7 @@ for demoE in range(0,demoE_nbins):
             if n_entries>0.:
                 avg_significance = avg_significance/n_entries
             significance_axis += [avg_significance]
-        ax.plot(elev_axis,significance_axis,color=ana_tag[ana][1],label='$k_{c}$='+f'{kc}')
+        ax.plot(elev_axis,significance_axis,label=f'{ana_tag[ana][1]}')
 
     ax.legend(loc='best')
     E_min = pow(10.,demo_energy[demoE])
@@ -467,7 +452,6 @@ for demoE in range(0,demoE_nbins):
     ax.set_xlabel(label_x)
     ax.set_ylabel(label_y)
     for ana in range(0,len(ana_tag)):
-        if ana_tag[ana][1]=='w': continue
         plot_nsb = []
         plot_error_significance = []
         for grp in range(0,len(list_nsb[ana])):
@@ -476,14 +460,8 @@ for demoE in range(0,demoE_nbins):
                 significance = list_significance[ana][grp][demoE][pix]
                 plot_nsb += [nsb]
                 plot_error_significance += [abs(significance)]
-        kc = ana_tag[ana][0].strip('rank').strip('fullspec')
         n_entries = len(plot_nsb)
-        scatter_color = 'k'
-        if ana_tag[ana][1]=='b':
-            scatter_color = 'skyblue'
-        if ana_tag[ana][1]=='r':
-            scatter_color = 'salmon'
-        ax.scatter(plot_nsb,plot_error_significance,color=scatter_color,alpha=0.05)
+        ax.scatter(plot_nsb,plot_error_significance,alpha=0.05)
 
         n_bins = 10
         nsb_min = np.min(plot_nsb)
@@ -505,7 +483,7 @@ for demoE in range(0,demoE_nbins):
             if n_entries>0.:
                 avg_significance = avg_significance/n_entries
             significance_axis += [avg_significance]
-        ax.plot(nsb_axis,significance_axis,color=ana_tag[ana][1],label='$k_{c}$='+f'{kc}')
+        ax.plot(nsb_axis,significance_axis,label=f'{ana_tag[ana][1]}')
 
     ax.legend(loc='best')
     E_min = pow(10.,demo_energy[demoE])
@@ -531,7 +509,6 @@ for demoE in range(0,demoE_nbins):
     ax.set_xlabel(label_x)
     ax.set_ylabel(label_y)
     for ana in range(0,len(ana_tag)):
-        if ana_tag[ana][1]=='w': continue
         plot_error_significance = []
         for grp in range(0,len(list_elev[ana])):
             for pix in range(0,len(list_significance[ana][grp][demoE])):
@@ -541,8 +518,7 @@ for demoE in range(0,demoE_nbins):
         hist_significance, bin_edges = np.histogram(plot_error_significance,bins=hist_bins,range=(-hist_range,hist_range))
         mean = np.mean(np.array(plot_error_significance))
         rms = np.sqrt(np.mean(np.square(np.array(plot_error_significance))))
-        kc = ana_tag[ana][0].strip('rank').strip('fullspec')
-        ax.hist(plot_error_significance,bin_edges,histtype='step',density=True,facecolor=ana_tag[ana][1],label='$k_{c}$='+f'{kc}, $\\sigma$={rms:0.2f}')
+        ax.hist(plot_error_significance,bin_edges,histtype='step',density=True,label=f'{ana_tag[ana][1]}')
 
     hist_binsize = 2.*hist_range/float(hist_bins)
     significance_axis = np.arange(-5., 5., 0.01)
@@ -575,13 +551,11 @@ for demoE in range(0,demoE_nbins):
     ax.set_xlabel(label_x)
     ax.set_ylabel(label_y)
     for ana in range(0,len(ana_tag)):
-        if ana_tag[ana][1]=='w': continue
         freqs_shifted = list_freqs_shifted[ana][0][demoE]
         v_power_spectrum = np.zeros_like(list_v_power_spectrum[ana][0][demoE])
         for grp in range(0,len(list_elev[ana])):
             v_power_spectrum += list_v_power_spectrum[ana][grp][demoE]
-        kc = ana_tag[ana][0].strip('rank').strip('fullspec')
-        ax.plot(freqs_shifted,v_power_spectrum,label='$k_{c}$='+f'{kc}')
+        ax.plot(freqs_shifted,v_power_spectrum,label=f'{ana_tag[ana][1]}')
     ax.legend(loc='best')
     E_min = pow(10.,demo_energy[demoE])
     E_max = pow(10.,demo_energy[demoE+1])
@@ -602,13 +576,11 @@ for demoE in range(0,demoE_nbins):
     ax.set_xlabel(label_x)
     ax.set_ylabel(label_y)
     for ana in range(0,len(ana_tag)):
-        if ana_tag[ana][1]=='w': continue
         freqs_shifted = list_freqs_shifted[ana][0][demoE]
         h_power_spectrum = np.zeros_like(list_h_power_spectrum[ana][0][demoE])
         for grp in range(0,len(list_elev[ana])):
             h_power_spectrum += list_h_power_spectrum[ana][grp][demoE]
-        kc = ana_tag[ana][0].strip('rank').strip('fullspec')
-        ax.plot(freqs_shifted,h_power_spectrum,label='$k_{c}$='+f'{kc}')
+        ax.plot(freqs_shifted,h_power_spectrum,label=f'{ana_tag[ana][1]}')
     ax.legend(loc='best')
     E_min = pow(10.,demo_energy[demoE])
     E_max = pow(10.,demo_energy[demoE+1])
@@ -654,7 +626,7 @@ for demoE in range(0,demoE_nbins):
     ana_axis_label = []
     for ana in range(0,len(ana_tag)):
         ana_axis += [ana]
-        ana_axis_label += [ana_tag[ana][0].strip("rank").strip('fullspec')]
+        ana_axis_label += [ana_tag[ana][1].strip("$k_{c}$=")]
 
     syst_err_axis = []
     stat_err_axis = []
