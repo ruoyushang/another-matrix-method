@@ -33,6 +33,7 @@ gcut_end = common_functions.gcut_end
 cosmic_ray_like_chi2_fullspec = common_functions.cosmic_ray_like_chi2_fullspec
 significance_li_and_ma = common_functions.significance_li_and_ma
 prepare_vector_for_least_square = common_functions.prepare_vector_for_least_square
+convert_multivar_to_xyoff_vector1d_monospec = common_functions.convert_multivar_to_xyoff_vector1d_monospec
 convert_multivar_to_xyoff_vector1d = common_functions.convert_multivar_to_xyoff_vector1d
 convert_multivar_to_xyvar_vector1d = common_functions.convert_multivar_to_xyvar_vector1d
 weighted_least_square_solution = common_functions.weighted_least_square_solution
@@ -123,13 +124,16 @@ for entry in range(0,len(big_matrix_fullspec)):
     if expo<15./60. or norm<200.:
         delete_entries += [entry]
 
+new_xyoff_matrix_monospec = []
 new_xyoff_matrix_fullspec = []
 new_xyvar_matrix_fullspec = []
 for entry in range(0,len(big_matrix_fullspec)):
     if entry in delete_entries: continue
     norm = big_exposure[entry]
+    new_xyoff_matrix_monospec += [convert_multivar_to_xyoff_vector1d_monospec(big_matrix_fullspec[entry]/norm)]
     new_xyoff_matrix_fullspec += [convert_multivar_to_xyoff_vector1d(big_matrix_fullspec[entry]/norm)]
     new_xyvar_matrix_fullspec += [convert_multivar_to_xyvar_vector1d(big_matrix_fullspec[entry]/norm)]
+new_xyoff_matrix_monospec = np.array(new_xyoff_matrix_monospec)
 new_xyoff_matrix_fullspec = np.array(new_xyoff_matrix_fullspec)
 new_xyvar_matrix_fullspec = np.array(new_xyvar_matrix_fullspec)
 
@@ -171,8 +175,11 @@ with open(output_filename, "wb") as file:
         
 print ('Computing SVD eigenvectors...')
         
+avg_xyoff_map_1d_monospec = np.zeros_like(new_xyoff_matrix_monospec[0])
 avg_xyoff_map_1d_fullspec = np.zeros_like(new_xyoff_matrix_fullspec[0])
 avg_xyvar_map_1d_fullspec = np.zeros_like(new_xyvar_matrix_fullspec[0])
+for entry in range(0,len(new_xyoff_matrix_monospec)):
+    avg_xyoff_map_1d_monospec += new_xyoff_matrix_monospec[entry]
 for entry in range(0,len(new_xyoff_matrix_fullspec)):
     avg_xyoff_map_1d_fullspec += new_xyoff_matrix_fullspec[entry]
 for entry in range(0,len(new_xyvar_matrix_fullspec)):
@@ -227,6 +234,19 @@ def find_elbow_rank(S_vtr):
             break
 
     return elbow_rank
+
+print (f'new_xyoff_matrix_monospec.shape = {new_xyoff_matrix_monospec.shape}')
+big_xyoff_eigenvalues_monospec = []
+big_xyoff_eigenvectors_monospec = []
+for logE in range(0,logE_nbins):
+    U_full, S_full, VT_full = np.linalg.svd(new_xyoff_matrix_monospec[:,logE,:],full_matrices=False) # perform better for perturbation method
+    effective_matrix_rank_monospec = min(matrix_rank_fullspec,int(0.5*(len(S_full)-1)))
+    U_eco = U_full[:, :effective_matrix_rank_monospec]
+    VT_eco = VT_full[:effective_matrix_rank_monospec, :]
+    S_eco = S_full[:effective_matrix_rank_monospec]
+    big_xyoff_eigenvalues_monospec += [S_eco]
+    big_xyoff_eigenvectors_monospec += [VT_eco]
+
 
 print (f'new_xyoff_matrix_fullspec.shape = {new_xyoff_matrix_fullspec.shape}')
 U_full, S_full, VT_full = np.linalg.svd(new_xyoff_matrix_fullspec,full_matrices=False) # perform better for perturbation method
@@ -308,6 +328,7 @@ output_filename = f'{smi_output}/{ana_dir}/model_eigenvectors_{source_name}_{ono
 with open(output_filename,"wb") as file:
     models = []
     models += [[big_xyoff_eigenvalues_fullspec,big_xyoff_eigenvectors_fullspec,avg_xyoff_map_1d_fullspec]]
+    models += [[big_xyoff_eigenvalues_monospec,big_xyoff_eigenvectors_monospec,avg_xyoff_map_1d_monospec]]
     pickle.dump(models, file)
 
 

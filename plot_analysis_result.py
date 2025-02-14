@@ -44,6 +44,7 @@ GetRadialProfile = common_functions.GetRadialProfile
 fit_2d_model = common_functions.fit_2d_model
 matrix_rank = common_functions.matrix_rank
 skymap_size = common_functions.skymap_size
+fine_skymap_size = common_functions.fine_skymap_size
 skymap_bins = common_functions.skymap_bins
 fine_skymap_bins = common_functions.fine_skymap_bins
 GetGammaSourceInfo = common_functions.GetGammaSourceInfo
@@ -120,7 +121,8 @@ input_epoch = ['V4','V5','V6']
 #input_epoch = ['V5','V6']
 
 logE_min = 0
-logE_mid = logE_axis.get_bin(np.log10(1.7))+1
+#logE_min = logE_axis.get_bin(np.log10(0.3))+1
+logE_mid = logE_axis.get_bin(np.log10(1.0))+1
 logE_max = logE_nbins
 fit_radial_profile = False
 radial_bin_scale = 0.1
@@ -148,17 +150,17 @@ if 'Geminga' in source_name:
     radial_bin_scale = 0.25
 
 
-xsky_start = src_ra+skymap_size
-xsky_end = src_ra-skymap_size
-ysky_start = src_dec-skymap_size
-ysky_end = src_dec+skymap_size
+xsky_start = src_ra+fine_skymap_size
+xsky_end = src_ra-fine_skymap_size
+ysky_start = src_dec-fine_skymap_size
+ysky_end = src_dec+fine_skymap_size
 
 if coordinate_type == 'galactic':
     src_gal_l, src_gal_b = ConvertRaDecToGalactic(src_ra, src_dec)
-    xsky_start = src_gal_l+skymap_size
-    xsky_end = src_gal_l-skymap_size
-    ysky_start = src_gal_b-skymap_size
-    ysky_end = src_gal_b+skymap_size
+    xsky_start = src_gal_l+fine_skymap_size
+    xsky_end = src_gal_l-fine_skymap_size
+    ysky_start = src_gal_b-fine_skymap_size
+    ysky_end = src_gal_b+fine_skymap_size
 
 if onoff=='OFF':
     coordinate_type = 'relative'
@@ -172,7 +174,7 @@ print (f"xsky_start = {xsky_start}, xsky_end = {xsky_end}, ysky_start = {ysky_st
 if onoff=='ON':
     skymap_bins = fine_skymap_bins
     print (f'original skymap_bins = {skymap_bins}')
-    skymap_bin_size = 2.*skymap_size/float(skymap_bins)
+    skymap_bin_size = 2.*fine_skymap_size/float(skymap_bins)
 
 region_name = source_name
 if onoff=='OFF':
@@ -1038,7 +1040,7 @@ axbig.remove()
 
 other_stars, other_star_type, other_star_coord = GetGammaSourceInfo() 
 for star in range(0,len(other_stars)):
-    if abs(src_ra-other_star_coord[star][0])>skymap_size: continue
-    if abs(src_dec-other_star_coord[star][1])>skymap_size: continue
+    if abs(src_ra-other_star_coord[star][0])>fine_skymap_size: continue
+    if abs(src_dec-other_star_coord[star][1])>fine_skymap_size: continue
     print (f'Star {other_stars[star]} RA = {other_star_coord[star][0]:0.2f}, Dec = {other_star_coord[star][1]:0.2f}')
 

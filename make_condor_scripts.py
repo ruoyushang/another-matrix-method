@@ -14,24 +14,23 @@ bin_tag = os.environ.get("BIN_TAG")
 cr_tag = os.environ.get("CR_TAG")
 ana_dir = os.environ.get("ANA_DIR")
 
+script_dir = f'{smi_dir}/run'
 job_dir = f'{smi_dir}/run/{sky_tag}'
 print (f'job_dir = {job_dir}')
 subprocess.run(['mkdir',f'{job_dir}'], capture_output=True, text=True)
 
-is_training = True
-#is_training = False
-print (f"is_training = {is_training}")
 
 training_mode = 'off'
-if not is_training:
-    training_mode = 'on'
+#training_mode = 'on'
+#training_mode = 'gal'
+print (f"training_mode = {training_mode}")
 
 #n_mimic = 5
 n_mimic = 0
 
 input_params = []
 
-if is_training:
+if training_mode=='off':
 
     input_params += [ ['1ES0647'               ,102.694 ,25.050 , 'OFF'] ]
     input_params += [ ['1ES1011'               ,153.767 ,49.434 , 'OFF'] ]
@@ -53,38 +52,8 @@ if is_training:
     input_params += [ ['UrsaMinor'             ,227.285 ,67.222 , 'OFF'] ]
     input_params += [ ['UrsaMajorII'           ,132.875 ,63.13  , 'OFF'] ]
     input_params += [ ['1ES1959_p650'          ,300.00 ,65.15   , 'OFF'] ]
-
-    #input_params += [ ['CrabNebula_elev_80_90' ,83.633  ,22.014 , 'OFF'] ]
-    #input_params += [ ['CrabNebula_elev_70_80' ,83.633  ,22.014 , 'OFF'] ]
-    #input_params += [ ['CrabNebula_elev_60_70' ,83.633  ,22.014 , 'OFF'] ]
-    #input_params += [ ['CrabNebula_elev_50_60' ,83.633  ,22.014 , 'OFF'] ]
-    #input_params += [ ['CrabNebula_elev_40_50' ,83.633  ,22.014 , 'OFF'] ]
-    #input_params += [ ['CrabNebula_elev_30_40' ,83.633  ,22.014 , 'OFF'] ]
-    #input_params += [ ['CrabNebula_1p0wobble' ,83.633  ,22.014 , 'OFF'] ]
-    #input_params += [ ['CrabNebula_1p5wobble' ,83.633  ,22.014 , 'OFF'] ]
     
-if not is_training:
-
-    #input_params += [ ['1ES0647'               ,102.694 ,25.050 , 'ON'] ]
-    #input_params += [ ['1ES1011'               ,153.767 ,49.434 , 'ON'] ]
-    #input_params += [ ['1ES0414'               ,64.220  ,1.089  , 'ON'] ]
-    #input_params += [ ['1ES0502'               ,76.983  ,67.623 , 'ON'] ]
-    #input_params += [ ['1ES0229'               ,38.222  ,20.273 , 'ON'] ]
-    #input_params += [ ['M82'                   ,148.970 ,69.679 , 'ON'] ]
-    #input_params += [ ['3C264'                 ,176.271 ,19.606 , 'ON'] ]
-    #input_params += [ ['BLLac'                 ,330.680 ,42.277 , 'ON'] ]
-    #input_params += [ ['Draco'                 ,260.059 ,57.921 , 'ON'] ]
-    #input_params += [ ['OJ287'                 ,133.705 ,20.100 , 'ON'] ]
-    #input_params += [ ['H1426'                 ,217.136  ,42.673, 'ON' ] ]
-    #input_params += [ ['NGC1275'               ,49.950  ,41.512 , 'ON'] ]
-    #input_params += [ ['Segue1'                ,151.767 ,16.082 , 'ON'] ]
-    #input_params += [ ['3C273'                 ,187.277 ,2.05   , 'ON'] ]
-    #input_params += [ ['PG1553'                ,238.936 ,11.195 , 'ON'] ]
-    #input_params += [ ['PKS1424'               ,216.750 ,23.783 , 'ON'] ]
-    #input_params += [ ['RGB_J0710_p591'        ,107.61  ,59.15  , 'ON'] ]
-    #input_params += [ ['UrsaMinor'             ,227.285 ,67.222 , 'ON'] ]
-    #input_params += [ ['UrsaMajorII'           ,132.875 ,63.13  , 'ON'] ]
-    #input_params += [ ['1ES1959_p650'          ,300.00 ,65.15   , 'ON'] ]
+if training_mode=='on':
 
     input_params += [ ['CrabNebula_elev_80_90' ,83.633  ,22.014 , 'ON'] ]
     input_params += [ ['CrabNebula_elev_70_80' ,83.633  ,22.014 , 'ON'] ]
@@ -94,6 +63,8 @@ if not is_training:
     input_params += [ ['CrabNebula_elev_30_40' ,83.633  ,22.014 , 'ON'] ]
     input_params += [ ['CrabNebula_1p0wobble' ,83.633  ,22.014 , 'ON'] ]
     input_params += [ ['CrabNebula_1p5wobble' ,83.633  ,22.014 , 'ON'] ]
+
+if training_mode=='gal':
     
     input_params += [ ['PSR_J1856_p0245', 284.21  , 2.76 , 'ON' ] ]
     input_params += [ ['SNR_G189_p03'          ,94.213  ,22.503, 'ON' ] ] # ic 443
@@ -251,7 +222,7 @@ for s in range(0,len(input_params)):
     src_ra = input_params[s][1]
     src_dec = input_params[s][2]
     onoff = input_params[s][3]
-    file = open("%s/plot_%s_%s.sh"%(job_dir,source,onoff),"w") 
+    file = open("%s/plot_%s_%s.sh"%(script_dir,source,onoff),"w") 
     file.write('cd %s\n'%(smi_dir))
     #file.write('sh clean_plots.sh\n')
     file.write(f'python3 plot_analysis_result.py "{source}" {src_ra} {src_dec} "{onoff}" \n')

@@ -27,6 +27,7 @@ gcut_end = common_functions.gcut_end
 ReadRunListFromFile = common_functions.ReadRunListFromFile
 smooth_image = common_functions.smooth_image
 skymap_size = common_functions.skymap_size
+fine_skymap_size = common_functions.fine_skymap_size
 skymap_bins = common_functions.skymap_bins
 fine_skymap_bins = common_functions.fine_skymap_bins
 coordinate_type = common_functions.coordinate_type
@@ -84,17 +85,17 @@ off_file = f'{smi_runlist}/PairList_{source_name}_{input_epoch}.txt'
 mimic_file = f'{smi_runlist}/ImposterList_{source_name}_{input_epoch}.txt'
 on_runlist, off_runlist, mimic_runlist = ReadRunListFromFile(smi_input,on_file,off_file,mimic_file)
 
-xsky_start = src_ra+skymap_size
-xsky_end = src_ra-skymap_size
-ysky_start = src_dec-skymap_size
-ysky_end = src_dec+skymap_size
+xsky_start = src_ra+fine_skymap_size
+xsky_end = src_ra-fine_skymap_size
+ysky_start = src_dec-fine_skymap_size
+ysky_end = src_dec+fine_skymap_size
 
 if coordinate_type == 'galactic':
     src_gal_l, src_gal_b = ConvertRaDecToGalactic(src_ra, src_dec)
-    xsky_start = src_gal_l+skymap_size
-    xsky_end = src_gal_l-skymap_size
-    ysky_start = src_gal_b-skymap_size
-    ysky_end = src_gal_b+skymap_size
+    xsky_start = src_gal_l+fine_skymap_size
+    xsky_end = src_gal_l-fine_skymap_size
+    ysky_start = src_gal_b-fine_skymap_size
+    ysky_end = src_gal_b+fine_skymap_size
 
 if onoff=='OFF':
     xsky_start = skymap_size
@@ -150,8 +151,8 @@ for run in range(0,total_runs):
     total_exposure += (time_end-time_start)/3600.
 
 #min_exposure = 0.1 # hours
-min_exposure = 2.0 # hours
-#min_exposure = 5.0 # hours
+#min_exposure = 2.0 # hours
+min_exposure = 5.0 # hours
 #min_exposure = 10.0 # hours
 run_exposure = 0.
 for run in range(0,total_runs):

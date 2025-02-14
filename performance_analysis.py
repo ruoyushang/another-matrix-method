@@ -57,18 +57,20 @@ ana_tag = []
 #ana_tag += [['cr8_nbin7_fullspec8_free','$k_{c}$=8']]
 #ana_tag += [['cr8_nbin7_fullspec16_free','$k_{c}$=16']]
 #ana_tag += [['cr8_nbin7_fullspec32_free','$k_{c}$=32']]
+#ana_tag += [['cr8_nbin7_fullspec64_free','$k_{c}$=64']]
+#ana_tag += [['cr8_nbin7_fullspec128_free','$k_{c}$=128']]
 
-ana_tag += [['cr8_nbin1_fullspec32_free','$1\times1$ bins']]
-ana_tag += [['cr8_nbin3_fullspec32_free','$3\times3$ bins']]
-ana_tag += [['cr8_nbin5_fullspec32_free','$5\times5$ bins']]
-ana_tag += [['cr8_nbin7_fullspec32_free','$7\times7$ bins']]
+ana_tag += [['cr8_nbin1_fullspec64_free','$1\\times1$ bins']]
+ana_tag += [['cr8_nbin3_fullspec64_free','$3\\times3$ bins']]
+ana_tag += [['cr8_nbin5_fullspec64_free','$5\\times5$ bins']]
+ana_tag += [['cr8_nbin7_fullspec64_free','$7\\times7$ bins']]
 
 
 onoff = 'OFF'
 
 #exposure_per_group = 2.
-#exposure_per_group = 5.
-exposure_per_group = 10.
+exposure_per_group = 5.
+#exposure_per_group = 10.
 #exposure_per_group = 20.
 #exposure_per_group = 50.
 #exposure_per_group = 100.
@@ -286,8 +288,8 @@ for ana in range(0,len(analysis_data)):
         ana_data_count += [grp_data_count]
         ana_bkgd_count += [grp_bkgd_count]
 
-        for demoE in range(0,demoE_nbins):
-            grp_bkgd_map[demoE].scale(grp_data_count[demoE] / grp_bkgd_count[demoE])
+        #for demoE in range(0,demoE_nbins):
+        #    grp_bkgd_map[demoE].scale(grp_data_count[demoE] / grp_bkgd_count[demoE])
 
         for demoE in range(0,demoE_nbins):
             nbins_x = len(grp_data_map[demoE].xaxis)-1
