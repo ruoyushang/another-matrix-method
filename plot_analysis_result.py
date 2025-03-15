@@ -11,6 +11,8 @@ from common_functions import MyArray3D
 
 import common_functions
 
+MSCL_cut = common_functions.MSCL_cut
+MSCW_cut = common_functions.MSCW_cut
 logE_threshold = common_functions.logE_threshold
 logE_axis = common_functions.logE_axis
 logE_nbins = common_functions.logE_nbins
@@ -68,8 +70,10 @@ fig.set_figwidth(figsize_x)
 smi_dir = os.environ.get("SMI_DIR")
 smi_input = os.environ.get("SMI_INPUT")
 #smi_output = os.environ.get("SMI_OUTPUT")
-#smi_output = "/nevis/ged/data/rshang/smi_output/output_default"
-smi_output = "/nevis/ged/data/rshang/smi_output/output_multivar"
+smi_output = "/nevis/ged/data/rshang/smi_output/output_default"
+#smi_output = "/nevis/ged/data/rshang/smi_output/output_multivar"
+#smi_output = "/nevis/ged/data/rshang/smi_output/output_hnsb"
+#smi_output = "/nevis/ged/data/rshang/smi_output/output_lnsb"
 
 sky_tag = os.environ.get("SKY_TAG")
 
@@ -99,9 +103,11 @@ ana_tag = sky_tag
 qual_cut = 0.
 #qual_cut = 20.
 
-elev_cut = 20.
-#elev_cut = 50.
-#elev_cut = 65.
+min_elev_cut = 40.
+#min_elev_cut = 50.
+#max_elev_cut = 60.
+#min_elev_cut = 60.
+max_elev_cut = 90.
 cr_qual_cut = 1e10
 
 source_name = sys.argv[1]
@@ -116,8 +122,8 @@ if onoff=='ON':
 
 #input_epoch = ['V4']
 #input_epoch = ['V5']
-#input_epoch = ['V6']
-input_epoch = ['V4','V5','V6']
+input_epoch = ['V6']
+#input_epoch = ['V4','V5','V6']
 #input_epoch = ['V5','V6']
 
 logE_min = 0
@@ -149,6 +155,12 @@ if 'Geminga' in source_name:
     fit_radial_profile = True
     radial_bin_scale = 0.25
 
+if 'PSR_J1907_p0602' in source_name:
+    logE_min = logE_axis.get_bin(np.log10(0.3))+1
+    logE_mid = logE_axis.get_bin(np.log10(1.0))+1
+if 'PSR_J2021_p3651' in source_name:
+    logE_min = logE_axis.get_bin(np.log10(0.5))+1
+    logE_mid = logE_axis.get_bin(np.log10(1.0))+1
 
 xsky_start = src_ra+fine_skymap_size
 xsky_end = src_ra-fine_skymap_size
@@ -429,7 +441,9 @@ for epoch in input_epoch:
             if run_azim>270.:
                 run_azim = run_azim-360.
 
-            if run_elev<elev_cut:
+            if run_elev<min_elev_cut:
+                continue
+            if run_elev>max_elev_cut:
                 continue
 
             if not 'MIMIC' in mode:
@@ -854,6 +868,7 @@ for logE in range(plot_logE_min,plot_logE_max):
     PlotSkyMap(fig,'significance',logE,logE+1,sum_significance_sky_map[logE],f'significance_sky_map_{source_name}_logE{logE}_{ana_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,excl_x=all_excl_x,excl_y=all_excl_y,excl_r=all_excl_r,max_z=max_z,zoomin=zoomin)
 
 
+font = {'family': 'serif', 'color':  'white', 'weight': 'normal', 'size': 10, 'rotation': 0.,}
 for logE in range(plot_logE_min,plot_logE_max):
     fig.clf()
     figsize_y = 5
@@ -863,11 +878,39 @@ for logE in range(plot_logE_min,plot_logE_max):
     axbig = fig.add_subplot()
     axbig.set_xlabel('MSCL')
     axbig.set_ylabel('MSCW')
-    xmin = sum_data_xyvar_map[logE].xaxis.min()
-    xmax = sum_data_xyvar_map[logE].xaxis.max()
-    ymin = sum_data_xyvar_map[logE].yaxis.min()
-    ymax = sum_data_xyvar_map[logE].yaxis.max()
+    xmin = sum_data_xyvar_map[logE].xaxis.min()*MSCL_cut[logE]
+    xmax = sum_data_xyvar_map[logE].xaxis.max()*MSCL_cut[logE]
+    ymin = sum_data_xyvar_map[logE].yaxis.min()*MSCW_cut[logE]
+    ymax = sum_data_xyvar_map[logE].yaxis.max()*MSCW_cut[logE]
     im = axbig.imshow(sum_data_xyvar_map[logE].waxis[:,:,0].T,origin='lower',extent=(xmin,xmax,ymin,ymax),aspect='auto')
+    lable_region = f'$\\gamma$-like SR'
+    txt = axbig.text(-0.5, 0.4, lable_region, fontdict=font)
+    lable_region = f'CR-1'
+    txt = axbig.text(-0.5, 0.4+2.*MSCW_cut[logE], lable_region, fontdict=font)
+    lable_region = f'CR-2'
+    txt = axbig.text(-0.5, 0.4+4.*MSCW_cut[logE], lable_region, fontdict=font)
+    lable_region = f'CR-3'
+    txt = axbig.text(-0.5, 0.4+6.*MSCW_cut[logE], lable_region, fontdict=font)
+    lable_region = f'CR-4'
+    txt = axbig.text(-0.5+2.*MSCL_cut[logE], 0.4, lable_region, fontdict=font)
+    lable_region = f'CR-5'
+    txt = axbig.text(-0.5+2.*MSCL_cut[logE], 0.4+2.*MSCW_cut[logE], lable_region, fontdict=font)
+    lable_region = f'CR-6'
+    txt = axbig.text(-0.5+2.*MSCL_cut[logE], 0.4+4.*MSCW_cut[logE], lable_region, fontdict=font)
+    lable_region = f'CR-7'
+    txt = axbig.text(-0.5+2.*MSCL_cut[logE], 0.4+6.*MSCW_cut[logE], lable_region, fontdict=font)
+    x_coord = np.array([1.,1.])*MSCL_cut[logE]
+    y_coord = np.array([-1.,7.])*MSCW_cut[logE]
+    axbig.plot(x_coord,y_coord,color='r',linestyle='solid',linewidth=1)
+    x_coord = np.array([-1.,3.])*MSCL_cut[logE]
+    y_coord = np.array([1.,1.])*MSCW_cut[logE]
+    axbig.plot(x_coord,y_coord,color='r',linestyle='solid',linewidth=1)
+    x_coord = np.array([-1.,3.])*MSCL_cut[logE]
+    y_coord = np.array([3.,3.])*MSCW_cut[logE]
+    axbig.plot(x_coord,y_coord,color='r',linestyle='solid',linewidth=1)
+    x_coord = np.array([-1.,3.])*MSCL_cut[logE]
+    y_coord = np.array([5.,5.])*MSCW_cut[logE]
+    axbig.plot(x_coord,y_coord,color='r',linestyle='solid',linewidth=1)
     fig.savefig(f'output_plots/xyvar_map_inclusive_data_{source_name}_transpose_{ana_tag}_logE{logE}.png',bbox_inches='tight')
     axbig.remove()
 

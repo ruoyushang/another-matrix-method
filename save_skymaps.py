@@ -151,8 +151,8 @@ for run in range(0,total_runs):
     total_exposure += (time_end-time_start)/3600.
 
 #min_exposure = 0.1 # hours
-#min_exposure = 2.0 # hours
-min_exposure = 5.0 # hours
+min_exposure = 2.0 # hours
+#min_exposure = 5.0 # hours
 #min_exposure = 10.0 # hours
 run_exposure = 0.
 for run in range(0,total_runs):
@@ -305,6 +305,9 @@ for small_runlist in range(0,len(big_runlist)):
     run_azim = run_info[2]
     run_nsb = run_info[3]
     if run_exposure_hours==0.: continue
+    print (f"run_exposure_hours = {run_exposure_hours}")
+    print (f"run_elev = {run_elev}")
+    print (f"run_nsb = {run_nsb}")
 
     run_data_xyoff_sum_sr = 0.
     run_data_sky_sum_sr = 0.

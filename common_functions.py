@@ -31,14 +31,18 @@ sky_tag = os.environ.get("SKY_TAG")
 smi_output = os.environ.get("SMI_OUTPUT")
 
 run_elev_cut = 25.
+max_MeanPedvar_cut = 11.
+min_MeanPedvar_cut = 3.
+if 'output_hnsb' in smi_output:
+    min_MeanPedvar_cut = 7.
+if 'output_lnsb' in smi_output:
+    max_MeanPedvar_cut = 5.
 
 #min_NImages = 2
 min_NImages = 3
 max_Roff = 1.7
 max_EmissionHeight_cut = 20.
 min_EmissionHeight_cut = 6.
-max_MeanPedvar_cut = 11.
-min_MeanPedvar_cut = 3.
 max_Rcore = 400.
 min_Rcore = 0.
 min_Energy_cut = 0.02
@@ -84,9 +88,9 @@ coordinate_type = 'galactic'
 #coordinate_type = 'icrs'
 
 #logE_threshold = -99
-logE_threshold = 0
+#logE_threshold = 0
 #logE_threshold = 1
-#logE_threshold = 2
+logE_threshold = 2
 fov_mask_radius = 10.
 gcut_bins = 3
 matrix_rank = 1
@@ -97,6 +101,7 @@ use_poisson_likelihood = True
 use_init = False
 use_fft = False
 use_mono = False
+use_offruns = False
 
 if eigen_tag=='init':
     matrix_rank_fullspec = 1
@@ -967,6 +972,16 @@ def build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,runlist,max_run
         EvtTree = InputFile.Get(TreeName)
         total_entries = EvtTree.GetEntries()
         #print (f'total_entries = {total_entries}')
+
+        if not is_bkgd:
+            avg_MeanPedvar = 0.
+            for entry in range(0,total_entries):
+                EvtTree.GetEntry(entry)
+                avg_MeanPedvar += EvtTree.MeanPedvar
+            avg_MeanPedvar = avg_MeanPedvar/float(total_entries)
+            if avg_MeanPedvar>max_MeanPedvar_cut: continue
+            if avg_MeanPedvar<min_MeanPedvar_cut: continue
+
         EvtTree.GetEntry(0)
         Time0 = EvtTree.timeOfDay
         EvtTree.GetEntry(total_entries-1)
@@ -1008,8 +1023,8 @@ def build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,runlist,max_run
             if NImages<min_NImages: continue
             if EmissionHeight>max_EmissionHeight_cut: continue
             if EmissionHeight<min_EmissionHeight_cut: continue
-            if MeanPedvar>max_MeanPedvar_cut: continue
-            if MeanPedvar<min_MeanPedvar_cut: continue
+            #if MeanPedvar>max_MeanPedvar_cut: continue
+            #if MeanPedvar<min_MeanPedvar_cut: continue
             if Roff>max_Roff: continue
             if Rcore>max_Rcore: continue
             if Rcore<min_Rcore: continue
@@ -1061,7 +1076,8 @@ def build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,runlist,max_run
         InputFile.Close()
         if run_count==max_runs: break
 
-    big_elevation = big_elevation / np.sum(np.array(big_exposure_time))
+    if np.sum(np.array(big_exposure_time))>0.:
+        big_elevation = big_elevation / np.sum(np.array(big_exposure_time))
     print (f'batch elevation = {big_elevation}')
 
     return big_elevation, big_exposure_time, big_matrix_fullspec, big_mask_matrix_fullspec
@@ -1238,6 +1254,8 @@ def cosmic_ray_like_chi2_fullspec(
     sum_log_likelihood = 0.
     lsq_log_likelihood = 0.
 
+    #init_params = eigenvectors @ init_xyoff_map
+
     try_params = np.array(try_params)
     try_xyoff_map = eigenvectors.T @ try_params
 
@@ -1309,7 +1327,10 @@ def cosmic_ray_like_chi2_fullspec(
 
                     if gcut==0:
                         if mask>0.:
-                            weight = 0.
+                            if use_offruns:
+                                n_data = init
+                            else:
+                                weight = 0.
 
                     sum_weight += weight
 
@@ -1626,12 +1647,12 @@ def GetGammaSourceInfo():
 
     near_source_cut = 0.1
 
-    drawBrightStar = True
+    drawBrightStar = False
     drawPulsar = False
     drawSNR = False
     drawLHAASO = False
     drawFermi = False
-    drawHAWC = True
+    drawHAWC = False
     drawTeV = False
 
     if drawBrightStar:
@@ -1985,10 +2006,12 @@ def PlotCountProjection(fig,label_z,logE_min,logE_max,hist_map_data,hist_map_bkg
         if other_star_types[star]=='MSP':
             axTemperature.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c=favorite_color, marker='+', label=other_star_labels[star])
         if other_star_types[star]=='TeV':
-            axTemperature.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c=favorite_color, marker='+', label=other_star_labels[star])
+            #axTemperature.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c=favorite_color, marker='+', label=other_star_labels[star])
+            axTemperature.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c=favorite_color, marker='+', label='')
         if other_star_types[star]=='Star':
-            axTemperature.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c='k', marker='+', label=other_star_labels[star])
-        txt = axTemperature.text(other_star_markers[star][0]-0.07, other_star_markers[star][1]+0.07, other_star_labels[star], fontdict=font, c=favorite_color)
+            #axTemperature.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c='k', marker='+', label=other_star_labels[star])
+            axTemperature.plot(other_star_markers[star][0], other_star_markers[star][1], markersize=15, c='k', marker='o', fillstyle='none')
+        #txt = axTemperature.text(other_star_markers[star][0]-0.07, other_star_markers[star][1]+0.07, other_star_labels[star], fontdict=font, c=favorite_color)
 
 
     #Plot the axes labels
@@ -2060,10 +2083,12 @@ def PlotCountProjection(fig,label_z,logE_min,logE_max,hist_map_data,hist_map_bkg
         if other_star_types[star]=='MSP':
             axTemperature.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c=favorite_color, marker='+', label=other_star_labels[star])
         if other_star_types[star]=='TeV':
-            axTemperature.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c=favorite_color, marker='+', label=other_star_labels[star])
+            #axTemperature.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c=favorite_color, marker='+', label=other_star_labels[star])
+            axTemperature.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c=favorite_color, marker='+', label='')
         if other_star_types[star]=='Star':
-            axTemperature.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c='k', marker='+', label=other_star_labels[star])
-        txt = axTemperature.text(other_star_markers[star][0]-0.07, other_star_markers[star][1]+0.07, other_star_labels[star], fontdict=font, c=favorite_color)
+            #axTemperature.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c='k', marker='+', label=other_star_labels[star])
+            axTemperature.plot(other_star_markers[star][0], other_star_markers[star][1], markersize=15, c='k', marker='o', fillstyle='none')
+        #txt = axTemperature.text(other_star_markers[star][0]-0.07, other_star_markers[star][1]+0.07, other_star_labels[star], fontdict=font, c=favorite_color)
 
     #Plot the axes labels
     axTemperature.set_xlabel(label_x)
@@ -2168,18 +2193,18 @@ def PlotSkyMap(fig,label_z,logE_min,logE_max,hist_map_input,plotname,roi_x=[],ro
         if other_star_types[star]=='HAWC':
             axbig.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c=favorite_color, marker='+', label=other_star_labels[star])
         if other_star_types[star]=='Fermi':
-            axbig.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c=favorite_color, marker='+', label=other_star_labels[star])
+            axbig.plot(other_star_markers[star][0], other_star_markers[star][1], markersize=10, c='k', marker='v', fillstyle='none')
         if other_star_types[star]=='MSP':
             axbig.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c=favorite_color, marker='+', label=other_star_labels[star])
         if other_star_types[star]=='TeV':
-            axbig.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c=favorite_color, marker='+', label=other_star_labels[star])
+            axbig.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c=favorite_color, marker='+', label='')
         if other_star_types[star]=='Star':
-            axbig.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c='k', marker='+', label=other_star_labels[star])
-        txt = axbig.text(other_star_markers[star][0]-0.07, other_star_markers[star][1]+0.07, other_star_labels[star], fontdict=font, c=favorite_color)
+            axbig.plot(other_star_markers[star][0], other_star_markers[star][1], markersize=15, c='k', marker='o', fillstyle='none')
+        #txt = axbig.text(other_star_markers[star][0]-0.07, other_star_markers[star][1]+0.07, other_star_labels[star], fontdict=font, c=favorite_color)
 
     linestyles = ['-', '--', '-.', ':']  # List of linestyles
     for roi in range(0,len(roi_x)):
-        mycircle = plt.Circle( (roi_x[roi], roi_y[roi]), roi_r[roi], fill = False, linestyle=linestyles[roi], color='white')
+        mycircle = plt.Circle( (roi_x[roi], roi_y[roi]), roi_r[roi], fill = False, linestyle='dashed', color='black')
         axbig.add_patch(mycircle)
     for roi in range(0,len(excl_x)):
         mycircle = plt.Circle( (excl_x[roi], excl_y[roi]), excl_r[roi], fill = False, linestyle='-', color='black')
@@ -2953,6 +2978,15 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec,coordinate_type='icrs'):
         #region_y += [src_y]
         #region_r += [1.05]
 
+    elif 'PSR_J2021_p3651' in src_name:
+
+        region_name = ('1LHAASO','1LHAASO')
+        src_x = 304.65
+        src_y = 36.72
+        region_x += [src_x]
+        region_y += [src_y]
+        region_r += [0.24*2.]
+
     elif 'PSR_J2021_p4026' in src_name:
 
         #region_name = ('SNR_full','SNR (full)')
@@ -2978,10 +3012,15 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec,coordinate_type='icrs'):
 
     elif 'PSR_J1907_p0602' in src_name:
 
-        region_name = ('3HWC','3HWC')
+        region_name = ('1LHAASO','1LHAASO')
         region_x += [287.05]
-        region_y += [6.39]
-        region_r += [1.2]
+        region_y += [6.26]
+        region_r += [0.36*2.]
+
+        #region_name = ('3HWC','3HWC')
+        #region_x += [287.05]
+        #region_y += [6.39]
+        #region_r += [1.2]
 
         #region_name = ('SS433','SS 433')
         #region_x += [288.0833333]
@@ -3803,7 +3842,8 @@ def build_skymap(
         big_on_elevation, big_on_exposure, big_on_matrix_fullspec, big_mask_matrix_fullspec = build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,runlist,max_runs=1e10,is_bkgd=False)
     else:
         big_on_elevation, big_on_exposure, big_on_matrix_fullspec, big_mask_matrix_fullspec = build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,runlist,max_runs=1e10,is_bkgd=False)
-    #big_off_elevation, big_off_exposure, big_off_matrix_fullspec, big_off_mask_matrix_fullspec = build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,off_runlist,max_runs=1e10,is_bkgd=True)
+    if use_offruns:
+        big_off_elevation, big_off_exposure, big_off_matrix_fullspec, big_off_mask_matrix_fullspec = build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,off_runlist,max_runs=1e10,is_bkgd=True)
 
     if len(big_on_matrix_fullspec)==0:
         print (f'No data. Break.')
@@ -3841,16 +3881,16 @@ def build_skymap(
     data_xyvar_map_1d_fullspec = convert_multivar_to_xyvar_vector1d(data_multivar_map_1d_fullspec)
     mask_xyvar_map_1d_fullspec = convert_multivar_to_xyvar_vector1d(mask_multivar_map_1d_fullspec)
 
-    #off_data_multivar_map_1d_fullspec = np.zeros_like(big_off_matrix_fullspec[0])
-    #off_mask_multivar_map_1d_fullspec = np.zeros_like(big_off_mask_matrix_fullspec[0])
-    #for entry in range(0,len(big_off_matrix_fullspec)):
-    #    off_data_multivar_map_1d_fullspec += np.array(big_off_matrix_fullspec[entry])
-    #    off_mask_multivar_map_1d_fullspec += np.array(big_off_mask_matrix_fullspec[entry])
-
-    #off_data_xyoff_map_1d_fullspec = convert_multivar_to_xyoff_vector1d(off_data_multivar_map_1d_fullspec)
-    #off_mask_xyoff_map_1d_fullspec = convert_multivar_to_xyoff_vector1d(off_mask_multivar_map_1d_fullspec)
-    #off_data_xyvar_map_1d_fullspec = convert_multivar_to_xyvar_vector1d(off_data_multivar_map_1d_fullspec)
-    #off_mask_xyvar_map_1d_fullspec = convert_multivar_to_xyvar_vector1d(off_mask_multivar_map_1d_fullspec)
+    if use_offruns:
+        off_data_multivar_map_1d_fullspec = np.zeros_like(big_off_matrix_fullspec[0])
+        off_mask_multivar_map_1d_fullspec = np.zeros_like(big_off_mask_matrix_fullspec[0])
+        for entry in range(0,len(big_off_matrix_fullspec)):
+            off_data_multivar_map_1d_fullspec += np.array(big_off_matrix_fullspec[entry])
+            off_mask_multivar_map_1d_fullspec += np.array(big_off_mask_matrix_fullspec[entry])
+        off_data_xyoff_map_1d_fullspec = convert_multivar_to_xyoff_vector1d(off_data_multivar_map_1d_fullspec)
+        off_mask_xyoff_map_1d_fullspec = convert_multivar_to_xyoff_vector1d(off_mask_multivar_map_1d_fullspec)
+        off_data_xyvar_map_1d_fullspec = convert_multivar_to_xyvar_vector1d(off_data_multivar_map_1d_fullspec)
+        off_mask_xyvar_map_1d_fullspec = convert_multivar_to_xyvar_vector1d(off_mask_multivar_map_1d_fullspec)
 
     xyoff_idx_1d = find_index_for_xyoff_vector1d()
     xyvar_idx_1d = find_index_for_xyvar_vector1d()
@@ -3860,10 +3900,12 @@ def build_skymap(
                 for idx_y in range(0,yoff_bins[logE]):
                     idx_1d = xyoff_idx_1d[gcut][logE][idx_x][idx_y]
                     data_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = data_xyoff_map_1d_fullspec[idx_1d]
-                    #init_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = off_data_xyoff_map_1d_fullspec[idx_1d]
-                    #fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = off_data_xyoff_map_1d_fullspec[idx_1d]
-                    init_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = avg_xyoff_map_1d_fullspec[idx_1d]
-                    fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = avg_xyoff_map_1d_fullspec[idx_1d]
+                    if use_offruns:
+                        init_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = off_data_xyoff_map_1d_fullspec[idx_1d]
+                        fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = off_data_xyoff_map_1d_fullspec[idx_1d]
+                    else:
+                        init_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = avg_xyoff_map_1d_fullspec[idx_1d]
+                        fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = avg_xyoff_map_1d_fullspec[idx_1d]
 
     for logE in range(0,logE_nbins):
         for idx_x in range(0,xvar_bins[logE]):
@@ -3888,11 +3930,9 @@ def build_skymap(
         norm_cr_init = np.sum(init_xyoff_map[logE].waxis[:,:,:]) - np.sum(init_xyoff_map[logE].waxis[:,:,0])
         norm_data = norm_cr_data
         norm_init = norm_cr_init
-        if abs(norm_sr_data_err)<abs(norm_sr_data):
-            #norm_data = norm_sr_data + norm_cr_data
-            #norm_init = norm_sr_init + norm_cr_init
-            norm_data = norm_sr_data 
-            norm_init = norm_sr_init 
+        #if abs(norm_sr_data_err)<abs(norm_sr_data):
+        #    norm_data = norm_sr_data 
+        #    norm_init = norm_sr_init 
         if norm_init==0.: continue
         for gcut in range(0,gcut_bins):
             for idx_x in range(0,xoff_bins[logE]):
@@ -4078,29 +4118,19 @@ def build_skymap(
             print (f'sum_data_xyoff_map = {sum_data_xyoff_map:0.1f}, sum_init_xyoff_map = {sum_init_xyoff_map:0.1f}, sum_fit_xyoff_map = {sum_fit_xyoff_map:0.1f}')
 
 
-    use_all_crs = [False] * logE_nbins
     for logE in range(0,logE_nbins):
         sum_xyoff_map_sr = 0.
         sum_xyoff_map_sr = np.sum(fit_xyoff_map[logE].waxis[:,:,0])
         for idx_x in range(0,xoff_bins[logE]):
             for idx_y in range(0,yoff_bins[logE]):
                 sum_xyoff_map_cr = 0.
-                model = 0.
-                model_err = 0.
-                if sum_xyoff_map_sr>3.*float(xoff_bins[logE]*yoff_bins[logE]):
+                for gcut in range(1,2):
+                    sum_xyoff_map_cr += fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
+                model = fit_xyoff_map[logE].waxis[idx_x,idx_y,0]
+                model_err = syst_xyoff_map[logE].waxis[idx_x,idx_y,0]
+                if sum_xyoff_map_cr<10.:
+                    sum_xyoff_map_cr = 0.
                     for gcut in range(1,2):
-                        sum_xyoff_map_cr += fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
-                    model = fit_xyoff_map[logE].waxis[idx_x,idx_y,0]
-                    model_err = syst_xyoff_map[logE].waxis[idx_x,idx_y,0]
-                elif sum_xyoff_map_sr>1.*float(xoff_bins[logE]*yoff_bins[logE]):
-                    use_all_crs[logE] = True
-                    for gcut in range(1,gcut_bins):
-                        sum_xyoff_map_cr += fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
-                    model = fit_xyoff_map[logE].waxis[idx_x,idx_y,0]
-                    model_err = syst_xyoff_map[logE].waxis[idx_x,idx_y,0]
-                else:
-                    use_all_crs[logE] = True
-                    for gcut in range(1,gcut_bins):
                         sum_xyoff_map_cr += np.sum(fit_xyoff_map[logE].waxis[:,:,gcut])
                     model = np.sum(fit_xyoff_map[logE].waxis[:,:,0])
                     model_err = np.sum(syst_xyoff_map[logE].waxis[:,:,0])
@@ -4188,6 +4218,15 @@ def build_skymap(
         EvtTree = InputFile.Get(TreeName)
         total_entries = EvtTree.GetEntries()
         #print (f'total_entries = {total_entries}')
+
+        avg_MeanPedvar = 0.
+        for entry in range(0,total_entries):
+            EvtTree.GetEntry(entry)
+            avg_MeanPedvar += EvtTree.MeanPedvar
+        avg_MeanPedvar = avg_MeanPedvar/float(total_entries)
+        if avg_MeanPedvar>max_MeanPedvar_cut: continue
+        if avg_MeanPedvar<min_MeanPedvar_cut: continue
+
         EvtTree.GetEntry(0)
         time_start = EvtTree.timeOfDay
         EvtTree.GetEntry(total_entries-1)
@@ -4229,8 +4268,8 @@ def build_skymap(
             if NImages<min_NImages: continue
             if EmissionHeight>max_EmissionHeight_cut: continue
             if EmissionHeight<min_EmissionHeight_cut: continue
-            if MeanPedvar>max_MeanPedvar_cut: continue
-            if MeanPedvar<min_MeanPedvar_cut: continue
+            #if MeanPedvar>max_MeanPedvar_cut: continue
+            #if MeanPedvar<min_MeanPedvar_cut: continue
             if Roff>max_Roff: continue
             if Rcore>max_Rcore: continue
             if Rcore<min_Rcore: continue
@@ -4251,6 +4290,9 @@ def build_skymap(
                 found_gamma_source = CoincideWithBrightStars(RA, DEC, gamma_source_coord)
                 if found_gamma_source: continue
 
+            if GammaCut>float(gcut_end): continue
+            if GammaCut>2.: continue
+
             if onoff=='OFF':
 
                 #Xsky_rel = RA - src_ra
@@ -4259,12 +4301,11 @@ def build_skymap(
                 Ysky_rel = Yoff
 
                 incl_sky_map[logE].fill(Xsky_rel,Ysky_rel,0.5)
-                if GammaCut>float(gcut_end): continue
 
                 sr_syst = syst_xyoff_map[logE].get_bin_content(Xoff,Yoff,0.5)
                 sr_model = ratio_xyoff_map[logE].get_bin_content(Xoff,Yoff,0.5)
                 if GammaCut>1.:
-                    if not use_all_crs[logE] and not GammaCut<2.: continue
+                    if not GammaCut<2.: continue
                     fit_sky_map[logE].fill(Xsky_rel,Ysky_rel,0.5,weight=sr_model)
                     syst_sky_map[logE].fill(Xsky_rel,Ysky_rel,0.5,weight=sr_syst)
                 elif GammaCut<1.:
@@ -4276,12 +4317,11 @@ def build_skymap(
                     Gal_Xsky, Gal_Ysky = ConvertRaDecToGalactic(Xsky, Ysky)
 
                     incl_sky_map[logE].fill(Gal_Xsky,Gal_Ysky,0.5)
-                    if GammaCut>float(gcut_end): continue
 
                     sr_syst = syst_xyoff_map[logE].get_bin_content(Xoff,Yoff,0.5)
                     sr_model = ratio_xyoff_map[logE].get_bin_content(Xoff,Yoff,0.5)
                     if GammaCut>1.:
-                        if not use_all_crs[logE] and not GammaCut<2.: continue
+                        if not GammaCut<2.: continue
                         fit_sky_map[logE].fill(Gal_Xsky,Gal_Ysky,0.5,weight=sr_model)
                         syst_sky_map[logE].fill(Gal_Xsky,Gal_Ysky,0.5,weight=sr_syst)
                     elif GammaCut<1.:
@@ -4290,12 +4330,11 @@ def build_skymap(
                 else:
 
                     incl_sky_map[logE].fill(Xsky,Ysky,0.5)
-                    if GammaCut>float(gcut_end): continue
 
                     sr_syst = syst_xyoff_map[logE].get_bin_content(Xoff,Yoff,0.5)
                     sr_model = ratio_xyoff_map[logE].get_bin_content(Xoff,Yoff,0.5)
                     if GammaCut>1.:
-                        if not use_all_crs[logE] and not GammaCut<2.: continue
+                        if not GammaCut<2.: continue
                         fit_sky_map[logE].fill(Xsky,Ysky,0.5,weight=sr_model)
                         syst_sky_map[logE].fill(Xsky,Ysky,0.5,weight=sr_syst)
                     elif GammaCut<1.:

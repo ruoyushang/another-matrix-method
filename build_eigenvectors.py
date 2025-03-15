@@ -217,6 +217,7 @@ for logE in range(0,logE_nbins):
         wmax = avg_xyoff_map[logE].waxis[:,:,gcut].max()
         zmax = max(abs(wmax),abs(wmin))
         im = axbig.imshow(avg_xyoff_map[logE].waxis[:,:,gcut].T,extent=(xmin,xmax,ymin,ymax),aspect='auto',origin='lower',cmap='coolwarm')
+        #im = axbig.imshow(avg_xyoff_map[logE].waxis[:,:,gcut].T,extent=(xmin,xmax,ymin,ymax),aspect='auto',origin='lower')
 fig.savefig(f'output_plots/fullspec_avgmap_xyoff_{source_name}_{input_epoch}_tanspose',bbox_inches='tight')
 axbig.remove()
 
@@ -250,7 +251,8 @@ for logE in range(0,logE_nbins):
 
 print (f'new_xyoff_matrix_fullspec.shape = {new_xyoff_matrix_fullspec.shape}')
 U_full, S_full, VT_full = np.linalg.svd(new_xyoff_matrix_fullspec,full_matrices=False) # perform better for perturbation method
-effective_matrix_rank_fullspec = min(matrix_rank_fullspec,int(0.5*(len(S_full)-1)))
+effective_matrix_rank_fullspec = min(matrix_rank_fullspec,len(S_full)-1)
+#effective_matrix_rank_fullspec = min(matrix_rank_fullspec,int(0.5*(len(S_full)-1)))
 #elbow_rank = find_elbow_rank(S_full)
 #effective_matrix_rank_fullspec = min(effective_matrix_rank_fullspec,elbow_rank)
 print (f'effective_matrix_rank_fullspec = {effective_matrix_rank_fullspec}')
@@ -287,7 +289,7 @@ axbig.remove()
 max_matrix_rank = min(matrix_rank_fullspec,big_xyoff_eigenvectors_fullspec.shape[0])
 for rank in range(0,max_matrix_rank):
 
-    eigen_xyoff_map =  convert_xyoff_vector1d_to_map3d(big_xyoff_eigenvectors_fullspec[rank])
+    eigen_xyoff_map =  convert_xyoff_vector1d_to_map3d(big_xyoff_eigenvectors_fullspec[rank]*(-1.))
 
     fig.clf()
     figsize_x = 2.*logE_nbins
@@ -319,6 +321,7 @@ for rank in range(0,max_matrix_rank):
             wmax = eigen_xyoff_map[logE].waxis[:,:,gcut].max()
             zmax = max(abs(wmax),abs(wmin))
             im = axbig.imshow(eigen_xyoff_map[logE].waxis[:,:,gcut].T,extent=(xmin,xmax,ymin,ymax),vmin=-zmax,vmax=zmax,aspect='auto',origin='lower',cmap='coolwarm')
+            #im = axbig.imshow(eigen_xyoff_map[logE].waxis[:,:,gcut].T,extent=(xmin,xmax,ymin,ymax),vmin=-zmax,vmax=zmax,aspect='auto',origin='lower')
     fig.savefig(f'output_plots/fullspec_eigenmap_xyoff_{source_name}_{input_epoch}_rank{rank}_tanspose',bbox_inches='tight')
     axbig.remove()
 

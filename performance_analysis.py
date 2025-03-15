@@ -43,6 +43,8 @@ smi_input = os.environ.get("SMI_INPUT")
 #smi_output = os.environ.get("SMI_OUTPUT")
 #smi_output = "/nevis/ged/data/rshang/smi_output/output_default"
 smi_output = "/nevis/ged/data/rshang/smi_output/output_multivar"
+#smi_output = "/nevis/ged/data/rshang/smi_output/output_hnsb"
+#smi_output = "/nevis/ged/data/rshang/smi_output/output_lnsb"
 #skymap_bins = 60
 
 ana_tag = []
@@ -57,29 +59,28 @@ ana_tag = []
 #ana_tag += [['cr8_nbin7_fullspec8_free','$k_{c}$=8']]
 #ana_tag += [['cr8_nbin7_fullspec16_free','$k_{c}$=16']]
 #ana_tag += [['cr8_nbin7_fullspec32_free','$k_{c}$=32']]
-#ana_tag += [['cr8_nbin7_fullspec64_free','$k_{c}$=64']]
-#ana_tag += [['cr8_nbin7_fullspec128_free','$k_{c}$=128']]
+ana_tag += [['cr8_nbin7_fullspec64_free','$k_{c}$=64']]
 
-ana_tag += [['cr8_nbin1_fullspec64_free','$1\\times1$ bins']]
-ana_tag += [['cr8_nbin3_fullspec64_free','$3\\times3$ bins']]
-ana_tag += [['cr8_nbin5_fullspec64_free','$5\\times5$ bins']]
-ana_tag += [['cr8_nbin7_fullspec64_free','$7\\times7$ bins']]
+#ana_tag += [['cr8_nbin1_fullspec64_free','$1\\times1$ bins']]
+#ana_tag += [['cr8_nbin3_fullspec64_free','$3\\times3$ bins']]
+#ana_tag += [['cr8_nbin5_fullspec64_free','$5\\times5$ bins']]
+#ana_tag += [['cr8_nbin7_fullspec64_free','$7\\times7$ bins']]
 
 
 onoff = 'OFF'
 
 #exposure_per_group = 2.
-exposure_per_group = 5.
+#exposure_per_group = 5.
 #exposure_per_group = 10.
 #exposure_per_group = 20.
-#exposure_per_group = 50.
+exposure_per_group = 50.
 #exposure_per_group = 100.
 #exposure_per_group = 1000.
 cr_qual_cut = 1e10
 #cr_qual_cut = 230
 
 min_elev = 30.
-#min_elev = 50.
+#max_elev = 60.
 #min_elev = 60.
 max_elev = 90.
 
@@ -95,7 +96,7 @@ input_epoch = ['V4','V5','V6']
 #logE_hig = logE_axis.get_bin(np.log10(1.7))+1
 #demo_energy = [logE_bins[logE_low], logE_bins[logE_mid], logE_bins[logE_hig], logE_bins[len(logE_bins)-1]] # log10(E/TeV)
 logE_low = 0
-logE_hig = logE_axis.get_bin(np.log10(1.0))+1
+logE_hig = logE_axis.get_bin(np.log10(8.0))+1
 demo_energy = [logE_bins[logE_low], logE_bins[logE_hig], logE_bins[len(logE_bins)-1]] # log10(E/TeV)
 demoE_nbins = len(demo_energy) - 1 
 demoE_axis = MyArray1D(x_bins=demo_energy)
@@ -145,6 +146,7 @@ for ana in range(0,len(ana_tag)):
     current_exposure = 0.
     total_exposure = 0.
     expo_dict = dict.fromkeys(src_keys, 0.)  # Initializes all values to 0.
+    nsb_dict = dict.fromkeys(src_keys, 0.)  # Initializes all values to 0.
 
     run_data = []
     for epoch in input_epoch:
@@ -197,6 +199,7 @@ for ana in range(0,len(ana_tag)):
                     continue
                 
                 expo_dict[source_name] += exposure
+                nsb_dict[source_name] += exposure * run_nsb
 
                 total_exposure += exposure
                 current_exposure += exposure
