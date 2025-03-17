@@ -122,8 +122,8 @@ if onoff=='ON':
 
 #input_epoch = ['V4']
 #input_epoch = ['V5']
-input_epoch = ['V6']
-#input_epoch = ['V4','V5','V6']
+#input_epoch = ['V6']
+input_epoch = ['V4','V5','V6']
 #input_epoch = ['V5','V6']
 
 logE_min = 0

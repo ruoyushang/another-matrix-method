@@ -60,10 +60,12 @@ input_params += [ ['RX_J0648_p1516', 102.20 , 15.27 ,30 ,90] ]
 input_params += [ ['LS_V_p4417', 70.25 , 44.53 ,30 ,90] ]
 input_params += [ ['SNR_G150_p4', 66.785, 55.458,30 ,90] ] # Jamie's SNR
 input_params += [ ['CTB109', 345.28 , 58.88 ,30, 90 ] ]
+input_params += [ ['HESS_J0632_p057', 98.25 , 5.79 ,30, 90 ] ]
+input_params += [ ['LS_I_p61_303', 40.14 , 61.26 ,30, 90 ] ]
 
 
 
-#input_params += [ ['Galactic_Plane', 0., 0.  ,30 ,90] ]
+input_params += [ ['HighNSB', 0., 0.  ,30 ,90] ]
 #input_params += [ ['Extragalactic', 0., 0.  ,30 ,90] ]
 #input_params += [ ['LHAASO_Catalog', 0., 0.  ,30 ,90] ]
 

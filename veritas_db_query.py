@@ -643,11 +643,16 @@ def get_run_type(run_id):
 
     return res[0]['run_type']
 
-def find_runs_near_galactic_plane(obs_name,epoch,obs_type,gal_b_low,gal_b_up):
+def find_runs_near_galactic_plane(obs_name,epoch,obs_type,gal_b_low,gal_b_up,nsb_low,nsb_up,elev_range):
+
+    global all_runs_info
 
     out_file = open('%s/%s.txt'%(output_dir,obs_name),"w")
+    out_run_file = open('%s/RunList_%s.txt'%(output_dir,obs_name),"w")
 
     list_on_run_ids = []
+    list_on_run_elev = []
+    list_on_run_azim = []
     list_on_sources = []
 
     # setup database connection
@@ -655,27 +660,14 @@ def find_runs_near_galactic_plane(obs_name,epoch,obs_type,gal_b_low,gal_b_up):
     # connect to database
     crs=dbcnx.cursor()
 
-    all_src_ra = {}
-    all_src_dec = {}
-    runs_per_src = {}
-    avg_elev_per_src = {}
-    avg_azim_per_src = {}
-    avg_nsb_per_src = {}
     query = 'SELECT source_id,ra,decl FROM tblObserving_Sources'
     crs.execute(query)
     # fetch from cursor
     res = crs.fetchall()
     for x in res:
         source_name = x['source_id']
-        #print ('source_name = %s'%(source_name))
         source_ra = x['ra']*180./math.pi
         source_dec = x['decl']*180./math.pi
-        all_src_ra[x['source_id']] = source_ra
-        all_src_dec[x['source_id']] = source_dec
-        runs_per_src[x['source_id']] = 0
-        avg_elev_per_src[x['source_id']] = 0
-        avg_azim_per_src[x['source_id']] = 0
-        avg_nsb_per_src[x['source_id']] = 0
         source_gal_l, source_gal_b = ConvertRaDecToGalactic(source_ra,source_dec)
         if abs(source_gal_b)>gal_b_low and abs(source_gal_b)<gal_b_up:
             list_on_sources += [source_name]
@@ -726,6 +718,9 @@ def find_runs_near_galactic_plane(obs_name,epoch,obs_type,gal_b_low,gal_b_up):
     res = crs.fetchall()
     for x in res:
 
+        if 'PSR_J2032_p4127_baseline' in obs_name:
+            if x['run_id']>=86880 and x['run_id']<=88479: continue
+
         #if x['run_id']<46642: continue
         if x['run_id']<46642:
             if not epoch=='V4': continue
@@ -750,64 +745,82 @@ def find_runs_near_galactic_plane(obs_name,epoch,obs_type,gal_b_low,gal_b_up):
 
         if x['run_id'] in all_runs_type:
             run_type = all_runs_type[x['run_id']]
-            if run_type!=obs_type: continue
+            if run_type!=obs_type: 
+                print ('RUN %s rejected because of observation type = %s'%(x['run_id'],run_type))
+                continue
         else:
             continue
 
         if x['run_id'] in all_runs_weather:
             run_weather = all_runs_weather[x['run_id']]
-            if run_weather==None: continue
-            if 'C' in run_weather: continue
-            if 'D' in run_weather: continue
-            if 'F' in run_weather: continue
+            if run_weather==None: 
+                print ('RUN %s rejected because of weather = %s'%(x['run_id'],run_weather))
+                continue
+            if 'C' in run_weather: 
+                print ('RUN %s rejected because of weather = %s'%(x['run_id'],run_weather))
+                continue
+            if 'D' in run_weather: 
+                print ('RUN %s rejected because of weather = %s'%(x['run_id'],run_weather))
+                continue
+            if 'F' in run_weather: 
+                print ('RUN %s rejected because of weather = %s'%(x['run_id'],run_weather))
+                continue
         else:
+            print ('RUN %s rejected because of weather not found'%(x['run_id']))
             continue
 
         if x['run_id'] in all_runs_duration:
             run_duration = all_runs_duration[x['run_id']]
-            if run_duration<5.*60.: continue
+            if run_duration<5.*60.: 
+                print ('RUN %s rejected because of duration = %s'%(x['run_id'],run_duration))
+                continue
         else:
+            print ('RUN %s rejected because of duration not found'%(x['run_id']))
             continue
 
-        #on_run_el, on_run_az = get_run_el_az(x['run_id'])
+
         on_run_el, on_run_az = get_run_elaz_from_aux_file(x['run_id'])
         on_run_nsb = get_run_nsb_from_aux_file(x['run_id'])
-        if on_run_el<45.: continue
+        if on_run_el<elev_range[0]: 
+            print ('RUN %s rejected because of elevation = %s'%(x['run_id'],on_run_el))
+            continue
+        if on_run_el>elev_range[1]: 
+            print ('RUN %s rejected because of elevation = %s'%(x['run_id'],on_run_el))
+            continue
+        if on_run_nsb<nsb_low:
+            print ('RUN %s rejected because of NSB = %s'%(x['run_id'],on_run_nsb))
+            continue
+        if on_run_nsb>nsb_up:
+            print ('RUN %s rejected because of NSB = %s'%(x['run_id'],on_run_nsb))
+            continue
 
-        print ('run_id = %s, source_name = %s, RA = %0.2f, Dec = %0.2f'%(x['run_id'],x['source_id'],all_src_ra[x['source_id']],all_src_dec[x['source_id']]))
-        out_file.write('run_id = %s, source_name = %s, RA = %0.2f, Dec = %0.2f \n'%(x['run_id'],x['source_id'],all_src_ra[x['source_id']],all_src_dec[x['source_id']]))
+        on_run_ra, on_run_dec = get_run_ra_dec(x['run_id'])
+
+        print ('run_id = %s, source_name = %s'%(x['run_id'],x['source_id']))
+        out_file.write('run_id = %s, source_name = %s \n'%(x['run_id'],x['source_id']))
+
         list_on_run_ids += [x['run_id']]
-        runs_per_src[x['source_id']] += 1
-        avg_elev_per_src[x['source_id']] += on_run_el
-        avg_azim_per_src[x['source_id']] +=  math.cos(on_run_az*math.pi/180.)
-        avg_nsb_per_src[x['source_id']] += on_run_nsb
+        list_on_run_elev += [on_run_el]
+        list_on_run_azim += [on_run_az]
 
-    list_on_sources_runs = []
-    for src in range(0,len(list_on_sources)):
-        src_name = list_on_sources[src]
-        list_on_sources_runs += [runs_per_src[src_name]]
-
-    for src in range(0,len(list_on_sources)):
-        src_name = list_on_sources[src]
-        if runs_per_src[src_name]==0: continue
-        avg_elev_per_src[src_name] = avg_elev_per_src[src_name]/float(runs_per_src[src_name])
-        avg_azim_per_src[src_name] = avg_azim_per_src[src_name]/float(runs_per_src[src_name])
-        avg_nsb_per_src[src_name] = avg_nsb_per_src[src_name]/float(runs_per_src[src_name])
-
-    zip_list = list(zip(list_on_sources_runs, list_on_sources))
-    zip_list_sorted = sorted(zip_list)
-    list_on_sources_runs, list_on_sources = zip(*zip_list_sorted)
+    #list_pairs = zip(list_on_run_ids, list_on_run_elev)
+    #sorted_pairs = sorted(list_pairs, key=lambda x: x[1])
+    #list_on_run_ids = [x[0] for x in sorted_pairs]
 
     out_file.write('++++++++++++++++++++++++++++++++++++++++++++++++++++\n')
-    out_file.write('Source list\n')
-    for src in range(0,len(list_on_sources)):
-        src_name = list_on_sources[src]
-        if runs_per_src[src_name]<10: continue
-        print ('%s, runs = %s, RA = %0.2f, Dec = %0.2f, El. = %0.1f, Az. = %0.2f, NSB = %0.1f'%(src_name,runs_per_src[src_name],all_src_ra[src_name],all_src_dec[src_name],avg_elev_per_src[src_name],avg_azim_per_src[src_name],avg_nsb_per_src[src_name]))
-        out_file.write('%s, runs = %s, RA = %0.2f, Dec = %0.2f, El. = %0.1f, Az. = %0.2f, NSB = %0.1f \n'%(src_name,runs_per_src[src_name],all_src_ra[src_name],all_src_dec[src_name],avg_elev_per_src[src_name],avg_azim_per_src[src_name],avg_nsb_per_src[src_name]))
+    out_file.write('ON run list\n')
+    print ('++++++++++++++++++++++++++++++++++++++++++++++++++++')
+    print ('ON run list')
+    for run in range(0,len(list_on_run_ids)):
+        out_file.write('%s\n'%(list_on_run_ids[run]))
+        out_run_file.write('%s\n'%(list_on_run_ids[run]))
+        print (list_on_run_ids[run])
 
     out_file.close()
     dbcnx.close()
+
+    return list_on_run_ids
+
 
 def find_on_runs_from_a_list(input_file_name):
 
@@ -1254,15 +1267,15 @@ if input_name=='AUX_files':
     print_all_runs_nsb()
     #print_all_runs_l3rate()  # do not use
 
-elif input_name=='Galactic_Plane':
+elif input_name=='HighNSB':
 
-    obs_name = 'Galactic_Plane_%s'%(run_epoch)
-    find_runs_near_galactic_plane(obs_name,run_epoch,run_obs_type,0.0,10.0)
-
-elif input_name=='Extragalactic':
-
-    obs_name = 'Extragalactic_%s'%(run_epoch)
-    find_runs_near_galactic_plane(obs_name,run_epoch,run_obs_type,10.0,90.0)
+    run_elev_range = [input_elev_low,input_elev_up]
+    obs_name = 'HighNSB_%s'%(run_epoch)
+    obs_ra = input_ra
+    obs_dec = input_dec
+    my_list_on_run_ids = find_runs_near_galactic_plane(obs_name,run_epoch,run_obs_type,10.0,90.0,8.0,20.0,run_elev_range)
+    my_list_off_run_ids = find_off_runs_around_source(obs_name,obs_ra,obs_dec,run_epoch,run_obs_type,run_elev_range,my_list_on_run_ids,False,'PairList')
+    list_for_eventdisplay([my_list_on_run_ids,my_list_off_run_ids],obs_name)
 
 elif input_name=='LHAASO_Catalog':
 

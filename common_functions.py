@@ -4093,7 +4093,7 @@ def build_skymap(
 
         xyoff_idx_1d = find_index_for_xyoff_vector1d()
         for logE in range(0,logE_nbins):
-            xyoff_idx_1d_monospec = find_index_for_xyoff_vector1d_monospec(logE)
+            #xyoff_idx_1d_monospec = find_index_for_xyoff_vector1d_monospec(logE)
             for gcut in range(0,gcut_bins):
                 for idx_x in range(0,xoff_bins[logE]):
                     for idx_y in range(0,yoff_bins[logE]):

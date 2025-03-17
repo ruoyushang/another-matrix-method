@@ -20,8 +20,8 @@ print (f'job_dir = {job_dir}')
 subprocess.run(['mkdir',f'{job_dir}'], capture_output=True, text=True)
 
 
-training_mode = 'off'
-#training_mode = 'on'
+#training_mode = 'off'
+training_mode = 'on'
 #training_mode = 'gal'
 print (f"training_mode = {training_mode}")
 
@@ -64,6 +64,27 @@ if training_mode=='on':
     input_params += [ ['CrabNebula_1p0wobble' ,83.633  ,22.014 , 'ON'] ]
     input_params += [ ['CrabNebula_1p5wobble' ,83.633  ,22.014 , 'ON'] ]
 
+    input_params += [ ['1ES0647'               ,102.694 ,25.050 , 'ON'] ]
+    input_params += [ ['1ES1011'               ,153.767 ,49.434 , 'ON'] ]
+    input_params += [ ['1ES0414'               ,64.220  ,1.089  , 'ON'] ]
+    input_params += [ ['1ES0502'               ,76.983  ,67.623 , 'ON'] ]
+    input_params += [ ['1ES0229'               ,38.222  ,20.273 , 'ON'] ]
+    input_params += [ ['M82'                   ,148.970 ,69.679 , 'ON'] ]
+    input_params += [ ['3C264'                 ,176.271 ,19.606 , 'ON'] ]
+    input_params += [ ['BLLac'                 ,330.680 ,42.277 , 'ON'] ]
+    input_params += [ ['Draco'                 ,260.059 ,57.921 , 'ON'] ]
+    input_params += [ ['OJ287'                 ,133.705 ,20.100 , 'ON'] ]
+    input_params += [ ['H1426'                 ,217.136  ,42.673, 'ON' ] ]
+    input_params += [ ['NGC1275'               ,49.950  ,41.512 , 'ON'] ]
+    input_params += [ ['Segue1'                ,151.767 ,16.082 , 'ON'] ]
+    input_params += [ ['3C273'                 ,187.277 ,2.05   , 'ON'] ]
+    input_params += [ ['PG1553'                ,238.936 ,11.195 , 'ON'] ]
+    input_params += [ ['PKS1424'               ,216.750 ,23.783 , 'ON'] ]
+    input_params += [ ['RGB_J0710_p591'        ,107.61  ,59.15  , 'ON'] ]
+    input_params += [ ['UrsaMinor'             ,227.285 ,67.222 , 'ON'] ]
+    input_params += [ ['UrsaMajorII'           ,132.875 ,63.13  , 'ON'] ]
+    input_params += [ ['1ES1959_p650'          ,300.00 ,65.15   , 'ON'] ]
+    
 if training_mode=='gal':
     
     input_params += [ ['PSR_J1856_p0245', 284.21  , 2.76 , 'ON' ] ]
@@ -93,6 +114,7 @@ if training_mode=='gal':
     input_params += [ ['PSR_B1937_p21', 295.45 , 21.44 , 'ON' ] ]
     input_params += [ ['RX_J0648_p1516', 102.20 , 15.27 , 'ON' ] ]
     input_params += [ ['LS_V_p4417', 70.25 , 44.53 , 'ON' ] ]
+    input_params += [ ['HESS_J0632_p057', 98.25 , 5.79 , 'ON' ] ]
     
     #input_params += [ ['PSR_J1747_m2809', 266.825  , -28.15 , 'ON' ] ] # Sgr A*
 
