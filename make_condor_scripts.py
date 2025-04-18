@@ -20,8 +20,8 @@ print (f'job_dir = {job_dir}')
 subprocess.run(['mkdir',f'{job_dir}'], capture_output=True, text=True)
 
 
-#training_mode = 'off'
-training_mode = 'on'
+training_mode = 'off'
+#training_mode = 'on'
 #training_mode = 'gal'
 print (f"training_mode = {training_mode}")
 

@@ -27,9 +27,7 @@ gcut_end = common_functions.gcut_end
 ReadRunListFromFile = common_functions.ReadRunListFromFile
 smooth_image = common_functions.smooth_image
 skymap_size = common_functions.skymap_size
-fine_skymap_size = common_functions.fine_skymap_size
 skymap_bins = common_functions.skymap_bins
-fine_skymap_bins = common_functions.fine_skymap_bins
 coordinate_type = common_functions.coordinate_type
 ConvertRaDecToGalactic = common_functions.ConvertRaDecToGalactic
 build_skymap = common_functions.build_skymap
@@ -77,27 +75,27 @@ print (f'path_to_big_matrix = {path_to_big_matrix}')
 path_to_leastsquare_model = f'{smi_output}/{ana_dir}/model_least_square_{source_name}_{onoff}_{input_epoch}_{cr_tag}_{bin_tag}_{eigen_tag}.pkl'
 print (f'path_to_leastsquare_model = {path_to_leastsquare_model}')
 
-if onoff=='ON' or 'MIMIC' in onoff:
-    skymap_bins = fine_skymap_bins
 
 on_file = f'{smi_runlist}/RunList_{source_name}_{input_epoch}.txt'
 off_file = f'{smi_runlist}/PairList_{source_name}_{input_epoch}.txt'
 mimic_file = f'{smi_runlist}/ImposterList_{source_name}_{input_epoch}.txt'
 on_runlist, off_runlist, mimic_runlist = ReadRunListFromFile(smi_input,on_file,off_file,mimic_file)
 
-xsky_start = src_ra+fine_skymap_size
-xsky_end = src_ra-fine_skymap_size
-ysky_start = src_dec-fine_skymap_size
-ysky_end = src_dec+fine_skymap_size
+xsky_start = src_ra+skymap_size
+xsky_end = src_ra-skymap_size
+ysky_start = src_dec-skymap_size
+ysky_end = src_dec+skymap_size
 
 if coordinate_type == 'galactic':
     src_gal_l, src_gal_b = ConvertRaDecToGalactic(src_ra, src_dec)
-    xsky_start = src_gal_l+fine_skymap_size
-    xsky_end = src_gal_l-fine_skymap_size
-    ysky_start = src_gal_b-fine_skymap_size
-    ysky_end = src_gal_b+fine_skymap_size
+    xsky_start = src_gal_l+skymap_size
+    xsky_end = src_gal_l-skymap_size
+    ysky_start = src_gal_b-skymap_size
+    ysky_end = src_gal_b+skymap_size
 
 if onoff=='OFF':
+    skymap_size = 2.
+    skymap_bins = 80
     xsky_start = skymap_size
     xsky_end = -skymap_size
     ysky_start = skymap_size
@@ -241,11 +239,13 @@ run_data_xyoff_map = []
 run_fit_xyoff_map = []
 run_init_xyoff_map = []
 run_syst_xyoff_map = []
+run_mask_xyoff_map = []
 for logE in range(0,logE_nbins):
     run_data_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
     run_fit_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
     run_init_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
     run_syst_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
+    run_mask_xyoff_map += [MyArray3D(x_bins=xoff_bins[logE],start_x=xoff_start,end_x=xoff_end,y_bins=yoff_bins[logE],start_y=yoff_start,end_y=yoff_end,z_bins=gcut_bins,start_z=gcut_start,end_z=gcut_end)]
 
 data_xyvar_map = []
 run_data_xyvar_map = []
@@ -296,6 +296,7 @@ for small_runlist in range(0,len(big_runlist)):
             run_init_xyoff_map, 
             run_data_xyvar_map, 
             run_syst_xyoff_map,
+            run_mask_xyoff_map,
             total_data_xyoff_map,
             total_fit_xyoff_map,
         )

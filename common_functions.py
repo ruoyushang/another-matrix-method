@@ -73,12 +73,10 @@ str_flux_calibration = ['3.40e+02', '6.90e+02', '1.42e+03', '2.51e+03', '2.85e+0
 #MSCL_cut = [0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70]
 #str_flux_calibration = ['2.51e+03', '2.85e+03', '2.53e+03', '3.20e+03', '8.51e+03', '2.51e+04', '1.14e+05', '3.70e+05', '1.09e+06']
 
-skymap_size = 2.
-fine_skymap_size = 3.
-#skymap_bins = 20
-#fine_skymap_bins = 20
-skymap_bins = 80
-fine_skymap_bins = 120
+#skymap_size = 2.
+#skymap_bins = 80
+skymap_size = 3.
+skymap_bins = 120
 
 #doFluxCalibration = True
 doFluxCalibration = False
@@ -88,9 +86,9 @@ coordinate_type = 'galactic'
 #coordinate_type = 'icrs'
 
 #logE_threshold = -99
-#logE_threshold = 0
+logE_threshold = 0
 #logE_threshold = 1
-logE_threshold = 2
+#logE_threshold = 2
 fov_mask_radius = 10.
 gcut_bins = 3
 matrix_rank = 1
@@ -154,6 +152,24 @@ xoff_bins = [xyoff_map_nbins for logE in range(0,logE_nbins)]
 yoff_bins = [xyoff_map_nbins for logE in range(0,logE_nbins)]
 xvar_bins = [xyvar_map_nbins for logE in range(0,logE_nbins)]
 yvar_bins = [xyvar_map_nbins for logE in range(0,logE_nbins)]
+
+if 'nbin0' in bin_tag:
+    for logE in range(0,logE_nbins):
+        xoff_bins[logE] = 9
+        yoff_bins[logE] = 9
+        if pow(10.,logE_bins[logE])>0.4:
+            xoff_bins[logE] = 7
+            yoff_bins[logE] = 7
+        if pow(10.,logE_bins[logE])>1.0:
+            xoff_bins[logE] = 5
+            yoff_bins[logE] = 5
+        if pow(10.,logE_bins[logE])>3.0:
+            xoff_bins[logE] = 3
+            yoff_bins[logE] = 3
+        if pow(10.,logE_bins[logE])>10.0:
+            xoff_bins[logE] = 1
+            yoff_bins[logE] = 1
+
 
 smi_aux = os.environ.get("SMI_AUX")
 smi_dir = os.environ.get("SMI_DIR")
@@ -705,11 +721,14 @@ def CoincideWithBrightStars(ra, dec, bright_stars_coord):
         isCoincident = True
     return isCoincident
 
-def CoincideWithRegionOfInterest(ra, dec, roi_ra, roi_dec, roi_r):
+def CoincideWithRegionOfInterest(ra, dec, roi_ra, roi_dec, roi_r, reverse=False):
     isCoincident = False
     for roi in range(0,len(roi_r)):
         distance = pow(pow(roi_ra[roi]-ra,2)+pow(roi_dec[roi]-dec,2),0.5)
-        if distance>roi_r[roi]: continue
+        if not reverse:
+            if distance>roi_r[roi]: continue
+        if reverse:
+            if distance<2.*roi_r[roi]: continue
         isCoincident = True
     return isCoincident
 
@@ -1049,6 +1068,9 @@ def build_big_camera_matrix(source_name,src_ra,src_dec,smi_input,runlist,max_run
                 found_roi = CoincideWithRegionOfInterest(Xsky, Ysky, roi_ra, roi_dec, roi_r)
                 if found_roi:
                     xyoff_mask_map[logE].fill(Xoff,Yoff,GammaCut)
+                #found_roi = CoincideWithRegionOfInterest(Xsky, Ysky, roi_ra, roi_dec, roi_r, reverse=True)
+                #if found_roi:
+                #    xyoff_mask_map[logE].fill(Xoff,Yoff,GammaCut)
 
 
             xyoff_map[logE].fill(Xoff,Yoff,GammaCut)
@@ -1648,7 +1670,7 @@ def GetGammaSourceInfo():
     near_source_cut = 0.1
 
     drawBrightStar = False
-    drawPulsar = False
+    drawPulsar = True
     drawSNR = False
     drawLHAASO = False
     drawFermi = False
@@ -2181,34 +2203,52 @@ def PlotSkyMap(fig,label_z,logE_min,logE_max,hist_map_input,plotname,roi_x=[],ro
         favorite_color = 'deepskyblue'
     font = {'family': 'serif', 'color':  favorite_color, 'weight': 'normal', 'size': 10, 'rotation': 0.,}
 
-    for star in range(0,len(other_star_markers)):
-        marker_size = 60
-        if other_star_types[star]=='PSR':
-            axbig.scatter(other_star_markers[star][0], other_star_markers[star][1], s=1.5*marker_size, c=favorite_color, marker='+', label=other_star_labels[star])
-        if other_star_types[star]=='SNR':
-            mycircle = plt.Circle( (other_star_markers[star][0], other_star_markers[star][1]), other_star_markers[star][2], fill = False, color=favorite_color)
-            axbig.add_patch(mycircle)
-        if other_star_types[star]=='LHAASO':
-            axbig.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c=favorite_color, marker='+', label=other_star_labels[star])
-        if other_star_types[star]=='HAWC':
-            axbig.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c=favorite_color, marker='+', label=other_star_labels[star])
-        if other_star_types[star]=='Fermi':
-            axbig.plot(other_star_markers[star][0], other_star_markers[star][1], markersize=10, c='k', marker='v', fillstyle='none')
-        if other_star_types[star]=='MSP':
-            axbig.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c=favorite_color, marker='+', label=other_star_labels[star])
-        if other_star_types[star]=='TeV':
-            axbig.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c=favorite_color, marker='+', label='')
-        if other_star_types[star]=='Star':
-            axbig.plot(other_star_markers[star][0], other_star_markers[star][1], markersize=15, c='k', marker='o', fillstyle='none')
-        #txt = axbig.text(other_star_markers[star][0]-0.07, other_star_markers[star][1]+0.07, other_star_labels[star], fontdict=font, c=favorite_color)
+    if 'PSR_J1856_p0245' in plotname:
 
-    linestyles = ['-', '--', '-.', ':']  # List of linestyles
-    for roi in range(0,len(roi_x)):
-        mycircle = plt.Circle( (roi_x[roi], roi_y[roi]), roi_r[roi], fill = False, linestyle='dashed', color='black')
-        axbig.add_patch(mycircle)
-    for roi in range(0,len(excl_x)):
-        mycircle = plt.Circle( (excl_x[roi], excl_y[roi]), excl_r[roi], fill = False, linestyle='-', color='black')
-        axbig.add_patch(mycircle)
+        linestyles = ['--', '-.', ':']  # List of linestyles
+        roi_x = [284.30]
+        roi_y = [2.72]
+        roi_r = [0.38]
+        roi_x += [284.37]
+        roi_y += [2.72]
+        roi_r += [0.24]
+        for roi in range(0,len(roi_x)):
+            mycircle = plt.Circle( (roi_x[roi], roi_y[roi]), roi_r[roi], fill = False, linestyle=linestyles[roi], color=favorite_color)
+            axbig.add_patch(mycircle)
+
+        marker_size = 60
+        axbig.scatter(284.21, 2.76, s=1.5*marker_size, c=favorite_color, marker='+')
+
+    else:
+
+        for star in range(0,len(other_star_markers)):
+            marker_size = 60
+            if other_star_types[star]=='PSR':
+                axbig.scatter(other_star_markers[star][0], other_star_markers[star][1], s=1.5*marker_size, c=favorite_color, marker='+', label=other_star_labels[star])
+            if other_star_types[star]=='SNR':
+                mycircle = plt.Circle( (other_star_markers[star][0], other_star_markers[star][1]), other_star_markers[star][2], fill = False, color=favorite_color)
+                axbig.add_patch(mycircle)
+            if other_star_types[star]=='LHAASO':
+                axbig.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c=favorite_color, marker='+', label=other_star_labels[star])
+            if other_star_types[star]=='HAWC':
+                axbig.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c=favorite_color, marker='+', label=other_star_labels[star])
+            if other_star_types[star]=='Fermi':
+                axbig.plot(other_star_markers[star][0], other_star_markers[star][1], markersize=10, c='k', marker='v', fillstyle='none')
+            if other_star_types[star]=='MSP':
+                axbig.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c=favorite_color, marker='+', label=other_star_labels[star])
+            if other_star_types[star]=='TeV':
+                axbig.scatter(other_star_markers[star][0], other_star_markers[star][1], s=marker_size, c=favorite_color, marker='+', label='')
+            if other_star_types[star]=='Star':
+                axbig.plot(other_star_markers[star][0], other_star_markers[star][1], markersize=15, c='k', marker='o', fillstyle='none')
+            #txt = axbig.text(other_star_markers[star][0]-0.07, other_star_markers[star][1]+0.07, other_star_labels[star], fontdict=font, c=favorite_color)
+
+        linestyles = ['-', '--', '-.', ':']  # List of linestyles
+        for roi in range(0,len(roi_x)):
+            mycircle = plt.Circle( (roi_x[roi], roi_y[roi]), roi_r[roi], fill = False, linestyle='dashed', color='black')
+            axbig.add_patch(mycircle)
+        for roi in range(0,len(excl_x)):
+            mycircle = plt.Circle( (excl_x[roi], excl_y[roi]), excl_r[roi], fill = False, linestyle='-', color='black')
+            axbig.add_patch(mycircle)
 
     if not 'Gas' in plotname:
         lable_energy_range = f'E = {E_min:0.2f}-{E_max:0.2f} TeV'
@@ -2320,11 +2360,11 @@ def GetRadialProfile(hist_flux_skymap,hist_error_skymap,hist_syst_skymap,roi_x,r
                     if not hist_error_skymap==None:
                         brightness_err_array[br] += pow(hist_error_skymap.waxis[bx,by,0],2)
                     if not hist_syst_skymap==None:
-                        brightness_syst_array[br] += hist_syst_skymap.waxis[bx,by,0]
+                        brightness_syst_array[br] += pow(hist_syst_skymap.waxis[bx,by,0],2)
         if pixel_array[br]==0.: continue
         brightness_array[br] = brightness_array[br]/pixel_array[br]
         brightness_err_array[br] = pow(brightness_err_array[br],0.5)/pixel_array[br]
-        brightness_syst_array[br] = brightness_syst_array[br]/pixel_array[br]
+        brightness_syst_array[br] = pow(brightness_syst_array[br],0.5)/pixel_array[br]
 
     output_radius_array = []
     output_brightness_array = []
@@ -2934,7 +2974,7 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec,coordinate_type='icrs'):
         region_name = ('center','center')
         region_x += [0.]
         region_y += [0.]
-        region_r += [3.]
+        region_r += [1.5]
 
     elif 'Crab' in src_name:
 
@@ -2996,12 +3036,26 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec,coordinate_type='icrs'):
         #region_y += [src_y]
         #region_r += [1.0]
 
-        region_name = ('SNR_core','SNR (core)')
-        src_x = 305.21
+        #region_name = ('hotspot','VER J2019+407')
+        #src_x = 305.0200000
+        #src_y = 40.7572222
+        #region_x += [src_x]
+        #region_y += [src_y]
+        #region_r += [0.5]
+
+        region_name = ('HAWC_disk','HAWC (disk)')
+        src_x = 305.3
         src_y = 40.43
         region_x += [src_x]
         region_y += [src_y]
-        region_r += [0.5]
+        region_r += [0.64]
+
+        #region_name = ('SNR_core','SNR (core)')
+        #src_x = 305.21
+        #src_y = 40.43
+        #region_x += [src_x]
+        #region_y += [src_y]
+        #region_r += [0.5]
 
         #region_name = ('SNR_shell','SNR (shell)')
         #src_x = 305.21
@@ -3126,7 +3180,7 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec,coordinate_type='icrs'):
         region_name = ('default','default')
         region_x += [src_x]
         region_y += [src_y]
-        region_r += [3.0]
+        region_r += [0.5]
 
 
     if coordinate_type == 'galactic':
@@ -3478,6 +3532,7 @@ def GetSlicedDataCubeMap(map_file, sky_map, vel_low, vel_up):
         delta_vel = velocity_next - velocity
         image_data_reduced_z += image_data[:, :, idx]*delta_vel
 
+    CO_column_density_factor = 2.0 * 10**20 # K / (cm2) / (km/s)
     for idx_x in range(0,nbins_x):
         for idx_y in range(0,nbins_y):
             sky_ra = sky_map.xaxis[idx_x]
@@ -3492,7 +3547,7 @@ def GetSlicedDataCubeMap(map_file, sky_map, vel_low, vel_up):
             pix_dec = int(map_pixs[2])
             #if pix_ra>=image_data_reduced_z.shape[0]: continue
             #if pix_dec>=image_data_reduced_z.shape[1]: continue
-            sky_map.waxis[idx_x,idx_y,0] += image_data_reduced_z[pix_dec,pix_ra]
+            sky_map.waxis[idx_x,idx_y,0] += image_data_reduced_z[pix_dec,pix_ra] * CO_column_density_factor
 
 def GetSlicedDataCubeMapCGPS(map_file, sky_map, vel_low, vel_up):
 
@@ -3639,6 +3694,7 @@ def GetSlicedDataCubeMapGALFA(map_file, sky_map, vel_low, vel_up):
     print (f"min_lon = {min_lon}")
     print (f"min_lat = {min_lat}")
 
+    HI_column_density_factor = 1.8 * 10**18 # K / (cm2) / (km/s)
     for idx_x in range(0,nbins_x):
         for idx_y in range(0,nbins_y):
             sky_ra = sky_map.xaxis[idx_x]
@@ -3648,7 +3704,7 @@ def GetSlicedDataCubeMapGALFA(map_file, sky_map, vel_low, vel_up):
             pix_dec = int(map_pixs[1])
             if pix_ra>=image_data_reduced_z.shape[1]: continue
             if pix_dec>=image_data_reduced_z.shape[0]: continue
-            sky_map.waxis[idx_x,idx_y,0] += image_data_reduced_z[pix_dec,pix_ra]
+            sky_map.waxis[idx_x,idx_y,0] += image_data_reduced_z[pix_dec,pix_ra] * HI_column_density_factor / 1e3
 
 def compute_camera_frame_power_spectrum(skymap,idx_z=0):
 
@@ -3785,13 +3841,12 @@ def build_skymap(
         init_xyoff_map, 
         data_xyvar_map, 
         syst_xyoff_map,
+        mask_xyoff_map,
         total_data_sky_map,
         total_bkgd_sky_map,
     ):
 
     global skymap_bins
-    if onoff=='ON' or 'MIMIC' in onoff:
-        skymap_bins = fine_skymap_bins
 
     # start memory profiling
     tracemalloc.start()
@@ -3806,12 +3861,12 @@ def build_skymap(
     big_xyoff_eigenvalues_fullspec = eigen_stuff[0][0]
     big_xyoff_eigenvectors_fullspec = eigen_stuff[0][1]
     avg_xyoff_map_1d_fullspec = eigen_stuff[0][2]
-    big_xyoff_eigenvalues_monospec = eigen_stuff[1][0]
-    big_xyoff_eigenvectors_monospec = eigen_stuff[1][1]
-    avg_xyoff_map_1d_monospec = eigen_stuff[1][2]
+    #big_xyoff_eigenvalues_monospec = eigen_stuff[1][0]
+    #big_xyoff_eigenvectors_monospec = eigen_stuff[1][1]
+    #avg_xyoff_map_1d_monospec = eigen_stuff[1][2]
 
     print (f"avg_xyoff_map_1d_fullspec.shape = {avg_xyoff_map_1d_fullspec.shape}")
-    print (f"avg_xyoff_map_1d_monospec.shape = {avg_xyoff_map_1d_monospec.shape}")
+    #print (f"avg_xyoff_map_1d_monospec.shape = {avg_xyoff_map_1d_monospec.shape}")
 
     exposure_hours = 0.
     avg_tel_elev = 0.
@@ -3863,6 +3918,7 @@ def build_skymap(
         init_xyoff_map[logE].reset()
         data_xyvar_map[logE].reset()
         syst_xyoff_map[logE].reset()
+        mask_xyoff_map[logE].reset()
         ratio_xyoff_map[logE].reset()
 
     print ('===================================================================================')
@@ -3874,12 +3930,14 @@ def build_skymap(
         data_multivar_map_1d_fullspec += np.array(big_on_matrix_fullspec[entry])
         mask_multivar_map_1d_fullspec += np.array(big_mask_matrix_fullspec[entry])
 
-    data_xyoff_map_1d_monospec = convert_multivar_to_xyoff_vector1d_monospec(data_multivar_map_1d_fullspec)
-    mask_xyoff_map_1d_monospec = convert_multivar_to_xyoff_vector1d_monospec(mask_multivar_map_1d_fullspec)
+    #data_xyoff_map_1d_monospec = convert_multivar_to_xyoff_vector1d_monospec(data_multivar_map_1d_fullspec)
+    #mask_xyoff_map_1d_monospec = convert_multivar_to_xyoff_vector1d_monospec(mask_multivar_map_1d_fullspec)
     data_xyoff_map_1d_fullspec = convert_multivar_to_xyoff_vector1d(data_multivar_map_1d_fullspec)
     mask_xyoff_map_1d_fullspec = convert_multivar_to_xyoff_vector1d(mask_multivar_map_1d_fullspec)
     data_xyvar_map_1d_fullspec = convert_multivar_to_xyvar_vector1d(data_multivar_map_1d_fullspec)
     mask_xyvar_map_1d_fullspec = convert_multivar_to_xyvar_vector1d(mask_multivar_map_1d_fullspec)
+
+    mask_xyoff_map_1d_fullspec[mask_xyoff_map_1d_fullspec>0.] = 1.
 
     if use_offruns:
         off_data_multivar_map_1d_fullspec = np.zeros_like(big_off_matrix_fullspec[0])
@@ -3900,6 +3958,20 @@ def build_skymap(
                 for idx_y in range(0,yoff_bins[logE]):
                     idx_1d = xyoff_idx_1d[gcut][logE][idx_x][idx_y]
                     data_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = data_xyoff_map_1d_fullspec[idx_1d]
+                    if 'OFF' in onoff:
+                        delta_x = (xoff_end-xoff_start)/xoff_bins[logE]
+                        delta_y = (yoff_end-yoff_start)/yoff_bins[logE]
+                        pix_x = mask_xyoff_map[logE].xaxis[idx_x]+0.5*delta_x
+                        pix_y = mask_xyoff_map[logE].yaxis[idx_y]+0.5*delta_y
+                        distance = pow(pix_x*pix_x+pix_y*pix_y,0.5)
+                        if distance<fov_mask_radius:
+                            mask_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = 1.
+                        elif distance>2.*fov_mask_radius:
+                            mask_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = 1.
+                        else:
+                            mask_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = 0.
+                    else:
+                        mask_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = mask_xyoff_map_1d_fullspec[idx_1d]
                     if use_offruns:
                         init_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = off_data_xyoff_map_1d_fullspec[idx_1d]
                         fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = off_data_xyoff_map_1d_fullspec[idx_1d]
@@ -3928,11 +4000,13 @@ def build_skymap(
         norm_sr_data_err = sr_map_1d_err[logE]
         norm_sr_init = np.sum(init_xyoff_map[logE].waxis[:,:,0])
         norm_cr_init = np.sum(init_xyoff_map[logE].waxis[:,:,:]) - np.sum(init_xyoff_map[logE].waxis[:,:,0])
+        print ("mask_xyoff_map = ")
+        print (mask_xyoff_map[logE].waxis[:,:,0])
+        if 'fov' in norm_tag:
+            norm_cr_data = np.sum(data_xyoff_map[logE].waxis[:,:,0] - data_xyoff_map[logE].waxis[:,:,0]*mask_xyoff_map[logE].waxis[:,:,0])
+            norm_cr_init = np.sum(init_xyoff_map[logE].waxis[:,:,0] - init_xyoff_map[logE].waxis[:,:,0]*mask_xyoff_map[logE].waxis[:,:,0])
         norm_data = norm_cr_data
         norm_init = norm_cr_init
-        #if abs(norm_sr_data_err)<abs(norm_sr_data):
-        #    norm_data = norm_sr_data 
-        #    norm_init = norm_sr_init 
         if norm_init==0.: continue
         for gcut in range(0,gcut_bins):
             for idx_x in range(0,xoff_bins[logE]):
@@ -3955,8 +4029,8 @@ def build_skymap(
         print ('fitting xyoff maps fullspec...')
 
         xyoff_idx_1d = find_index_for_xyoff_vector1d()
-        init_xyoff_map_1d_monospec = np.zeros_like(data_xyoff_map_1d_monospec)
-        syst_xyoff_map_1d_monospec = np.zeros_like(data_xyoff_map_1d_monospec)
+        #init_xyoff_map_1d_monospec = np.zeros_like(data_xyoff_map_1d_monospec)
+        #syst_xyoff_map_1d_monospec = np.zeros_like(data_xyoff_map_1d_monospec)
         init_xyoff_map_1d_fullspec = np.zeros_like(data_xyoff_map_1d_fullspec)
         syst_xyoff_map_1d_fullspec = np.zeros_like(data_xyoff_map_1d_fullspec)
         for logE in range(0,logE_nbins):
@@ -3969,12 +4043,12 @@ def build_skymap(
                         idx_1d_monospec = xyoff_idx_1d_monospec[gcut][idx_x][idx_y]
                         prediction = init_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
                         init_xyoff_map_1d_fullspec[idx_1d] = prediction
-                        init_xyoff_map_1d_monospec[logE][idx_1d_monospec] = prediction
+                        #init_xyoff_map_1d_monospec[logE][idx_1d_monospec] = prediction
                         rel_syst = 1.
                         if abs(sr_map_1d[logE])>0.:
                             rel_syst = sr_map_1d_err[logE]/abs(sr_map_1d[logE])
                         syst_xyoff_map_1d_fullspec[idx_1d] = prediction * rel_syst
-                        syst_xyoff_map_1d_monospec[logE][idx_1d_monospec] = prediction * rel_syst
+                        #syst_xyoff_map_1d_monospec[logE][idx_1d_monospec] = prediction * rel_syst
 
         for logE in range(0,logE_nbins):
             for gcut in range(0,gcut_bins):
@@ -4093,16 +4167,14 @@ def build_skymap(
 
         xyoff_idx_1d = find_index_for_xyoff_vector1d()
         for logE in range(0,logE_nbins):
-            #xyoff_idx_1d_monospec = find_index_for_xyoff_vector1d_monospec(logE)
             for gcut in range(0,gcut_bins):
                 for idx_x in range(0,xoff_bins[logE]):
                     for idx_y in range(0,yoff_bins[logE]):
                         idx_1d = xyoff_idx_1d[gcut][logE][idx_x][idx_y]
+                        data = data_xyoff_map_1d_fullspec[idx_1d]
                         prediction = max(0.0,fit_xyoff_map_1d_fullspec[idx_1d])
                         fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = prediction
-                        #idx_1d_monospec = xyoff_idx_1d_monospec[gcut][idx_x][idx_y]
-                        #prediction = max(0.0,fit_xyoff_map_1d_monospec[logE][idx_1d_monospec])
-                        #fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = prediction
+                        syst_xyoff_map[logE].waxis[idx_x,idx_y,gcut] = data - prediction
 
 
 
@@ -4125,20 +4197,33 @@ def build_skymap(
             for idx_y in range(0,yoff_bins[logE]):
                 sum_xyoff_map_cr = 0.
                 for gcut in range(1,2):
-                    sum_xyoff_map_cr += fit_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
+                    sum_xyoff_map_cr += data_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
+
                 model = fit_xyoff_map[logE].waxis[idx_x,idx_y,0]
-                model_err = syst_xyoff_map[logE].waxis[idx_x,idx_y,0]
                 if sum_xyoff_map_cr<10.:
                     sum_xyoff_map_cr = 0.
                     for gcut in range(1,2):
-                        sum_xyoff_map_cr += np.sum(fit_xyoff_map[logE].waxis[:,:,gcut])
+                        sum_xyoff_map_cr += np.sum(data_xyoff_map[logE].waxis[:,:,gcut])
                     model = np.sum(fit_xyoff_map[logE].waxis[:,:,0])
-                    model_err = np.sum(syst_xyoff_map[logE].waxis[:,:,0])
+                    sum_xyoff_map_cr_all = 0.
+                    sum_xyoff_map_cr_err = 0.
+                    for gcut in range(1,gcut_bins):
+                        sum_xyoff_map_cr_all += np.sum(data_xyoff_map[logE].waxis[:,:,gcut])
+                        sum_xyoff_map_cr_err += pow(np.sum(syst_xyoff_map[logE].waxis[:,:,gcut]),2)
+                    model_err = sum_xyoff_map_cr_err / sum_xyoff_map_cr_all
+                else:
+                    sum_xyoff_map_cr_all = 0.
+                    sum_xyoff_map_cr_err = 0.
+                    for gcut in range(1,gcut_bins):
+                        sum_xyoff_map_cr_all += data_xyoff_map[logE].waxis[idx_x,idx_y,gcut]
+                        sum_xyoff_map_cr_err += pow(syst_xyoff_map[logE].waxis[idx_x,idx_y,gcut],2)
+                    model_err = sum_xyoff_map_cr_err / sum_xyoff_map_cr_all
+
                 ratio = 0.
                 ratio_syst = 0.
                 if sum_xyoff_map_cr>0.:
-                    ratio = model/sum_xyoff_map_cr
-                    ratio_syst = model_err/sum_xyoff_map_cr
+                    ratio = model / sum_xyoff_map_cr
+                    ratio_syst = pow(model_err*model,0.5) / sum_xyoff_map_cr
                 ratio_xyoff_map[logE].waxis[idx_x,idx_y,0] = ratio
                 syst_xyoff_map[logE].waxis[idx_x,idx_y,0] = ratio_syst
 
