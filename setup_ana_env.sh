@@ -10,7 +10,8 @@ export NUMEXPR_NUM_THREADS=1
 export OMP_NUM_THREADS=1
 export NUMBA_NUM_THREADS=1
 
-export SMI_INPUT=/nevis/ged/data/rshang/EDv490_output
+#export SMI_INPUT=/nevis/ged/data/rshang/EDv490_output
+export SMI_INPUT=/nevis/ged/data/rshang/EDv490_output_CTA1
 #export SMI_INPUT=/nevis/ged/data/rshang/EDv490_output_PSR_J2021_p4026
 #export SMI_INPUT=/nevis/ged/data/rshang/EDv490_output_HESS_J0632_p057
 echo $SMI_INPUT
@@ -46,11 +47,11 @@ export CR_TAG="cr8"
 #export NORM_TAG="fov15"
 export NORM_TAG="free"
 
-export BIN_TAG="nbin0"
+#export BIN_TAG="nbin0"
 #export BIN_TAG="nbin1"
 #export BIN_TAG="nbin3"
 #export BIN_TAG="nbin5"
-#export BIN_TAG="nbin7"
+export BIN_TAG="nbin7"
 #export BIN_TAG="nbin9"
 #export BIN_TAG="nbin10"
 
