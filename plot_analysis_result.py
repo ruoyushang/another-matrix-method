@@ -76,9 +76,9 @@ smi_output = "/nevis/ged/data/rshang/smi_output/output_20250417"
 
 sky_tag = os.environ.get("SKY_TAG")
 
-smooth_size = 0.06
+#smooth_size = 0.06
 #smooth_size = 0.08
-#smooth_size = 0.2
+smooth_size = 0.24
 
 norm_smooth_size = [3.*smooth_size for i in range(0,logE_nbins)]
 for logE in range(0,logE_nbins):
@@ -203,6 +203,7 @@ print (f"all_roi_x = {all_roi_x}")
 print (f"all_roi_y = {all_roi_y}")
 print (f"all_roi_r = {all_roi_r}")
 
+max_exposure = 1000.
 total_exposure = 0.
 good_exposure = 0.
 mimic_exposure = [0.] * n_mimic 
@@ -449,6 +450,9 @@ for epoch in input_epoch:
             if run_elev<min_elev_cut:
                 continue
             if run_elev>max_elev_cut:
+                continue
+
+            if total_exposure >= max_exposure:
                 continue
 
             if not 'MIMIC' in mode:

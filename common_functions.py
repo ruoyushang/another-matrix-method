@@ -75,8 +75,8 @@ fine_skymap_bins = 120
 doFluxCalibration = False
 calibration_radius = 0.15 # need to be larger than the PSF and smaller than the integration radius
 
-coordinate_type = 'galactic'
-#coordinate_type = 'icrs'
+#coordinate_type = 'galactic'
+coordinate_type = 'icrs'
 
 #logE_threshold = -99
 logE_threshold = -1
@@ -417,12 +417,16 @@ def smooth_image(image_data,xaxis,yaxis,kernel_radius=0.07):
     for idx_x1 in range(0,len(xaxis)-1):
         for idx_y1 in range(0,len(yaxis)-1):
             image_smooth[idx_y1,idx_x1] = 0.
-            for idx_x2 in range(idx_x1-3*kernel_pix_size,idx_x1+3*kernel_pix_size):
-                for idx_y2 in range(idx_y1-3*kernel_pix_size,idx_y1+3*kernel_pix_size):
+            for idx_x2 in range(idx_x1-2*kernel_pix_size,idx_x1+2*kernel_pix_size):
+                for idx_y2 in range(idx_y1-2*kernel_pix_size,idx_y1+2*kernel_pix_size):
                     if idx_x2<0: continue
                     if idx_y2<0: continue
                     if idx_x2>=len(xaxis)-1: continue
                     if idx_y2>=len(yaxis)-1: continue
+                    if central_bin_y+idx_y2-idx_y1<0: continue
+                    if central_bin_x+idx_x2-idx_x1<0: continue
+                    if central_bin_y+idx_y2-idx_y1>=len(yaxis)-1: continue
+                    if central_bin_x+idx_x2-idx_x1>=len(xaxis)-1: continue
                     old_content = image_data[idx_y2,idx_x2]
                     scale = image_kernel[central_bin_y+idx_y2-idx_y1,central_bin_x+idx_x2-idx_x1]
                     image_smooth[idx_y1,idx_x1] += old_content*scale
@@ -2074,10 +2078,13 @@ def PlotSkyMap(fig,label_z,logE_min,logE_max,hist_map_input,plotname,roi_x=[],ro
     # Create the custom colormap
     cmap_name = 'white_black_to_red_yellow'
     custom_cmap = LinearSegmentedColormap(cmap_name, segmentdata=cdict, N=256)
-    offset_z = 4.
+    offset_z = 0.
     if not colormap=='custom':
         custom_cmap = colormap
         offset_z = 0.
+    else:
+        max_z = 2.
+        offset_z = 4.
 
 
     axbig.set_xlabel(label_x)
@@ -3933,24 +3940,24 @@ def build_skymap(
         print (f"solution['fun'] = {solution['fun']}")
         fit_params = solution['x']
 
-        syst_solution = minimize(
-            cosmic_ray_like_chi2_fullspec,
-            x0=init_params,
-            args=(
-                big_xyoff_eigenvectors_fullspec,
-                data_xyoff_map_1d_fullspec,
-                mask_xyoff_map_1d_fullspec,
-                init_xyoff_map_1d_fullspec,
-                True,
-                [0,1],
-                logE_peak,
-            ),
-            method='L-BFGS-B',
-            jac=None,
-            options={'eps':stepsize,'ftol':0.0001},
-        )
-        print (f"syst_solution['fun'] = {syst_solution['fun']}")
-        syst_params = syst_solution['x']
+        #syst_solution = minimize(
+        #    cosmic_ray_like_chi2_fullspec,
+        #    x0=init_params,
+        #    args=(
+        #        big_xyoff_eigenvectors_fullspec,
+        #        data_xyoff_map_1d_fullspec,
+        #        mask_xyoff_map_1d_fullspec,
+        #        init_xyoff_map_1d_fullspec,
+        #        True,
+        #        [0,1],
+        #        logE_peak,
+        #    ),
+        #    method='L-BFGS-B',
+        #    jac=None,
+        #    options={'eps':stepsize,'ftol':0.0001},
+        #)
+        #print (f"syst_solution['fun'] = {syst_solution['fun']}")
+        #syst_params = syst_solution['x']
 
         print ("***************************************************************************************")
         for entry in range(0,len(fit_params)):
@@ -3972,7 +3979,7 @@ def build_skymap(
                 return [exposure_hours,avg_tel_elev,avg_tel_azim,avg_MeanPedvar]
 
         fit_xyoff_map_1d_fullspec = big_xyoff_eigenvectors_fullspec.T @ fit_params
-        syst_xyoff_map_1d_fullspec = big_xyoff_eigenvectors_fullspec.T @ syst_params
+        syst_xyoff_map_1d_fullspec = big_xyoff_eigenvectors_fullspec.T @ fit_params
 
 
         xyoff_idx_1d = find_index_for_xyoff_vector1d()

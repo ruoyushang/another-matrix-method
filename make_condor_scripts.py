@@ -20,8 +20,8 @@ print (f'job_dir = {job_dir}')
 subprocess.run(['mkdir',f'{job_dir}'], capture_output=True, text=True)
 
 
-#training_mode = 'off'
-training_mode = 'on'
+training_mode = 'off'
+#training_mode = 'on'
 #training_mode = 'gal'
 print (f"training_mode = {training_mode}")
 
@@ -97,7 +97,7 @@ if training_mode=='gal':
     #input_params += [ ['SS433'       ,288.404, 4.930 , 'ON' ] ]
 
     input_params += [ ['PSR_J2229_p6114', 337.27, 61.23 , 'ON' ] ] # Boomerang
-    input_params += [ ['CTA1', 1.608, 72.983 , 'ON' ] ]
+    #input_params += [ ['CTA1', 1.608, 72.983 , 'ON' ] ]
     input_params += [ ['PSR_J2032_p4127', 308.05  , 41.46 , 'ON' ] ]
     #input_params += [ ['PSR_J2030_p4415', 307.7139583  , 44.2605833 , 'ON' ] ]
     #input_params += [ ['PSR_J2032_p4127_baseline', 308.05  , 41.46 , 'ON'  ] ]
