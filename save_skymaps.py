@@ -4,6 +4,7 @@ import os, sys
 import ROOT
 import numpy as np
 import pickle
+import random
 from matplotlib import pyplot as plt
 #from memory_profiler import profile
 from common_functions import MyArray1D
@@ -103,6 +104,13 @@ if onoff=='OFF':
 
 print (f"xsky_start = {xsky_start}, xsky_end = {xsky_end}, ysky_start = {ysky_start}, ysky_end = {ysky_end}")
 
+def shuffle_three_lists(list1, list2, list3):
+
+    combined_list = list(zip(list1, list2, list3))
+    random.shuffle(combined_list)
+    shuffled_list1, shuffled_list2, shuffled_list3 = zip(*combined_list)
+
+    return list(shuffled_list1), list(shuffled_list2), list(shuffled_list3)
 
 total_runs = len(on_runlist)
 big_runlist = []
@@ -191,6 +199,8 @@ for run in range(0,total_runs):
         big_mimic_runlist += [small_mimic_runlist]
         small_mimic_runlist = []
         run_exposure = 0.
+
+big_runlist, big_off_runlist, big_mimic_runlist = shuffle_three_lists(big_runlist, big_off_runlist, big_mimic_runlist)
 
 print (f'min_exposure = {min_exposure}')
 print (f'len(big_runlist) = {len(big_runlist)}')

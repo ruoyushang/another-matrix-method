@@ -46,7 +46,9 @@ GetRadialProfile = common_functions.GetRadialProfile
 fit_2d_model = common_functions.fit_2d_model
 matrix_rank = common_functions.matrix_rank
 skymap_size = common_functions.skymap_size
+fine_skymap_size = common_functions.fine_skymap_size
 skymap_bins = common_functions.skymap_bins
+fine_skymap_bins = common_functions.fine_skymap_bins
 GetGammaSourceInfo = common_functions.GetGammaSourceInfo
 build_radial_symmetric_model = common_functions.build_radial_symmetric_model
 doFluxCalibration = common_functions.doFluxCalibration
@@ -68,15 +70,15 @@ fig.set_figwidth(figsize_x)
 smi_dir = os.environ.get("SMI_DIR")
 smi_input = os.environ.get("SMI_INPUT")
 #smi_output = os.environ.get("SMI_OUTPUT")
-smi_output = "/nevis/ged/data/rshang/smi_output/output_default"
-#smi_output = "/nevis/ged/data/rshang/smi_output/output_20250417"
+#smi_output = "/nevis/ged/data/rshang/smi_output/output_default"
+smi_output = "/nevis/ged/data/rshang/smi_output/output_20250417"
 #smi_output = "/nevis/ged/data/rshang/smi_output/output_20250421"
 
 sky_tag = os.environ.get("SKY_TAG")
 
-smooth_size = 0.06
+#smooth_size = 0.06
 #smooth_size = 0.08
-#smooth_size = 0.2
+smooth_size = 0.24
 
 norm_smooth_size = [3.*smooth_size for i in range(0,logE_nbins)]
 for logE in range(0,logE_nbins):
@@ -123,7 +125,7 @@ if onoff=='ON':
 input_epoch = ['V4','V5','V6']
 #input_epoch = ['V5','V6']
 
-logE_min = logE_axis.get_bin(np.log10(0.2))+1
+logE_min = logE_axis.get_bin(np.log10(0.1))+1
 logE_mid = logE_axis.get_bin(np.log10(1.0))+1
 logE_max = logE_nbins
 fit_radial_profile = False
@@ -163,17 +165,17 @@ if 'PSR_J2021_p3651' in source_name:
     logE_min = logE_axis.get_bin(np.log10(0.5))+1
     logE_mid = logE_axis.get_bin(np.log10(1.0))+1
 
-xsky_start = src_ra+skymap_size
-xsky_end = src_ra-skymap_size
-ysky_start = src_dec-skymap_size
-ysky_end = src_dec+skymap_size
+xsky_start = src_ra+fine_skymap_size
+xsky_end = src_ra-fine_skymap_size
+ysky_start = src_dec-fine_skymap_size
+ysky_end = src_dec+fine_skymap_size
 
 if coordinate_type == 'galactic':
     src_gal_l, src_gal_b = ConvertRaDecToGalactic(src_ra, src_dec)
-    xsky_start = src_gal_l+skymap_size
-    xsky_end = src_gal_l-skymap_size
-    ysky_start = src_gal_b-skymap_size
-    ysky_end = src_gal_b+skymap_size
+    xsky_start = src_gal_l+fine_skymap_size
+    xsky_end = src_gal_l-fine_skymap_size
+    ysky_start = src_gal_b-fine_skymap_size
+    ysky_end = src_gal_b+fine_skymap_size
 
 if onoff=='OFF':
     coordinate_type = 'relative'
@@ -186,6 +188,11 @@ if onoff=='OFF':
 
 print (f"xsky_start = {xsky_start}, xsky_end = {xsky_end}, ysky_start = {ysky_start}, ysky_end = {ysky_end}")
 
+if onoff=='ON':
+    skymap_bins = fine_skymap_bins
+    print (f'original skymap_bins = {skymap_bins}')
+    skymap_bin_size = 2.*fine_skymap_size/float(skymap_bins)
+
 region_name = source_name
 if onoff=='OFF':
     region_name = 'Validation'
@@ -196,6 +203,7 @@ print (f"all_roi_x = {all_roi_x}")
 print (f"all_roi_y = {all_roi_y}")
 print (f"all_roi_r = {all_roi_r}")
 
+max_exposure = 1000.
 total_exposure = 0.
 good_exposure = 0.
 mimic_exposure = [0.] * n_mimic 
@@ -442,6 +450,9 @@ for epoch in input_epoch:
             if run_elev<min_elev_cut:
                 continue
             if run_elev>max_elev_cut:
+                continue
+
+            if total_exposure >= max_exposure:
                 continue
 
             if not 'MIMIC' in mode:
@@ -857,7 +868,7 @@ max_z = 3.
 
 for logE in range(plot_logE_min,plot_logE_max):
 
-    PlotSkyMap(fig,'significance',logE,logE+1,sum_significance_sky_map[logE],f'significance_sky_map_{source_name}_logE{logE}_{plot_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,excl_x=all_excl_x,excl_y=all_excl_y,excl_r=all_excl_r,max_z=max_z,colormap='custom',zoomin=zoomin)
+    PlotSkyMap(fig,'significance',logE,logE+1,sum_significance_sky_map[logE],f'significance_sky_map_{source_name}_logE{logE}_{plot_tag}',roi_x=all_roi_x,roi_y=all_roi_y,roi_r=all_roi_r,excl_x=all_excl_x,excl_y=all_excl_y,excl_r=all_excl_r,max_z=max_z,colormap='coolwarm',zoomin=zoomin)
 
 
 font = {'family': 'serif', 'color':  'white', 'weight': 'normal', 'size': 10, 'rotation': 0.,}
