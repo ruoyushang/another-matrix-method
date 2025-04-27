@@ -225,7 +225,7 @@ def weighted_least_square_solution(mtx_input,vec_output,vec_weight,plot_tag=''):
 
 def significance_li_and_ma(N_on, N_bkg, N_bkg_err):
 
-    if (N_on+N_bkg)<=1.0:
+    if (N_on+N_bkg)<=1e-3:
         return 0.
 
     sign = 1.
@@ -1208,11 +1208,23 @@ def cosmic_ray_like_chi2_fullspec(
                 log_likelihood = significance_li_and_ma(n_data_gcut, n_expect_gcut, 0.)
                 reg_log_likelihood += pow(log_likelihood,2) * weight_gcut
 
+    #avg_bin_entries = [0.]*logE_nbins
+    #for logE in range(0,logE_nbins):
+    #    nbins = (gcut_bins-1) * xoff_bins[logE] * yoff_bins[logE]
+    #    entries = 0.
+    #    for gcut in range(1,gcut_bins):
+    #        for idx_x in range(0,xoff_bins[logE]):
+    #            for idx_y in range(0,yoff_bins[logE]):
+    #                idx_1d = xyoff_idx_1d[gcut][logE][idx_x][idx_y]
+    #                data = data_xyoff_map[idx_1d]
+    #                entries += data
+    #    avg_bin_entries[logE] = entries / float(nbins)
 
     sum_weight = 0.
     for gcut in range(0,gcut_bins):
         for logE in range(0,logE_nbins):
             #if logE<logE_peak: continue
+            #if avg_bin_entries[logE] < 3.: continue
             for idx_x in range(0,xoff_bins[logE]):
                 for idx_y in range(0,yoff_bins[logE]):
 

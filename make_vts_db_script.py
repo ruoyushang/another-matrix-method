@@ -65,11 +65,11 @@ input_params += [ ['LS_I_p61_303', 40.14 , 61.26 ,30, 90 ] ]
 
 
 
-input_params += [ ['HighNSB', 0., 0.  ,30 ,90] ]
+#input_params += [ ['HighNSB', 0., 0.  ,30 ,90] ]
 #input_params += [ ['Extragalactic', 0., 0.  ,30 ,90] ]
 #input_params += [ ['LHAASO_Catalog', 0., 0.  ,30 ,90] ]
 
-#input_params += [ ['AUX_files', 0., 0.  ,30 ,90] ]
+input_params += [ ['AUX_files', 0., 0.  ,30 ,90] ]
 
 job_counts = 0
 for s in range(0,len(input_params)):

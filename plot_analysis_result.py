@@ -76,9 +76,9 @@ smi_output = "/nevis/ged/data/rshang/smi_output/output_20250417"
 
 sky_tag = os.environ.get("SKY_TAG")
 
-#smooth_size = 0.06
+smooth_size = 0.06
 #smooth_size = 0.08
-smooth_size = 0.24
+#smooth_size = 0.24
 
 norm_smooth_size = [3.*smooth_size for i in range(0,logE_nbins)]
 for logE in range(0,logE_nbins):
