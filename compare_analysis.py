@@ -46,32 +46,11 @@ smi_output = "/nevis/ged/data/rshang/smi_output/output_20250417"
 
 ana_tag = []
 
-#ana_tag += [['cr20_nbin9_fullspec16_fov10','b']]
-#ana_tag += [['cr20_nbin9_fullspec16_fov15','b']]
-#ana_tag += [['cr20_nbin9_fullspec16_free','b']]
+ana_tag += [['cr8_nbin7_init_free','$r = 0.5^{\\circ}$',0.5,1.0]]
+ana_tag += [['cr8_nbin7_init_free','$r = 1.0^{\\circ}$',1.0,1.5]]
+ana_tag += [['cr8_nbin7_init_free','$r = 1.5^{\\circ}$',1.5,1.75]]
+ana_tag += [['cr8_nbin7_fullspec32_free','$k_{c}$=32',-99,-99]]
 
-#ana_tag += [['cr8_nbin7_init_free','initial']]
-#ana_tag += [['cr8_nbin7_init_fov15','initial']]
-#ana_tag += [['cr8_nbin7_init_fov10','initial']]
-#ana_tag += [['cr8_nbin7_init_fov05','initial']]
-#ana_tag += [['cr8_nbin7_init_fov03','initial']]
-#ana_tag += [['cr8_nbin7_fullspec64_free','$k_{c}$=64']]
-
-#ana_tag += [['cr8_nbin5_fullspec64_free','$k_{c}$=64']]
-
-ana_tag += [['cr8_nbin7_fullspec1_free','$k_{c}$=1']]
-ana_tag += [['cr8_nbin7_fullspec2_free','$k_{c}$=2']]
-ana_tag += [['cr8_nbin7_fullspec4_free','$k_{c}$=4']]
-ana_tag += [['cr8_nbin7_fullspec8_free','$k_{c}$=8']]
-ana_tag += [['cr8_nbin7_fullspec16_free','$k_{c}$=16']]
-ana_tag += [['cr8_nbin7_fullspec32_free','$k_{c}$=32']]
-ana_tag += [['cr8_nbin7_fullspec64_free','$k_{c}$=64']]
-
-#ana_tag += [['cr8_nbin0_fullspec64_free','energy-dep bins']]
-#ana_tag += [['cr8_nbin1_fullspec64_free','$1\\times1$ bins']]
-#ana_tag += [['cr8_nbin3_fullspec64_free','$3\\times3$ bins']]
-#ana_tag += [['cr8_nbin5_fullspec64_free','$5\\times5$ bins']]
-#ana_tag += [['cr8_nbin7_fullspec64_free','$7\\times7$ bins']]
 
 
 onoff = 'OFF'
@@ -79,9 +58,9 @@ onoff = 'OFF'
 #exposure_per_group = 2.
 #exposure_per_group = 5.
 #exposure_per_group = 10.
-#exposure_per_group = 20.
+exposure_per_group = 20.
 #exposure_per_group = 30.
-exposure_per_group = 50.
+#exposure_per_group = 50.
 #exposure_per_group = 100.
 #exposure_per_group = 1000.
 cr_qual_cut = 1e10
@@ -224,6 +203,22 @@ def get_analysis_data(ana):
 
     return expo_dict, group_data
 
+def GetNormRBM(hist_skymap,roi_x,roi_y,roi_r_inner,roi_r_outer):
+
+    norm = 0.
+    for bx in range(0,len(hist_skymap.xaxis)-1):
+        for by in range(0,len(hist_skymap.yaxis)-1):
+            bin_ra = 0.5*(hist_skymap.xaxis[bx]+hist_skymap.xaxis[bx+1])
+            bin_dec = 0.5*(hist_skymap.yaxis[by]+hist_skymap.yaxis[by+1])
+            keep_event = False
+            distance = pow(pow(bin_ra-roi_x,2) + pow(bin_dec-roi_y,2),0.5)
+            if distance<roi_r_outer and distance>=roi_r_inner: 
+                keep_event = True
+            if keep_event:
+                norm += hist_skymap.waxis[bx,by,0]
+
+    return norm
+
 def GetRadialProfile(hist_skymap,roi_x,roi_y,roi_r,radial_bin_scale=0.1):
 
     deg2_to_sr =  3.046*1e-4
@@ -275,13 +270,15 @@ def plot_normalization_error(ana_tag):
 
     radial_range = 1.8
     for demoE in range(0,demoE_nbins):
-        fig, ax = plt.subplots(1, 1, figsize=(6.4, 1.5 * 4.8))
+        fig, ax = plt.subplots(1, 1, figsize=(6.4, 4.8))
         analysis_array = []
+        stat_array = []
         error_array = []
         syst_array = []
         for ana in range(0,len(ana_tag)):
             expo_dict, ana_data = get_analysis_data(ana_tag[ana])
 
+            analysis_stat = []
             analysis_error = []
             analysis_syst = []
             for grp  in range(0,len(ana_data)):
@@ -312,7 +309,7 @@ def plot_normalization_error(ana_tag):
                     for logE in range(0,len(data_map)):
                         data_count = np.sum(data_map[logE].waxis[:,:,0])
                         bkgd_count = np.sum(bkgd_map[logE].waxis[:,:,0])
-                        syst_count = np.sum(syst_map[logE].waxis[:,:,0])
+                        syst_count = np.sum(syst_map[logE].waxis[:,:,0]) * 2.
                         if demoE != demoE_axis.get_bin(logE_bins[logE]): continue
                         grp_data_count[demoE] += data_count
                         grp_bkgd_count[demoE] += bkgd_count
@@ -323,22 +320,26 @@ def plot_normalization_error(ana_tag):
                 if grp_data_count[demoE]==0.: continue
                 if grp_expo<exposure_per_group: continue
 
+                analysis_stat += [pow(grp_data_count[demoE],0.5)/grp_data_count[demoE]]
                 analysis_error += [abs(grp_data_count[demoE]-grp_bkgd_count[demoE])/grp_data_count[demoE]]
                 analysis_syst += [abs(grp_syst_count[demoE])/grp_data_count[demoE]]
 
+            avg_analysis_stat = np.mean(np.array(analysis_stat))
             avg_analysis_error = np.mean(np.array(analysis_error))
             avg_analysis_syst = np.mean(np.array(analysis_syst))
+            stat_array += [avg_analysis_stat]
             error_array += [avg_analysis_error]
             syst_array += [avg_analysis_syst]
             analysis_array += [ana_tag[ana][1]]
 
-        ax.plot(error_array)
-        ax.plot(syst_array)
+        ax.errorbar(analysis_array,error_array,yerr=stat_array,label='SR')
+        ax.plot(analysis_array,syst_array,label='CR1')
         ax.set_title(f'E > {pow(10.,demo_energy[demoE]):0.2f} TeV')
         ax.set_xlabel('$k$ number of eigenvectors')
         ax.set_ylabel('$\\epsilon$ (%)')
         ax.set_xticks(np.arange(len(analysis_array)), labels=analysis_array)
         ax.set_yscale('log')
+        ax.legend(loc='best')
         fig.savefig(
             f"output_plots/normalization_error_demoE{demoE}.png", 
             dpi=300,
@@ -351,12 +352,14 @@ def plot_normalization_error(ana_tag):
 
 
 def plot_radial_profile(ana_tag):
-    
 
     radial_range = 1.8
     for demoE in range(0,demoE_nbins):
         for ana in range(0,len(ana_tag)):
             expo_dict, ana_data = get_analysis_data(ana_tag[ana])
+
+            roi_r_inner = ana_tag[ana][2]
+            roi_r_outer = ana_tag[ana][3]
 
             avg_radius_array = []
             avg_significance_array = []
@@ -387,11 +390,17 @@ def plot_radial_profile(ana_tag):
                     for logE in range(0,len(data_map)):
                         data_count = np.sum(data_map[logE].waxis[:,:,0])
                         bkgd_count = np.sum(bkgd_map[logE].waxis[:,:,0])
+                        scale = 1.
+                        if roi_r_inner>0. and roi_r_outer>0.:
+                            data_ring_norm = GetNormRBM(data_map[logE],0.,0.,roi_r_inner,roi_r_outer)
+                            bkgd_ring_norm = GetNormRBM(bkgd_map[logE],0.,0.,roi_r_inner,roi_r_outer)
+                            if bkgd_ring_norm>0.:
+                                scale = data_ring_norm / bkgd_ring_norm
                         if demoE != demoE_axis.get_bin(logE_bins[logE]): continue
                         grp_data_count[demoE] += data_count
                         grp_bkgd_count[demoE] += bkgd_count
-                        grp_data_map[demoE].add(data_map[logE])
-                        grp_bkgd_map[demoE].add(bkgd_map[logE])
+                        grp_data_map[demoE].add(data_map[logE],factor=1.)
+                        grp_bkgd_map[demoE].add(bkgd_map[logE],factor=scale)
 
                 data_radius_array, data_profile_array = GetRadialProfile(grp_data_map[demoE],0.,0.,radial_range,radial_bin_scale=0.1)
                 bkgd_radius_array, bkgd_profile_array = GetRadialProfile(grp_bkgd_map[demoE],0.,0.,radial_range,radial_bin_scale=0.1)
@@ -422,12 +431,11 @@ def plot_radial_profile(ana_tag):
             ax[1].set_ylabel('avg. significance (absolute)')
             ax[1].set_xlabel('angular distance to camera center [deg]')
             ax[1].set_ylim(0., 4.)
-            if 'fov' in ana_tag[ana][0]:
-                ring_radius = float(ana_tag[ana][0].split('fov')[1])/10.
-                ax[0].axvspan(ring_radius, min(radial_range,2.*ring_radius), color='gray', alpha=0.5)
-                ax[1].axvspan(ring_radius, min(radial_range,2.*ring_radius), color='gray', alpha=0.5)
+            if roi_r_inner>0. and roi_r_outer>0.:
+                ax[0].axvspan(roi_r_inner, roi_r_outer, color='gray', alpha=0.5)
+                ax[1].axvspan(roi_r_inner, roi_r_outer, color='gray', alpha=0.5)
             fig.savefig(
-                f"output_plots/radial_profile_{ana_tag[ana][0]}_demoE{demoE}.png", 
+                f"output_plots/radial_profile_{ana_tag[ana][0]}_{ana}_demoE{demoE}.png", 
                 dpi=300,
                 bbox_inches="tight",
             )
@@ -437,6 +445,6 @@ def plot_radial_profile(ana_tag):
             plt.close()
 
 
-plot_normalization_error(ana_tag)
-#plot_radial_profile(ana_tag)
+#plot_normalization_error(ana_tag)
+plot_radial_profile(ana_tag)
 

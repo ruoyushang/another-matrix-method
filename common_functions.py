@@ -62,7 +62,8 @@ logE_nbins = len(logE_bins)-1
 
 MSCW_cut = [0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60,0.60]
 MSCL_cut = [0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70,0.70]
-str_flux_calibration = ['2.51e+03', '2.85e+03', '2.53e+03', '3.20e+03', '8.51e+03', '2.51e+04', '1.14e+05', '3.70e+05', '1.09e+06']
+# elev = 60-70 deg
+str_flux_calibration = ['1.83e+03', '3.60e+03', '5.37e+03', '1.05e+04', '2.50e+04', '7.26e+04', '2.89e+05', '6.39e+05', '1.75e+06']
 
 skymap_size = 2.
 fine_skymap_size = 3.
@@ -75,8 +76,8 @@ fine_skymap_bins = 120
 doFluxCalibration = False
 calibration_radius = 0.15 # need to be larger than the PSF and smaller than the integration radius
 
-#coordinate_type = 'galactic'
-coordinate_type = 'icrs'
+coordinate_type = 'galactic'
+#coordinate_type = 'icrs'
 
 #logE_threshold = -99
 logE_threshold = -1
@@ -417,8 +418,8 @@ def smooth_image(image_data,xaxis,yaxis,kernel_radius=0.07):
     for idx_x1 in range(0,len(xaxis)-1):
         for idx_y1 in range(0,len(yaxis)-1):
             image_smooth[idx_y1,idx_x1] = 0.
-            for idx_x2 in range(idx_x1-2*kernel_pix_size,idx_x1+2*kernel_pix_size):
-                for idx_y2 in range(idx_y1-2*kernel_pix_size,idx_y1+2*kernel_pix_size):
+            for idx_x2 in range(idx_x1-3*kernel_pix_size,idx_x1+3*kernel_pix_size):
+                for idx_y2 in range(idx_y1-3*kernel_pix_size,idx_y1+3*kernel_pix_size):
                     if idx_x2<0: continue
                     if idx_y2<0: continue
                     if idx_x2>=len(xaxis)-1: continue
@@ -1552,8 +1553,8 @@ def GetGammaSourceInfo():
 
     near_source_cut = 0.1
 
-    drawBrightStar = False
-    drawPulsar = False
+    drawBrightStar = True
+    drawPulsar = True
     drawSNR = False
     drawLHAASO = False
     drawFermi = False
@@ -2138,10 +2139,11 @@ def PlotSkyMap(fig,label_z,logE_min,logE_max,hist_map_input,plotname,roi_x=[],ro
 
     linestyles = ['-', '--', '-.', ':']  # List of linestyles
     for roi in range(0,len(roi_x)):
-        mycircle = plt.Circle( (roi_x[roi], roi_y[roi]), roi_r[roi], fill = False, linestyle='dashed', color='black')
+        if roi_r[roi]>=3.: continue
+        mycircle = plt.Circle( (roi_x[roi], roi_y[roi]), roi_r[roi], fill = False, linestyle='dashed', color='white')
         axbig.add_patch(mycircle)
     for roi in range(0,len(excl_x)):
-        mycircle = plt.Circle( (excl_x[roi], excl_y[roi]), excl_r[roi], fill = False, linestyle='-', color='black')
+        mycircle = plt.Circle( (excl_x[roi], excl_y[roi]), excl_r[roi], fill = False, linestyle='-', color='white')
         axbig.add_patch(mycircle)
 
     if not 'Gas' in plotname:
@@ -2930,12 +2932,12 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec,coordinate_type='icrs'):
         #region_y += [src_y]
         #region_r += [1.0]
 
-        region_name = ('SNR_core','SNR (core)')
-        src_x = 305.21
-        src_y = 40.43
-        region_x += [src_x]
-        region_y += [src_y]
-        region_r += [0.5]
+        #region_name = ('SNR_core','SNR (core)')
+        #src_x = 305.21
+        #src_y = 40.43
+        #region_x += [src_x]
+        #region_y += [src_y]
+        #region_r += [0.5]
 
         #region_name = ('SNR_shell','SNR (shell)')
         #src_x = 305.21
@@ -2943,6 +2945,34 @@ def DefineRegionOfInterest(src_name,src_ra,src_dec,coordinate_type='icrs'):
         #region_x += [src_x]
         #region_y += [src_y]
         #region_r += [1.0]
+
+        #region_name = ('hotspot','VER J2019+407')
+        #src_x = 305.0200000
+        #src_y = 40.7572222
+        #region_x += [src_x]
+        #region_y += [src_y]
+        #region_r += [0.5]
+
+        region_name = ('HAWC_disk','HAWC (disk)')
+        src_x = 305.3
+        src_y = 40.43
+        region_x += [src_x]
+        region_y += [src_y]
+        region_r += [0.64]
+
+    elif 'PSR_B1937_p21' in src_name:
+        # HESS J1943+213  , 295.979, 21.302
+        region_name = ('HESS','HESS')
+        region_x += [295.979]
+        region_y += [21.302]
+        region_r += [0.2]
+
+    elif 'Cas_A' in src_name:
+        # Cassiopeia A  , 350.808, 58.807
+        region_name = ('CasA','CasA')
+        region_x += [350.808]
+        region_y += [58.807]
+        region_r += [0.2]
 
     elif 'PSR_J1907_p0602' in src_name:
 
