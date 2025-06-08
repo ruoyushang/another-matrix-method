@@ -89,8 +89,8 @@ gcut_bins = 3
 matrix_rank = 1
 matrix_rank_fullspec = 16
 xyoff_map_nbins = 9
-#xyvar_map_nbins = 20
-xyvar_map_nbins = 2
+xyvar_map_nbins = 20
+#xyvar_map_nbins = 2
 use_poisson_likelihood = True
 use_init = False
 use_fft = False
@@ -1706,6 +1706,8 @@ def MakeSkymapCutout(skymap_input,cutout_frac):
 
 def PlotCountProjection(fig,label_z,logE_min,logE_max,hist_map_data,hist_map_bkgd,label_x,label_y,plotname,hist_map_syst=None,roi_x=[],roi_y=[],roi_r=[],max_z=0.,colormap='coolwarm',layer=0):
 
+    fig_fontsize = 16
+
     E_min = pow(10.,logE_bins[logE_min])
     E_max = pow(10.,logE_bins[logE_max])
 
@@ -1841,8 +1843,8 @@ def PlotCountProjection(fig,label_z,logE_min,logE_max,hist_map_data,hist_map_bkg
         axTemperature.add_patch(mycircle)
 
     #Plot the axes labels
-    axTemperature.set_xlabel(label_x)
-    axTemperature.set_ylabel(label_y)
+    axTemperature.set_xlabel(label_x, fontsize=fig_fontsize)
+    axTemperature.set_ylabel(label_y, fontsize=fig_fontsize)
 
     #Plot the histograms
     axHistx.plot(x_axis_array,x_bkgd_array,color='r',ls='solid',label='Background model')
@@ -1857,6 +1859,10 @@ def PlotCountProjection(fig,label_z,logE_min,logE_max,hist_map_data,hist_map_bkg
     formatter.set_powerlimits((-1,1))
     axHistx.yaxis.set_major_formatter(formatter)
     axHistx.legend(loc='best')
+
+    axTemperature.tick_params(axis='both', which='major', labelsize=fig_fontsize)
+    axHistx.tick_params(labelsize=fig_fontsize)
+    axHisty.tick_params(labelsize=fig_fontsize)
 
     font = {'family': 'serif', 'color':  'white', 'weight': 'normal', 'size': 10, 'rotation': 0.,}
     lable_energy_range = f'E = {E_min:0.2f}-{E_max:0.2f} TeV'
@@ -1891,7 +1897,8 @@ def PlotCountProjection(fig,label_z,logE_min,logE_max,hist_map_data,hist_map_bkg
     divider = make_axes_locatable(axTemperature)
     cax_app = divider.append_axes("bottom", size="5%", pad=0.7)
     cbar = fig.colorbar(cax,orientation="horizontal",cax=cax_app)
-    cbar.set_label('significance')
+    cbar.set_label('Significance', fontsize=fig_fontsize)
+    cax_app.tick_params(labelsize=fig_fontsize)
 
     favorite_color = 'k'
     font = {'family': 'serif', 'color':  favorite_color, 'weight': 'normal', 'size': 10, 'rotation': 0.,}
@@ -1921,8 +1928,8 @@ def PlotCountProjection(fig,label_z,logE_min,logE_max,hist_map_data,hist_map_bkg
 
 
     #Plot the axes labels
-    axTemperature.set_xlabel(label_x)
-    axTemperature.set_ylabel(label_y)
+    axTemperature.set_xlabel(label_x, fontsize=fig_fontsize)
+    axTemperature.set_ylabel(label_y, fontsize=fig_fontsize)
 
     #Plot the histograms
     axHistx.plot(x_axis_array,x_bkgd_array,color='r',ls='solid',label='Background model')
@@ -1937,6 +1944,10 @@ def PlotCountProjection(fig,label_z,logE_min,logE_max,hist_map_data,hist_map_bkg
     formatter.set_powerlimits((-1,1))
     axHistx.yaxis.set_major_formatter(formatter)
     axHistx.legend(loc='best')
+
+    axTemperature.tick_params(axis='both', which='major', labelsize=fig_fontsize)
+    axHistx.tick_params(labelsize=fig_fontsize)
+    axHisty.tick_params(labelsize=fig_fontsize)
 
     font = {'family': 'serif', 'color':  'black', 'weight': 'normal', 'size': 10, 'rotation': 0.,}
     lable_energy_range = f'E = {E_min:0.2f}-{E_max:0.2f} TeV'
@@ -1966,7 +1977,8 @@ def PlotCountProjection(fig,label_z,logE_min,logE_max,hist_map_data,hist_map_bkg
     divider = make_axes_locatable(axTemperature)
     cax_app = divider.append_axes("bottom", size="5%", pad=0.7)
     cbar = fig.colorbar(cax,orientation="horizontal",cax=cax_app)
-    cbar.set_label('excess count')
+    cbar.set_label('Excess count', fontsize=fig_fontsize)
+    cax_app.tick_params(labelsize=fig_fontsize)
 
     favorite_color = 'k'
     if colormap=='magma':
@@ -1997,8 +2009,8 @@ def PlotCountProjection(fig,label_z,logE_min,logE_max,hist_map_data,hist_map_bkg
         #txt = axTemperature.text(other_star_markers[star][0]-0.07, other_star_markers[star][1]+0.07, other_star_labels[star], fontdict=font, c=favorite_color)
 
     #Plot the axes labels
-    axTemperature.set_xlabel(label_x)
-    axTemperature.set_ylabel(label_y)
+    axTemperature.set_xlabel(label_x, fontsize=fig_fontsize)
+    axTemperature.set_ylabel(label_y, fontsize=fig_fontsize)
 
     #Plot the histograms
     axHistx.plot(x_axis_array,x_bkgd_array,color='r',ls='solid',label='Background model')
@@ -2014,6 +2026,10 @@ def PlotCountProjection(fig,label_z,logE_min,logE_max,hist_map_data,hist_map_bkg
     axHistx.yaxis.set_major_formatter(formatter)
     axHistx.legend(loc='best')
 
+    axTemperature.tick_params(axis='both', which='major', labelsize=fig_fontsize)
+    axHistx.tick_params(labelsize=fig_fontsize)
+    axHisty.tick_params(labelsize=fig_fontsize)
+
     font = {'family': 'serif', 'color':  'white', 'weight': 'normal', 'size': 10, 'rotation': 0.,}
     lable_energy_range = f'E = {E_min:0.2f}-{E_max:0.2f} TeV'
     txt = axTemperature.text(xmax-0.14, ymax-0.21, lable_energy_range, fontdict=font)
@@ -2028,6 +2044,8 @@ def PlotSkyMap(fig,label_z,logE_min,logE_max,hist_map_input,plotname,roi_x=[],ro
     E_max = pow(10.,logE_bins[logE_max])
 
     hist_map = MakeSkymapCutout(hist_map_input,zoomin)
+
+    fig_fontsize = 16
 
     xmin = hist_map.xaxis.min()
     xmax = hist_map.xaxis.max()
@@ -2100,8 +2118,8 @@ def PlotSkyMap(fig,label_z,logE_min,logE_max,hist_map_input,plotname,roi_x=[],ro
         offset_z = 4.
 
 
-    axbig.set_xlabel(label_x)
-    axbig.set_ylabel(label_y)
+    axbig.set_xlabel(label_x, fontsize=fig_fontsize)
+    axbig.set_ylabel(label_y, fontsize=fig_fontsize)
     im = axbig.imshow(hist_map.waxis[:,:,layer].T,origin='lower',extent=(xmax,xmin,ymin,ymax),aspect='auto',cmap=custom_cmap)
     if max_z!=0.:
         im = axbig.imshow(hist_map.waxis[:,:,layer].T,origin='lower',extent=(xmax,xmin,ymin,ymax),vmin=-max_z,vmax=max_z+offset_z,aspect='auto',cmap=custom_cmap)
@@ -2109,12 +2127,13 @@ def PlotSkyMap(fig,label_z,logE_min,logE_max,hist_map_input,plotname,roi_x=[],ro
     divider = make_axes_locatable(axbig)
     cax = divider.append_axes("bottom", size="5%", pad=0.7)
     cbar = fig.colorbar(im,orientation="horizontal",cax=cax)
-    cbar.set_label(label_z)
+    cbar.set_label(label_z, fontsize=fig_fontsize)
+    cax.tick_params(labelsize=fig_fontsize)
 
     favorite_color = 'k'
     if colormap=='magma':
         favorite_color = 'deepskyblue'
-    font = {'family': 'serif', 'color':  favorite_color, 'weight': 'normal', 'size': 10, 'rotation': 0.,}
+    font = {'family': 'serif', 'color':  favorite_color, 'weight': 'normal', 'size': fig_fontsize, 'rotation': 0.,}
 
     for star in range(0,len(other_star_markers)):
         marker_size = 60
@@ -2148,7 +2167,9 @@ def PlotSkyMap(fig,label_z,logE_min,logE_max,hist_map_input,plotname,roi_x=[],ro
 
     if not 'Gas' in plotname:
         lable_energy_range = f'E = {E_min:0.2f}-{E_max:0.2f} TeV'
-        txt = axbig.text(xmax-0.14, ymax-0.21, lable_energy_range, fontdict=font)
+        txt = axbig.text(xmax-0.14, ymax-0.25, lable_energy_range, fontdict=font)
+
+    axbig.tick_params(axis='both', which='major', labelsize=fig_fontsize)
 
     fig.savefig(f'output_plots/{plotname}.png',bbox_inches='tight')
     axbig.remove()
